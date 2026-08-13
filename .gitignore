@@ -22,6 +22,10 @@
 *.pyc
 *$py.class
 
+# equivalence-verification build products and environments
+verification/.venv/
+verification/build/
+
 # save game files
 *.sgm
 *.sav

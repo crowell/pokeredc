@@ -60,6 +60,7 @@ RGBGFXFLAGS  ?= -Weverything
 	clean \
 	tidy \
 	compare \
+	verify \
 	tools
 
 all: $(roms)
@@ -95,6 +96,9 @@ tidy:
 
 compare: $(roms) $(patches)
 	@$(SHA1) -c roms.sha1
+
+verify: pokered.gbc
+	$(MAKE) -C verification test
 
 tools:
 	$(MAKE) -C tools/

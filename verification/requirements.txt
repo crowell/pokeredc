@@ -1,0 +1,4 @@
+angr==9.2.162
+claripy==9.2.162
+pypcode==3.2.1
+pytest>=8,<10
