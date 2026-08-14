@@ -6161,3 +6161,13 @@ status = "proven"
 observables = ["wNameBuffer[0..4] (the machine name: a 2-char TM/HM prefix followed by the zero-padded two-digit machine number and the '@' terminator, in pokered text encoding)"]
 proof_domain = "all general-register and canonical-flag inputs; [wNamedObjectIndex] is fixed concrete per test, the HiddenPrefix/TechnicalPrefix ROM bytes are concrete, while the four general registers stay symbolic"
 decoder = "exact 73-byte linked body checked; `call CopyData` is modeled as a 2-byte forward copy from [HL] (HiddenPrefix/TechnicalPrefix) to [DE] (wNameBuffer) (CopyDataSim); `ld a,[a16]` (0xFA, reading wNamedObjectIndex) and `ld [a16],a` (0xEA, writing wNamedObjectIndex) are shimmed (absent from z80); `ld hl,nn`/`ld de,nn`/`ld bc,nn`/`sub a,imm`/`ld b,imm`/`add a,imm`/`add b`/`ld [de],a`/`inc de`/`pop af`/`push af`/`ret` run natively"
+
+[[function]]
+assembly_symbol = "ClearVram"
+assembly_source = "home/init.asm"
+c_symbol = "port_clear_vram"
+c_source = "verification/ports/clear_vram.c"
+status = "proven"
+observables = ["VRAM[0x8000], VRAM[0x9000], VRAM[0x9FFF] (sample bytes at start, middle, end of VRAM cleared to 0)"]
+proof_domain = "all general-register and canonical-flag inputs; VRAM initialized to 0xFF, FillMemory called with HL=0x8000, BC=0x2000, A=0 (concrete)"
+decoder = "exact 10-byte linked body checked; tail `jp FillMemory` is modeled as BC-byte fill at HL with A (FillMemorySim); `ld hl,nn`/`ld bc,nn`/`xor a`/`jp` run natively"
