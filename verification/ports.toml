@@ -6418,6 +6418,18 @@ proof_domain = "all register/flag inputs, all 256 E table indices, arbitrary fet
 decoder = "exact 18-byte body and all table/global addresses checked; push/pop DE/HL, XOR/ADD HL,DE/AND/INC flags, computed fetch, conditional return, and absolute store modeled explicitly"
 
 [[function]]
+assembly_symbol = "Delay3"
+assembly_source = "home/palettes.asm"
+c_symbol = "port_delay3"
+c_source = "verification/ports/delay3.c"
+status = "proven"
+observables = [
+    "C (returns 0 after 3 iterations)",
+]
+proof_domain = "all general-register and canonical-flag inputs; DelayFrame inlined as no-op return"
+decoder = "exact 20-byte linked body checked; `call DelayFrames` modeled as no-op return; `ld c,imm`/`jp` run natively"
+
+[[function]]
 assembly_symbol = "Random_"
 assembly_source = "engine/math/random.asm"
 c_symbol = "port_random"
