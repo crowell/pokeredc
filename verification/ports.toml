@@ -6141,3 +6141,13 @@ status = "proven"
 observables = ["m_copy (BC bytes copied from [HL] to [DE])"]
 proof_domain = "all general-register and canonical-flag inputs; HL (source), DE (dest) and BC (length = 0x60) are fixed concrete so the copy addresses and length are concrete, while the BC source bytes stay symbolic and shared between the asm and native paths (the A source-bank byte is unconstrained and only drives the no-op bank switch)"
 decoder = "exact 22-byte linked body checked (the trailing e08b belongs to FarCopyData3); `call CopyData` is modeled as a BC-byte forward copy from [HL] to [DE] (CopyDataSim); the bank switch `ldh [a8],a` (0xE0, writing hROMBankTemp/hLoadedROMBank), `ld [a16],a` (0xEA, writing rROMB), and `ldh a,[a8]` (0xF0, reading hROMBankTemp/hLoadedROMBank) are shimmed (no-op for the observable in the flat memory model), and `push af`/`pop af`/`ret` run natively"
+
+[[function]]
+assembly_symbol = "GetMonFieldMoves"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_get_mon_field_moves"
+c_source = "verification/ports/get_mon_field_moves.c"
+status = "proven"
+observables = ["m_wfieldmoves (wFieldMoves[0..3] name indices of the party mon's field moves)", "m_nfm (wNumFieldMoves)", "m_leftmost (wFieldMovesLeftmostXCoord = minimum field-move xcoord)", "m_lastid (wLastFieldMoveID)"]
+proof_domain = "all general-register and canonical-flag inputs; the party mon index [wWhichPokemon] is fixed concrete (0), the four party-move bytes and the concrete FieldMoveDisplayData ROM table make the loop branch-free, while the four general registers stay symbolic"
+decoder = "exact 77-byte linked body checked; `call AddNTimes` (computing the party-move pointer) is modeled as `hl = hl + bc*a`; `ld a,[a16]` (0xFA, reading wWhichPokemon/wNumFieldMoves/wFieldMovesLeftmostXCoord/wLastFieldMoveID), `ld [a16]` (0xEA, writing wLastFieldMoveID/wNumFieldMoves/wFieldMovesLeftmostXCoord), `ld a,[hli]` (0x2A, reading the table) and `ld [hli],a` (0x22, appending the name index) are shimmed (absent from z80); `ld hl,nn`/`ld bc,nn`/`ld c,imm`/`ld d,h`/`ld e,l`/`ld a,[de]`/`and a`/`ld b,a`/`inc de`/`cp $ff`/`cp b`/`inc hl`/`pop hl`/`push hl`/`jr`/`ret` run natively"
