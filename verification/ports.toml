@@ -6171,3 +6171,13 @@ status = "proven"
 observables = ["VRAM[0x8000], VRAM[0x9000], VRAM[0x9FFF] (sample bytes at start, middle, end of VRAM cleared to 0)"]
 proof_domain = "all general-register and canonical-flag inputs; VRAM initialized to 0xFF, FillMemory called with HL=0x8000, BC=0x2000, A=0 (concrete)"
 decoder = "exact 10-byte linked body checked; tail `jp FillMemory` is modeled as BC-byte fill at HL with A (FillMemorySim); `ld hl,nn`/`ld bc,nn`/`xor a`/`jp` run natively"
+
+[[function]]
+assembly_symbol = "DelayFrames"
+assembly_source = "home/delay.asm"
+c_symbol = "port_delay_frames"
+c_source = "verification/ports/delay_frames.c"
+status = "proven"
+observables = ["C register (becomes 0)"]
+proof_domain = "all general-register and canonical-flag inputs; C is fixed concrete per test, all other registers concrete zero, DelayFrame inlined as no-op"
+decoder = "exact 6-byte linked body checked; `call DelayFrame` inlined as no-op (CallDelayFrameSim); `dec c`/`jr nz`/`ret` run natively"
