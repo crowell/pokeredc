@@ -6121,3 +6121,13 @@ status = "proven"
 observables = ["m_cursor (the '▷' = $ec glyph written at wTileMap + 1 + 9*SCREEN_WIDTH + row*SCREEN_WIDTH)"]
 proof_domain = "all general-register and canonical-flag inputs; the selected row read from [wSerialSyncAndExchangeNybbleReceiveData] is fixed concrete (rows 0..5 covered) so the tilemap store address is concrete, while the other general registers stay symbolic"
 decoder = "exact 15-byte linked body checked; `ld a,[a16]` (0xFA, reading the row) is shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (bc = SCREEN_WIDTH), and `ld hl,nn`/`ld bc,nn`/`ld [hl],imm` (0x36, writing $ec)/`ret` run natively"
+
+[[function]]
+assembly_symbol = "FarCopyData"
+assembly_source = "home/copy.asm"
+c_symbol = "port_far_copy_data"
+c_source = "verification/ports/far_copy_data.c"
+status = "proven"
+observables = ["m_copy (BC bytes copied from [HL] to [DE])"]
+proof_domain = "all general-register and canonical-flag inputs; HL (source), DE (dest) and BC (length = 0x60) are fixed concrete so the copy addresses and length are concrete, while the BC source bytes stay symbolic and shared between the asm and native paths (the A source-bank byte is unconstrained and only drives the no-op bank switch)"
+decoder = "exact 24-byte linked body checked; `call CopyData` is modeled as a BC-byte forward copy from [HL] to [DE] (CopyDataSim); the bank switch `ld [a16],a` (0xEA, writing wBuffer/rROMB), `ld a,[a16]` (0xFA, reloading wBuffer), and `ldh a,[a8]`/`ldh [a8],a` (0xF0/0xE0, on hLoadedROMBank) are shimmed (no-op for the observable in the flat memory model), and `push af`/`pop af`/`ret` run natively"
