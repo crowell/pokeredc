@@ -6111,3 +6111,13 @@ status = "proven"
 observables = ["m_copy (HOF_TEAM = PARTY_LENGTH*HOF_MON bytes copied from [HL] to wHallOfFame)"]
 proof_domain = "all general-register and canonical-flag inputs; HL (source slot), DE (=wHallOfFame) and BC (=HOF_TEAM) are fixed concrete so the copy addresses and length are concrete, while the HOF_TEAM source bytes stay symbolic and shared between the asm and native paths"
 decoder = "exact 25-byte linked body checked; `call CopyData` is modeled as a BC-byte forward copy from [HL] to [DE] (CopyDataSim); the SRAM enable/disable `ld [a16],a` (0xEA, writing rRAMG/rBMODE/rRAMB) are shimmed (no-op for the observable in the flat memory model) and `ld a,imm`/xor a/`ret` run natively"
+
+[[function]]
+assembly_symbol = "TradeCenter_PlaceSelectedEnemyMonMenuCursor"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_trade_center_place_selected_enemy_mon_menu_cursor"
+c_source = "verification/ports/trade_center_place_selected_enemy_mon_menu_cursor.c"
+status = "proven"
+observables = ["m_cursor (the '▷' = $ec glyph written at wTileMap + 1 + 9*SCREEN_WIDTH + row*SCREEN_WIDTH)"]
+proof_domain = "all general-register and canonical-flag inputs; the selected row read from [wSerialSyncAndExchangeNybbleReceiveData] is fixed concrete (rows 0..5 covered) so the tilemap store address is concrete, while the other general registers stay symbolic"
+decoder = "exact 15-byte linked body checked; `ld a,[a16]` (0xFA, reading the row) is shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (bc = SCREEN_WIDTH), and `ld hl,nn`/`ld bc,nn`/`ld [hl],imm` (0x36, writing $ec)/`ret` run natively"
