@@ -5453,8 +5453,20 @@ observables = [
     "L",
     "all 160 wShadowOAM bytes",
 ]
-proof_domain = "all general-register and canonical-flag inputs and all values of the 160 overwritten OAM bytes; the proven constant initializer composes with exhaustive one-step transition equivalence for all 160 iterations"
+proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 11-byte linked body and wShadowOAM bounds checked; SM83 DEC B flags, pointer increment, symbolic write boundary, and loop continuation modeled explicitly"
+
+[[function]]
+assembly_symbol = "FadeOutAudio"
+assembly_source = "home/fade_audio.asm"
+c_symbol = "port_fade_out_audio"
+c_source = "verification/ports/fade_out_audio.c"
+status = "proven"
+observables = [
+    "rAUDVOL (master volume), wAudioFadeOutControl, wAudioFadeOutCounter, wNewSoundID, wAudioROMBank",
+]
+proof_domain = "all general-register and canonical-flag inputs; all audio control globals and hardware registers as concrete or symbolic inputs"
+decoder = "exact 100-byte linked body checked; `ldh [a8],a` (0xE0, rAUDVOL) and `ldh a,[a8]` (0xF0, rAUDVOL) modeled as direct memory access; `ld a,[a16]` (0xFA) and `ld [a16],a` (0xEA) shimmed; `call PlaySound` inlined as no-op; `bit`/`jr`/`dec`/`jr nz`/`ret` run natively"
 
 [[function]]
 assembly_symbol = "StartSimulatingJoypadStates"
