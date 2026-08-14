@@ -6211,3 +6211,13 @@ status = "proven"
 observables = ["A (0xFF), F, audio control globals (wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl, wNewSoundID, wLastMusicSoundID)"]
 proof_domain = "all general-register and canonical-flag inputs; PlaySound inlined as no-op return"
 decoder = "exact 16-byte linked body checked; `jp PlaySound` modeled as no-op return; `ld a,imm`/`ld [a16],a`/`xor a`/`dec a` run natively"
+
+[[function]]
+assembly_symbol = "Random"
+assembly_source = "home/random.asm"
+c_symbol = "port_random_generate"
+c_source = "verification/ports/random.c"
+status = "proven"
+observables = ["A (updated hRandomAdd), hRandomAdd, hRandomSub"]
+proof_domain = "all general-register and canonical-flag inputs; Random_ inlined as a symbolic rDIV-based update to hRandomAdd/hRandomSub"
+decoder = "exact 14-byte linked body checked; `farcall Random_` modeled as a symbolic update to hRandomAdd/hRandomSub based on independent rDIV samples; `push`/`pop`/`ret` run natively"

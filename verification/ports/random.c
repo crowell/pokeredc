@@ -42,3 +42,47 @@ port_random(struct random_state *state)
 		state->registers.f |= PORT_FLAG_C;
 	state->random_sub = state->registers.a;
 }
+
+/* Port of Random in home/random.asm.
+ *
+ * Generates a random number by calling Random_, then returns the updated
+ * hRandomAdd value in A.
+ *
+ * Input: none
+ * Output: A = random value (updated hRandomAdd), other registers preserved */
+
+#define H_RANDOM_ADD 0xFFD3u
+#define H_RANDOM_SUB 0xFFD4u
+#define R_DIV 0xFF04u
+
+/* Forward declaration of the Random_ port. */
+__attribute__((noinline, used)) void
+port_random(struct random_state *state);
+
+__attribute__((noinline, used)) void
+port_random_generate(struct cpu_register_state *state, port_u8 *memory)
+{
+	/* Build the random_state from current CPU state and memory. */
+	struct random_state rand_state = {0};
+
+	/* rDIV is read twice by Random_. We need two independent samples. */
+	rand_state.div_first = memory[R_DIV];
+	rand_state.div_second = memory[R_DIV];
+
+	/* Current random state from memory. */
+	rand_state.random_add = memory[H_RANDOM_ADD];
+	rand_state.random_sub = memory[H_RANDOM_SUB];
+
+	/* Copy general registers. */
+	rand_state.registers = *state;
+
+	/* Call the Random_ port. */
+	port_random(&rand_state);
+
+	/* Random returns the updated hRandomAdd in A. */
+	state->a = rand_state.random_add;
+
+	/* Update memory with the new random state. */
+	memory[H_RANDOM_ADD] = rand_state.random_add;
+	memory[H_RANDOM_SUB] = rand_state.random_sub;
+}
