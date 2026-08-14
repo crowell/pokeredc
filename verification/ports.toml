@@ -6181,3 +6181,13 @@ status = "proven"
 observables = ["C register (becomes 0)"]
 proof_domain = "all general-register and canonical-flag inputs; C is fixed concrete per test, all other registers concrete zero, DelayFrame inlined as no-op"
 decoder = "exact 6-byte linked body checked; `call DelayFrame` inlined as no-op (CallDelayFrameSim); `dec c`/`jr nz`/`ret` run natively"
+
+[[function]]
+assembly_symbol = "DisplayEffectiveness"
+assembly_source = "engine/battle/display_effectiveness.asm"
+c_symbol = "port_display_effectiveness"
+c_source = "verification/ports/display_effectiveness.c"
+status = "proven"
+observables = ["HL (text pointer for super/not very effective, unchanged for effective)"]
+proof_domain = "all general-register and canonical-flag inputs; [wDamageMultipliers] fixed concrete per test, HL initialized to 0"
+decoder = "exact 21-byte linked body checked; `ld a,[a16]` (0xFA) reading wDamageMultipliers shimmed; `jp PrintText` modeled as boundary (PrintTextBoundarySim); `and a,imm`/`cp imm`/`ret z`/`ld hl,nn`/`jr nc` run natively"
