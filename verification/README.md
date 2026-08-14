@@ -247,3 +247,11 @@ Current results:
   source bytes, and destination bytes.
 - `IgnoreInputForHalfSecond`: proven across all registers, flags, and both
   affected global bytes.
+- `HasEnoughCoins`: proven across every pair of 2-byte BCD values held in
+  `wPlayerCoins` and `hCoins`; the routine loads DE/HL/C and delegates the
+  byte-wise comparison to StringCmp, whose port is proven.
+- `HasEnoughMoney`: proven across every pair of 3-byte BCD values held in
+  `wPlayerMoney` and `hMoney`; identical structure with a length of three.
+- `InGameTrade_GetReceivedMonPointer`: proven across all registers, flags,
+  16-bit BC/HL pairs, and every `wPartyCount` byte; it loads the count,
+  decrements it, runs the proven AddNTimes loop, and copies HL into DE.

@@ -2684,6 +2684,16 @@ proof_domain = "all general-register and canonical-flag inputs, including every 
 decoder = "exact 10-byte linked body checked; entry/return boundaries modeled explicitly and the shared SM83 ADD HL,BC/DEC A recurrence is compositionally proven"
 
 [[function]]
+assembly_symbol = "InGameTrade_GetReceivedMonPointer"
+assembly_source = "engine/events/in_game_trades.asm"
+c_symbol = "port_in_game_trade_get_received_mon_pointer"
+c_source = "verification/ports/in_game_trade.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "wPartyCount"]
+proof_domain = "all general-register, canonical-flag, 16-bit BC/HL pairs, and every wPartyCount byte; the SM83 LD A,[a16] load, DEC A, and the DE=HL tail compose with the independently proven AddNTimes loop recurrence, proved by exhaustive begin and one-step inductive equivalence"
+decoder = "exact 10-byte linked body checked; the Game Boy LD A,[a16] (opcode FA) is shimmed, and entry/loop/return boundaries plus the shared ADD HL,BC/DEC A recurrence are modeled explicitly"
+
+[[function]]
 assembly_symbol = "CopyString"
 assembly_source = "home/copy_string.asm"
 c_symbol = "port_copy_string"
@@ -5732,3 +5742,23 @@ status = "proven"
 observables = ["all registers and flags", "move/score pointers", "type-effectiveness routing", "score write"]
 proof_domain = "all register/flag, move, effect, type, power, type-effectiveness, score, pointer, and prior-call/write inputs; shared four-slot traversal, neutral/super-effective/not-effective routing, all nested better-move scan paths, special-effect recognition, same-type suppression, damaging-different-type fallback, and final encouragement/discouragement compose"
 decoder = "exact 108-byte body checked; fixed outer/inner scan setup, ReadMove and type-effectiveness boundaries, compare-to-neutral routing, Super Fang/special-damage/Fly recognition, type/power checks, scan terminators, saved-register restoration semantics, DEC/INC [HL] with A preservation, and loop continuation modeled explicitly"
+
+[[function]]
+assembly_symbol = "HasEnoughCoins"
+assembly_source = "home/money.asm"
+c_symbol = "port_has_enough_coins"
+c_source = "verification/ports/money_checks.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "C", "DE", "HL"]
+proof_domain = "all 65,536 pairs of 2-byte values held in wPlayerCoins and hCoins; the tail delegates the byte-wise comparison to StringCmp, whose port is proven, and the register setup (DE=wPlayerCoins, HL=hCoins, C=2) is constant"
+decoder = "generic Z80 encodings verified; the shared CP (HL) half-carry correction is applied at StringCmp+1 exactly as in the StringCmp proof"
+
+[[function]]
+assembly_symbol = "HasEnoughMoney"
+assembly_source = "home/money.asm"
+c_symbol = "port_has_enough_money"
+c_source = "verification/ports/money_checks.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "C", "DE", "HL"]
+proof_domain = "all 16,777,216 pairs of 3-byte values held in wPlayerMoney and hMoney; the tail delegates the byte-wise comparison to StringCmp, whose port is proven, and the register setup (DE=wPlayerMoney, HL=hMoney, C=3) is constant"
+decoder = "generic Z80 encodings verified; the shared CP (HL) half-carry correction is applied at StringCmp+1 exactly as in the StringCmp proof"
