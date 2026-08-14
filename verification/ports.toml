@@ -2022,6 +2022,15 @@ status = "proven"
 observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "wDoNotWaitForButtonPressAfterDisplayingText"]
 proof_domain = "all general-register and canonical-flag inputs and all 256 initial values of the affected byte"
 decoder = "exact 6-byte linked body checked; SM83 LD [a16],A store modeled explicitly"
+[[function]]
+assembly_symbol = "AutoTextBoxDrawingCommon"
+assembly_source = "home/window.asm"
+c_symbol = "port_auto_text_box_drawing_common"
+c_source = "verification/ports/auto_text_box.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "wAutoTextBoxDrawingControl", "wDoNotWaitForButtonPressAfterDisplayingText"]
+proof_domain = "all general-register and canonical-flag inputs and all 256 initial values of both affected bytes"
+decoder = "exact 8-byte linked body checked; both SM83 LD [a16],A stores modeled explicitly"
 
 [[function]]
 assembly_symbol = "SafariZoneGateReturnSimulatedJoypadStateScript"
@@ -5819,7 +5828,7 @@ assembly_source = "engine/gfx/palettes.asm"
 c_symbol = "port_set_pal_generic"
 c_source = "verification/ports/palette_packets.c"
 status = "proven"
-observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 7-byte linked body and linked PalPacket_Generic / BlkPacket_WholeScreen addresses verified with generic Z80 semantics"
 
@@ -5942,3 +5951,153 @@ status = "proven"
 observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
 proof_domain = "all A/F inputs and every symbolic 360-byte (SCREEN_AREA) source buffer; HL, DE and BC are fixed to the tile-map, wTileMapBackup and SCREEN_AREA constants and are left mutated by the delegated CopyData loop (proven independently); the routine jumps rather than calls CopyData so CopyData returns to the caller"
 decoder = "exact 11-byte linked body checked; the `jp CopyData` is inlined as a real-memory copy across a symbolic source/destination buffer, proving the bytes are transferred"
+
+[[function]]
+assembly_symbol = "AnimCutGrass_SwapOAMEntries"
+assembly_source = "engine/overworld/cut2.asm"
+c_symbol = "port_anim_cut_grass_swap_oam_entries"
+c_source = "verification/ports/anim_cut_grass.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "wShadowOAMSprite36", "wShadowOAMSprite38", "wBuffer"]
+proof_domain = "all general-register and canonical-flag inputs and all 256 possible byte values in the three 8-byte OAM/swap buffers (wShadowOAMSprite36, wShadowOAMSprite38, wBuffer)"
+decoder = "exact 36-byte linked body checked; the two `call CopyData` sites and the tail `jp CopyData` are modeled explicitly and apply the proven port_copy_data transition across the real absolute buffers"
+
+[[function]]
+assembly_symbol = "ClearVariablesOnEnterMap"
+assembly_source = "engine/overworld/clear_variables.asm"
+c_symbol = "port_clear_variables_on_enter_map"
+c_source = "verification/ports/clear_variables.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "hWY", "rWY", "hAutoBGTransferEnabled", "wStepCounter", "wLoneAttackNo", "hJoyPressed", "hJoyReleased", "hJoyHeld", "wActionResultOrTookBattleTurn", "wUnusedMapVariable", "wCardKeyDoorY", "wWhichTrade..wStandingOnWarpPadOrHole"]
+proof_domain = "all general-register and canonical-flag inputs; every observable is a deterministic constant or the (symbolic, preserved) D/E pair, so pathwise equivalence holds over the single linear control-flow path"
+decoder = "exact 42-byte linked body checked; the twelve memory stores are modeled with the proven SM83 store shims and the tail `call FillMemory` applies the proven port_fill_memory transition over the real [wWhichTrade, wStandingOnWarpPadOrHole) range"
+
+[[function]]
+assembly_symbol = "MovePicLeft"
+assembly_source = "engine/movie/oak_speech/oak_speech.asm"
+c_symbol = "port_move_pic_left"
+c_source = "verification/ports/move_pic_left.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "rWX", "rBGP"]
+proof_domain = "all general-register and canonical-flag inputs; rWX and rBGP are the only memory observables and the loop bound is the concrete constant 119 down to 7, so pathwise equivalence holds over the single concrete control-flow path"
+decoder = "exact 25-byte linked body checked; the two `call DelayFrame` sites are modeled as no-op tail jumps and the rWX / rBGP high-memory loads and stores use the proven SM83 shims"
+
+[[function]]
+assembly_symbol = "ResetPlayerSpriteData_ClearSpriteData"
+assembly_source = "home/reset_player_sprite.asm"
+c_symbol = "port_reset_player_sprite_data_clear_sprite_data"
+c_source = "verification/ports/reset_player_sprite.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "wSpriteData (caller HL .. HL+SPRITESTATEDATA1_LENGTH)"]
+proof_domain = "all general-register and canonical-flag inputs including the symbolic HL pointer; BC, A and the filled 16-byte range are deterministic zeros, so pathwise equivalence holds over the single linear control-flow path"
+decoder = "exact 7-byte linked body checked; the tail `jp FillMemory` applies the proven port_fill_memory transition over the caller-provided HL buffer"
+
+[[function]]
+assembly_symbol = "UnusedPlayerNameLengthFunc"
+assembly_source = "engine/events/diploma.asm"
+c_symbol = "port_unused_player_name_length_func"
+c_source = "verification/ports/unused_player_name_length_func.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "B", "C", "D", "E", "H", "L", "wPlayerName buffer (caller HL .. HL+name length)"]
+proof_domain = "all general-register and canonical-flag inputs including the symbolic 11-byte wPlayerName buffer; the '@' ($50) terminator always terminates the scan within the buffer, so pathwise equivalence holds over every termination position (0 through 11)"
+decoder = "exact 12-byte linked body checked; the loop runs natively (ld a,[hli] / cp / dec c / jr / ret z) with no SM83 shims required"
+
+[[function]]
+assembly_symbol = "GetQuantityOfItemInBag"
+assembly_source = "engine/items/get_bag_item_quantity.asm"
+c_symbol = "port_get_quantity_of_item_in_bag"
+c_source = "verification/ports/get_quantity_of_item_in_bag.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "B", "C", "D", "E", "H", "L", "wNumBagItems item table (caller HL .. HL+2*slots)"]
+proof_domain = "all general-register and canonical-flag inputs including the symbolic wNumBagItems item table; the $ff ($ff) terminator always bounds the scan within the table, so pathwise equivalence holds over every match/not-found position"
+decoder = "exact 21-byte linked body checked; `call GetPredefRegisters` skipped (b passes through, hl overwritten), `ld a,[hli]` (0x2A) and `cp $ff`/`cp b` shimmed for SM83 semantics, the loop control (inc hl / jr z / jr nz / ret) runs natively"
+
+[[function]]
+assembly_symbol = "HoFFadeOutScreenAndMusic"
+assembly_source = "engine/movie/hall_of_fame.asm"
+c_symbol = "port_ho_f_fade_out_screen_and_music"
+c_source = "verification/ports/ho_f_fade_out_screen_and_music.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "B", "C", "D", "E", "H", "L", "wAudioFadeOutControl", "wAudioFadeOutCounterReloadValue", "wAudioFadeOutCounter"]
+proof_domain = "all general-register and canonical-flag inputs; the three audio-fade control bytes are written unconditionally"
+decoder = "exact 16-byte linked body checked; the three SM83 EA absolute stores (`wAudioFadeOutControl`=$ff, `wAudioFadeOutCounterReloadValue`/`wAudioFadeOutCounter`=10) are shimmed, and the `jp GBFadeOutToWhite` tail is modeled as the function endpoint"
+
+[[function]]
+assembly_symbol = "HoFRecordMonInfo"
+assembly_source = "engine/movie/hall_of_fame.asm"
+c_symbol = "port_ho_f_record_mon_info"
+c_source = "verification/ports/ho_f_record_mon_info.c"
+status = "proven"
+observables = ["wHallOfFame record (13 bytes: species @ wHallOfFame + HOF_MON * wHoFPartyMonIndex, level @ +1, name @ +2..+12)"]
+proof_domain = "all general-register and canonical-flag inputs including the symbolic wHoFPartyMonIndex (record slot), wHoFMonSpecies, wHoFMonLevel, and the 11-byte wNameBuffer; the record is written at the data-dependent address wHallOfFame + HOF_MON * wHoFPartyMonIndex"
+decoder = "exact 34-byte linked body checked; `ld a,[a16]` (0xFA) loads are shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged), the two `ld [hli],a` (0x22) stores are shimmed, and the `jp CopyData` tail is inlined as a CopyDataSim that copies NAME_LENGTH bytes from wNameBuffer into the record and returns; the post-CopyData registers are scratch and excluded from the observable record"
+
+[[function]]
+assembly_symbol = "KnowsHMMove"
+assembly_source = "engine/pokemon/bills_pc.asm"
+c_symbol = "port_knows_hm_move"
+c_source = "verification/ports/knows_hm_move.c"
+status = "proven"
+observables = ["A"]
+proof_domain = "all general-register and canonical-flag inputs; the mon index [wWhichPokemon] is fixed concrete (1) so the move-list base wPartyMon1Moves + PARTYMON_STRUCT_LENGTH * which is concrete, while the four party-mon moves stay symbolic and shared between the asm and native paths"
+decoder = "exact 42-byte linked body checked; `ld a,[a16]` (0xFA) loads are shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged), `ld a,[hli]` (0x2A) loads are shimmed, and `call IsInArray` is inlined as an IsInArraySim that sets the z80 carry iff `a` is one of the five HM ids; the function returns the first matching HM move id (with carry set) or, on no match, the last move read (the tail is `and a; ret`, which does not zero `a`)"
+
+[[function]]
+assembly_symbol = "DecrementPP"
+assembly_source = "engine/battle/decrement_pp.asm"
+c_symbol = "port_decrement_pp"
+c_source = "verification/ports/decrement_pp.c"
+status = "proven"
+observables = ["m_battle_pp (PP byte at wBattleMonPP + moveIndex)", "m_party_pp (PP byte at wPartyMon1PP + PARTYMON_STRUCT_LENGTH * which + moveIndex)"]
+proof_domain = "all general-register and canonical-flag inputs; the used move id (read from [de]) and the three battle-status bytes (wPlayerBattleStatus1/2/3) stay symbolic, while the move index and party-mon number are fixed concrete so the two PP addresses are concrete"
+decoder = "exact 47-byte linked body checked; `ld a,[hli]` (0x2A) and the three `ld a,[a16]` (0xFA) loads are shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged), and the internal `call .DecrementPP` is run natively; `dec [hl]`, `bit`, `and`, `cp`, and the conditional returns run natively under the pcode engine, yielding the same five terminal paths (Struggle / status1 mask / Rage early-exit with no write, battle-only decrement on Transform, and full double decrement)"
+
+[[function]]
+assembly_symbol = "IncrementMovePP"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_increment_move_pp"
+c_source = "verification/ports/increment_move_pp.c"
+status = "proven"
+observables = ["m_player_battle_pp (PP byte at wBattleMonPP + moveIndex)", "m_player_party_pp (PP byte at wPartyMon1PP + PARTYMON_STRUCT_LENGTH * which + moveIndex)", "m_enemy_battle_pp (PP byte at wEnemyMonPP + moveIndex)", "m_enemy_party_pp (PP byte at wEnemyMon1PP + PARTYMON_STRUCT_LENGTH * which + moveIndex)"]
+proof_domain = "all general-register and canonical-flag inputs; hWhoseTurn (player/enemy selector) and the move index / party-mon number are fixed concrete so every PP address is concrete; the four initial PP bytes stay symbolic and shared between the asm and native paths; the proof is run once per turn (whose = 0 player, 1 enemy) so both branches are covered"
+decoder = "exact 50-byte linked body checked; the two `ldh a,[a8]` (0xF0) loads and the four `ld a,[a16]` (0xFA) loads are shimmed (absent from the z80 decoder), and `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged); `inc [hl]`, `and a`, `jr z`, and the conditional moves run natively under the pcode engine"
+
+[[function]]
+assembly_symbol = "AICureStatus"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_ai_cure_status"
+c_source = "verification/ports/ai_cure_status.c"
+status = "proven"
+observables = ["m_roster (status byte at wEnemyMon1Status + PARTYMON_STRUCT_LENGTH * partyPos)", "m_active (wEnemyMonStatus)", "m_battle3 (wEnemyBattleStatus3 with BADLY_POISONED bit cleared)"]
+proof_domain = "all general-register and canonical-flag inputs; wEnemyMonPartyPos is fixed concrete (0) so the roster status address is concrete, while the roster status, active status, and wEnemyBattleStatus3 bytes stay symbolic and shared between the asm and native paths"
+decoder = "exact 23-byte linked body checked; `ld a,[a16]` (0xFA) and `ld [a16],a` (0xEA) are shimmed (absent from the z80 decoder), `res BADLY_POISONED,[hl]` (0xCB 0x86) is shimmed, and `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged); `xor a`, `ld [hl],a`, and `ret` run natively under the pcode engine"
+
+[[function]]
+assembly_symbol = "ReadMove"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_read_move"
+c_source = "verification/ports/read_move.c"
+status = "proven"
+observables = ["m_move0..m_move5 (6 move-data bytes at wEnemyMoveNum)"]
+proof_domain = "all general-register and canonical-flag inputs; the 1-based move id in A is fixed concrete (1 -> index 0) so the Moves-table source address is concrete, while the six move-data bytes stay symbolic and shared between the asm and native paths"
+decoder = "exact 23-byte linked body checked; `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged) and `call CopyData` is modeled as a BC-byte copy from [HL] to [DE] (CopyDataSim); `ld hl,nn`/`ld bc,nn`/`ld de,nn`/`dec a`/push/pop/`ret` run natively under the pcode engine"
+
+[[function]]
+assembly_symbol = "GetMonName"
+assembly_source = "home/names.asm"
+c_symbol = "port_get_mon_name"
+c_source = "verification/ports/get_mon_name.c"
+status = "proven"
+observables = ["m_name0..m_name9 (NAME_LENGTH-1 name bytes at wNameBuffer)", "m_terminator ('@' = $50 text terminator at wNameBuffer+NAME_LENGTH-1)"]
+proof_domain = "all general-register and canonical-flag inputs; the 1-based species id in [wNamedObjectIndex] is fixed concrete (1 -> index 0) so the MonsterNames source address is concrete, while the ten name-data bytes stay symbolic and shared between the asm and native paths"
+decoder = "exact 49-byte linked body checked; `call AddNTimes` is modeled as `hl = hl + bc*a` and `call CopyData` is modeled as a BC-byte copy from [HL] to [DE] (CopyDataSim); `ldh a,[a8]`/`ldh [a8],a` (0xF0/0xE0, absent from z80) and `ld [a16],a`/`ld a,[a16]` (0xEA/0xFA, absent from z80) are shimmed (the ROM-bank switch to MonsterNames is a no-op for the observable); `ld hl,nn`/`ld bc,nn`/`ld de,nn`/`ld a,imm`/`ld c,imm`/`ld b,imm`/`dec a`/`ld [hl],imm`/push/pop/`ret` run natively under the pcode engine"
+
+[[function]]
+assembly_symbol = "SpinPlayerSprite"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_spin_player_sprite"
+c_source = "verification/ports/spin_player_sprite.c"
+status = "proven"
+observables = ["m_image (wSpritePlayerStateData1ImageIndex = [HL] at entry)", "m_flist0..m_flist3 (wFacingDirectionList[0..3] after the rotate)"]
+proof_domain = "all general-register and canonical-flag inputs; the HL input pointer is fixed concrete (0xC600) so the store/copy addresses are concrete, while the image-index source byte and the four facing-list entries stay symbolic and shared between the asm and native paths"
+decoder = "exact 25-byte linked body checked; `call CopyData` is modeled as a BC-byte forward copy from [HL] to [DE] (CopyDataSim), which rotates the list down by one entry; `ld [a16],a` (0xEA, writing wSpritePlayerStateData1ImageIndex and wFacingDirectionList+3) and `ld a,[a16]` (0xFA, reading the rotated former-first entry) are shimmed (absent from z80), and `ld a,[hl]`/`push hl`/`ld hl,nn`/`ld de,nn`/`ld bc,nn`/`pop hl`/`ret` run natively"

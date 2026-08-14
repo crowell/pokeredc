@@ -147,6 +147,10 @@ def _native_endpoint(c_symbol: str, inputs: dict[str, claripy.ast.BV]) -> Endpoi
             "DisableWaitingAfterTextDisplay",
             "port_disable_waiting_after_text_display",
         ),
+        (
+            "AutoTextBoxDrawingCommon",
+            "port_auto_text_box_drawing_common",
+        ),
     ],
 )
 def test_auto_text_box_symbolic_equivalence(
@@ -185,4 +189,25 @@ def test_disable_waiting_after_text_display_exact_linked_body() -> None:
     ).address
     assert linked_bytes(ROM, location, 6) == bytes(
         (0x3E, 1, 0xEA, destination & 0xFF, destination >> 8, 0xC9)
+    )
+
+
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_auto_text_box_drawing_common_exact_linked_body() -> None:
+    location = symbol_location(SYMBOLS, "AutoTextBoxDrawingCommon")
+    auto_control = symbol_location(SYMBOLS, "wAutoTextBoxDrawingControl").address
+    do_not_wait = symbol_location(
+        SYMBOLS, "wDoNotWaitForButtonPressAfterDisplayingText"
+    ).address
+    assert linked_bytes(ROM, location, 8) == bytes(
+        (
+            0xEA,
+            auto_control & 0xFF,
+            auto_control >> 8,
+            0xAF,
+            0xEA,
+            do_not_wait & 0xFF,
+            do_not_wait >> 8,
+            0xC9,
+        )
     )

@@ -29,3 +29,14 @@ port_disable_waiting_after_text_display(struct auto_text_box_state *state)
 	state->registers.a = 1;
 	state->do_not_wait_for_button_press = 1;
 }
+/* Port of AutoTextBoxDrawingCommon in home/window.asm. It stores the incoming
+ * accumulator into wAutoTextBoxDrawingControl, then clears A (XOR A sets Z and
+ * clears N/H/C) and stores zero into wDoNotWaitForButtonPressAfterDisplayingText. */
+__attribute__((noinline, used)) void
+port_auto_text_box_drawing_common(struct auto_text_box_state *state)
+{
+	state->auto_text_box_drawing_control = state->registers.a;
+	state->registers.a = 0;
+	state->registers.f = PORT_FLAG_Z;
+	state->do_not_wait_for_button_press = 0;
+}
