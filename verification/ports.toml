@@ -6151,3 +6151,13 @@ status = "proven"
 observables = ["m_wfieldmoves (wFieldMoves[0..3] name indices of the party mon's field moves)", "m_nfm (wNumFieldMoves)", "m_leftmost (wFieldMovesLeftmostXCoord = minimum field-move xcoord)", "m_lastid (wLastFieldMoveID)"]
 proof_domain = "all general-register and canonical-flag inputs; the party mon index [wWhichPokemon] is fixed concrete (0), the four party-move bytes and the concrete FieldMoveDisplayData ROM table make the loop branch-free, while the four general registers stay symbolic"
 decoder = "exact 77-byte linked body checked; `call AddNTimes` (computing the party-move pointer) is modeled as `hl = hl + bc*a`; `ld a,[a16]` (0xFA, reading wWhichPokemon/wNumFieldMoves/wFieldMovesLeftmostXCoord/wLastFieldMoveID), `ld [a16]` (0xEA, writing wLastFieldMoveID/wNumFieldMoves/wFieldMovesLeftmostXCoord), `ld a,[hli]` (0x2A, reading the table) and `ld [hli],a` (0x22, appending the name index) are shimmed (absent from z80); `ld hl,nn`/`ld bc,nn`/`ld c,imm`/`ld d,h`/`ld e,l`/`ld a,[de]`/`and a`/`ld b,a`/`inc de`/`cp $ff`/`cp b`/`inc hl`/`pop hl`/`push hl`/`jr`/`ret` run natively"
+
+[[function]]
+assembly_symbol = "GetMachineName"
+assembly_source = "home/names.asm"
+c_symbol = "port_get_machine_name"
+c_source = "verification/ports/get_machine_name.c"
+status = "proven"
+observables = ["wNameBuffer[0..4] (the machine name: a 2-char TM/HM prefix followed by the zero-padded two-digit machine number and the '@' terminator, in pokered text encoding)"]
+proof_domain = "all general-register and canonical-flag inputs; [wNamedObjectIndex] is fixed concrete per test, the HiddenPrefix/TechnicalPrefix ROM bytes are concrete, while the four general registers stay symbolic"
+decoder = "exact 73-byte linked body checked; `call CopyData` is modeled as a 2-byte forward copy from [HL] (HiddenPrefix/TechnicalPrefix) to [DE] (wNameBuffer) (CopyDataSim); `ld a,[a16]` (0xFA, reading wNamedObjectIndex) and `ld [a16],a` (0xEA, writing wNamedObjectIndex) are shimmed (absent from z80); `ld hl,nn`/`ld de,nn`/`ld bc,nn`/`sub a,imm`/`ld b,imm`/`add a,imm`/`add b`/`ld [de],a`/`inc de`/`pop af`/`push af`/`ret` run natively"
