@@ -6461,9 +6461,6 @@ decoder = "exact 17-byte body and 16-byte lookup table checked; push/pop HL, AND
 
 [[function]]
 assembly_symbol = "ReadSpriteSheetData"
-assembly_source = "engine/overworld/map_sprites.asm"
-c_symbol = "port_read_sprite_sheet_data"
-c_source = "verification/ports/computed_loads.c"
 status = "proven"
 observables = [
     "all registers and flags",
@@ -6471,6 +6468,21 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL pointers including four-byte wraparound, and all 2^32 possible sprite-sheet entries"
 decoder = "exact 10-byte body checked; four symbolic HLI reads, DE/BC register assembly, XOR flags, zero extension into B, final bank load, and return modeled explicitly"
+c_symbol = "port_read_sprite_sheet_data"
+c_source = "verification/ports/computed_loads.c"
+assembly_source = "engine/overworld/map_sprites.asm"
+
+[[function]]
+assembly_symbol = "ClearScreen"
+assembly_source = "home/copy2.asm"
+c_symbol = "port_clear_screen"
+c_source = "verification/ports/clear_screen.c"
+status = "proven"
+proof_domain = "all general-register and canonical-flag inputs; Delay3 inlined as no-op return"
+decoder = "exact 20-byte linked body checked; `jp Delay3` modeled as no-op return; `ld bc,nn`/`inc b`/`hlcoord`/`ld a,imm`/`ld [hli],a`/`dec`/`jr nz`/`jp` run natively"
+observables = [
+    "wTileMap[0..SCREEN_AREA+1] (cleared to space 0x7F)",
+]
 
 [[function]]
 assembly_symbol = "BattleTransition_VerticalStripes_"
