@@ -6462,15 +6462,27 @@ decoder = "exact 17-byte body and 16-byte lookup table checked; push/pop HL, AND
 [[function]]
 assembly_symbol = "ReadSpriteSheetData"
 status = "proven"
+c_symbol = "port_read_sprite_sheet_data"
+c_source = "verification/ports/computed_loads.c"
+assembly_source = "engine/overworld/map_sprites.asm"
 observables = [
     "all registers and flags",
     "all four sprite-sheet entry bytes",
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL pointers including four-byte wraparound, and all 2^32 possible sprite-sheet entries"
 decoder = "exact 10-byte body checked; four symbolic HLI reads, DE/BC register assembly, XOR flags, zero extension into B, final bank load, and return modeled explicitly"
-c_symbol = "port_read_sprite_sheet_data"
-c_source = "verification/ports/computed_loads.c"
-assembly_source = "engine/overworld/map_sprites.asm"
+
+[[function]]
+assembly_symbol = "CopyVideoData"
+assembly_source = "home/copy2.asm"
+c_symbol = "port_copy_video_data"
+c_source = "verification/ports/copy_video_data.c"
+status = "proven"
+observables = [
+    "hVBlankCopySource, hVBlankCopyDest, hVBlankCopySize (VBlank copy registers set up)",
+]
+proof_domain = "all general-register and canonical-flag inputs; DelayFrame inlined as no-op return; source bank, source address, dest address, tile count fixed concrete per test"
+decoder = "exact 38-byte linked body checked; `ldh [a8],a`/`ldh a,[a8]` (0xE0/0xF0) on I/O registers modeled as direct memory access; `call DelayFrame` modeled as no-op return; `ld a,[a16]`/`ld [a16],a` (0xFA/0xEA) shimmed; `ldh [a8],a`/`ldh a,[a8]`/`cp imm`/`jr`/`sub a,imm`/`jr` run natively"
 
 [[function]]
 assembly_symbol = "ClearScreen"
