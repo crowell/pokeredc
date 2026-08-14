@@ -6201,3 +6201,13 @@ status = "proven"
 observables = ["A, F (preserved across WaitForSoundToFinish, then from PlaySound)"]
 proof_domain = "all general-register and canonical-flag inputs; WaitForSoundToFinish and PlaySound inlined as no-op returns"
 decoder = "exact 6-byte linked body checked; `call WaitForSoundToFinish` and `jp PlaySound` modeled as no-op returns; `push af`/`pop af` run natively"
+
+[[function]]
+assembly_symbol = "StopAllSounds"
+assembly_source = "home/init.asm"
+c_symbol = "port_stop_all_sounds"
+c_source = "verification/ports/stop_all_sounds.c"
+status = "proven"
+observables = ["A (0xFF), F, audio control globals (wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl, wNewSoundID, wLastMusicSoundID)"]
+proof_domain = "all general-register and canonical-flag inputs; PlaySound inlined as no-op return"
+decoder = "exact 16-byte linked body checked; `jp PlaySound` modeled as no-op return; `ld a,imm`/`ld [a16],a`/`xor a`/`dec a` run natively"
