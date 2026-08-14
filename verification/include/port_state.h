@@ -2751,4 +2751,14 @@ _Static_assert(sizeof(struct audio_play_sound_state) == 1058, "unexpected ABI pa
 _Static_assert(sizeof(struct audio_unknown_ef_state) == 1060, "unexpected ABI padding");
 _Static_assert(sizeof(struct audio_note_state) == 1060, "unexpected ABI padding");
 
+struct set_pal_game_freak_intro_state {
+	struct cpu_register_state registers;
+	port_u8 default_palette_command;
+};
+
+struct safari_zone_game_still_going_state {
+	struct cpu_register_state registers;
+	port_u8 safari_zone_game_over;
+};
+
 #endif

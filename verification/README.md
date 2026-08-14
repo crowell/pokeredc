@@ -255,3 +255,53 @@ Current results:
 - `InGameTrade_GetReceivedMonPointer`: proven across all registers, flags,
   16-bit BC/HL pairs, and every `wPartyCount` byte; it loads the count,
   decrements it, runs the proven AddNTimes loop, and copies HL into DE.
+- `SetPal_BattleBlack`: proven across all registers, flags, and the linked
+  `PalPacket_Black` / `BlkPacket_Battle` addresses; selects a palette packet.
+- `SetPal_TownMap`: proven across all registers, flags, and the linked
+  `PalPacket_TownMap` / `BlkPacket_WholeScreen` addresses.
+- `SetPal_PartyMenu`: proven across all registers, flags, and the linked
+  `PalPacket_PartyMenu` / `wPartyMenuBlkPacket` addresses.
+- `SetPal_Slots`: proven across all registers, flags, and the linked
+  `PalPacket_Slots` / `BlkPacket_Slots` addresses.
+- `SetPal_TitleScreen`: proven across all registers, flags, and the linked
+  `PalPacket_Titlescreen` / `BlkPacket_Titlescreen` addresses.
+- `SetPal_Generic`: proven across all registers, flags, and the linked
+  `PalPacket_Generic` / `BlkPacket_WholeScreen` addresses.
+- `SetPal_NidorinoIntro`: proven across all registers, flags, and the linked
+  `PalPacket_NidorinoIntro` / `BlkPacket_NidorinoIntro` addresses.
+- `SetPal_GameFreakIntro`: proven across all registers, flags, the linked
+  `PalPacket_GameFreakIntro` / `BlkPacket_GameFreakIntro` addresses, and the
+  `wDefaultPaletteCommand` byte written with SET_PAL_GENERIC ($08); the SM83
+  absolute store is modeled explicitly.
+- `PrintPlayerMon1Text`: proven across all registers, flags, and the linked
+  `PlayerMon1Text` address; selects a text pointer.
+- `PrintComeBackText`: proven across all registers, flags, and the linked
+  `ComeBackText` address; selects a text pointer.
+- `LoadPresentsGraphic`: proven across all registers and flags (body is a single
+  RET, so every register and flag is preserved).
+- `SafariZoneGameStillGoing`: proven across all registers, flags, and the
+  `wSafariZoneGameOver` byte cleared to zero; the SM83 absolute store is modeled
+  explicitly.
+- `InGameTrade_CopyData`: proven across all registers, flags, and every symbolic
+  source-buffer contents; it pushes HL and BC, delegates the byte-wise copy to the
+  proven CopyData loop, and pops HL and BC back, so the destination receives the
+  source verbatim while HL and BC are preserved.
+- `SaveScreenTilesToBuffer2`: proven across all registers, flags, and every
+  symbolic 360-byte (SCREEN_AREA) source buffer; it sets HL/DE/BC to the tile
+  map, wTileMapBackup2 and SCREEN_AREA constants and delegates the byte-wise copy
+  to the proven CopyData loop (HL/DE/BC are left mutated).
+- `SaveScreenTilesToBuffer1`: proven across all registers, flags, and every
+  symbolic 360-byte (SCREEN_AREA) source buffer; it sets HL/DE/BC to the tile
+  map, wTileMapBackup and SCREEN_AREA constants and jumps (rather than calls)
+  CopyData, which returns directly to the caller (HL/DE/BC are left mutated).
+- `LoadScreenTilesFromBuffer1`: proven across all registers, flags, the
+  `hAutoBGTransferEnabled` byte (written to 0 then 1), and every symbolic 360-byte
+  source buffer; it sets HL/DE/BC to wTileMapBackup, the tile map and SCREEN_AREA
+  and delegates the byte-wise copy to the proven CopyData loop.
+- `LoadScreenTilesFromBuffer2DisableBGTransfer`: proven across all registers,
+  flags, the `hAutoBGTransferEnabled` byte (written to 0), and every symbolic
+  360-byte source buffer.
+- `LoadScreenTilesFromBuffer2`: proven across all registers, flags, the
+  `hAutoBGTransferEnabled` byte (written to 1 at the end), and every symbolic
+  360-byte source buffer; it runs LoadScreenTilesFromBuffer2DisableBGTransfer and
+  then re-enables the auto BG transfer.

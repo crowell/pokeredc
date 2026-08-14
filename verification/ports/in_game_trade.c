@@ -10,6 +10,7 @@ struct received_mon_pointer_state {
 
 port_u8 port_add_n_times_begin(struct cpu_register_state *state);
 port_u8 port_add_n_times_step(struct cpu_register_state *state);
+void port_copy_data(struct cpu_register_state *state, port_u8 *memory);
 
 /* Load the current party count, decrement it, and prime AddNTimes. When the
  * count is zero after the decrement the loop body never runs and the resulting
@@ -51,4 +52,25 @@ port_in_game_trade_get_received_mon_pointer(
 		;
 	state->registers.e = state->registers.l;
 	state->registers.d = state->registers.h;
+}
+
+/* Port of InGameTrade_CopyData in engine/events/in_game_trades.asm.
+ *
+ * The routine merely pushes HL and BC, calls CopyData, and pops them back, so
+ * HL and BC are preserved while DE is left advanced past the destination (since
+ * CopyData itself mutates HL/DE/BC). */
+__attribute__((noinline, used)) void
+port_in_game_trade_copy_data(struct cpu_register_state *state, port_u8 *memory)
+{
+	port_u8 saved_h = state->h;
+	port_u8 saved_l = state->l;
+	port_u8 saved_b = state->b;
+	port_u8 saved_c = state->c;
+
+	port_copy_data(state, memory);
+
+	state->h = saved_h;
+	state->l = saved_l;
+	state->b = saved_b;
+	state->c = saved_c;
 }

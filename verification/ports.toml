@@ -5762,3 +5762,183 @@ status = "proven"
 observables = ["A", "F.Z", "F.N", "F.H", "F.C", "C", "DE", "HL"]
 proof_domain = "all 16,777,216 pairs of 3-byte values held in wPlayerMoney and hMoney; the tail delegates the byte-wise comparison to StringCmp, whose port is proven, and the register setup (DE=wPlayerMoney, HL=hMoney, C=3) is constant"
 decoder = "generic Z80 encodings verified; the shared CP (HL) half-carry correction is applied at StringCmp+1 exactly as in the StringCmp proof"
+
+[[function]]
+assembly_symbol = "SetPal_BattleBlack"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_set_pal_battle_black"
+c_source = "verification/ports/palette_packets.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 7-byte linked body and linked PalPacket_Black / BlkPacket_Battle addresses verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "SetPal_TownMap"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_set_pal_town_map"
+c_source = "verification/ports/palette_packets.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 7-byte linked body and linked PalPacket_TownMap / BlkPacket_WholeScreen addresses verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "SetPal_PartyMenu"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_set_pal_party_menu"
+c_source = "verification/ports/palette_packets.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 7-byte linked body and linked PalPacket_PartyMenu / wPartyMenuBlkPacket addresses verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "SetPal_Slots"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_set_pal_slots"
+c_source = "verification/ports/palette_packets.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 7-byte linked body and linked PalPacket_Slots / BlkPacket_Slots addresses verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "SetPal_TitleScreen"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_set_pal_title_screen"
+c_source = "verification/ports/palette_packets.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 7-byte linked body and linked PalPacket_Titlescreen / BlkPacket_Titlescreen addresses verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "SetPal_Generic"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_set_pal_generic"
+c_source = "verification/ports/palette_packets.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 7-byte linked body and linked PalPacket_Generic / BlkPacket_WholeScreen addresses verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "SetPal_NidorinoIntro"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_set_pal_nidorino_intro"
+c_source = "verification/ports/palette_packets.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 7-byte linked body and linked PalPacket_NidorinoIntro / BlkPacket_NidorinoIntro addresses verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "SetPal_GameFreakIntro"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_set_pal_game_freak_intro"
+c_source = "verification/ports/palette_packets.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "wDefaultPaletteCommand"]
+proof_domain = "all general-register and canonical-flag inputs and all values of the wDefaultPaletteCommand destination byte"
+decoder = "exact 12-byte linked body verified; the SM83 absolute store to wDefaultPaletteCommand is modeled explicitly"
+
+[[function]]
+assembly_symbol = "PrintPlayerMon1Text"
+assembly_source = "engine/battle/common_text.asm"
+c_symbol = "port_print_player_mon1_text"
+c_source = "verification/ports/text_pointer_loads.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 4-byte linked body and linked PlayerMon1Text address verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "PrintComeBackText"
+assembly_source = "engine/battle/common_text.asm"
+c_symbol = "port_print_come_back_text"
+c_source = "verification/ports/text_pointer_loads.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact 4-byte linked body and linked ComeBackText address verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "LoadPresentsGraphic"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_load_presents_graphic"
+c_source = "verification/ports/text_pointer_loads.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all general-register and canonical-flag inputs"
+decoder = "exact single-byte RET verified with generic Z80 semantics"
+
+[[function]]
+assembly_symbol = "SafariZoneGameStillGoing"
+assembly_source = "engine/events/hidden_events/safari_game.asm"
+c_symbol = "port_safari_zone_game_still_going"
+c_source = "verification/ports/safari_zone.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "wSafariZoneGameOver"]
+proof_domain = "all general-register and canonical-flag inputs and all values of the wSafariZoneGameOver destination byte"
+decoder = "exact 5-byte linked body verified; the SM83 absolute store to wSafariZoneGameOver is modeled explicitly"
+
+[[function]]
+assembly_symbol = "InGameTrade_CopyData"
+assembly_source = "engine/events/in_game_trades.asm"
+c_symbol = "port_in_game_trade_copy_data"
+c_source = "verification/ports/in_game_trade.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all A/F inputs, every symbolic source-buffer contents, and the fixed source/destination/length held in HL/DE/BC; the delegated CopyData loop is proven independently and the push/pop of HL and BC is modeled explicitly"
+decoder = "exact 8-byte linked body checked; the cross-bank `call CopyData` is inlined as a real-memory copy across a symbolic source/destination buffer, proving the bytes are transferred and HL/BC are preserved"
+
+[[function]]
+assembly_symbol = "SaveScreenTilesToBuffer2"
+assembly_source = "home/tilemap.asm"
+c_symbol = "port_save_screen_tiles_to_buffer2"
+c_source = "verification/ports/tilemap_buffer.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all A/F inputs and every symbolic 360-byte (SCREEN_AREA) source buffer; HL, DE and BC are fixed to the tile-map, wTileMapBackup2 and SCREEN_AREA constants and are left mutated by the delegated CopyData loop, which is proven independently"
+decoder = "exact 13-byte linked body checked; the cross-bank `call CopyData` is inlined as a real-memory copy across a symbolic source/destination buffer, proving the bytes are transferred"
+
+[[function]]
+assembly_symbol = "LoadScreenTilesFromBuffer1"
+assembly_source = "home/tilemap.asm"
+c_symbol = "port_load_screen_tiles_from_buffer1"
+c_source = "verification/ports/tilemap_buffer.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "hAutoBGTransferEnabled"]
+proof_domain = "all A/F inputs and every symbolic 360-byte source buffer; hAutoBGTransferEnabled is written to 0 then 1, and HL/DE/BC are fixed to wTileMapBackup, the tile map and SCREEN_AREA and left mutated by the delegated CopyData loop (proven independently)"
+decoder = "exact 20-byte linked body checked; the `ldh` stores to hAutoBGTransferEnabled and the `call CopyData` are modeled explicitly as real-memory writes/copy, proving the buffer transfer and the BG-transfer flag toggle"
+
+[[function]]
+assembly_symbol = "LoadScreenTilesFromBuffer2DisableBGTransfer"
+assembly_source = "home/tilemap.asm"
+c_symbol = "port_load_screen_tiles_from_buffer2_disable_bg_transfer"
+c_source = "verification/ports/tilemap_buffer.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "hAutoBGTransferEnabled"]
+proof_domain = "all A/F inputs and every symbolic 360-byte source buffer; hAutoBGTransferEnabled is written to 0 and HL/DE/BC are fixed to wTileMapBackup2, the tile map and SCREEN_AREA and left mutated by the delegated CopyData loop (proven independently)"
+decoder = "exact 16-byte linked body checked; the `ldh` store to hAutoBGTransferEnabled and the `call CopyData` are modeled explicitly as real-memory writes/copy"
+
+[[function]]
+assembly_symbol = "LoadScreenTilesFromBuffer2"
+assembly_source = "home/tilemap.asm"
+c_symbol = "port_load_screen_tiles_from_buffer2"
+c_source = "verification/ports/tilemap_buffer.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L", "hAutoBGTransferEnabled"]
+proof_domain = "all A/F inputs and every symbolic 360-byte source buffer; it calls LoadScreenTilesFromBuffer2DisableBGTransfer (proven) then writes hAutoBGTransferEnabled to 1"
+decoder = "exact 8-byte linked body checked; the `call`, `ldh` store to hAutoBGTransferEnabled and the delegated CopyData copy are all modeled explicitly"
+
+[[function]]
+assembly_symbol = "SaveScreenTilesToBuffer1"
+assembly_source = "home/tilemap.asm"
+c_symbol = "port_save_screen_tiles_to_buffer1"
+c_source = "verification/ports/tilemap_buffer.c"
+status = "proven"
+observables = ["A", "F.Z", "F.N", "F.H", "F.C", "B", "C", "D", "E", "H", "L"]
+proof_domain = "all A/F inputs and every symbolic 360-byte (SCREEN_AREA) source buffer; HL, DE and BC are fixed to the tile-map, wTileMapBackup and SCREEN_AREA constants and are left mutated by the delegated CopyData loop (proven independently); the routine jumps rather than calls CopyData so CopyData returns to the caller"
+decoder = "exact 11-byte linked body checked; the `jp CopyData` is inlined as a real-memory copy across a symbolic source/destination buffer, proving the bytes are transferred"
