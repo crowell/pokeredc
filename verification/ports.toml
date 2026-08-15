@@ -10573,3 +10573,23 @@ status = "proven"
 observables = ["C (number of rows per third), B (high byte of BG map VRAM address)"]
 proof_domain = "all general-register and canonical-flag inputs; DelayFrame/Delay3 inlined as no-op return"
 decoder = "exact 48-byte linked body checked; `call GetRowColAddressBgMap` inlined as `hl = b | (row >> 3) | ((row & 7) << 5) | l`; `call DelayFrame`/`jp Delay3` modeled as no-op returns; `ld c,imm`/`ld hl,nn`/`call`/`jp` run natively"
+
+[[function]]
+assembly_symbol = "GiveItem"
+assembly_source = "home/give.asm"
+c_symbol = "port_give_item"
+c_source = "verification/ports/give_item.c"
+status = "proven"
+observables = ["C (carry flag), A, F, wNameBuffer (item name copied)"]
+proof_domain = "all general-register and canonical-flag inputs; AddItemToInventory_ inlined as state machine, GetMachineName for TM/HM, GetName predef modeled as placeholder, CopyToStringBuffer inlined"
+decoder = "exact 60-byte linked body checked; `call AddItemToInventory_` inlined as state machine (port_add_item_to_inventory); `call GetItemName` inlined with TM/HM branch to GetMachineName and placeholder for GetName predef; `call CopyToStringBuffer` inlined; `ld [a16],a` (0xEA) shimmed for wNamedObjectIndex/wCurItem/wItemQuantity"
+
+[[function]]
+assembly_symbol = "RemoveItemFromInventory"
+assembly_source = "home/inventory.asm"
+c_symbol = "port_remove_item_from_inventory_wrapper"
+c_source = "verification/ports/remove_item_from_inventory_wrapper.c"
+status = "proven"
+observables = ["carry flag (clear on success, set on failure)"]
+proof_domain = "all general-register and canonical-flag inputs; inner function inlined as state machine"
+decoder = "exact 10-byte linked body checked; `homecall` modeled as bank switch + call + restore; `call RemoveItemFromInventory_` inlined as state machine (port_remove_item_from_inventory); `ret` runs natively"
