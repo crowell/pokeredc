@@ -12,11 +12,11 @@ ROM = ROOT / "pokered.gbc"
 SYMBOLS = ROOT / "pokered.sym"
 
 EXPECTED_BODY = bytes.fromhex(
-    "e5d5c5f0b8f53e0de0b8ea0020cda57df1e0b8ea"
+    "f0b8f5fa94cffe013e0120023e0fe0b8ea0020218fcf2a666ffa91cffec43013"
 )
 
 
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_divide_exact_linked_body() -> None:
-    location = symbol_location(SYMBOLS, "Divide")
+def test_get_item_price_exact_linked_body() -> None:
+    location = symbol_location(SYMBOLS, "GetItemPrice")
     assert linked_bytes(ROM, location, len(EXPECTED_BODY)) == EXPECTED_BODY
