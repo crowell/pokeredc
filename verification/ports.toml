@@ -10551,3 +10551,15 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; WaitForSoundToFinish inlined as no-op return"
 decoder = "exact 21-byte linked body checked; `call WaitForSoundToFinish` modeled as no-op return; `xor a`/`ld c,a`/`ld d,a`/`ld [wLastMusicSoundID],a`/`jr` run natively"
+
+[[function]]
+assembly_symbol = "CopyVideoDataDouble"
+assembly_source = "home/copy2.asm"
+c_symbol = "port_copy_video_data_double"
+c_source = "verification/ports/copy_video_data_double.c"
+status = "proven"
+observables = [
+    "hVBlankCopyDoubleSource, hVBlankCopyDoubleDest, hVBlankCopyDoubleSize (VBlank copy registers set up)",
+]
+proof_domain = "all general-register and canonical-flag inputs; DelayFrame inlined as no-op return; source bank, source address, dest address, tile count fixed concrete per test"
+decoder = "exact 67-byte linked body checked; `ldh [a8],a`/`ldh a,[a8]` (0xE0/0xF0) on I/O registers modeled as direct memory access; `call DelayFrame` modeled as no-op return; `ld a,[a16]`/`ld [a16],a` (0xFA/0xEA) shimmed; `ldh [a8],a`/`ldh a,[a8]`/`cp imm`/`jr`/`sub a,imm`/`jr` run natively"
