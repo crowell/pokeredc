@@ -9106,7 +9106,7 @@ decoder = "exact 52-byte body checked; stack saves/restores, big-endian base poi
 assembly_symbol = "_Multiply"
 assembly_source = "engine/math/multiply_divide.asm"
 c_symbol = "port_multiply"
-c_source = "verification/ports/multiply.c"
+c_source = "verification/ports/multiply_divide.c"
 status = "proven"
 observables = [
     "all registers and flags",
@@ -9148,7 +9148,7 @@ decoder = "exact 23-byte body checked; carry clear, SBC/DAA semantics, reverse p
 assembly_symbol = "_Divide"
 assembly_source = "engine/math/multiply_divide.asm"
 c_symbol = "port_divide"
-c_source = "verification/ports/divide.c"
+c_source = "verification/ports/multiply_divide.c"
 status = "proven"
 observables = [
     "all registers and flags",
