@@ -10563,3 +10563,13 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; DelayFrame inlined as no-op return; source bank, source address, dest address, tile count fixed concrete per test"
 decoder = "exact 67-byte linked body checked; `ldh [a8],a`/`ldh a,[a8]` (0xE0/0xF0) on I/O registers modeled as direct memory access; `call DelayFrame` modeled as no-op return; `ld a,[a16]`/`ld [a16],a` (0xFA/0xEA) shimmed; `ldh [a8],a`/`ldh a,[a8]`/`cp imm`/`jr`/`sub a,imm`/`jr` run natively"
+
+[[function]]
+assembly_symbol = "CopyScreenTileBufferToVRAM"
+assembly_source = "home/copy2.asm"
+c_symbol = "port_copy_screen_tile_buffer_to_vram"
+c_source = "verification/ports/copy_screen_tile_buffer_to_vram.c"
+status = "proven"
+observables = ["C (number of rows per third), B (high byte of BG map VRAM address)"]
+proof_domain = "all general-register and canonical-flag inputs; DelayFrame/Delay3 inlined as no-op return"
+decoder = "exact 48-byte linked body checked; `call GetRowColAddressBgMap` inlined as `hl = b | (row >> 3) | ((row & 7) << 5) | l`; `call DelayFrame`/`jp Delay3` modeled as no-op returns; `ld c,imm`/`ld hl,nn`/`call`/`jp` run natively"
