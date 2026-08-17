@@ -9106,7 +9106,7 @@ decoder = "exact 52-byte body checked; stack saves/restores, big-endian base poi
 assembly_symbol = "_Multiply"
 assembly_source = "engine/math/multiply_divide.asm"
 c_symbol = "port_multiply"
-c_source = "verification/ports/multiply_divide.c"
+c_source = "verification/ports/multiply.c"
 status = "proven"
 observables = [
     "all registers and flags",
@@ -9148,7 +9148,7 @@ decoder = "exact 23-byte body checked; carry clear, SBC/DAA semantics, reverse p
 assembly_symbol = "_Divide"
 assembly_source = "engine/math/multiply_divide.asm"
 c_symbol = "port_divide"
-c_source = "verification/ports/multiply_divide.c"
+c_source = "verification/ports/divide.c"
 status = "proven"
 observables = [
     "all registers and flags",
@@ -10575,3 +10575,15 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; inner function inlined as state machine"
 decoder = "exact 10-byte linked body checked; `homecall` modeled as bank switch + call + restore; `call RemoveItemFromInventory_` inlined as state machine (port_remove_item_from_inventory); `ret` runs natively"
+
+[[function]]
+assembly_symbol = "IsKeyItem_"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_is_key_item_"
+c_source = "verification/ports/is_key_item.c"
+status = "proven"
+observables = [
+    "wIsKeyItem",
+]
+proof_domain = "all 256 initial [wCurItem] values and all 15-byte KeyItemFlags tables; models call CopyData (bc=15), predef FlagActionPredef (FLAG_TEST on bit (item-1)), and call IsItemHM"
+decoder = "exact linked body checked; SM83 `cp`/`xor` flags shimmed; `call CopyData`, `predef FlagActionPredef`, and `call IsItemHM` modeled as state-preserving SimProcedures"

@@ -3,6 +3,7 @@
 
 typedef unsigned char port_u8;
 typedef unsigned short port_u16;
+typedef unsigned int port_u32;
 
 enum port_flag {
 	PORT_FLAG_C = 0x10,
@@ -2501,6 +2502,7 @@ struct audio_note_state {
 
 _Static_assert(sizeof(port_u8) == 1, "port_u8 must be 8 bits");
 _Static_assert(sizeof(port_u16) == 2, "port_u16 must be 16 bits");
+_Static_assert(sizeof(port_u32) == 4, "port_u32 must be 32 bits");
 _Static_assert(sizeof(struct string_cmp_state) == 8, "unexpected ABI padding");
 _Static_assert(sizeof(struct accumulator_state) == 2, "unexpected ABI padding");
 _Static_assert(sizeof(struct binary_accumulator_state) == 4, "unexpected ABI padding");
