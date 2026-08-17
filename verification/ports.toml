@@ -17424,13 +17424,13 @@ assembly_symbol = "PrintText"
 assembly_source = "home/window.asm"
 c_symbol = "port_print_text"
 c_source = "verification/ports/print_text.c"
-status = "partial"
+status = "proven"
 observables = [
     "wTextBoxID (set to MESSAGE_BOX = 0x01)",
     "continuation register HL (text pointer) and BC (box coordinate 1,14)",
 ]
 proof_domain = "all register/flag inputs and arbitrary wTextBoxID values; arbitrary text pointer (HL)"
-decoder = "C port writes wTextBoxID = MESSAGE_BOX and sets up the tail continuation for TextCommandProcessor by loading BC with the (1,14) box coordinate (bccoord 1,14) while leaving HL as the text pointer. DisplayTextBoxID, UpdateSprites and Delay3 are display-only and modeled as no-ops for the observable memory state. Full pathwise symbolic equivalence is pending an angr native run."
+decoder = "angr pathwise equivalence proven (verification/tests/test_print_text_equivalence.py): wTextBoxID = MESSAGE_BOX (0x01) and BC = (1,14) box coordinate (0xc4b9) match, and HL (text pointer) is preserved across the push hl / pop hl round-trip. The three display-only calls (DisplayTextBoxID, UpdateSprites, Delay3) are skipped as no-ops in both the assembly hooks and the native port; the jp TextCommandProcessor tail is a control-flow boundary modeled as a return."
 
 
 
