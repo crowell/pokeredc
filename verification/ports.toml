@@ -17459,14 +17459,14 @@ assembly_symbol = "PrintButItFailedText_"
 assembly_source = "engine/battle/effects.asm"
 c_symbol = "port_print_but_it_failed_text_"
 c_source = "verification/ports/print_but_it_failed_text_.c"
-status = "partial"
+status = "proven"
 observables = [
     "wTextBoxID (via the PrintText continuation, set to MESSAGE_BOX = 0x01)",
     "register HL (loaded with the ButItFailedText pointer 0x7b59)",
     "continuation state (text pointer + box coordinate handed to the renderer)",
 ]
 proof_domain = "all register/flag inputs and arbitrary memory contents"
-decoder = "C port loads HL with the absolute address of ButItFailedText (0x7b59) and delegates to port_print_text, which writes wTextBoxID = MESSAGE_BOX and hands the pointer to the text renderer (the jp PrintText tail). Full pathwise symbolic equivalence is pending an angr native run."
+decoder = "angr pathwise equivalence proven (verification/tests/test_print_but_it_failed_text__equivalence.py): the routine loads HL with the ButItFailedText pointer (0x7b59) and delegates to PrintText, so wTextBoxID = MESSAGE_BOX (0x01), BC = (1,14) box coordinate (0xc4b9), and HL = 0x7b59 all match. The jp PrintText tail is modeled by an inlined PrintText effect (wTextBoxID/BC write, HL preserved) in both the assembly hook and the proven port_print_text."
 
 
 
