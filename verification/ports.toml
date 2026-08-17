@@ -16,6 +16,7 @@ decoder = "exact 9-byte body and generic Z80 encodings verified; explicit SM83 C
 
 
 
+
 [[function]]
 assembly_symbol = "Sub5ClampTo0"
 assembly_source = "engine/items/itemfinder.asm"
@@ -27,6 +28,7 @@ observables = [
 ]
 proof_domain = "all 256 initial A values"
 decoder = "generic Z80 instruction encodings and relevant semantics verified"
+
 
 
 
@@ -43,6 +45,7 @@ observables = [
 ]
 proof_domain = "all 65,536 initial A/B pairs"
 decoder = "generic Z80 encodings verified; SUB B half-carry shim required"
+
 
 
 
@@ -68,6 +71,7 @@ decoder = "single generic-Z80-compatible RET"
 
 
 
+
 [[function]]
 assembly_symbol = "IsItemHM"
 assembly_source = "home/names.asm"
@@ -79,6 +83,7 @@ observables = [
 ]
 proof_domain = "all 256 initial A values"
 decoder = "generic Z80 encodings verified; final CP immediate half-carry shim required"
+
 
 
 
@@ -106,6 +111,7 @@ decoder = "machine bytes verified; both SM83 EA absolute stores shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "WaitLoop_15Iterations"
 assembly_source = "home/serial.asm"
@@ -123,6 +129,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "all generic-Z80 instruction encodings and relevant semantics verified"
+
 
 
 
@@ -146,6 +153,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and overwritten-memory inputs"
 decoder = "machine bytes verified; both SM83 EA absolute stores shimmed"
+
 
 
 
@@ -174,6 +182,7 @@ decoder = "machine bytes verified; all three SM83 E0 high-memory stores shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "IsUnknownCounterZero"
 assembly_source = "home/serial.asm"
@@ -193,6 +202,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and counter-byte inputs"
 decoder = "machine bytes verified; SM83 2A post-increment load shimmed"
+
 
 
 
@@ -220,6 +230,7 @@ decoder = "machine bytes verified; DEC A flags and both SM83 EA stores shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "InitYesNoTextBoxParameters"
 assembly_source = "home/yes_no.asm"
@@ -238,6 +249,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and overwritten-memory inputs"
 decoder = "machine bytes verified; SM83 EA absolute store shimmed"
+
 
 
 
@@ -265,6 +277,7 @@ decoder = "machine bytes verified; SM83 22 post-increment store and DEC A flags 
 
 
 
+
 [[function]]
 assembly_symbol = "ResetUsingStrengthOutOfBattleBit"
 assembly_source = "home/overworld.asm"
@@ -287,6 +300,7 @@ decoder = "all generic-Z80 instruction encodings and semantics verified"
 
 
 
+
 [[function]]
 assembly_symbol = "GetPlayerTeleportAnimFrameDelay"
 assembly_source = "engine/overworld/player_animations.asm"
@@ -305,6 +319,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and wOnSGB byte inputs"
 decoder = "machine bytes verified; SM83 FA absolute load and both INC A operations shimmed"
+
 
 
 
@@ -334,6 +349,7 @@ decoder = "machine bytes verified; both SM83 FA loads and EA stores shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "IgnoreInputForHalfSecond"
 assembly_source = "home/overworld.asm"
@@ -353,6 +369,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and both global-byte inputs"
 decoder = "machine bytes verified; SM83 EA absolute store shimmed"
+
 
 
 
@@ -380,6 +397,7 @@ decoder = "machine bytes verified; both SM83 EA absolute stores shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "EmptyFunc3"
 assembly_source = "engine/gfx/palettes.asm"
@@ -397,6 +415,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical flag inputs"
 decoder = "single generic-Z80-compatible RET"
+
 
 
 
@@ -422,6 +441,7 @@ decoder = "single generic-Z80-compatible RET"
 
 
 
+
 [[function]]
 assembly_symbol = "GenericAI"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -439,6 +459,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical flag inputs"
 decoder = "both generic-Z80-compatible instruction encodings and semantics verified"
+
 
 
 
@@ -461,6 +482,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and wAICount byte inputs"
 decoder = "machine bytes verified; DEC [HL] flags shimmed"
+
 
 
 
@@ -488,6 +510,7 @@ decoder = "machine bytes verified; both SM83 EA absolute stores shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "GoodCheckSum"
 assembly_source = "engine/menus/save.asm"
@@ -507,6 +530,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and mapper-register byte inputs"
 decoder = "machine bytes verified; both SM83 EA absolute stores shimmed"
+
 
 
 
@@ -531,6 +555,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and three global-byte inputs"
 decoder = "machine bytes verified; three SM83 EA stores and INC A shimmed"
+
 
 
 
@@ -560,6 +585,7 @@ decoder = "machine bytes verified; both SM83 FA absolute loads shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "ClearHyperBeam"
 assembly_source = "engine/battle/effects.asm"
@@ -580,6 +606,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, turn, and both battle-status byte inputs"
 decoder = "machine bytes verified; SM83 F0 high-memory load shimmed"
+
 
 
 
@@ -608,6 +635,7 @@ decoder = "machine bytes verified; SM83 F0 high-memory load shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "AnyPartyAlive"
 assembly_source = "engine/battle/core.asm"
@@ -627,6 +655,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and twelve party-HP byte inputs for every legal party count 1 through 6"
 decoder = "machine bytes verified; SM83 FA load and DEC E flags shimmed"
+
 
 
 
@@ -654,6 +683,7 @@ decoder = "machine bytes verified; SM83 FA load and DEC B flags shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "GetBattleTransitionID_WildOrTrainer"
 assembly_source = "engine/battle/battle_transitions.asm"
@@ -672,6 +702,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and 256 opponent-ID inputs"
 decoder = "machine bytes verified; SM83 FA load and CP immediate flags shimmed"
+
 
 
 
@@ -701,6 +732,7 @@ decoder = "machine bytes verified; SM83 2A and FA loads, SUB E flags, and both E
 
 
 
+
 [[function]]
 assembly_symbol = "GetBattleTransitionID_IsDungeonMap"
 assembly_source = "engine/battle/battle_transitions.asm"
@@ -719,6 +751,7 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, and 256 map-ID inputs"
 decoder = "machine and table bytes verified; SM83 FA and 2A loads plus CP immediate/register flags shimmed"
+
 
 
 
@@ -747,6 +780,7 @@ decoder = "machine bytes verified; all three SM83 E0 high-memory stores shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "UpdateHPBar_CompareNewHPToOldHP"
 assembly_source = "engine/gfx/hp_bar.asm"
@@ -768,6 +802,7 @@ decoder = "machine bytes verified; both SUB register operations shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "UpdateHPBar_CalcHPDifference"
 assembly_source = "engine/gfx/hp_bar.asm"
@@ -785,6 +820,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, including all 2^32 BC/DE pairs"
 decoder = "machine bytes verified; four SUB and two SBC register operations shimmed"
+
 
 
 
@@ -815,6 +851,7 @@ decoder = "machine bytes verified; SM83 F0/FA/3A/22 plus SRL A and RR B semantic
 
 
 
+
 [[function]]
 assembly_symbol = "HalveAttackDueToBurn"
 assembly_source = "engine/battle/core.asm"
@@ -837,6 +874,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, turn/status bytes, and both 16-bit attack values"
 decoder = "machine bytes verified; SM83 F0/FA/3A/22 plus SRL A and RR B semantics shimmed"
+
 
 
 
@@ -866,6 +904,7 @@ decoder = "entry bytes verified; composed proof uses audited QuarterSpeedDueToPa
 
 
 
+
 [[function]]
 assembly_symbol = "ApplyBurnAndParalysisPenaltiesToEnemy"
 assembly_source = "engine/battle/core.asm"
@@ -887,6 +926,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, statuses, and four 16-bit stat values"
 decoder = "entry bytes verified; composed proof uses audited QuarterSpeedDueToParalysis and HalveAttackDueToBurn instruction hooks"
+
 
 
 
@@ -916,6 +956,7 @@ decoder = "entry bytes verified; composed proof uses audited QuarterSpeedDueToPa
 
 
 
+
 [[function]]
 assembly_symbol = "SlidePlayerHeadLeft"
 assembly_source = "engine/battle/core.asm"
@@ -934,6 +975,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, and all values of the 21 affected OAM bytes"
 decoder = "machine bytes verified; both DEC [HL] operations and DEC C flags shimmed"
+
 
 
 
@@ -961,6 +1003,7 @@ decoder = "machine bytes verified; both SM83 FA loads and EA stores shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "GetSubanimationTransform1"
 assembly_source = "engine/battle/animations.asm"
@@ -979,6 +1022,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, and 256 turn-byte inputs"
 decoder = "machine bytes verified; SM83 F0 high-memory load shimmed"
+
 
 
 
@@ -1005,6 +1049,7 @@ decoder = "machine bytes verified; SM83 F0 high-memory load shimmed"
 
 
 
+
 [[function]]
 assembly_symbol = "IsCryMove"
 assembly_source = "engine/battle/animations.asm"
@@ -1023,6 +1068,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, and 256 animation-ID inputs"
 decoder = "machine bytes verified; SM83 FA load and both CP immediate operations shimmed"
+
 
 
 
@@ -1049,6 +1095,7 @@ decoder = "machine bytes verified; SM83 F0 load plus SUB B and DEC A flags shimm
 
 
 
+
 [[function]]
 assembly_symbol = "GetTileIDList"
 assembly_source = "engine/battle/animations.asm"
@@ -1066,6 +1113,7 @@ observables = [
 ]
 proof_domain = "all registers and flags for every legal tilemap index 0 through 7"
 decoder = "function and table bytes verified; three SM83 2A loads and SWAP A shimmed"
+
 
 
 
@@ -1092,6 +1140,7 @@ decoder = "machine bytes verified; SM83 3A/22 operations and DEC C flags shimmed
 
 
 
+
 [[function]]
 assembly_symbol = "AnimCopyRowRight"
 assembly_source = "engine/battle/animations.asm"
@@ -1110,6 +1159,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, and row-byte values for both caller-supplied counts C=3 and C=7; address-translation-invariant WRAM window"
 decoder = "machine bytes verified; SM83 2A/32 operations and DEC C flags shimmed"
+
 
 
 
@@ -1140,6 +1190,7 @@ decoder = "all 48 machine bytes verified; SM83 FA/EA/E0 operations and both CP i
 
 
 
+
 [[function]]
 assembly_symbol = "FallingObjects_UpdateMovementByte"
 assembly_source = "engine/battle/animations.asm"
@@ -1158,6 +1209,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, and all 256 movement-byte values"
 decoder = "all 20 machine bytes verified; SM83 FA/EA plus INC A and CP immediate semantics shimmed"
+
 
 
 
@@ -1185,6 +1237,7 @@ decoder = "all 23 machine bytes verified; SM83 F0/FA/EA operations and both CP i
 
 
 
+
 [[function]]
 assembly_symbol = "FallingObjects_InitXCoords"
 assembly_source = "engine/battle/animations.asm"
@@ -1204,6 +1257,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, and destination bytes for both legal caller counts 3 and 20"
 decoder = "function and 20-byte table verified; SM83 FA/22 operations and DEC C flags shimmed"
+
 
 
 
@@ -1231,6 +1285,7 @@ decoder = "all 50 function bytes and the complete 128-byte reachable ROM lookup 
 
 
 
+
 [[function]]
 assembly_symbol = "AdjustOAMBlockXPos2"
 assembly_source = "engine/battle/animations.asm"
@@ -1250,6 +1305,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, adjustment bytes, and OAM bytes for counts 1 through 4 at address-translation-invariant legal OAM pointers"
 decoder = "all 23 machine bytes verified; SM83 FA/22, CP immediate, and DEC C semantics shimmed"
+
 
 
 
@@ -1277,6 +1333,7 @@ decoder = "all 23 machine bytes verified; SM83 FA/22, CP immediate, and DEC C se
 
 
 
+
 [[function]]
 assembly_symbol = "AdjustOAMBlockXPos"
 assembly_source = "engine/battle/animations.asm"
@@ -1296,6 +1353,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, adjustment bytes, and OAM bytes for the caller-supplied count 4 and legal DE OAM pointer"
 decoder = "all 25 machine bytes verified; proof includes the DE-to-HL entry prefix and shared X-adjustment body"
+
 
 
 
@@ -1323,6 +1381,7 @@ decoder = "all 25 machine bytes verified; proof includes the DE-to-HL entry pref
 
 
 
+
 [[function]]
 assembly_symbol = "BattleAnimWriteOAMEntry"
 assembly_source = "engine/battle/animations.asm"
@@ -1346,6 +1405,7 @@ decoder = "all 14 machine bytes verified; SM83 FA load and all four 22 post-incr
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_IsCry"
 assembly_source = "audio/engine_1.asm"
@@ -1364,6 +1424,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, and all 256 channel-5 sound IDs"
 decoder = "all 20 machine bytes verified; SM83 FA load and both CP immediate operations shimmed"
+
 
 
 
@@ -1392,6 +1453,7 @@ decoder = "all 49 function bytes and both eight-byte mask tables verified; SM83 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_MultiplyAdd"
 assembly_source = "audio/engine_1.asm"
@@ -1409,6 +1471,7 @@ observables = [
 ]
 proof_domain = "all registers and flags; every multiplier A from 0 through 255 is executed separately with all other registers symbolic"
 decoder = "all 17 machine bytes verified; SRL A, SLA E, and RL D semantics shimmed"
+
 
 
 
@@ -1434,6 +1497,7 @@ decoder = "assembly body is byte-identical to Audio1; compiled 76-byte native bo
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_GetRegisterPointer"
 assembly_source = "audio/engine_1.asm"
@@ -1455,6 +1519,7 @@ decoder = "all 15 machine bytes and the eight-byte hardware-base table verified;
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_CalculateFrequency"
 assembly_source = "audio/engine_1.asm"
@@ -1472,6 +1537,7 @@ observables = [
 ]
 proof_domain = "all registers and flags for every legal combination of 12 note indices and eight encoded octaves"
 decoder = "all 30 machine bytes and the complete 24-byte pitch table verified; CP, SRA D, RR E, INC A, and ADD D semantics shimmed"
+
 
 
 
@@ -1499,6 +1565,7 @@ decoder = "all 24 caller bytes verified; real GetRegisterPointer callee executes
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_ApplyDutyCyclePattern"
 assembly_source = "audio/engine_2.asm"
@@ -1522,6 +1589,7 @@ decoder = "all 24 caller bytes verified; real GetRegisterPointer callee executes
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_ApplyDutyCyclePattern"
 assembly_source = "audio/engine_3.asm"
@@ -1541,6 +1609,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, software duty-pattern bytes, and hardware duty-register bytes for every legal channel 0 through 7"
 decoder = "all 24 caller bytes verified; real GetRegisterPointer callee executes with its two audited ADD-register shims"
+
 
 
 
@@ -1569,6 +1638,7 @@ decoder = "all 34 caller bytes verified; both channel CP operations shimmed and 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_ApplyDutyCycleAndSoundLength"
 assembly_source = "audio/engine_2.asm"
@@ -1589,6 +1659,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, note-delay bytes, duty-cycle bytes, and hardware duty-register bytes for every legal channel 0 through 7"
 decoder = "all 34 caller bytes verified; both channel CP operations shimmed and the real GetRegisterPointer callee executes with its two audited ADD-register shims"
+
 
 
 
@@ -1617,6 +1688,7 @@ decoder = "all 34 caller bytes verified; both channel CP operations shimmed and 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_ResetCryModifiers"
 assembly_source = "audio/engine_2.asm"
@@ -1641,6 +1713,7 @@ decoder = "all 22 machine bytes verified; SM83 CP, FA load, BIT 7, and both EA s
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_SetSfxTempo"
 assembly_source = "audio/engine_1.asm"
@@ -1661,6 +1734,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, channel-5 sound IDs, tempo modifiers, and initial SFX tempo bytes"
 decoder = "all 34 caller bytes verified; real proven IsCry callee executes with audited FA and CP shims, and caller ADD, INC, FA, and EA operations are shimmed"
+
 
 
 
@@ -1690,6 +1764,7 @@ decoder = "all 39 caller bytes verified; real proven IsCry and IsBattleSFX calle
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_SetSfxTempo"
 assembly_source = "audio/engine_3.asm"
@@ -1714,6 +1789,7 @@ decoder = "all 34 caller bytes verified; real proven IsCry callee executes with 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_ApplyFrequencyModifier"
 assembly_source = "audio/engine_1.asm"
@@ -1734,6 +1810,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, sound IDs, modifiers, and hardware bytes for each of the four legal high-frequency register pointers"
 decoder = "all 18 caller bytes verified; real proven IsCry callee executes with audited shims, and caller FA, ADD E, and INC D operations are shimmed"
+
 
 
 
@@ -1763,6 +1840,7 @@ decoder = "all 23 caller bytes verified; real proven IsCry and IsBattleSFX calle
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_ApplyFrequencyModifier"
 assembly_source = "audio/engine_3.asm"
@@ -1783,6 +1861,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, sound IDs, modifiers, and hardware bytes for each of the four legal high-frequency register pointers"
 decoder = "all 18 caller bytes verified; real proven IsCry callee executes with audited shims, and caller FA, ADD E, and INC D operations are shimmed"
+
 
 
 
@@ -1814,6 +1893,7 @@ decoder = "all 72 caller bytes and 114 wave-pointer/sample bytes verified; real 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_ApplyWavePatternAndFrequency"
 assembly_source = "audio/engine_2.asm"
@@ -1837,6 +1917,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, sound IDs, modifiers, hardware/wave bytes, and channels 0 through 7; all nine defined wave-instrument indices on channels 3 and 7"
 decoder = "all 77 caller bytes and 114 wave-pointer/sample bytes verified; real GetRegisterPointer, ApplyFrequencyModifier, IsCry, and IsBattleSFX bodies execute with audited CP, LDH, HLI-store, DEC, ADD, FA, and INC shims"
+
 
 
 
@@ -1868,6 +1949,7 @@ decoder = "all 72 caller bytes and 114 wave-pointer/sample bytes verified; real 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_GoBackOneCommandIfCry"
 assembly_source = "audio/engine_1.asm"
@@ -1887,6 +1969,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, sound IDs, and command-pointer bytes for every channel 0 through 7"
 decoder = "all 30 caller bytes verified; real proven IsCry callee executes with audited FA/CP shims, and SLA E, RL D, SUB 1, and SBC 0 are shimmed"
+
 
 
 
@@ -1914,6 +1997,7 @@ decoder = "all 30 caller bytes verified; real proven IsCry callee executes with 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_GoBackOneCommandIfCry"
 assembly_source = "audio/engine_3.asm"
@@ -1933,6 +2017,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, sound IDs, and command-pointer bytes for every channel 0 through 7"
 decoder = "all 30 caller bytes verified; real proven IsCry callee executes with audited FA/CP shims, and SLA E, RL D, SUB 1, and SBC 0 are shimmed"
+
 
 
 
@@ -1960,6 +2045,7 @@ decoder = "all 19 machine bytes verified; only the ROM read is abstracted as an 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_GetNextMusicByte"
 assembly_source = "audio/engine_2.asm"
@@ -1983,6 +2069,7 @@ decoder = "all 19 machine bytes verified; only the ROM read is abstracted as an 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_GetNextMusicByte"
 assembly_source = "audio/engine_3.asm"
@@ -2002,6 +2089,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, command bytes, and channel pointers in the banked-ROM window $4000-$7fff for every channel 0 through 7"
 decoder = "all 19 machine bytes verified; only the ROM read is abstracted as an arbitrary byte, while ADD A, ADD HL/DE, HLI/HLD loads, pointer increment, and WRAM writeback execute with audited shims where needed"
+
 
 
 
@@ -2030,6 +2118,7 @@ decoder = "all 150 machine bytes verified; real GetRegisterPointer executes with
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_ApplyPitchSlide"
 assembly_source = "audio/engine_2.asm"
@@ -2050,6 +2139,7 @@ observables = [
 ]
 proof_domain = "all legal B=0 channel calls, registers, flags, pitch-slide state, and hardware bytes for both directions and every channel 0 through 7"
 decoder = "all 150 machine bytes verified; real GetRegisterPointer executes with audited BIT/RES memory, ADD/ADC/SUB/SBC/CP, 16-bit ADD, and HLI-store shims"
+
 
 
 
@@ -2078,6 +2168,7 @@ decoder = "all 150 machine bytes verified; real GetRegisterPointer executes with
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_InitPitchSlideVars"
 assembly_source = "audio/engine_1.asm"
@@ -2098,6 +2189,7 @@ observables = [
 ]
 proof_domain = "all caller-valid B=0 calls, 11-bit current/target frequencies, nonzero derived divisors, registers, flags, and state bytes for every channel 0 through 7"
 decoder = "all 126 machine bytes verified; setup/tail execute with audited arithmetic and memory shims, and the division loop uses an inductively proved summary exhaustively checked over all 587,520 reachable difference/divisor pairs"
+
 
 
 
@@ -2126,6 +2218,7 @@ decoder = "assembly body is byte-identical to the directly proved Audio1 body; n
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_InitPitchSlideVars"
 assembly_source = "audio/engine_3.asm"
@@ -2146,6 +2239,7 @@ observables = [
 ]
 proof_domain = "all caller-valid B=0 calls, 11-bit current/target frequencies, nonzero derived divisors, registers, flags, and state bytes for every channel 0 through 7"
 decoder = "assembly body is byte-identical to the directly proved Audio1 body; native symbol aliases the directly proved Audio1 C entry; the audited loop summary covers every reachable difference/divisor pair"
+
 
 
 
@@ -2173,6 +2267,7 @@ decoder = "all 15 machine bytes verified; CP, ADD HL/BC, and SET 0,[HL] execute 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_execute_music"
 assembly_source = "audio/engine_2.asm"
@@ -2192,6 +2287,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, command bytes, channel state, and every channel 0 through 7 across matched and fallthrough continuations"
 decoder = "all 15 machine bytes verified; CP, ADD HL/BC, and SET 0,[HL] execute with audited shims, and both sound_ret/octave tail destinations are explicit endpoints"
+
 
 
 
@@ -2219,6 +2315,7 @@ decoder = "all 15 machine bytes verified; CP, ADD HL/BC, and SET 0,[HL] execute 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_octave"
 assembly_source = "audio/engine_1.asm"
@@ -2238,6 +2335,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, command bytes, octave state, and every channel 0 through 7 across matched and fallthrough continuations"
 decoder = "all 19 machine bytes verified; CP and ADD HL/BC use audited shims, and both sound_ret/sfx_note tail destinations are explicit endpoints"
+
 
 
 
@@ -2265,6 +2363,7 @@ decoder = "all 19 machine bytes verified; CP and ADD HL/BC use audited shims, an
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_octave"
 assembly_source = "audio/engine_3.asm"
@@ -2288,6 +2387,7 @@ decoder = "all 19 machine bytes verified; CP and ADD HL/BC use audited shims, an
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_duty_cycle"
 assembly_source = "audio/engine_1.asm"
@@ -2303,6 +2403,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, banked-ROM pointers, fetched bytes, and duty-cycle state across both continuations"
 decoder = "all 21 machine bytes verified; real GetNextMusicByte executes with audited CP, RRCA, and 16-bit ADD shims; sound_ret/tempo tails are explicit"
+
 
 
 
@@ -2326,6 +2427,7 @@ decoder = "all 21 machine bytes verified; real GetNextMusicByte executes with au
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_duty_cycle"
 assembly_source = "audio/engine_3.asm"
@@ -2341,6 +2443,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, banked-ROM pointers, fetched bytes, and duty-cycle state across both continuations"
 decoder = "all 21 machine bytes verified; real GetNextMusicByte executes with audited CP, RRCA, and 16-bit ADD shims; sound_ret/tempo tails are explicit"
+
 
 
 
@@ -2364,6 +2467,7 @@ decoder = "all 13 machine bytes verified; real GetNextMusicByte executes with au
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_stereo_panning"
 assembly_source = "audio/engine_2.asm"
@@ -2379,6 +2483,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels, banked-ROM pointers, fetched bytes, and panning values across both continuations"
 decoder = "all 13 machine bytes verified; real GetNextMusicByte executes with audited CP/EA/pointer shims; sound_ret/unknownmusic0xef tails are explicit"
+
 
 
 
@@ -2402,6 +2507,7 @@ decoder = "all 13 machine bytes verified; real GetNextMusicByte executes with au
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_volume"
 assembly_source = "audio/engine_1.asm"
@@ -2417,6 +2523,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels, banked-ROM pointers, fetched bytes, and hardware-volume values across both continuations"
 decoder = "all 12 machine bytes verified; real GetNextMusicByte executes with audited CP/LDH/pointer shims; sound_ret/execute_music tails are explicit"
+
 
 
 
@@ -2440,6 +2547,7 @@ decoder = "all 12 machine bytes verified; real GetNextMusicByte executes with au
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_volume"
 assembly_source = "audio/engine_3.asm"
@@ -2455,6 +2563,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels, banked-ROM pointers, fetched bytes, and hardware-volume values across both continuations"
 decoder = "all 12 machine bytes verified; real GetNextMusicByte executes with audited CP/LDH/pointer shims; sound_ret/execute_music tails are explicit"
+
 
 
 
@@ -2478,6 +2587,7 @@ decoder = "all 30 machine bytes verified; real GetNextMusicByte executes with au
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_duty_cycle_pattern"
 assembly_source = "audio/engine_2.asm"
@@ -2497,6 +2607,7 @@ decoder = "all 30 machine bytes verified; real GetNextMusicByte executes with au
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_duty_cycle_pattern"
 assembly_source = "audio/engine_3.asm"
@@ -2512,6 +2623,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels, banked-ROM pointers, fetched bytes, and three affected arrays across both continuations"
 decoder = "all 30 machine bytes verified; real GetNextMusicByte executes with audited CP, SET, and 16-bit ADD shims; sound_ret/volume tails are explicit"
+
 
 
 
@@ -2537,6 +2649,7 @@ decoder = "all 30 machine bytes and the complete 24-byte pitch table verified; C
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_CalculateFrequency"
 assembly_source = "audio/engine_3.asm"
@@ -2554,6 +2667,7 @@ observables = [
 ]
 proof_domain = "all registers and flags for every legal combination of 12 note indices and eight encoded octaves"
 decoder = "all 30 machine bytes and the complete 24-byte pitch table verified; CP, SRA D, RR E, INC A, and ADD D semantics shimmed"
+
 
 
 
@@ -2579,6 +2693,7 @@ decoder = "all 15 machine bytes and the eight-byte hardware-base table verified;
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_GetRegisterPointer"
 assembly_source = "audio/engine_3.asm"
@@ -2600,6 +2715,7 @@ decoder = "all 15 machine bytes and the eight-byte hardware-base table verified;
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_MultiplyAdd"
 assembly_source = "audio/engine_3.asm"
@@ -2617,6 +2733,7 @@ observables = [
 ]
 proof_domain = "all registers and flags by composition with the exhaustive Audio1 proof"
 decoder = "assembly body is byte-identical to Audio1; compiled 76-byte native body is byte-identical to the exhaustively proved Audio1 C entry"
+
 
 
 
@@ -2645,6 +2762,7 @@ decoder = "all 49 function bytes and both eight-byte mask tables verified; SM83 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_EnableChannelOutput"
 assembly_source = "audio/engine_3.asm"
@@ -2665,6 +2783,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, hardware/stereo/SFX bytes, and every legal channel index 0 through 7"
 decoder = "all 49 function bytes and both eight-byte mask tables verified; SM83 F0/E0 operations and both CP immediates shimmed"
+
 
 
 
@@ -2692,6 +2811,7 @@ decoder = "all 25 machine bytes verified; both SM83 FA loads and both CP immedia
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_IsCry"
 assembly_source = "audio/engine_2.asm"
@@ -2714,6 +2834,7 @@ decoder = "all 20 machine bytes verified; SM83 FA load and both CP immediate ope
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_IsCry"
 assembly_source = "audio/engine_3.asm"
@@ -2732,6 +2853,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, and all 256 channel-5 sound IDs"
 decoder = "all 20 machine bytes verified; SM83 FA load and both CP immediate operations shimmed"
+
 
 
 
@@ -2759,6 +2881,7 @@ decoder = "function and 20-byte table verified; SM83 FA/22 operations and DEC C 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_tempo"
 assembly_source = "audio/engine_1.asm"
@@ -2775,6 +2898,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid two-byte banked-ROM ranges, fetched bytes, and affected state across music, SFX, and fallthrough paths"
 decoder = "all 64 machine bytes verified; both real GetNextMusicByte calls execute with audited CP, store, and pointer shims; sound_ret/stereo_panning tails are explicit"
+
 
 
 
@@ -2799,6 +2923,7 @@ decoder = "all 64 machine bytes verified; both real GetNextMusicByte calls execu
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_tempo"
 assembly_source = "audio/engine_3.asm"
@@ -2815,6 +2940,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid two-byte banked-ROM ranges, fetched bytes, and affected state across music, SFX, and fallthrough paths"
 decoder = "all 64 machine bytes verified; both real GetNextMusicByte calls execute with audited CP, store, and pointer shims; sound_ret/stereo_panning tails are explicit"
+
 
 
 
@@ -2836,6 +2962,7 @@ decoder = "all 18 machine bytes verified; CP and 16-bit ADD execute with audited
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_toggle_perfect_pitch"
 assembly_source = "audio/engine_2.asm"
@@ -2853,6 +2980,7 @@ decoder = "all 18 machine bytes verified; CP and 16-bit ADD execute with audited
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_toggle_perfect_pitch"
 assembly_source = "audio/engine_3.asm"
@@ -2866,6 +2994,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, command bytes, channel state, and every channel 0 through 7 across matched and fallthrough continuations"
 decoder = "all 18 machine bytes verified; CP and 16-bit ADD execute with audited shims, and sound_ret/vibrato tails are explicit"
+
 
 
 
@@ -2889,6 +3018,7 @@ decoder = "all 56 machine bytes verified; real GetNextMusicByte calls and audite
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_vibrato"
 assembly_source = "audio/engine_2.asm"
@@ -2908,6 +3038,7 @@ decoder = "all 56 machine bytes verified; real GetNextMusicByte calls and audite
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_vibrato"
 assembly_source = "audio/engine_3.asm"
@@ -2923,6 +3054,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid two-byte banked-ROM ranges, fetched parameters, and affected vibrato state across both continuations"
 decoder = "all 56 machine bytes verified; real GetNextMusicByte calls and audited CP, ADD, SRL, ADC, and SM83 SWAP shims execute; sound_ret/pitch_slide tails are explicit"
+
 
 
 
@@ -2947,6 +3079,7 @@ decoder = "all 28 machine bytes verified; real GetNextMusicByte and audited CP, 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_pitch_sweep"
 assembly_source = "audio/engine_2.asm"
@@ -2963,6 +3096,7 @@ observables = [
 ]
 proof_domain = "all registers, flags, channels 0 through 7, command values, flags2 state, caller-valid banked-ROM pointers, fetched bytes, and sweep hardware across all three path domains"
 decoder = "all 28 machine bytes verified; real GetNextMusicByte and audited CP, BIT, ADD, LDH, and pointer shims execute; both distinct note fallthroughs and sound_ret are explicit"
+
 
 
 
@@ -2987,6 +3121,7 @@ decoder = "all 28 machine bytes verified; real GetNextMusicByte and audited CP, 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_pitch_slide"
 assembly_source = "audio/engine_1.asm"
@@ -3002,6 +3137,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid three-byte banked-ROM ranges, fetched parameters, eight legal octaves, 12 legal note indices, and affected slide state across both continuations"
 decoder = "all 56 machine bytes verified; real GetNextMusicByte and CalculateFrequency bodies execute with audited CP, SWAP, SET, shift, arithmetic, table, and pointer shims; duty_cycle/note_length tails are explicit"
+
 
 
 
@@ -3025,6 +3161,7 @@ decoder = "all 56 machine bytes verified; real GetNextMusicByte and CalculateFre
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_pitch_slide"
 assembly_source = "audio/engine_3.asm"
@@ -3040,6 +3177,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid three-byte banked-ROM ranges, fetched parameters, eight legal octaves, 12 legal note indices, and affected slide state across both continuations"
 decoder = "all 56 machine bytes verified; real GetNextMusicByte and CalculateFrequency bodies execute with audited CP, SWAP, SET, shift, arithmetic, table, and pointer shims; duty_cycle/note_length tails are explicit"
+
 
 
 
@@ -3064,6 +3202,7 @@ decoder = "all 63 machine bytes verified; real GetNextMusicByte and audited CP, 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_note_type"
 assembly_source = "audio/engine_2.asm"
@@ -3080,6 +3219,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid banked-ROM pointers, fetched parameters, and affected note-type state across noise, wave, ordinary, and fallthrough paths"
 decoder = "all 63 machine bytes verified; real GetNextMusicByte and audited CP, SLA, ADD, load, store, and pointer shims execute; sound_ret/toggle_perfect_pitch tails are explicit"
+
 
 
 
@@ -3104,6 +3244,7 @@ decoder = "all 63 machine bytes verified; real GetNextMusicByte and audited CP, 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_sound_call"
 assembly_source = "audio/engine_1.asm"
@@ -3120,6 +3261,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid two-byte banked-ROM ranges, target bytes, return-address state, and call flags across both continuations"
 decoder = "all 53 machine bytes verified; both real GetNextMusicByte calls and audited CP, ADD, SET, auto-increment/decrement, stack, and pointer shims execute; sound_ret/sound_loop tails are explicit"
+
 
 
 
@@ -3144,6 +3286,7 @@ decoder = "all 53 machine bytes verified; both real GetNextMusicByte calls and a
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_sound_call"
 assembly_source = "audio/engine_3.asm"
@@ -3160,6 +3303,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid two-byte banked-ROM ranges, target bytes, return-address state, and call flags across both continuations"
 decoder = "all 53 machine bytes verified; both real GetNextMusicByte calls and audited CP, ADD, SET, auto-increment/decrement, stack, and pointer shims execute; sound_ret/sound_loop tails are explicit"
+
 
 
 
@@ -3183,6 +3327,7 @@ decoder = "all 59 machine bytes verified; real GetNextMusicByte calls and audite
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_sound_loop"
 assembly_source = "audio/engine_2.asm"
@@ -3202,6 +3347,7 @@ decoder = "all 59 machine bytes verified; real GetNextMusicByte calls and audite
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_sound_loop"
 assembly_source = "audio/engine_3.asm"
@@ -3217,6 +3363,7 @@ observables = [
 ]
 proof_domain = "all commands, registers, flags, channels 0 through 7, caller-valid three-byte banked-ROM ranges, parameter bytes, and loop-counter state across fallthrough, infinite-loop, finite-repeat, and finite-completion domains"
 decoder = "all 59 machine bytes verified; real GetNextMusicByte calls and audited CP, INC, ADD, auto-increment, stack, and pointer shims execute; every sound_ret path and note_type fallthrough are explicit"
+
 
 
 
@@ -3242,6 +3389,7 @@ decoder = "all 94 machine bytes verified; the caller body executes with audited 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_note_length"
 assembly_source = "audio/engine_2.asm"
@@ -3259,6 +3407,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, channels 0 through 7, all 16 legal encoded lengths, all note speeds, music/SFX tempos, fractional and integer delay state, both flag arrays, every 16-bit sound-ID pair, and tempo modifiers across note_pitch and early-return paths"
 decoder = "all 94 machine bytes verified; the caller body executes with audited shims and composes the previously proven MultiplyAdd and SetSfxTempo semantics, including Audio2's BattleSFX classifier; the compiled native arithmetic leaf is independently proven for all 256 factors with symbolic 16-bit tempo and fractional byte"
+
 
 
 
@@ -3284,6 +3433,7 @@ decoder = "all 94 machine bytes verified; the caller body executes with audited 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_note_pitch"
 assembly_source = "audio/engine_1.asm"
@@ -3300,6 +3450,7 @@ observables = [
 ]
 proof_domain = "all caller-valid commands, notes 0 through 11, rests, octaves 0 through 7, channels 0 through 7, low command nibbles, sound arbitration, perfect-pitch state, wave instruments, cry modifiers, hardware state, and both pitch-slide domains"
 decoder = "all 144 machine bytes verified; caller instructions execute with audited SM83 shims while six call sites compose independently proven leaf postconditions; the pitch-slide caller proof overapproximates the leaf with arbitrary shared outputs"
+
 
 
 
@@ -3324,6 +3475,7 @@ decoder = "all 144 machine bytes verified; caller instructions execute with audi
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_note_pitch"
 assembly_source = "audio/engine_3.asm"
@@ -3340,6 +3492,7 @@ observables = [
 ]
 proof_domain = "all caller-valid commands, notes 0 through 11, rests, octaves 0 through 7, channels 0 through 7, low command nibbles, sound arbitration, perfect-pitch state, wave instruments, cry modifiers, hardware state, and both pitch-slide domains"
 decoder = "all 144 machine bytes verified; caller instructions execute with audited SM83 shims while six call sites compose independently proven leaf postconditions; the pitch-slide caller proof overapproximates the leaf with arbitrary shared outputs"
+
 
 
 
@@ -3363,6 +3516,7 @@ decoder = "all 22 machine bytes verified; real load/store instructions and audit
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_PlayNextNote"
 assembly_source = "audio/engine_2.asm"
@@ -3382,6 +3536,7 @@ decoder = "all 33 machine bytes verified; real load/store and return instruction
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_PlayNextNote"
 assembly_source = "audio/engine_3.asm"
@@ -3397,6 +3552,7 @@ observables = [
 ]
 proof_domain = "all caller-valid registers and flags, channels 0 through 7, reload/delay state, channel flags, and low-health alarm values up to the sound_ret call boundary"
 decoder = "all 22 machine bytes verified; real load/store instructions and audited ADD HL and RES shims execute; the sound_ret call boundary is explicit"
+
 
 
 
@@ -3423,6 +3579,7 @@ decoder = "all 142 machine bytes verified; both real GetNextMusicByte calls exec
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_sound_ret"
 assembly_source = "audio/engine_2.asm"
@@ -3441,6 +3598,7 @@ observables = [
 ]
 proof_domain = "all caller-valid registers, flags, channels 0 through 7, command/return pointers, two fetched bytes, call/noise/execute flags, output state, sound IDs, and volume state across command fallthrough, recursive return, ordinary completion, channel shutdown, and cry paths"
 decoder = "all 142 machine bytes verified; both real GetNextMusicByte calls execute with audited SM83 instruction shims, and GoBackOneCommandIfCry composes its independently proven postcondition; every terminal path is collected"
+
 
 
 
@@ -3467,6 +3625,7 @@ decoder = "all 142 machine bytes verified; both real GetNextMusicByte calls exec
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_sfx_note"
 assembly_source = "audio/engine_1.asm"
@@ -3484,6 +3643,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, channels 0 through 7, command values, command pointers, three parameter bytes, execute-music state, note-length post-states, duty/envelope/output hardware, sound IDs, instruments, wave RAM, and frequency modifiers across decoder fallthrough and completed paths"
 decoder = "all 77 machine bytes verified; the caller body executes with audited SM83 shims and real parameter fetching; note_length composes an arbitrary shared post-state and the remaining five call sites compose independently proven leaf semantics"
+
 
 
 
@@ -3509,6 +3669,7 @@ decoder = "all 77 machine bytes verified; the caller body executes with audited 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_sfx_note"
 assembly_source = "audio/engine_3.asm"
@@ -3526,6 +3687,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, channels 0 through 7, command values, command pointers, three parameter bytes, execute-music state, note-length post-states, duty/envelope/output hardware, sound IDs, instruments, wave RAM, and frequency modifiers across decoder fallthrough and completed paths"
 decoder = "all 77 machine bytes verified; the caller body executes with audited SM83 shims and real parameter fetching; note_length composes an arbitrary shared post-state and the remaining five call sites compose independently proven leaf semantics"
+
 
 
 
@@ -3551,6 +3713,7 @@ decoder = "all 152 machine bytes verified; caller instructions execute with audi
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_ApplyMusicAffects"
 assembly_source = "audio/engine_2.asm"
@@ -3568,6 +3731,7 @@ observables = [
 ]
 proof_domain = "all caller-valid registers and flags, channels 0 through 7, note delays, sound arbitration, music/SFX flags, duty rotation, pitch-slide selection, vibrato delay/rate/extents, both vibrato directions, and saturating frequency arithmetic up to explicit PlayNextNote and ApplyPitchSlide boundaries"
 decoder = "all 152 machine bytes verified; caller instructions execute with audited SM83 ADD-HL, CP, DEC, BIT, SWAP, RES/SET, SUB, and ADD shims; ApplyDutyCyclePattern and GetRegisterPointer compose their independently proven semantics and both tail calls are explicit continuations"
+
 
 
 
@@ -3593,6 +3757,7 @@ decoder = "all 152 machine bytes verified; caller instructions execute with audi
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_UpdateMusic"
 assembly_source = "audio/engine_1.asm"
@@ -3608,6 +3773,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, every sound-ID byte, all mute/pause byte values, and arbitrary initial hardware state across every inactive/music/SFX channel history up to the first ApplyMusicAffects call or final return"
 decoder = "all 53 machine bytes verified; the loop is partitioned exhaustively into 169 symbolic domains by mute mode, first-four-channel activity mask, and first call channel; ADD HL, CP, BIT, absolute/high-memory loads/stores, and INC C use audited SM83 shims, and the callee boundary is explicit"
+
 
 
 
@@ -3631,6 +3797,7 @@ decoder = "all 53 machine bytes verified; the loop is partitioned exhaustively i
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_UpdateMusic"
 assembly_source = "audio/engine_3.asm"
@@ -3646,6 +3813,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, every sound-ID byte, all mute/pause byte values, and arbitrary initial hardware state across every inactive/music/SFX channel history up to the first ApplyMusicAffects call or final return"
 decoder = "all 53 machine bytes verified; the loop is partitioned exhaustively into 169 symbolic domains by mute mode, first-four-channel activity mask, and first call channel; ADD HL, CP, BIT, absolute/high-memory loads/stores, and INC C use audited SM83 shims, and the callee boundary is explicit"
+
 
 
 
@@ -3667,6 +3835,7 @@ decoder = "all 672 function bytes, the $ff CryRet marker, and the complete 784-b
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_PlaySound"
 assembly_source = "audio/engine_2.asm"
@@ -3684,6 +3853,7 @@ decoder = "all 672 function bytes, the $ff CryRet marker, and the complete 784-b
 
 
 
+
 [[function]]
 assembly_symbol = "Audio3_PlaySound"
 assembly_source = "audio/engine_3.asm"
@@ -3697,6 +3867,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, arbitrary audio RAM and hardware, every linked channel topology including intro/music layouts, symbolic incumbent sound arbitration, noise/cry/music threshold boundaries, maximum SFX and music IDs, special $fe playback, and stop-all-audio"
 decoder = "all 672 function bytes, the $ff CryRet marker, and the complete 784-byte reachable header-ROM window are hash-gated; every SM83-incompatible absolute/high-memory access, ADD HL, arithmetic, CP, HLI store, INC/DEC, RLCA, PUSH/POP AF, and SET operation is shimmed"
+
 
 
 
@@ -3719,6 +3890,7 @@ decoder = "all 31 machine bytes verified; real GetNextMusicByte executes with au
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_unknownmusic0xef"
 assembly_source = "audio/engine_2.asm"
@@ -3733,6 +3905,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, channels 0 through 7, command values, legal banked command pointers, fetched sound IDs, arbitrary audio state, and arbitrary shared PlaySound post-states across fallthrough and matched paths"
 decoder = "all 31 machine bytes verified; real GetNextMusicByte executes with audited shims, PlaySound composes its independently proven arbitrary post-state, SM83 absolute accesses are shimmed, and both tail continuations are explicit"
+
 
 
 
@@ -3755,6 +3928,7 @@ decoder = "all 31 machine bytes verified; real GetNextMusicByte executes with au
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_note"
 assembly_source = "audio/engine_1.asm"
@@ -3769,6 +3943,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, channels 0 through 7, every command high nibble and low nibble, both output-disable states, legal drum parameter pointers, arbitrary fetched instruments, and arbitrary shared PlaySound post-states"
 decoder = "all 47 machine bytes verified; the channel-4 domain is partitioned exhaustively by all 16 high nibbles and output state; CP, AND, SWAP, PUSH AF, absolute load, and real GetNextMusicByte semantics are shimmed, PlaySound composes its proven postcondition, and note_length fallthrough is explicit"
+
 
 
 
@@ -3797,6 +3972,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "ResetAgathaScript"
 assembly_source = "scripts/AgathasRoom.asm"
@@ -3815,6 +3991,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of every affected byte"
 decoder = "exact 5-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -3841,6 +4018,7 @@ decoder = "exact 5-byte linked body checked; SM83 LD [a16],A stores modeled expl
 
 
 
+
 [[function]]
 assembly_symbol = "ResetRivalScript"
 assembly_source = "scripts/ChampionsRoom.asm"
@@ -3860,6 +4038,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of every affected byte"
 decoder = "exact 8-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -3889,6 +4068,7 @@ decoder = "exact 14-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "ResetLanceScript"
 assembly_source = "scripts/LancesRoom.asm"
@@ -3907,6 +4087,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of every affected byte"
 decoder = "exact 5-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -3933,6 +4114,7 @@ decoder = "exact 5-byte linked body checked; SM83 LD [a16],A stores modeled expl
 
 
 
+
 [[function]]
 assembly_symbol = "SSAnne2FResetScripts"
 assembly_source = "scripts/SSAnne2F.asm"
@@ -3952,6 +4134,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of every affected byte"
 decoder = "exact 8-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -3980,6 +4163,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "FightingDojoResetScripts"
 assembly_source = "scripts/FightingDojo.asm"
@@ -4000,6 +4184,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected bytes"
 decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -4028,6 +4213,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "GameCornerReenterMapAfterPlayerLoss"
 assembly_source = "scripts/GameCorner.asm"
@@ -4048,6 +4234,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected bytes"
 decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -4076,6 +4263,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "PewterGymResetScripts"
 assembly_source = "scripts/PewterGym.asm"
@@ -4096,6 +4284,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected bytes"
 decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -4124,6 +4313,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "PokemonTower6FSetDefaultScript"
 assembly_source = "scripts/PokemonTower6F.asm"
@@ -4144,6 +4334,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected bytes"
 decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -4172,6 +4363,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "RocketHideoutB4FSetDefaultScript"
 assembly_source = "scripts/RocketHideoutB4F.asm"
@@ -4192,6 +4384,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected bytes"
 decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -4220,6 +4413,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "Route16ResetScripts"
 assembly_source = "scripts/Route16.asm"
@@ -4240,6 +4434,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected bytes"
 decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -4268,6 +4463,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "SaffronGymResetScripts"
 assembly_source = "scripts/SaffronGym.asm"
@@ -4288,6 +4484,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected bytes"
 decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled explicitly"
+
 
 
 
@@ -4316,6 +4513,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "ViridianGymResetScripts"
 assembly_source = "scripts/ViridianGym.asm"
@@ -4340,6 +4538,7 @@ decoder = "exact 11-byte linked body checked; SM83 LD [a16],A stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "Audio2_note"
 assembly_source = "audio/engine_2.asm"
@@ -4354,6 +4553,7 @@ observables = [
 ]
 proof_domain = "all registers and flags, channels 0 through 7, every command high nibble and low nibble, both output-disable states, legal drum parameter pointers, arbitrary fetched instruments, and arbitrary shared PlaySound post-states"
 decoder = "all 47 machine bytes verified; the channel-4 domain is partitioned exhaustively by all 16 high nibbles and output state; CP, AND, SWAP, PUSH AF, absolute load, and real GetNextMusicByte semantics are shimmed, PlaySound composes its proven postcondition, and note_length fallthrough is explicit"
+
 
 
 
@@ -4376,6 +4576,7 @@ decoder = "all 47 machine bytes verified; the channel-4 domain is partitioned ex
 
 
 
+
 [[function]]
 assembly_symbol = "DisableWaitingAfterTextDisplay"
 assembly_source = "home/reload_tiles.asm"
@@ -4394,6 +4595,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 initial values of the affected byte"
 decoder = "exact 6-byte linked body checked; SM83 LD [a16],A store modeled explicitly"
+
 
 
 
@@ -4421,6 +4623,7 @@ decoder = "exact 8-byte linked body checked; both SM83 LD [a16],A stores modeled
 
 
 
+
 [[function]]
 assembly_symbol = "SafariZoneGateReturnSimulatedJoypadStateScript"
 assembly_source = "scripts/SafariZoneGate.asm"
@@ -4439,6 +4642,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 values of the read byte"
 decoder = "exact 5-byte linked body checked; SM83 LD A,[a16] load modeled explicitly and generic AND A flags audited"
+
 
 
 
@@ -4464,6 +4668,7 @@ decoder = "exact 3-byte linked body and generic Z80 semantics verified"
 
 
 
+
 [[function]]
 assembly_symbol = "TextScriptEnd"
 assembly_source = "home/overworld_text.asm"
@@ -4481,6 +4686,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 4-byte linked body and linked TextScriptEndingText address verified with generic Z80 semantics"
+
 
 
 
@@ -4509,6 +4715,7 @@ decoder = "exact 9-byte linked body checked; SM83 absolute/high-memory loads and
 
 
 
+
 [[function]]
 assembly_symbol = "CinnabarGymSetTrainerHeader"
 assembly_source = "scripts/CinnabarGym.asm"
@@ -4528,6 +4735,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the source and destination bytes"
 decoder = "exact 6-byte linked body checked; SM83 high-memory load and absolute store modeled explicitly"
+
 
 
 
@@ -4555,6 +4763,7 @@ decoder = "exact 7-byte linked body checked; both SM83 absolute stores modeled e
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo7FSetCurScript"
 assembly_source = "scripts/SilphCo7F.asm"
@@ -4578,6 +4787,7 @@ decoder = "exact 7-byte linked body checked; both SM83 absolute stores modeled e
 
 
 
+
 [[function]]
 assembly_symbol = "StoreTrainerHeaderPointer"
 assembly_source = "home/trainers.asm"
@@ -4597,6 +4807,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of both destination bytes"
 decoder = "exact 9-byte linked body checked; both SM83 absolute stores modeled explicitly"
+
 
 
 
@@ -4625,6 +4836,7 @@ decoder = "exact 9-byte linked body checked; SM83 high-memory stores modeled exp
 
 
 
+
 [[function]]
 assembly_symbol = "GBPalWhiteOut"
 assembly_source = "home/palettes.asm"
@@ -4645,6 +4857,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three hardware registers"
 decoder = "exact 8-byte linked body checked; SM83 high-memory stores modeled explicitly"
+
 
 
 
@@ -4671,6 +4884,7 @@ decoder = "exact 7-byte linked body checked; SM83 high-memory load/store modeled
 
 
 
+
 [[function]]
 assembly_symbol = "ResetBoulderPushFlags"
 assembly_source = "engine/overworld/push_boulder.asm"
@@ -4689,6 +4903,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 values of wMiscFlags"
 decoder = "exact 8-byte linked body and generic Z80 LD/RES semantics verified"
+
 
 
 
@@ -4716,6 +4931,7 @@ decoder = "exact 5-byte linked body checked; SM83 DEC A flags and both symbolic 
 
 
 
+
 [[function]]
 assembly_symbol = "Audio1_OverwriteChannelPointer"
 assembly_source = "audio/alternate_tempo.asm"
@@ -4735,6 +4951,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 65,536 initial HL pointers including wraparound, and all initial values of both overwritten bytes"
 decoder = "exact 5-byte linked body checked; both symbolic LD [HL+],A write boundaries modeled explicitly"
+
 
 
 
@@ -4762,6 +4979,7 @@ decoder = "exact 5-byte linked body checked; both symbolic LD [HL+],A write boun
 
 
 
+
 [[function]]
 assembly_symbol = "CheckIfInOutsideMap"
 assembly_source = "home/overworld.asm"
@@ -4780,6 +4998,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 current-map tileset values across both return paths"
 decoder = "exact 8-byte linked body checked; SM83 absolute load and CP immediate flags modeled explicitly"
+
 
 
 
@@ -4806,6 +5025,7 @@ decoder = "exact 8-byte linked body checked; SM83 absolute load and ADD HL,BC fl
 
 
 
+
 [[function]]
 assembly_symbol = "ExecutePlayerMoveDone"
 assembly_source = "engine/battle/core.asm"
@@ -4824,6 +5044,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 initial values of the affected byte"
 decoder = "exact 7-byte linked body checked; SM83 absolute store modeled explicitly"
+
 
 
 
@@ -4850,6 +5071,7 @@ decoder = "exact 7-byte linked loop checked; SM83 DEC B flags and each symbolic 
 
 
 
+
 [[function]]
 assembly_symbol = "TrainerInfo_NextTextBoxRow"
 assembly_source = "engine/menus/start_sub_menus.asm"
@@ -4868,6 +5090,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 65,536 initial HL pointers including wraparound, and every offset byte; exhaustive one-step transition equivalence plus the shared loop recurrence proves all effective lengths from 1 through 256"
 decoder = "exact 8-byte linked body checked; SM83 DEC A flags and the loop/return boundaries modeled explicitly"
+
 
 
 
@@ -4895,6 +5118,7 @@ decoder = "exact 5-byte linked entry body checked; SM83 absolute load modeled ex
 
 
 
+
 [[function]]
 assembly_symbol = "ItemUseNoEffect"
 assembly_source = "engine/items/item_effects.asm"
@@ -4913,6 +5137,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 5-byte linked entry body and linked ItemUseNoEffectText address checked; the shared ItemUseFailed tail is an explicit boundary"
+
 
 
 
@@ -4939,6 +5164,7 @@ decoder = "exact 5-byte linked entry body and linked ItemUseNotTimeText address 
 
 
 
+
 [[function]]
 assembly_symbol = "ItemUseNotYoursToUse"
 assembly_source = "engine/items/item_effects.asm"
@@ -4957,6 +5183,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 5-byte linked entry body and linked ItemUseNotYoursToUseText address checked; the shared ItemUseFailed tail is an explicit boundary"
+
 
 
 
@@ -4983,6 +5210,7 @@ decoder = "exact 5-byte linked entry body and linked NoCyclingAllowedHereText ad
 
 
 
+
 [[function]]
 assembly_symbol = "BoxFullCannotThrowBall"
 assembly_source = "engine/items/item_effects.asm"
@@ -5001,6 +5229,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 5-byte linked entry body and linked BoxFullCannotThrowBallText address checked; the shared ItemUseFailed tail is an explicit boundary"
+
 
 
 
@@ -5027,6 +5256,7 @@ decoder = "exact 3-byte linked entry body and linked NoSurfingHereText address c
 
 
 
+
 [[function]]
 assembly_symbol = "ItemUseFailed"
 assembly_source = "engine/items/item_effects.asm"
@@ -5046,6 +5276,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 initial values of the affected byte"
 decoder = "exact 7-byte linked body checked; SM83 absolute store modeled explicitly and the PrintText jump is an explicit boundary"
+
 
 
 
@@ -5074,6 +5305,7 @@ decoder = "exact 11-byte linked body checked across the shared setter label; SM8
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo7FSetDefaultScript"
 assembly_source = "scripts/SilphCo7F.asm"
@@ -5094,6 +5326,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected bytes"
 decoder = "exact 11-byte linked body checked across the shared setter label; SM83 absolute stores modeled explicitly"
+
 
 
 
@@ -5121,6 +5354,7 @@ decoder = "exact 8-byte linked body checked across the shared no-op return label
 
 
 
+
 [[function]]
 assembly_symbol = "GBFadeInFromBlack"
 assembly_source = "home/fade.asm"
@@ -5139,6 +5373,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 7-byte linked entry body and linked FadePal1 address checked; the shared fade loop is an explicit boundary"
+
 
 
 
@@ -5165,6 +5400,7 @@ decoder = "exact 5-byte linked entry body and linked FadePal6 address checked; t
 
 
 
+
 [[function]]
 assembly_symbol = "GBFadeOutToBlack"
 assembly_source = "home/fade.asm"
@@ -5183,6 +5419,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 7-byte linked entry body and linked FadePal4 + 2 address checked; the shared fade loop is an explicit boundary"
+
 
 
 
@@ -5209,6 +5446,7 @@ decoder = "exact 5-byte linked entry body and linked FadePal7 + 2 address checke
 
 
 
+
 [[function]]
 assembly_symbol = "SetSpriteImageIndexAfterSettingFacingDirection"
 assembly_source = "home/map_objects.asm"
@@ -5227,6 +5465,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 65,536 initial HL pointers including wraparound, and all initial values of the overwritten byte"
 decoder = "exact 6-byte linked body checked; SM83 ADD HL,DE flags and the symbolic write boundary modeled explicitly"
+
 
 
 
@@ -5253,6 +5492,7 @@ decoder = "exact 10-byte linked body checked; SM83 ADD HL,DE flags and the symbo
 
 
 
+
 [[function]]
 assembly_symbol = "LoadWalkingPlayerSpriteGraphics"
 assembly_source = "home/overworld.asm"
@@ -5271,6 +5511,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 8-byte linked entry body and linked RedSprite/vNPCSprites addresses checked; the shared graphics loader is an explicit boundary"
+
 
 
 
@@ -5297,6 +5538,7 @@ decoder = "exact 8-byte linked entry body and linked SeelSprite/vNPCSprites addr
 
 
 
+
 [[function]]
 assembly_symbol = "LoadBikePlayerSpriteGraphics"
 assembly_source = "home/overworld.asm"
@@ -5315,6 +5557,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 6-byte linked entry body and linked RedBikeSprite/vNPCSprites addresses checked; the shared graphics loader is an explicit boundary"
+
 
 
 
@@ -5341,6 +5584,7 @@ decoder = "exact 5-byte linked entry body and linked _GetSpritePosition1 address
 
 
 
+
 [[function]]
 assembly_symbol = "GetSpritePosition2"
 assembly_source = "home/trainers.asm"
@@ -5359,6 +5603,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 5-byte linked entry body and linked _GetSpritePosition2 address checked; the shared bankswitch tail is an explicit boundary"
+
 
 
 
@@ -5385,6 +5630,7 @@ decoder = "exact 5-byte linked entry body and linked _SetSpritePosition1 address
 
 
 
+
 [[function]]
 assembly_symbol = "SetSpritePosition2"
 assembly_source = "home/trainers.asm"
@@ -5403,6 +5649,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 3-byte linked entry body and linked _SetSpritePosition2 address checked; the shared bankswitch tail is an explicit boundary"
+
 
 
 
@@ -5429,6 +5676,7 @@ decoder = "exact 5-byte linked entry body and linked DrawPartyMenu_ address chec
 
 
 
+
 [[function]]
 assembly_symbol = "RedrawPartyMenu"
 assembly_source = "home/pokemon.asm"
@@ -5447,6 +5695,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 3-byte linked entry body and linked RedrawPartyMenu_ address checked; the shared bankswitch tail is an explicit boundary"
+
 
 
 
@@ -5473,6 +5722,7 @@ decoder = "exact 2-byte linked entry body checked; the shared IsInRestOfArray im
 
 
 
+
 [[function]]
 assembly_symbol = "CopyToStringBuffer"
 assembly_source = "home/copy_string.asm"
@@ -5491,6 +5741,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 3-byte linked entry body checked; the shared CopyString implementation is an explicit boundary"
+
 
 
 
@@ -5517,6 +5768,7 @@ decoder = "exact 2-byte linked entry body checked; the shared RunPaletteCommand 
 
 
 
+
 [[function]]
 assembly_symbol = "GetPointerWithinSpriteStateData1"
 assembly_source = "home/map_objects.asm"
@@ -5535,6 +5787,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 4-byte linked entry body checked; the shared _GetPointerWithinSpriteStateData implementation is an explicit boundary"
+
 
 
 
@@ -5561,6 +5814,7 @@ decoder = "exact 2-byte linked entry body checked; the shared _GetPointerWithinS
 
 
 
+
 [[function]]
 assembly_symbol = "IsSpriteInFrontOfPlayer"
 assembly_source = "home/overworld.asm"
@@ -5579,6 +5833,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 2-byte linked entry body checked; the shared IsSpriteInFrontOfPlayer2 implementation is an explicit boundary"
+
 
 
 
@@ -5605,6 +5860,7 @@ decoder = "exact 3-byte linked entry body checked; the shared TryWalking impleme
 
 
 
+
 [[function]]
 assembly_symbol = "ClearBgMap"
 assembly_source = "home/vcopy.asm"
@@ -5623,6 +5879,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 4-byte linked entry body checked; the shared FillBgMapCommon implementation is an explicit boundary"
+
 
 
 
@@ -5649,6 +5906,7 @@ decoder = "exact 8-byte linked entry body checked; the shared IntroClearCommon i
 
 
 
+
 [[function]]
 assembly_symbol = "IntroClearMiddleOfScreen"
 assembly_source = "engine/movie/intro.asm"
@@ -5667,6 +5925,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 6-byte linked entry body checked; the shared IntroClearCommon implementation is an explicit boundary"
+
 
 
 
@@ -5693,6 +5952,7 @@ decoder = "exact 3-byte linked entry body checked; the shared CopyTileIDsFromLis
 
 
 
+
 [[function]]
 assembly_symbol = "CompareHLWithBC"
 assembly_source = "engine/overworld/update_map.asm"
@@ -5710,6 +5970,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, covering all 4,294,967,296 BC/HL pairs and both return paths"
 decoder = "exact 6-byte linked body checked; both SM83 SUB register flag transitions modeled explicitly"
+
 
 
 
@@ -5736,6 +5997,7 @@ decoder = "exact 7-byte linked body checked; SM83 ADD A,E, INC D, and symbolic l
 
 
 
+
 [[function]]
 assembly_symbol = "ReverseNybble"
 assembly_source = "home/uncompress.asm"
@@ -5758,6 +6020,7 @@ decoder = "exact 10-byte linked body and NybbleReverseTable address checked; SM8
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_CheckForMatch"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -5776,6 +6039,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all three fetched bytes, all pointer-alias configurations, and both return paths"
 decoder = "exact 6-byte linked body checked; both symbolic loads and both SM83 CP [HL] transitions modeled explicitly"
+
 
 
 
@@ -5806,6 +6070,7 @@ decoder = "exact 14-byte linked body checked; SM83 absolute and high-memory stor
 
 
 
+
 [[function]]
 assembly_symbol = "StoreSpriteOutputPointer"
 assembly_source = "home/uncompress.asm"
@@ -5827,6 +6092,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the four affected bytes"
 decoder = "exact 15-byte linked body checked; all four SM83 absolute stores modeled explicitly"
+
 
 
 
@@ -5856,6 +6122,7 @@ decoder = "exact 10-byte linked body checked; SM83 high-memory loads and HL-incr
 
 
 
+
 [[function]]
 assembly_symbol = "AddNTimes"
 assembly_source = "home/array.asm"
@@ -5877,6 +6144,7 @@ decoder = "exact 7-byte linked body checked; SM83 ADD HL,BC and DEC A transition
 
 
 
+
 [[function]]
 assembly_symbol = "SkipFixedLengthTextEntries"
 assembly_source = "home/array.asm"
@@ -5894,6 +6162,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, including every A count and every 16-bit HL pointer; its exhaustive entry transition composes with the independently proven AddNTimes loop recurrence"
 decoder = "exact 10-byte linked body checked; entry/return boundaries modeled explicitly and the shared SM83 ADD HL,BC/DEC A recurrence is compositionally proven"
+
 
 
 
@@ -5920,6 +6189,7 @@ decoder = "exact 10-byte linked body checked; the Game Boy LD A,[a16] (opcode FA
 
 
 
+
 [[function]]
 assembly_symbol = "CopyString"
 assembly_source = "home/copy_string.asm"
@@ -5938,6 +6208,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, every fetched byte, every initial destination byte, and all 16-bit DE/HL pointers including aliasing and wraparound; exhaustive one-step equivalence plus identical memory updates and the shared recurrence proves every @-terminated string"
 decoder = "exact 8-byte linked body checked; symbolic load/write boundaries, SM83 CP immediate flags, loop continuation, and pointer increments modeled explicitly"
+
 
 
 
@@ -5964,6 +6235,7 @@ decoder = "exact 9-byte linked body checked; symbolic load/write boundaries, SM8
 
 
 
+
 [[function]]
 assembly_symbol = "AIUsePotion"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -5982,6 +6254,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 6-byte linked entry body checked; the shared AIRecoverHP implementation is an explicit boundary"
+
 
 
 
@@ -6008,6 +6281,7 @@ decoder = "exact 6-byte linked entry body checked; the shared AIRecoverHP implem
 
 
 
+
 [[function]]
 assembly_symbol = "AIUseHyperPotion"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -6026,6 +6300,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 4-byte linked entry body checked; the shared AIRecoverHP implementation is an explicit boundary"
+
 
 
 
@@ -6052,6 +6327,7 @@ decoder = "exact 6-byte linked entry body checked; the shared AIIncreaseStat imp
 
 
 
+
 [[function]]
 assembly_symbol = "AIUseXDefend"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -6070,6 +6346,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 6-byte linked entry body checked; the shared AIIncreaseStat implementation is an explicit boundary"
+
 
 
 
@@ -6096,6 +6373,7 @@ decoder = "exact 6-byte linked entry body checked; the shared AIIncreaseStat imp
 
 
 
+
 [[function]]
 assembly_symbol = "AIUseXSpecial"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -6114,6 +6392,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 4-byte linked entry body checked; the shared AIIncreaseStat implementation is an explicit boundary"
+
 
 
 
@@ -6140,6 +6419,7 @@ decoder = "exact 5-byte linked entry body checked; the shared GetSpriteScreenXYP
 
 
 
+
 [[function]]
 assembly_symbol = "GetSpriteScreenXPointer"
 assembly_source = "engine/overworld/movement.asm"
@@ -6158,6 +6438,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 3-byte linked entry body checked; the shared GetSpriteScreenXYPointerCommon implementation is an explicit boundary"
+
 
 
 
@@ -6185,6 +6466,7 @@ decoder = "exact 16-byte linked entry body and all linked wheel/state/OAM addres
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_AnimWheel2"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -6204,6 +6486,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 initial wBaseCoordX values"
 decoder = "exact 16-byte linked entry body and all linked wheel/state/OAM addresses checked; the shared animation implementation is an explicit boundary"
+
 
 
 
@@ -6231,6 +6514,7 @@ decoder = "exact 14-byte linked entry body and all linked wheel/state/OAM addres
 
 
 
+
 [[function]]
 assembly_symbol = "InternalClockTradeAnim"
 assembly_source = "engine/movie/trade.asm"
@@ -6251,6 +6535,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the four source/destination species bytes"
 decoder = "exact 17-byte linked entry body and sequence/global addresses checked; SM83 absolute loads/stores modeled explicitly and the shared trade animation is an explicit boundary"
+
 
 
 
@@ -6283,6 +6568,7 @@ decoder = "exact 15-byte linked entry body and sequence/global addresses checked
 
 
 
+
 [[function]]
 assembly_symbol = "UpdateMusic6Times"
 assembly_source = "home/audio.asm"
@@ -6294,6 +6580,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; Bankswitch inlined as no-op return; wAudioROMBank fixed concrete per test"
 decoder = "exact 40-byte linked body checked; `ld a,[a16]` (0xFA, reading wAudioROMBank) shimmed; `call Bankswitch` modeled as no-op return; `cp imm`/`jr nz`/`ld hl,nn`/`ld c,imm`/`push`/`pop`/`dec`/`jr nz`/`ret` run natively"
+
 
 
 
@@ -6320,6 +6607,7 @@ decoder = "exact 11-byte linked body and wShadowOAM bounds checked; SM83 DEC B f
 
 
 
+
 [[function]]
 assembly_symbol = "FadeOutAudio"
 assembly_source = "home/fade_audio.asm"
@@ -6331,6 +6619,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; all audio control globals and hardware registers as concrete or symbolic inputs"
 decoder = "exact 100-byte linked body checked; `ldh [a8],a` (0xE0, rAUDVOL) and `ldh a,[a8]` (0xF0, rAUDVOL) modeled as direct memory access; `ld a,[a16]` (0xFA) and `ld [a16],a` (0xEA) shimmed; `call PlaySound` inlined as no-op; `bit`/`jr`/`dec`/`jr nz`/`ret` run natively"
+
 
 
 
@@ -6359,6 +6648,7 @@ decoder = "exact 13-byte linked body checked; SM83 absolute stores and SET 7,[HL
 
 
 
+
 [[function]]
 assembly_symbol = "Serial_TryEstablishingExternallyClockedConnection"
 assembly_source = "home/serial.asm"
@@ -6379,6 +6669,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of the three affected serial bytes"
 decoder = "exact 12-byte linked body checked; all three SM83 high-memory stores modeled explicitly"
+
 
 
 
@@ -6408,6 +6699,7 @@ decoder = "exact 17-byte linked body checked; SM83 absolute/high-memory loads an
 
 
 
+
 [[function]]
 assembly_symbol = "PlayBattleAnimation"
 assembly_source = "engine/battle/effects.asm"
@@ -6427,6 +6719,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 initial wAnimationID values"
 decoder = "exact 3-byte linked entry body checked; SM83 absolute store modeled explicitly and the shared animation tail is an explicit boundary"
+
 
 
 
@@ -6454,6 +6747,7 @@ decoder = "exact 4-byte linked entry body checked; SM83 absolute store modeled e
 
 
 
+
 [[function]]
 assembly_symbol = "LoadFlippedFrontSpriteByMonIndex"
 assembly_source = "home/pokemon.asm"
@@ -6473,6 +6767,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 initial values of the affected byte"
 decoder = "exact 5-byte linked entry body checked; SM83 absolute store modeled explicitly and the shared sprite loader is an explicit boundary"
+
 
 
 
@@ -6499,6 +6794,7 @@ decoder = "exact 10-byte linked body checked; SM83 high-memory load, SWAP A, and
 
 
 
+
 [[function]]
 assembly_symbol = "IntroPlaceBlackTiles"
 assembly_source = "engine/movie/intro.asm"
@@ -6517,6 +6813,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 16-bit HL pointers including wraparound, every initial destination byte, and every C count including the 256-iteration zero case; proven initializer composes with exhaustive one-step recurrence"
 decoder = "exact 7-byte linked body checked; symbolic write boundary, SM83 DEC C flags, pointer increment, and both loop continuations modeled explicitly"
+
 
 
 
@@ -6545,6 +6842,7 @@ decoder = "exact 8-byte linked entry body checked; SM83 absolute loads modeled e
 
 
 
+
 [[function]]
 assembly_symbol = "StartNewGame"
 assembly_source = "engine/menus/main_menu.asm"
@@ -6564,6 +6862,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 initial status flag values"
 decoder = "exact 5-byte linked entry body checked; SM83 RES 1,[HL] modeled explicitly and the shared new-game implementation is an explicit boundary"
+
 
 
 
@@ -6591,6 +6890,7 @@ decoder = "exact 10-byte linked entry body checked; SM83 absolute load modeled e
 
 
 
+
 [[function]]
 assembly_symbol = "GetEnemyAnimationType"
 assembly_source = "engine/battle/core.asm"
@@ -6610,6 +6910,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 enemy move effect values across both control-flow paths"
 decoder = "exact 12-byte reachable entry body checked; SM83 absolute load modeled explicitly and the shared enemy animation implementation is an explicit boundary"
+
 
 
 
@@ -6637,6 +6938,7 @@ decoder = "exact 11-byte linked entry body checked; SM83 high-memory load modele
 
 
 
+
 [[function]]
 assembly_symbol = "GetCoordsInFrontOfPlayer"
 assembly_source = "engine/events/card_key.asm"
@@ -6657,6 +6959,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all values of both coordinates and facing direction across all four return paths"
 decoder = "exact 30-byte linked body checked; SM83 absolute loads, compares, and INC/DEC flag semantics modeled explicitly"
+
 
 
 
@@ -6686,6 +6989,7 @@ decoder = "exact 23-byte linked body checked; SM83 absolute loads, local CALL/co
 
 
 
+
 [[function]]
 assembly_symbol = "CableClub_DrawHorizontalLine"
 assembly_source = "engine/link/cable_club.asm"
@@ -6704,6 +7008,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 16-bit HL pointers including wraparound, every initial destination byte, and every C count including the 256-iteration zero case; proven initializer composes with exhaustive one-step recurrence"
 decoder = "exact 6-byte linked body checked; symbolic write boundary, SM83 DEC D flags, pointer increment, and both loop continuations modeled explicitly"
+
 
 
 
@@ -6730,6 +7035,7 @@ decoder = "exact 11-byte linked body checked; symbolic write boundary, SM83 ADD 
 
 
 
+
 [[function]]
 assembly_symbol = "DrawPokedexVerticalLine"
 assembly_source = "engine/menus/pokedex.asm"
@@ -6748,6 +7054,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 16-bit HL pointers including wraparound, and every initial destination byte; proven constant initializer composes with exhaustive one-step transition equivalence for all nine iterations"
 decoder = "exact 15-byte linked body checked; symbolic write boundary, SM83 ADD HL,DE, XOR immediate, DEC C flags, and both loop continuations modeled explicitly"
+
 
 
 
@@ -6774,6 +7081,7 @@ decoder = "exact 13-byte linked body checked; symbolic source read and destinati
 
 
 
+
 [[function]]
 assembly_symbol = "GetSpriteMovementByte2Pointer"
 assembly_source = "home/map_objects.asm"
@@ -6792,6 +7100,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 sprite index values"
 decoder = "exact 15-byte linked body checked; SM83 high-memory load, DEC, ADD A,A, ADD HL,DE flags, and saved DE semantics modeled explicitly"
+
 
 
 
@@ -6818,6 +7127,7 @@ decoder = "exact 12-byte linked body checked; SM83 high-memory load, SWAP, both 
 
 
 
+
 [[function]]
 assembly_symbol = "ShiftFontColorIndex"
 assembly_source = "engine/movie/credits.asm"
@@ -6836,6 +7146,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 16-bit HL and BC values including pointer wraparound and the 65,536-iteration zero-count case, and every destination byte; exhaustive one-step recurrence proves the loop"
 decoder = "exact 10-byte linked body checked; symbolic zero write, 16-bit HL increment and BC decrement, SM83 OR flags, and both loop continuations modeled explicitly"
+
 
 
 
@@ -6863,6 +7174,7 @@ decoder = "exact 16-byte linked body and table/global addresses checked; SM83 ab
 
 
 
+
 [[function]]
 assembly_symbol = "GetPartyMonName2"
 assembly_source = "home/pokemon.asm"
@@ -6886,6 +7198,7 @@ decoder = "exact 6-byte linked entry checked; absolute load modeled explicitly a
 
 
 
+
 [[function]]
 assembly_symbol = "SetMapTextPointer"
 assembly_source = "home/predef_text.asm"
@@ -6899,6 +7212,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and all values of both pointer pairs"
 decoder = "exact 19-byte linked body checked; all absolute and high-memory transfers modeled explicitly"
+
 
 
 
@@ -6920,6 +7234,7 @@ decoder = "exact 22-byte linked body checked; high-memory load and absolute stor
 
 
 
+
 [[function]]
 assembly_symbol = "GetSavedEndBattleTextPointer"
 assembly_source = "home/trainers.asm"
@@ -6936,6 +7251,7 @@ decoder = "exact 24-byte linked body checked; absolute loads and SM83 AND flags 
 
 
 
+
 [[function]]
 assembly_symbol = "GetPredefRegisters"
 assembly_source = "home/predef.asm"
@@ -6948,6 +7264,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and all values of the six saved register bytes"
 decoder = "exact 25-byte linked body checked; every absolute load modeled explicitly"
+
 
 
 
@@ -6969,6 +7286,7 @@ decoder = "exact 38-byte linked body and both SRAM buffer addresses checked; abs
 
 
 
+
 [[function]]
 assembly_symbol = "MoveTileBlockMapPointerEast"
 assembly_source = "home/overworld.asm"
@@ -6981,6 +7299,7 @@ observables = [
 ]
 proof_domain = "all registers/flags, all 16-bit DE including wraparound, and every pointer word across carry/no-carry paths"
 decoder = "exact 10-byte body checked; symbolic DE memory, ADD/INC flags, conditional return, and pointer carry modeled explicitly"
+
 
 
 
@@ -7001,6 +7320,7 @@ decoder = "exact 10-byte body checked; symbolic DE memory, SUB/DEC flags, condit
 
 
 
+
 [[function]]
 assembly_symbol = "MoveTileBlockMapPointerSouth"
 assembly_source = "home/overworld.asm"
@@ -7013,6 +7333,7 @@ observables = [
 ]
 proof_domain = "all registers/flags, all 16-bit DE including wraparound, every initial A, and every pointer word across carry/no-carry paths"
 decoder = "exact 12-byte body checked; border-offset arithmetic, symbolic DE memory, ADD/INC flags, and conditional return modeled explicitly"
+
 
 
 
@@ -7033,6 +7354,7 @@ decoder = "exact 12-byte body checked; border-offset arithmetic, symbolic DE mem
 
 
 
+
 [[function]]
 assembly_symbol = "TownMapCoordsToOAMCoords"
 assembly_source = "engine/items/town_map.asm"
@@ -7045,6 +7367,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, every packed coordinate byte, all 16-bit HL values including wraparound, and every initial destination byte"
 decoder = "exact 21-byte body checked; AF save/restore, AND/SWAP/SRL/ADD flags, symbolic HLI stores, and pointer increments modeled explicitly"
+
 
 
 
@@ -7065,6 +7388,7 @@ decoder = "exact 13-byte body checked; symbolic fetched byte, CP/INC flags, poin
 
 
 
+
 [[function]]
 assembly_symbol = "CenterMonName"
 assembly_source = "engine/battle/core.asm"
@@ -7077,6 +7401,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL values, representative DE with all four symbolic fetched bytes, and every early/complete path; DE restoration is explicit"
 decoder = "exact 23-byte body checked; saved DE, four symbolic reads, CP and DEC flags, pointer movement, and all early exits modeled explicitly"
+
 
 
 
@@ -7097,6 +7422,7 @@ decoder = "exact 10-byte body checked; symbolic tile write, ADD HL,DE and DEC fl
 
 
 
+
 [[function]]
 assembly_symbol = "TrainerInfo_DrawHorizontalEdge"
 assembly_source = "engine/menus/start_sub_menus.asm"
@@ -7109,6 +7435,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL pointers including wraparound, every corner/interior tile, every width including the 256-iteration zero case, and every initial destination byte; setup and finish proofs compose with exhaustive loop recurrence"
 decoder = "exact 13-byte body checked; symbolic HLI writes, explicit width load, DEC C flags, both continuations, and final nonincrementing store modeled explicitly"
+
 
 
 
@@ -7130,6 +7457,7 @@ decoder = "exact 23-byte body and table/global addresses checked; symbolic HLI f
 
 
 
+
 [[function]]
 assembly_symbol = "IndexToPokedex"
 assembly_source = "engine/menus/pokedex.asm"
@@ -7143,6 +7471,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 256 index bytes, and every possible byte fetched from the computed table address"
 decoder = "exact 20-byte body and table/global addresses checked; DEC, ADD HL,BC, computed read, absolute store, and saved BC/HL restoration modeled explicitly"
+
 
 
 
@@ -7161,6 +7490,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 256 data-location selectors, all E offsets, and every possible byte fetched from the selected party/enemy/box table"
 decoder = "exact 28-byte body and all base/global addresses checked; absolute selector load, three paths, DEC and ADD HL,DE flags, computed read, and destination store modeled explicitly"
+
 
 
 
@@ -7184,6 +7514,7 @@ decoder = "exact 33-byte body and all base/global addresses checked; absolute lo
 
 
 
+
 [[function]]
 assembly_symbol = "CheckSpriteCanSeePlayer"
 assembly_source = "engine/overworld/trainer_sight.asm"
@@ -7196,6 +7527,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and all 2^32 combinations of distance, facing, screen Y, and screen X across every aligned, too-far, invalid-facing, and successful path"
 decoder = "exact 52-byte body and all four global addresses checked; absolute loads, all CP operations, SCF, AND flags, and complete branch/return behavior modeled explicitly"
+
 
 
 
@@ -7214,6 +7546,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, every current-sprite offset, all values of both computed counters, and every initial high-memory output across short-return and rollover paths"
 decoder = "exact 22-byte body and high-memory addresses checked; computed loads/stores, ADD/INC/CP/AND flags, L wraparound, conditional return, and rollover output modeled explicitly"
+
 
 
 
@@ -7237,6 +7570,7 @@ decoder = "exact 37-byte body and all global/high-memory addresses checked; DEC/
 
 
 
+
 [[function]]
 assembly_symbol = "SetLastBlackoutMap"
 assembly_source = "engine/events/set_blackout_map.asm"
@@ -7252,6 +7586,7 @@ observables = [
 ]
 proof_domain = "all register/flag and global inputs and every terminating symbolic rest-house sequence; setup/update proofs compose with exhaustive continue, match, and terminator transitions plus exact saved-HL restoration"
 decoder = "exact 26-byte body and table/global addresses checked; symbolic HLI fetch, both CP operations, all three loop outcomes, conditional update, and push/pop HL restoration modeled explicitly"
+
 
 
 
@@ -7275,6 +7610,7 @@ decoder = "exact 37-byte body and all nine global addresses checked; all four RE
 
 
 
+
 [[function]]
 assembly_symbol = "LoadCoinsToSubtract"
 assembly_source = "engine/events/prize_menu.asm"
@@ -7290,6 +7626,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 256 prize indices, arbitrary bytes at both computed price addresses, and every initial output byte"
 decoder = "exact 21-byte body and all global/base addresses checked; ADD A, ADD HL,DE, XOR flags, computed HLI/plain reads, all high-memory stores, and pointer increment modeled explicitly"
+
 
 
 
@@ -7313,6 +7650,7 @@ decoder = "exact 25-byte body and all global/table addresses checked; both ADD A
 
 
 
+
 [[function]]
 assembly_symbol = "GetPrizeMonLevel"
 assembly_source = "engine/events/prize_menu.asm"
@@ -7327,6 +7665,7 @@ observables = [
 ]
 proof_domain = "all register/flag and global inputs and every finite dictionary prefix ending in a matching species; setup and finish compose with an exhaustive symbolic match/nonmatch recurrence including HL wraparound"
 decoder = "exact 19-byte body and all global/table addresses checked; symbolic HLI/plain reads, CP flags, both loop paths, INC HL, final absolute store, and return modeled explicitly"
+
 
 
 
@@ -7349,6 +7688,7 @@ decoder = "exact 19-byte body and table address checked; push/pop HL composition
 
 
 
+
 [[function]]
 assembly_symbol = "CalcCheckSum"
 assembly_source = "engine/menus/save.asm"
@@ -7361,6 +7701,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, every 16-bit HL/BC pair including wraparound and BC=0's 65536 iterations, and every finite symbolic input byte sequence; setup/finish compose with an exhaustive recurrence"
 decoder = "exact 13-byte body checked; symbolic HLI fetch, ADD flags, DEC BC, OR flags, both loop paths, CPL flags, and return modeled explicitly"
+
 
 
 
@@ -7385,6 +7726,7 @@ decoder = "exact 98-byte body and all global/table addresses checked; four CP op
 
 
 
+
 [[function]]
 assembly_symbol = "GetMachinePrice"
 assembly_source = "engine/items/tm_prices.asm"
@@ -7403,6 +7745,7 @@ decoder = "exact 33-byte body and all global/table addresses checked; SUB early 
 
 
 
+
 [[function]]
 assembly_symbol = "CureVolatileStatuses"
 assembly_source = "engine/battle/move_effects/haze.asm"
@@ -7415,6 +7758,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL pointers including wraparound, and all 2^24 initial status-byte combinations"
 decoder = "exact 12-byte body checked; RES without flag changes, INC/HLI pointer effects, both AND masks and flags, all three memory transformations, and return modeled explicitly"
+
 
 
 
@@ -7437,6 +7781,7 @@ decoder = "exact 16-byte body and all global addresses checked; push/pop HL, hig
 
 
 
+
 [[function]]
 assembly_symbol = "GetTitleBallY"
 assembly_source = "engine/movie/title2.asm"
@@ -7455,6 +7800,7 @@ decoder = "exact 18-byte body and all table/global addresses checked; push/pop D
 
 
 
+
 [[function]]
 assembly_symbol = "Delay3"
 assembly_source = "home/palettes.asm"
@@ -7466,6 +7812,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; DelayFrame inlined as no-op return"
 decoder = "exact 20-byte linked body checked; `call DelayFrames` modeled as no-op return; `ld c,imm`/`jp` run natively"
+
 
 
 
@@ -7488,6 +7835,7 @@ decoder = "exact 17-byte body and all high-memory addresses checked; independent
 
 
 
+
 [[function]]
 assembly_symbol = "ScalePixelsByTwo"
 assembly_source = "engine/battle/scale_sprites.asm"
@@ -7502,6 +7850,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, every four-bit pixel pattern, all 16-bit destination HL/BC values including decrement/add wraparound, and arbitrary initial destination bytes"
 decoder = "exact 17-byte body and 16-byte lookup table checked; push/pop HL, AND/ADD/INC/ADD HL,BC flags, table lookup, HLD/plain stores, and final pointer modeled explicitly"
+
 
 
 
@@ -7522,6 +7871,7 @@ decoder = "exact 10-byte body checked; four symbolic HLI reads, DE/BC register a
 
 
 
+
 [[function]]
 assembly_symbol = "CopyVideoData"
 assembly_source = "home/copy2.asm"
@@ -7537,6 +7887,7 @@ decoder = "exact 38-byte linked body checked; `ldh [a8],a`/`ldh a,[a8]` (0xE0/0x
 
 
 
+
 [[function]]
 assembly_symbol = "ClearScreen"
 assembly_source = "home/copy2.asm"
@@ -7548,6 +7899,7 @@ decoder = "exact 20-byte linked body checked; `jp Delay3` modeled as no-op retur
 observables = [
     "wTileMap[0..SCREEN_AREA+1] (cleared to space 0x7F)",
 ]
+
 
 
 
@@ -7568,6 +7920,7 @@ decoder = "exact 10-byte body checked; immediate writes, both INC HL operations,
 
 
 
+
 [[function]]
 assembly_symbol = "BattleTransition_HorizontalStripes_"
 assembly_source = "engine/battle/battle_transitions.asm"
@@ -7580,6 +7933,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and all 16-bit HL values including forty-byte stride wraparound; setup composes with exhaustive one-step recurrence through the fixed nine iterations"
 decoder = "exact 12-byte body checked; immediate writes, ADD HL,DE carry, DEC flags, both loop paths, and return modeled explicitly"
+
 
 
 
@@ -7600,6 +7954,7 @@ decoder = "exact 13-byte body checked; four symbolic HLI reads, both SUB and DEC
 
 
 
+
 [[function]]
 assembly_symbol = "SearchTextBoxTable"
 assembly_source = "engine/menus/text_box.asm"
@@ -7612,6 +7967,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL/DE values including decrement/stride wraparound, and every finite symbolic table sequence ending in either C or $ff; setup composes with exhaustive three-outcome recurrence"
 decoder = "exact 14-byte body checked; DEC DE, symbolic HLI fetch, both CP operations, SCF, ADD HL,DE flags, all three outcomes, and return modeled explicitly"
+
 
 
 
@@ -7632,6 +7988,7 @@ decoder = "exact 15-byte body and tilemap base checked; immediate blank writes, 
 
 
 
+
 [[function]]
 assembly_symbol = "StatusScreen_PrintPP"
 assembly_source = "engine/pokemon/status_screen.asm"
@@ -7644,6 +8001,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL/DE values including HLI/HLD and stride wraparound, every A byte, and every C count including the 256-iteration zero case; exhaustive recurrence composes the full loop"
 decoder = "exact 7-byte body checked; HLI/HLD writes, ADD HL,DE carry, DEC C flags, both loop paths, and return modeled explicitly"
+
 
 
 
@@ -7666,6 +8024,7 @@ decoder = "exact 21-byte body and all global/OAM addresses checked; both ADD ope
 
 
 
+
 [[function]]
 assembly_symbol = "CopyMapConnectionHeader"
 assembly_source = "home/overworld.asm"
@@ -7678,6 +8037,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and all 16-bit HL/DE values including source/destination wraparound and overlap; setup composes with exhaustive one-byte recurrence through eleven sequential copies"
 decoder = "exact 9-byte body checked; symbolic HLI read, DE store/increment, DEC C flags with carry preservation, both loop paths, and return modeled explicitly"
+
 
 
 
@@ -7699,6 +8059,7 @@ decoder = "exact 11-byte body checked; push/pop DE lifecycle, HLI write, DEC BC,
 
 
 
+
 [[function]]
 assembly_symbol = "CopyDataUntil"
 assembly_source = "home/move_mon.asm"
@@ -7711,6 +8072,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL/BC/DE values including source/destination wraparound, overlap, and the 65536-iteration initial-HL=BC case; exhaustive recurrence covers both high-byte and low-byte continuation paths"
 decoder = "exact 12-byte body checked; symbolic HLI read, DE store/increment, both CP operations and loop branches, final return, and sequential overlap semantics modeled explicitly"
+
 
 
 
@@ -7732,6 +8094,7 @@ decoder = "exact 18-byte body and tilemap base checked; push/pop BC lifecycle, A
 
 
 
+
 [[function]]
 assembly_symbol = "WriteMonMoves_ShiftMoveData"
 assembly_source = "engine/pokemon/evos_moves.asm"
@@ -7744,6 +8107,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and all 16-bit HL/DE values including wraparound and overlapping move slots; fixed setup composes with exhaustive one-byte recurrence through three shifts"
 decoder = "exact 9-byte body checked; INC DE, symbolic computed read, HLI write, DEC C flags with carry preservation, both loop paths, and return modeled explicitly"
+
 
 
 
@@ -7764,6 +8128,7 @@ decoder = "exact 11-byte body and SPRITEBUFFERSIZE constant checked; XOR flags, 
 
 
 
+
 [[function]]
 assembly_symbol = "CopyToRedrawRowOrColumnSrcTiles"
 assembly_source = "home/overworld.asm"
@@ -7780,6 +8145,7 @@ decoder = "exact 12-byte body and destination address checked; symbolic HLI read
 
 
 
+
 [[function]]
 assembly_symbol = "GetHealthBarColor"
 assembly_source = "home/palettes.asm"
@@ -7792,6 +8158,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 256 E pixel lengths, and every initial destination byte across green, yellow, and red paths"
 decoder = "exact 15-byte body checked; both CP operations, both INC D flag transitions with carry preservation, all three branches, computed store, and return modeled explicitly"
+
 
 
 
@@ -7814,6 +8181,7 @@ decoder = "exact 13-byte body and all high-memory/hardware addresses checked; XO
 
 
 
+
 [[function]]
 assembly_symbol = "Wait7000"
 assembly_source = "engine/gfx/palettes.asm"
@@ -7826,6 +8194,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs; fixed DE=7000 setup composes with exhaustive one-step recurrence, including low-byte borrow and final zero transition"
 decoder = "exact 12-byte body checked; three NOPs, DEC DE, OR flags, both loop paths, and return modeled explicitly"
+
 
 
 
@@ -7843,6 +8212,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL/DE strides including wraparound, every B count, and every finite symbolic sequence ending in either the target C or $ff; setup composes with exhaustive continue/found/not-found recurrence"
 decoder = "exact 17-byte body checked; symbolic computed read, both CP operations, INC B, ADD HL,DE flags, AND not-found flags, SCF match flags, all outcomes, and return modeled explicitly"
+
 
 
 
@@ -7865,6 +8235,7 @@ decoder = "exact 19-byte body and global address checked; computed CP read, cond
 
 
 
+
 [[function]]
 assembly_symbol = "CountSetBits"
 assembly_source = "home/count_set_bits.asm"
@@ -7882,6 +8253,7 @@ decoder = "exact 23-byte body and output address checked; symbolic HLI reads, SR
 
 
 
+
 [[function]]
 assembly_symbol = "GetRowColAddressBgMap"
 assembly_source = "home/vcopy.asm"
@@ -7893,6 +8265,7 @@ observables = [
 ]
 proof_domain = "all register and flag inputs, including every row, column, and background-map high byte"
 decoder = "exact 19-byte body checked; XOR, all three SRL/RR carry transfers, both OR operations, register moves, and return boundary modeled explicitly"
+
 
 
 
@@ -7915,6 +8288,7 @@ decoder = "exact 21-byte body and all three HRAM addresses checked; saved HL, HL
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_GetWheelTiles"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -7928,6 +8302,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit source and destination pointers including wraparound and arbitrary overlap, and arbitrary source/destination bytes; setup composes with exactly three exhaustive copy recurrences"
 decoder = "exact 14-byte body checked; offset ADD HL flags, HLI read, DE store/increment, extra HL stride, DEC C flags, both loop paths, and return modeled explicitly"
+
 
 
 
@@ -7948,6 +8323,7 @@ decoder = "exact 18-byte body checked; both saved register pairs, HLI writes, DE
 
 
 
+
 [[function]]
 assembly_symbol = "IncrementDayCareMonExp"
 assembly_source = "engine/overworld/daycare_exp.asm"
@@ -7961,6 +8337,7 @@ observables = [
 ]
 proof_domain = "all register/flag and daycare-state inputs, including every three-byte experience value and every in-use byte"
 decoder = "exact 23-byte body and global addresses checked; AND early exit, all three computed INC writes and flags, every conditional return, high-byte comparison/clamp, and return modeled explicitly"
+
 
 
 
@@ -7983,6 +8360,7 @@ decoder = "exact 28-byte body and all three global addresses checked; both loads
 
 
 
+
 [[function]]
 assembly_symbol = "IsPlayerCharacterBeingControlledByGame"
 assembly_source = "home/npc_movement.asm"
@@ -8001,6 +8379,7 @@ decoder = "exact 17-byte body and all three global addresses checked; global loa
 
 
 
+
 [[function]]
 assembly_symbol = "DebugPressedOrHeldB"
 assembly_source = "home/npc_movement.asm"
@@ -8012,6 +8391,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs in the linked retail build"
 decoder = "single generic-Z80-compatible RET; debug-only conditional source is absent from this ROM build"
+
 
 
 
@@ -8033,6 +8413,7 @@ decoder = "exact 10-byte body and linked HRAM/event address checked; zero early 
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo8F_UnlockedDoorEventScript"
 assembly_source = "scripts/SilphCo8F.asm"
@@ -8046,6 +8427,7 @@ observables = [
 ]
 proof_domain = "all register/flag, unlocked-door, and event-byte inputs"
 decoder = "exact 10-byte body and linked HRAM/event address checked; zero early return and SET 0 path modeled explicitly"
+
 
 
 
@@ -8067,6 +8449,7 @@ decoder = "exact 10-byte body and linked HRAM/event address checked; zero early 
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo11FSetUnlockedDoorEventScript"
 assembly_source = "scripts/SilphCo11F.asm"
@@ -8080,6 +8463,7 @@ observables = [
 ]
 proof_domain = "all register/flag, unlocked-door, and event-byte inputs"
 decoder = "exact 10-byte body and linked HRAM/event address checked; zero early return and SET 0 path modeled explicitly"
+
 
 
 
@@ -8101,6 +8485,7 @@ decoder = "exact 12-byte body and both linked addresses checked; BIT 1 carry pre
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo2F_UnlockedDoorEventScript"
 assembly_source = "scripts/SilphCo2F.asm"
@@ -8114,6 +8499,7 @@ observables = [
 ]
 proof_domain = "all register/flag, door-counter, and event-byte inputs, including out-of-range counters"
 decoder = "exact 17-byte body/address checked; zero exit, CP 1 split, both SET paths, and returns modeled explicitly"
+
 
 
 
@@ -8135,6 +8521,7 @@ decoder = "exact 17-byte body/address checked; zero exit, CP 1 split, both SET p
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo4FUnlockedDoorEventScript"
 assembly_source = "scripts/SilphCo4F.asm"
@@ -8148,6 +8535,7 @@ observables = [
 ]
 proof_domain = "all register/flag, door-counter, and event-byte inputs, including out-of-range counters"
 decoder = "exact 17-byte body/address checked; zero exit, CP 1 split, both SET paths, and returns modeled explicitly"
+
 
 
 
@@ -8169,6 +8557,7 @@ decoder = "exact 24-byte body/address checked; zero exit, CP 1/2 splits, all thr
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo7F_UnlockedDoorEventScript"
 assembly_source = "scripts/SilphCo7F.asm"
@@ -8182,6 +8571,7 @@ observables = [
 ]
 proof_domain = "all register/flag, door-counter, and event-byte inputs, including out-of-range counters"
 decoder = "exact 24-byte body/address checked; zero exit, CP 1/2 splits, all three SET paths, and returns modeled explicitly"
+
 
 
 
@@ -8203,6 +8593,7 @@ decoder = "exact 34-byte body/address checked; zero exit, CP 1/2/3/4 splits, fou
 
 
 
+
 [[function]]
 assembly_symbol = "OaksLabLoadTextPointers2Script"
 assembly_source = "scripts/OaksLab.asm"
@@ -8215,6 +8606,7 @@ observables = [
 ]
 proof_domain = "all register/flag and prior pointer-byte inputs"
 decoder = "exact 12-byte body and linked source/destination addresses checked; both pointer-byte stores and return modeled explicitly"
+
 
 
 
@@ -8236,6 +8628,7 @@ decoder = "exact 24-byte body and all linked addresses checked; BIT 0 carry pres
 
 
 
+
 [[function]]
 assembly_symbol = "HideSprites"
 assembly_source = "home/clear_sprites.asm"
@@ -8249,6 +8642,7 @@ observables = [
 ]
 proof_domain = "all register/flag and 160 OAM-byte inputs; constant setup composes with exhaustive stride-four recurrence for exactly 40 entries"
 decoder = "exact 16-byte body and OAM bounds checked; symbolic write, ADD HL/DE flags, DEC B flags, both loop paths, and return modeled explicitly"
+
 
 
 
@@ -8271,6 +8665,7 @@ decoder = "exact 44-byte body and globals checked; saved HL, all HLI reads, coun
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo4F_SetCardKeyDoorYScript"
 assembly_source = "scripts/SilphCo4F.asm"
@@ -8285,6 +8680,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and arbitrary terminated coordinate tables, including pointer wraparound; proven shared recurrence"
 decoder = "exact identical 44-byte linked body checked against the proven card-key-door recurrence"
+
 
 
 
@@ -8308,6 +8704,7 @@ decoder = "exact 23-byte body and all linked addresses checked; SET 7, direction
 
 
 
+
 [[function]]
 assembly_symbol = "Route7GateMovePlayerLeftScript"
 assembly_source = "scripts/Route7Gate.asm"
@@ -8323,6 +8720,7 @@ observables = [
 ]
 proof_domain = "all register/flag and five affected global-byte inputs"
 decoder = "exact 23-byte body and all linked addresses checked; left-direction constant and full shared tail modeled explicitly"
+
 
 
 
@@ -8346,6 +8744,7 @@ decoder = "exact 23-byte body and all linked addresses checked; right-direction 
 
 
 
+
 [[function]]
 assembly_symbol = "CeladonMartElevatorStoreWarpEntriesScript"
 assembly_source = "scripts/CeladonMartElevator.asm"
@@ -8359,6 +8758,7 @@ observables = [
 ]
 proof_domain = "all register/flag, source-global, and four overwritten destination-byte inputs"
 decoder = "exact 21-byte body and linked addresses checked; local CALL plus fallthrough executes the HLI store helper twice, with both returns modeled"
+
 
 
 
@@ -8380,6 +8780,7 @@ decoder = "exact 21-byte body and linked addresses checked; local CALL target an
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCoElevatorStoreWarpEntriesScript"
 assembly_source = "scripts/SilphCoElevator.asm"
@@ -8393,6 +8794,7 @@ observables = [
 ]
 proof_domain = "all register/flag, source-global, and four overwritten destination-byte inputs"
 decoder = "exact 21-byte body and linked addresses checked; local CALL target and double helper execution modeled explicitly"
+
 
 
 
@@ -8415,6 +8817,7 @@ decoder = "exact identical 44-byte linked body checked against the proven card-k
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo8F_SetCardKeyDoorYScript"
 assembly_source = "scripts/SilphCo8F.asm"
@@ -8429,6 +8832,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and arbitrary terminated coordinate tables, including pointer wraparound; proven shared recurrence"
 decoder = "exact identical 44-byte linked body checked against the proven card-key-door recurrence"
+
 
 
 
@@ -8451,6 +8855,7 @@ decoder = "exact identical 44-byte linked body checked against the proven card-k
 
 
 
+
 [[function]]
 assembly_symbol = "SilphCo11F_SetCardKeyDoorYScript"
 assembly_source = "scripts/SilphCo11F.asm"
@@ -8465,6 +8870,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and arbitrary terminated coordinate tables, including pointer wraparound; proven shared recurrence"
 decoder = "exact identical 44-byte linked body checked against the proven card-key-door recurrence"
+
 
 
 
@@ -8487,6 +8893,7 @@ decoder = "exact 23-byte fallthrough body and linked addresses checked; fixed wh
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_GetWheel2Tiles"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -8501,6 +8908,7 @@ observables = [
 ]
 proof_domain = "all register/flag and wheel-offset inputs and arbitrary source/destination bytes; both exhaustive fixed setups compose with two independently proven three-copy shared-tail invocations"
 decoder = "exact 38-byte body and linked addresses checked; CALL updates wheel 2, then source fallthrough updates wheel 1 before return"
+
 
 
 
@@ -8523,6 +8931,7 @@ decoder = "exact 53-byte body and linked addresses checked; nested CALL/fallthro
 
 
 
+
 [[function]]
 assembly_symbol = "GetMonCountsForBoxesInBank"
 assembly_source = "engine/menus/save.asm"
@@ -8536,6 +8945,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL destinations including wraparound and arbitrary source/destination overlap, and arbitrary memory bytes; six exact source-addressed copies compose from an exhaustive symbolic read/HLI-write transition"
 decoder = "exact 25-byte body and all six linked SRAM addresses checked; load-before-store ordering, HLI wraparound, untouched flags, and return compose through six unrolled transitions"
+
 
 
 
@@ -8557,6 +8967,7 @@ decoder = "exact 13-byte body and pointer-global addresses checked; saved A in B
 
 
 
+
 [[function]]
 assembly_symbol = "EraseMenuCursor"
 assembly_source = "home/window.asm"
@@ -8570,6 +8981,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, every 16-bit cursor destination, and arbitrary destination/global bytes with exact alias constraints when the destination overlaps either pointer byte"
 decoder = "exact 11-byte body and pointer-global addresses checked; both loads, computed 7F write including self-overlap, final A/HL, untouched flags, and return modeled explicitly"
+
 
 
 
@@ -8593,6 +9005,7 @@ decoder = "exact 16-byte body and both global addresses checked; initializer/fin
 
 
 
+
 [[function]]
 assembly_symbol = "UpdateIntroNidorinoOAM"
 assembly_source = "engine/movie/intro.asm"
@@ -8606,6 +9019,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global and OAM-byte inputs and every C count, including zero's 256 entries; fixed initializer composes with an exhaustive four-byte-stride recurrence"
 decoder = "exact 25-byte body and linked addresses checked; both ADD [HL] flag calculations, three HLI stores, attribute skip, INC D, DEC C, loop/return paths, and pointer carries modeled explicitly"
+
 
 
 
@@ -8628,6 +9042,7 @@ decoder = "exact 33-byte body and linked addresses checked; four HLI writes, zer
 
 
 
+
 [[function]]
 assembly_symbol = "VermilionDock_AnimSmokePuffDriftRight"
 assembly_source = "scripts/VermilionDock.asm"
@@ -8641,6 +9056,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global and OAM inputs, including every swapped drift count and zero's 256 entries; saved-register setup/restoration compose with an exhaustive stride-four recurrence"
 decoder = "exact 23-byte body and linked addresses checked; PUSH/POP-preserved pairs, SWAP flags, two memory increments, ADD HL flags, DEC C paths, loop, and return modeled explicitly"
+
 
 
 
@@ -8662,6 +9078,7 @@ decoder = "exact 41-byte body and linked addresses checked; nested PUSH/POP loop
 
 
 
+
 [[function]]
 assembly_symbol = "PickPokeball"
 assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
@@ -8675,6 +9092,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL/DE pointers including final pointer wraparound, and every HP-high/HP-low/status/destination byte"
 decoder = "exact 31-byte body checked; all fainted/alive/status/healthy branches, HLI and pointer increments, destination store, BC constant, ADD HL flags, and return modeled explicitly"
+
 
 
 
@@ -8696,6 +9114,7 @@ decoder = "exact 37-byte body and base-tile address checked; saved BC/DE, all HL
 
 
 
+
 [[function]]
 assembly_symbol = "WriteTownMapSpriteOAM"
 assembly_source = "engine/items/town_map.asm"
@@ -8713,6 +9132,7 @@ decoder = "exact 45-byte fallthrough body checked; saved destination HL, FCFC co
 
 
 
+
 [[function]]
 assembly_symbol = "WritePlayerOrBirdSpriteOAM"
 assembly_source = "engine/items/town_map.asm"
@@ -8726,6 +9146,7 @@ observables = [
 ]
 proof_domain = "all register/flag/base-tile and coordinate inputs; both player/bird selection paths compose with the proven coordinate setup and asymmetric writer"
 decoder = "exact 57-byte fallthrough body and both OAM destination constants checked; AND branch selects sprite 36 or 32 before the two proven shared stages"
+
 
 
 
@@ -8748,6 +9169,7 @@ decoder = "exact 51-byte body and both global addresses checked; attribute initi
 
 
 
+
 [[function]]
 assembly_symbol = "FindHiddenItemOrCoinsIndex"
 assembly_source = "engine/events/hidden_items.asm"
@@ -8761,6 +9183,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and every finite three-byte table sequence ending in FF, including all mismatch positions and 16-bit pointer wraparound"
 decoder = "exact 36-byte body and three global addresses checked; initializer composes with exhaustive terminator/map/Y/X mismatch and match recurrence, HLI increments, flags, and returns"
+
 
 
 
@@ -8782,6 +9205,7 @@ decoder = "exact 24-byte body and buffer address checked; DE/HL setup, both term
 
 
 
+
 [[function]]
 assembly_symbol = "LoadTownMapEntry"
 assembly_source = "engine/items/town_map.asm"
@@ -8795,6 +9219,7 @@ observables = [
 ]
 proof_domain = "all register/flag/map inputs, every external entry, and every finite sorted internal prefix ending above the requested map, including pointer arithmetic wraparound"
 decoder = "exact 34-byte body and table addresses checked; external triple-index addition, exhaustive internal scan recurrence, common HLI coordinate/name decode, destination write, and return modeled explicitly"
+
 
 
 
@@ -8816,6 +9241,7 @@ decoder = "exact 20-byte body and pointer address checked; two pointer loads, co
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_UpdateBallTiles"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -8829,6 +9255,7 @@ observables = [
 ]
 proof_domain = "all register/flag/tile/destination inputs and every 16-bit HL, including wraparound and exact alias constraints when a destination overlaps the tile global"
 decoder = "exact 21-byte body and source-global address checked; all four writes, three ADD HL operations and flags, INC A flags, BC constants, self-alias effects, and return modeled explicitly"
+
 
 
 
@@ -8850,6 +9277,7 @@ decoder = "exact 24-byte fallthrough body checked; C41B setup composes with the 
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_UpdateTwoCoinBallTiles"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -8863,6 +9291,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global and destination inputs; three fixed setups compose with three proven four-write updates"
 decoder = "exact 36-byte CALL/fallthrough body checked; C3F3, C443, and C41B update stages compose through return"
+
 
 
 
@@ -8884,6 +9313,7 @@ decoder = "exact 48-byte CALL/fallthrough body checked; C3CB, C46B, C3F3, C443, 
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_PutOutLitBalls"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -8897,6 +9327,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global and destination inputs; exhaustive 23-tile initializer composes with the proven three-coin cascade"
 decoder = "exact 7-byte entry and JR target checked; constant store composes with the exact 48-byte three-coin target"
+
 
 
 
@@ -8919,6 +9350,7 @@ decoder = "exact 14-byte dispatcher and all three branch targets checked; consta
 
 
 
+
 [[function]]
 assembly_symbol = "IsBikeRidingAllowed"
 assembly_source = "home/overworld.asm"
@@ -8937,6 +9369,7 @@ decoder = "exact 29-byte body and global/table addresses checked; two direct com
 
 
 
+
 [[function]]
 assembly_symbol = "CheckIfCoordsInFrontOfPlayerMatch"
 assembly_source = "engine/overworld/hidden_events.asm"
@@ -8950,6 +9383,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/output inputs, every facing byte including undocumented values, and every coordinate combination"
 decoder = "exact 63-byte body and four global addresses checked; all facing branches, coordinate INC/DEC and comparisons, match/nonmatch flags, output store, and return execute symbolically"
+
 
 
 
@@ -8972,6 +9406,7 @@ decoder = "exact 53-byte body and eight linked addresses checked; all facing bra
 
 
 
+
 [[function]]
 assembly_symbol = "GetMoveGrammar"
 assembly_source = "engine/battle/used_move_text.asm"
@@ -8985,6 +9420,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and every finite table sequence ending in matching move or FF, including arbitrary zero separators and pointer wraparound"
 decoder = "exact 30-byte body and global/table addresses checked; saved BC setup/restoration, exhaustive match/terminator/zero/nonzero recurrence, B increments, output store, and return modeled explicitly"
+
 
 
 
@@ -9005,6 +9441,7 @@ decoder = "exact 60-byte body checked; saved pairs, byte/bit calculation, exhaus
 
 
 
+
 [[function]]
 assembly_symbol = "ToggleableObjectFlagAction"
 assembly_source = "engine/overworld/toggleable_objects.asm"
@@ -9017,6 +9454,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, every 16-bit HL, every C bit index, every B action byte, and every bitfield byte"
 decoder = "exact 63-byte alternate-encoding body checked against the same exhaustive bitfield semantics, including every shift/action path and saved-register restoration"
+
 
 
 
@@ -9034,6 +9472,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global and table-byte inputs, including every masked box number and all computed table positions beyond the documented 0-11 domain"
 decoder = "exact 26-byte body and global/table addresses checked; bank branch, mask/compare/INC/SUB flags, doubled pointer arithmetic, HLI pointer decode, and return modeled explicitly"
+
 
 
 
@@ -9056,6 +9495,7 @@ decoder = "exact 25-byte body and linked addresses checked; selector setup and d
 
 
 
+
 [[function]]
 assembly_symbol = "SaveTrainerName"
 assembly_source = "engine/battle/save_trainer_name.asm"
@@ -9074,6 +9514,7 @@ decoder = "exact 26-byte body and linked addresses checked; DEC selector flags, 
 
 
 
+
 [[function]]
 assembly_symbol = "BoostExp"
 assembly_source = "engine/battle/experience.asm"
@@ -9086,6 +9527,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and every two-byte experience quotient, including all shift, addition, half-carry, and carry-over combinations"
 decoder = "exact 19-byte body and HRAM addresses checked; SRL B, carry-fed RR C, low ADD, high ADC, both stores, final registers/flags, and return modeled explicitly"
+
 
 
 
@@ -9107,6 +9549,7 @@ decoder = "exact 16-byte body and HRAM address checked; two immediate writes, IN
 
 
 
+
 [[function]]
 assembly_symbol = "WakeUpEntireParty"
 assembly_source = "engine/items/item_effects.asm"
@@ -9120,6 +9563,7 @@ observables = [
 ]
 proof_domain = "all register/flag/status inputs under the documented six-member party-buffer contract; fixed initializer composes with six exhaustive sleep/non-sleep transitions and pointer wraparound"
 decoder = "exact 24-byte body and global address checked; saved AF, sleep mask path, conditional global store, B mask, status write, ADD HL flags, DEC C recurrence, and return modeled explicitly"
+
 
 
 
@@ -9142,6 +9586,7 @@ decoder = "exact 74-byte body and linked addresses checked; generic table-index 
 
 
 
+
 [[function]]
 assembly_symbol = "AIGetTypeEffectiveness"
 assembly_source = "engine/battle/core.asm"
@@ -9155,6 +9600,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and every finite sequence of arbitrary three-byte matchup records ending in $ff, including both player types and pointer wraparound"
 decoder = "exact 43-byte body and linked addresses checked; initializer composes with exhaustive attacker mismatch, first/second defender match, defender mismatch, and terminator transitions"
+
 
 
 
@@ -9178,6 +9624,7 @@ decoder = "exact 57-byte body and all global addresses checked; initialization s
 
 
 
+
 [[function]]
 assembly_symbol = "GetTileSpriteStandsOn"
 assembly_source = "engine/overworld/movement.asm"
@@ -9192,6 +9639,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/pixel inputs and every sprite offset, including HLI full-pointer carry, INC-L wrap, coordinate overflow, and all ADD-HL carry combinations"
 decoder = "exact 40-byte body and linked constants checked; Y alignment/masking, X tile conversion, five row-stride additions, final column addition, and all intermediate flag behavior modeled explicitly"
+
 
 
 
@@ -9213,6 +9661,7 @@ decoder = "exact 39-byte body checked; conditional local call, low-byte ADD, car
 
 
 
+
 [[function]]
 assembly_symbol = "HalveSelectedStats"
 assembly_source = "engine/battle/unused_stats_functions.asm"
@@ -9226,6 +9675,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/stat inputs; turn-dependent initializer composes with four exhaustive selected/unselected transitions, arbitrary pointer wraparound, every right-shift carry, and the zero-to-one clamp"
 decoder = "exact 44-byte body checked; conditional local call, high-byte SRL, carry-fed low-byte RR, OR zero test, minimum-one clamp, restored stat pointer, and DEC-C termination modeled explicitly"
+
 
 
 
@@ -9249,6 +9699,7 @@ decoder = "exact 44-byte body and all linked addresses checked; initializer comp
 
 
 
+
 [[function]]
 assembly_symbol = "IsPlayerStandingOnWarpPadOrHole"
 assembly_source = "engine/overworld/player_animations.asm"
@@ -9267,6 +9718,7 @@ decoder = "exact 34-byte body and linked addresses checked; initializer and fina
 
 
 
+
 [[function]]
 assembly_symbol = "GetCutOrBoulderDustAnimationOffsets"
 assembly_source = "engine/overworld/cut.asm"
@@ -9281,6 +9733,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/table inputs and every direction/selector byte, including undocumented directions, computed reads beyond both documented four-entry tables, and all pointer/arithmetic carries"
 decoder = "exact 39-byte body and linked addresses checked; sprite-state pointer movement, direction SRL, cut/boulder base selection, ADD-HL indexing, offset fetches, and coordinate additions modeled explicitly"
+
 
 
 
@@ -9304,6 +9757,7 @@ decoder = "exact 30-byte body and linked addresses checked; raw direction indexi
 
 
 
+
 [[function]]
 assembly_symbol = "GetSpriteScreenXY"
 assembly_source = "engine/gfx/sprite_oam.asm"
@@ -9318,6 +9772,7 @@ observables = [
 ]
 proof_domain = "all register/flag/memory inputs and every initial DE, including low-byte-only wrap and every alias relation among the two sources, two HRAM scratch bytes, and two destinations"
 decoder = "exact 28-byte body and HRAM offsets checked; INC-E addressing, ordered scratch stores/loads, ADD/AND alignment, alias-sensitive adjusted writes, and final registers/flags modeled explicitly"
+
 
 
 
@@ -9341,6 +9796,7 @@ decoder = "exact 77-byte body and linked addresses checked; facing-bit initializ
 
 
 
+
 [[function]]
 assembly_symbol = "CheckPlayerIsInFrontOfSprite"
 assembly_source = "engine/overworld/trainer_sight.asm"
@@ -9355,6 +9811,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/source inputs and every map/offset/facing byte, including the Power Plant bypass, topmost-tile correction, undocumented facings, and all arithmetic carries"
 decoder = "exact 104-byte body and linked addresses checked; map bypass, both computed sprite reads, Y correction, screen stores, four facing/coordinate decisions, engage/no-engage flag behavior, and final offset store modeled explicitly"
+
 
 
 
@@ -9378,6 +9835,7 @@ decoder = "exact 48-byte body and linked addresses checked; register saves, two 
 
 
 
+
 [[function]]
 assembly_symbol = "InitializeSpriteScreenPosition"
 assembly_source = "engine/overworld/movement.asm"
@@ -9397,6 +9855,7 @@ decoder = "exact 31-byte body and linked addresses checked; computed MAPY/MAPX r
 
 
 
+
 [[function]]
 assembly_symbol = "SetSpriteCollisionValues"
 assembly_source = "engine/overworld/sprite_collisions.asm"
@@ -9408,6 +9867,7 @@ observables = [
 ]
 proof_domain = "all register and flag inputs, including zero, $ff, and every other accumulator value"
 decoder = "exact 19-byte body checked; AND zero test, B/C initialization, $ff comparison, special negative-one path, generic nonzero normalization, and final flags modeled explicitly"
+
 
 
 
@@ -9425,6 +9885,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/memory inputs and every sprite offset, including every low-byte wrap in ADD/L assignment and both HLD pointer decrements"
 decoder = "exact 33-byte body and linked offsets checked; movement delay, facing load, animation resets, image/facing OR, movement status, DEC-H flags, and final H/L/A/B modeled explicitly"
+
 
 
 
@@ -9447,6 +9908,7 @@ decoder = "exact 17-byte body and linked table base checked; exhaustive busy-wai
 
 
 
+
 [[function]]
 assembly_symbol = "SetScrollXForSlidingPlayerBodyLeft"
 assembly_source = "engine/battle/core.asm"
@@ -9464,6 +9926,7 @@ decoder = "exact 14-byte body checked; exhaustive first busy-wait recurrence, H-
 
 
 
+
 [[function]]
 assembly_symbol = "ScrollCreditsMonLeft_SetSCX"
 assembly_source = "engine/movie/credits.asm"
@@ -9477,6 +9940,7 @@ observables = [
 ]
 proof_domain = "all register/flag/hardware inputs and arbitrary finite pre-write/post-write rLY sequences ending with LY equal to L and unequal to H respectively"
 decoder = "exact byte-identical 14-byte body checked independently; both timing recurrences, SCX store, final flags, and return share the proven scanline state machine"
+
 
 
 
@@ -9499,6 +9963,7 @@ decoder = "exact 18-byte caller body checked; first/second H/L call setups and f
 
 
 
+
 [[function]]
 assembly_symbol = "ScrollTitleScreenGameVersion"
 assembly_source = "engine/movie/title.asm"
@@ -9512,6 +9977,7 @@ observables = [
 ]
 proof_domain = "all register/flag/hardware inputs and arbitrary finite pre-write/post-write rLY sequences ending with LY equal to L and unequal to H respectively"
 decoder = "exact byte-identical 14-byte body checked independently at its linked title-screen address; both proven timing recurrences, SCX store, final flags, and return apply unchanged"
+
 
 
 
@@ -9534,6 +10000,7 @@ decoder = "exact 24-byte body checked; H=D/L=$50 call setup and H=0/L=$80 fallth
 
 
 
+
 [[function]]
 assembly_symbol = "TwoOptionMenu_SaveScreenTiles"
 assembly_source = "engine/menus/text_box.asm"
@@ -9547,6 +10014,7 @@ observables = [
 ]
 proof_domain = "all register/flag/memory inputs; fixed initializer composes with 30 exhaustive byte transitions and five exhaustive row transitions, including overlap and 16-bit pointer wraparound"
 decoder = "exact 24-byte body checked; 5x6 HLI/DE copy, DEC-C inner loop, saved BC around ADD-HL 14, C reset, DEC-B outer loop, and final return modeled compositionally"
+
 
 
 
@@ -9565,6 +10033,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/table inputs and every finite arbitrary record sequence ending in a cursor match, including pointer wrap and every battle cursor/option-bit combination"
 decoder = "exact 45-byte body and linked addresses checked; initializer and exhaustive table recurrence compose with value load, both DEC cursor tests, SET/RES bits 7/6, and final options store"
+
 
 
 
@@ -9588,6 +10057,7 @@ decoder = "exact 28-byte body checked; saved HL/BC frames, base-tile ADD byte re
 
 
 
+
 [[function]]
 assembly_symbol = "CopyPicTiles"
 assembly_source = "engine/battle/animations.asm"
@@ -9607,6 +10077,7 @@ decoder = "exact 15-byte entry/setup path through CopyTileIDs_NoBGTransfer check
 
 
 
+
 [[function]]
 assembly_symbol = "CopyTileIDs_NoBGTransfer"
 assembly_source = "engine/battle/animations.asm"
@@ -9620,6 +10091,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/memory inputs and every B/C count; exact transfer-disable entry composes with the proven full-domain CopyTileIDs implementation"
 decoder = "exact 3-byte fallthrough entry checked; XOR-A and high-memory disable store compose directly with the independently proven 28-byte CopyTileIDs body"
+
 
 
 
@@ -9643,6 +10115,7 @@ decoder = "exact 17-byte wrapper checked; proven GetPredefRegisters restoration,
 
 
 
+
 [[function]]
 assembly_symbol = "CallFunctionInTable"
 assembly_source = "home/array2.asm"
@@ -9657,6 +10130,7 @@ observables = [
 ]
 proof_domain = "all register/flag/table/callback-result inputs and every accumulator index, including doubled-index wrap, pointer wraparound, and arbitrary callback A/F results"
 decoder = "exact 20-byte body checked; saved frames, ADD-A/ADD-HL index arithmetic, HLI pointer decode, callback target/return-address setup, arbitrary indirect callback boundary, and three ordered restores compose explicitly"
+
 
 
 
@@ -9680,6 +10154,7 @@ decoder = "exact 23-byte body and linked HRAM offsets checked; computed animatio
 
 
 
+
 [[function]]
 assembly_symbol = "PrintStatusAilment"
 assembly_source = "engine/pokemon/status_ailments.asm"
@@ -9693,6 +10168,7 @@ observables = [
 ]
 proof_domain = "all register/flag/memory inputs and every status byte, including multiple simultaneous ailments, no-status return, sleep mask values, full pointer wrap, and every alias relation between DE and the three destinations"
 decoder = "exact 65-byte body checked; prioritized BIT tests, sleep AND, five three-character outputs, ordered HLI writes, alias effects, return values, and final flags modeled explicitly"
+
 
 
 
@@ -9716,6 +10192,7 @@ decoder = "exact 46-byte entry, 12-byte NotYetMoving fallthrough, and proven 23-
 
 
 
+
 [[function]]
 assembly_symbol = "CallWithTurnFlipped"
 assembly_source = "engine/battle/animations.asm"
@@ -9730,6 +10207,7 @@ observables = [
 ]
 proof_domain = "all register/flag/turn inputs and an arbitrary callback post-state satisfying the routine's return convention; includes every turn byte, XOR wrap behavior, callback changes to all registers and hWhoseTurn, and exact AF/turn restoration"
 decoder = "exact 16-byte body and linked HRAM address checked; LDH, PUSH/POP, XOR, return-address setup, indirect JP boundary, arbitrary callback composition, and ordered AF/global restoration modeled explicitly"
+
 
 
 
@@ -9752,6 +10230,7 @@ decoder = "exact 18-byte dispatcher and 12-byte linked pointer table checked; AN
 
 
 
+
 [[function]]
 assembly_symbol = "Music_DoLowHealthAlarm"
 assembly_source = "audio/low_health_alarm.asm"
@@ -9766,6 +10245,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/hardware inputs and every alarm byte; includes disabled, inactive, high-tone, low-tone, and countdown paths plus the linked fifth-byte overread for each four-byte tone record"
 decoder = "exact 78-byte routine and 13 linked tone/overread bytes checked; CP/BIT/AND/DEC/SET paths, local CALL/RET flow, five-iteration HLI copy, ROM reads, timer reset, and hardware/global writes modeled explicitly"
+
 
 
 
@@ -9788,6 +10268,7 @@ decoder = "exact 24-byte dispatcher and linked pointer-table base checked; LDH/A
 
 
 
+
 [[function]]
 assembly_symbol = "InitOpponent"
 assembly_source = "engine/battle/core.asm"
@@ -9805,6 +10286,7 @@ decoder = "exact 11-byte body and linked global addresses checked; three ordered
 
 
 
+
 [[function]]
 assembly_symbol = "InitBattle"
 assembly_source = "engine/battle/core.asm"
@@ -9818,6 +10300,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and arbitrary post-states for both DetermineWildOpponent and InitBattleCommon; includes the zero wild branch and every nonzero opponent through the complete InitOpponent fallthrough"
 decoder = "exact 6-byte entry and exact 11-byte InitOpponent fallthrough checked; load/AND/JR selection, ordered species writes, destination identity, and arbitrary tail continuations modeled explicitly"
+
 
 
 
@@ -9840,6 +10323,7 @@ decoder = "exact 3-byte PrintType entry and exact 15-byte shared PrintType_ body
 
 
 
+
 [[function]]
 assembly_symbol = "PlayDefaultMusicFadeOutCurrent"
 assembly_source = "home/audio.asm"
@@ -9858,6 +10342,7 @@ decoder = "exact 18-byte entry and linked global/common addresses checked; immed
 
 
 
+
 [[function]]
 assembly_symbol = "PlayMusic"
 assembly_source = "home/audio.asm"
@@ -9871,6 +10356,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and an arbitrary PlaySound post-state; includes every sound ID and audio-bank byte with complete callback changes to modeled registers and globals"
 decoder = "exact 16-byte prefix and linked global/PlaySound addresses checked; register transfer, ordered global writes, XOR-A flags, fallthrough, and arbitrary PlaySound continuation modeled explicitly"
+
 
 
 
@@ -9893,6 +10379,7 @@ decoder = "exact 22-byte body and linked HRAM/mapper addresses checked; LDH, PUS
 
 
 
+
 [[function]]
 assembly_symbol = "CopyData"
 assembly_source = "home/copy.asm"
@@ -9907,6 +10394,7 @@ observables = [
 ]
 proof_domain = "all register/flag/source/destination-byte inputs, all 16-bit BC/DE/HL values including pointer wrap and the 65,536-iteration zero-count case; exhaustive one-step memory-transition equivalence plus the shared recurrence proves the complete copy"
 decoder = "exact 9-byte loop checked; SM83 HLI load, destination store/increment, 16-bit count decrement, OR flags, loop decision, pointer wrap, and source/destination overlap semantics modeled explicitly"
+
 
 
 
@@ -9930,6 +10418,7 @@ decoder = "exact 29-byte body and linked bank addresses checked; bank frame setu
 
 
 
+
 [[function]]
 assembly_symbol = "LoadGBPal"
 assembly_source = "home/fade.asm"
@@ -9944,6 +10433,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/palette inputs and every 8-bit map palette offset; includes low-byte zero, half-borrow, page-borrow, address wrap within the preceding page, and all three ordered palette writes"
 decoder = "exact 23-byte body and linked source/global addresses checked; SUB/DEC flags, JR-NC path split, 16-bit source reconstruction, three HLI reads, and all hardware writes modeled explicitly"
+
 
 
 
@@ -9965,6 +10455,7 @@ decoder = "exact 56-byte body and linked HRAM addresses checked; CP/AND/DEC flag
 
 
 
+
 [[function]]
 assembly_symbol = "WriteDMACodeToHRAM"
 assembly_source = "engine/gfx/oam_dma.asm"
@@ -9977,6 +10468,7 @@ observables = [
 ]
 proof_domain = "all register/flag and prior HRAM inputs; proves the complete fixed ten-iteration copy, source/destination pointer progression, counter termination, and final flags"
 decoder = "exact 14-byte body and exact ten-byte linked DMA payload checked; HLI ROM reads, LDH-C writes, INC/DEC, loop control, and all HRAM results modeled explicitly"
+
 
 
 
@@ -9997,6 +10489,7 @@ decoder = "exact ten-byte HRAM payload checked against its linked ROM source; DM
 
 
 
+
 [[function]]
 assembly_symbol = "ReadJoypad"
 assembly_source = "home/joypad.asm"
@@ -10010,6 +10503,7 @@ observables = [
 ]
 proof_domain = "all register/flag/hardware/global inputs and every stabilized direction/button read; covers every one of the 256 raw direction/button combinations"
 decoder = "exact 59-byte body and linked HRAM address checked; all sixteen polling reads, selection/deselection writes, CPL/AND/SWAP/OR flags, and packed joypad result modeled explicitly"
+
 
 
 
@@ -10032,6 +10526,7 @@ decoder = "exact 26-byte body checked; interrupt masking/restoration, RES/CP/AND
 
 
 
+
 [[function]]
 assembly_symbol = "PrintLevel"
 assembly_source = "home/pokemon.asm"
@@ -10046,6 +10541,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/tile inputs and every 8-bit level, plus an arbitrary PrintNumber post-state; includes the exact 99/100 boundary and pointer/count adjustment"
 decoder = "exact 16-byte entry and exact 11-byte shared common tail checked; HLI write, CP/INC flags, HL adjustment, global store, argument registers, and arbitrary JP continuation modeled explicitly"
+
 
 
 
@@ -10068,6 +10564,7 @@ decoder = "exact 21-byte entry and exact 21-byte far-call tail checked; stack-sa
 
 
 
+
 [[function]]
 assembly_symbol = "CheckCoords"
 assembly_source = "home/map_objects.asm"
@@ -10082,6 +10579,7 @@ observables = [
 ]
 proof_domain = "all register/flag/index/array-byte inputs and every 16-bit HL value including wrap; exhaustive initialization and one-pair transition equivalence compose inductively for every non-aliased terminated coordinate array length"
 decoder = "exact 29-byte body checked; XOR/store initialization, HLI reads, CP/INC/AND/SCF flags, saved HL around index increment, all three loop outcomes, and pointer progression modeled explicitly"
+
 
 
 
@@ -10104,6 +10602,7 @@ decoder = "exact 15-byte body and linked global address checked; BIT/AND flags, 
 
 
 
+
 [[function]]
 assembly_symbol = "Mansion1LoadHorizontalGateBlock"
 assembly_source = "scripts/PokemonMansion1F.asm"
@@ -10117,6 +10616,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and an arbitrary ReplaceTileBlock predef post-state"
 decoder = "exact 7-byte entry and exact 6-byte shared tail checked; tile selection/store, relative jump, predef ID, call/return, and arbitrary callback modeled explicitly"
+
 
 
 
@@ -10138,6 +10638,7 @@ decoder = "exact 5-byte fallthrough entry and exact 6-byte shared tail checked; 
 
 
 
+
 [[function]]
 assembly_symbol = "VermilionCityLeftSSAnneCallbackScript"
 assembly_source = "scripts/VermilionCity.asm"
@@ -10155,6 +10656,7 @@ decoder = "exact 17-byte body and linked script global checked; BIT flags, SET f
 
 
 
+
 [[function]]
 assembly_symbol = "VictoryRoad2FResetBoulderEventScript"
 assembly_source = "scripts/VictoryRoad2F.asm"
@@ -10168,6 +10670,7 @@ observables = [
 ]
 proof_domain = "all register/flag/event inputs and an arbitrary VictoryRoad2FCheckBoulderEventScript post-state"
 decoder = "exact 5-byte entry checked; event address construction, RES without flag changes, fallthrough identity, and arbitrary continuation modeled explicitly"
+
 
 
 
@@ -10190,6 +10693,7 @@ decoder = "exact 13-byte entry and exact 18-byte animation-type tail checked; AN
 
 
 
+
 [[function]]
 assembly_symbol = "PlayCurrentMoveAnimation"
 assembly_source = "engine/battle/effects.asm"
@@ -10208,6 +10712,7 @@ decoder = "exact 17-byte entry and exact 3-byte animation tail checked; XOR/AND 
 
 
 
+
 [[function]]
 assembly_symbol = "CopyUncompressedPicToHL"
 assembly_source = "engine/battle/core.asm"
@@ -10221,6 +10726,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/prior-write inputs and every 16-bit destination pointer; covers normal/flipped layouts, tile-ID wrap, pointer wrap, and final ADD carry"
 decoder = "exact 51-byte body checked; both fixed 7x7 loops, stack restoration, 16-bit pointer arithmetic, INC/DEC/ADD flags, all writes, and both orientations modeled explicitly"
+
 
 
 
@@ -10243,6 +10749,7 @@ decoder = "exact 10-byte entry and exact 51-byte shared body checked; global poi
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_PrintWinningSymbol"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -10260,6 +10767,7 @@ decoder = "exact 25-byte body and linked global checked; ADD/INC/ADD-HL flags, H
 
 
 
+
 [[function]]
 assembly_symbol = "DrawLineBox"
 assembly_source = "engine/pokemon/status_screen.asm"
@@ -10273,6 +10781,7 @@ observables = [
 ]
 proof_domain = "all register/flag/destination inputs and all B/C dimensions including zero's 256-iteration behavior; exhaustive phase transitions compose inductively for the complete shape"
 decoder = "exact 21-byte body checked; DE setup, vertical/horizontal write recurrences, ADD-HL/DEC flags, corner/final writes, pointer wrap, and both loop decisions modeled explicitly"
+
 
 
 
@@ -10295,6 +10804,7 @@ decoder = "exact 3-byte prefix checked; POP ordering, INC-memory result/flags, f
 
 
 
+
 [[function]]
 assembly_symbol = "Trade_AnimCircledMon"
 assembly_source = "engine/movie/trade.asm"
@@ -10308,6 +10818,7 @@ observables = [
 ]
 proof_domain = "all register/flag/palette/OAM inputs; proves the complete concrete 20-iteration loop, all XOR results, and exact restoration of BC, DE, and HL"
 decoder = "exact 29-byte body checked; stack saves/restores, palette flash, twenty XOR/write operations, OAM stride arithmetic, counter flags, and loop termination modeled explicitly"
+
 
 
 
@@ -10329,6 +10840,7 @@ decoder = "exact 8-byte prefix checked; XOR/store/register transfer, INC flags, 
 
 
 
+
 [[function]]
 assembly_symbol = "LoadMonPartySpriteGfx"
 assembly_source = "engine/gfx/mon_icons.asm"
@@ -10341,6 +10853,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and an arbitrary shared-continuation post-state"
 decoder = "exact 5-byte prefix and linked table address checked; HL/A argument construction, fallthrough identity, flag preservation, and arbitrary continuation modeled explicitly"
+
 
 
 
@@ -10362,6 +10875,7 @@ decoder = "exact 15-byte body and linked global checked; flag-array pointer, ind
 
 
 
+
 [[function]]
 assembly_symbol = "CopySGBBorderTiles"
 assembly_source = "engine/gfx/palettes.asm"
@@ -10375,6 +10889,7 @@ observables = [
 ]
 proof_domain = "all register/flag/source/destination-byte inputs and all 16-bit pointers including wrap; exhaustive phase transitions compose for 128 tiles, 2,048 copied bytes, and 2,048 zero bytes"
 decoder = "exact 22-byte body checked; HLI reads, destination writes, both 16-byte inner recurrences, XOR flags, outer counter, pointer progression, and all termination decisions modeled explicitly"
+
 
 
 
@@ -10397,6 +10912,7 @@ decoder = "exact 26-byte body and linked palette base checked; HLI/INC source st
 
 
 
+
 [[function]]
 assembly_symbol = "DeterminePaletteID"
 assembly_source = "engine/gfx/palettes.asm"
@@ -10411,6 +10927,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/read inputs and an arbitrary IndexToPokedex post-state; covers transformed, zero-index, and every nonzero-index path with saved BC restoration"
 decoder = "exact 31-byte body and linked palette base checked; BIT/AND/ADD-HL flags, both early returns, global stores/loads, predef call with BC save/restore, pointer construction, and palette read modeled explicitly"
+
 
 
 
@@ -10432,6 +10949,7 @@ decoder = "exact 44-byte body and linked SRAM address checked; mapper setup/clea
 
 
 
+
 [[function]]
 assembly_symbol = "Serial_ExchangeNybble"
 assembly_source = "home/serial.asm"
@@ -10449,6 +10967,7 @@ decoder = "exact 42-byte body checked; local CALL/RET flow, ADD/CP/AND/XOR flags
 
 
 
+
 [[function]]
 assembly_symbol = "WaitForSoundToFinish"
 assembly_source = "home/delay.asm"
@@ -10462,6 +10981,7 @@ observables = [
 ]
 proof_domain = "all register/flag/alarm/channel inputs and every terminating volatile-channel trace; nonzero polls are observational stutter, with alarm early-return and terminal all-zero poll modeled explicitly"
 decoder = "exact 21-byte body checked; AND/OR/XOR flags, HL save/restore, channel address progression, alarm early return, environment-driven wait, and terminal return modeled explicitly"
+
 
 
 
@@ -10485,6 +11005,7 @@ decoder = "exact 29-byte body checked; initial offset addition, AF/HL stack fram
 
 
 
+
 [[function]]
 assembly_symbol = "WriteOAMBlock"
 assembly_source = "home/oam.asm"
@@ -10498,6 +11019,7 @@ observables = [
 ]
 proof_domain = "all register/flag/source/OAM inputs and every block/Y/X byte; includes swapped block-index wrap, coordinate wrap, source/destination pointer wrap, and exact BC save/restore"
 decoder = "exact 39-byte body checked; SWAP/ADD flags, four call/fallthrough entry writes, stack-saved coordinates, HLI/source increments, OAM pointer progression, and final registers modeled explicitly"
+
 
 
 
@@ -10521,6 +11043,7 @@ decoder = "exact 40-byte body and tail target checked; sprite-state pointer arit
 
 
 
+
 [[function]]
 assembly_symbol = "HandleExplodingAnimation"
 assembly_source = "engine/battle/core.asm"
@@ -10535,6 +11058,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global inputs and an arbitrary PlayMoveAnimation post-state; covers both turns, all move IDs, invulnerability, either Ghost type, missed moves, and successful explosion animation"
 decoder = "exact 52-byte prefix and tail target checked; turn-dependent pointers/moves, CP/BIT/AND flags, HLI type reads, every early return, animation-type write, and arbitrary fallthrough continuation modeled explicitly"
+
 
 
 
@@ -10557,6 +11081,7 @@ decoder = "exact 8-byte prefix through the shared text tail checked; POP HL, DEC
 
 
 
+
 [[function]]
 assembly_symbol = "DrawTrainerPicColumn"
 assembly_source = "engine/battle/scroll_draw_trainer_pic.asm"
@@ -10570,6 +11095,7 @@ observables = [
 ]
 proof_domain = "all register/flag/prior-tile inputs and every 16-bit destination pointer; covers tile-ID wrap, row-pointer wrap, last ADD carry, and exact register restoration"
 decoder = "exact 18-byte body checked; stack saves/restores, seven concrete writes, 20-byte row stride, INC/DEC/ADD flags, loop termination, and final registers modeled explicitly"
+
 
 
 
@@ -10592,6 +11118,7 @@ decoder = "exact 7-byte prefix checked; two LDH reads, HLI/HL writes, POP HL ord
 
 
 
+
 [[function]]
 assembly_symbol = "UpdateLoweredStat"
 assembly_source = "engine/battle/effects.asm"
@@ -10610,6 +11137,7 @@ decoder = "exact 8-byte prefix checked; two LDH reads, HLI/HL writes, POP DE the
 
 
 
+
 [[function]]
 assembly_symbol = "CheckForTilePairCollisions2"
 assembly_source = "home/overworld.asm"
@@ -10624,6 +11152,7 @@ observables = [
 ]
 proof_domain = "all register/flag/tile/global inputs and an arbitrary continuation post-state"
 decoder = "exact 6-byte prefix checked; absolute tile read/store, flag preservation, fallthrough handoff, and arbitrary continuation modeled explicitly"
+
 
 
 
@@ -10648,6 +11177,7 @@ decoder = "exact 24-byte body checked; all absolute reads/writes, CP flags, cond
 
 
 
+
 [[function]]
 assembly_symbol = "ScheduleColumnRedrawHelper"
 assembly_source = "home/overworld.asm"
@@ -10661,6 +11191,7 @@ observables = [
 ]
 proof_domain = "all register/flag and ordered source/write byte inputs for every 16-bit source pointer; source reads are abstracted independently of destination aliasing"
 decoder = "exact 22-byte body checked; fixed 18-row loop, HLI, both writes, DE increments, low-byte ADD carry correction, DEC flags, and final pointers modeled explicitly"
+
 
 
 
@@ -10683,6 +11214,7 @@ decoder = "exact 24-byte body checked; setup stores, pointer byte order, HLI sou
 
 
 
+
 [[function]]
 assembly_symbol = "ReadTrainerHeaderInfo"
 assembly_source = "home/trainers.asm"
@@ -10697,6 +11229,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/header-byte inputs and every 8-bit header offset; covers flag, four pointer, lost-text, and unmatched paths with DE restoration"
 decoder = "exact 52-byte body checked; stack saves/restores, big-endian base pointer, 16-bit offset addition, AND/CP flags, all HLI reads, pointer decode variants, flag store, and returns modeled explicitly"
+
 
 
 
@@ -10719,6 +11252,7 @@ decoder = "exact 100-byte body checked; all LDH aliases, SRL/SLA/RL, four-byte A
 
 
 
+
 [[function]]
 assembly_symbol = "DivideBCD_divDivisorBy10"
 assembly_source = "engine/math/bcd.asm"
@@ -10731,6 +11265,7 @@ observables = [
 ]
 proof_domain = "all register/flag and three divisor-byte inputs, including non-BCD nibbles"
 decoder = "exact 41-byte body checked; every LDH read/write, SWAP, AND/OR nibble transfer, intermediate alias update, final flags, and return modeled explicitly"
+
 
 
 
@@ -10748,6 +11283,7 @@ observables = [
 ]
 proof_domain = "all register/flag/read/write inputs and every C/B byte count including zero's 256 iterations; initialization, exhaustive subtraction, and fill transitions compose inductively"
 decoder = "exact 23-byte body checked; carry clear, SBC/DAA semantics, reverse pointer movement, DEC loop flags, underflow rewind, zero fill, SCF, and all continuation outcomes modeled explicitly"
+
 
 
 
@@ -10770,6 +11306,7 @@ decoder = "exact 136-byte body checked; all LDH aliases, 16-bit SUB/SBC recurren
 
 
 
+
 [[function]]
 assembly_symbol = "DifferentialDecodeNybble"
 assembly_source = "home/uncompress.asm"
@@ -10787,6 +11324,7 @@ decoder = "exact 58-byte body checked; SRL parity, AND/BIT decisions, both point
 
 
 
+
 [[function]]
 assembly_symbol = "WriteSpriteBitsToBuffer"
 assembly_source = "home/uncompress.asm"
@@ -10800,6 +11338,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/pointed-byte inputs and every 8-bit offset; covers offset 0, 1, 2, and the assembly's shared greater-than-2 path"
 decoder = "exact 39-byte body checked; AND/CP dispatch, RRC/SLA/SWAP transforms, pointer reconstruction, computed read, OR flags, write, and return modeled explicitly"
+
 
 
 
@@ -10823,6 +11362,7 @@ decoder = "exact 68-byte body checked; stack-saved HL, indexed pointer arithmeti
 
 
 
+
 [[function]]
 assembly_symbol = "SlotMachine_FindWheel1Wheel2Matches"
 assembly_source = "engine/slots/slot_machine.asm"
@@ -10835,6 +11375,7 @@ observables = [
 ]
 proof_domain = "all register/flag and wheel-byte inputs; covers each of five early-match returns and the complete no-match path"
 decoder = "exact 26-byte body checked; fixed pointers, all DE/HL increments/decrements, five computed CP operations, early returns, final pointer restoration, and flags modeled explicitly"
+
 
 
 
@@ -10852,6 +11393,7 @@ observables = [
 ]
 proof_domain = "all register/flag/high-memory inputs and every finite interrupt-observation trace ending in zero; initialization and exhaustive HALT/poll transitions compose inductively"
 decoder = "exact 11-byte body checked; VBlank request store, HALT boundary, external interrupt observation, LDH read, AND flags, recurrence, and return modeled explicitly"
+
 
 
 
@@ -10874,6 +11416,7 @@ decoder = "exact 112-byte body checked; five saved stack words, bag/PC capacity 
 
 
 
+
 [[function]]
 assembly_symbol = "LoadNorthSouthConnectionsTileMap"
 assembly_source = "home/overworld.asm"
@@ -10887,6 +11430,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/read/write inputs and every strip width including zero's 256-byte rows; initialization, row setup, exhaustive byte copy, and three-row advance transitions compose inductively"
 decoder = "exact 36-byte body checked; saved pointers, LDH width, HLI/DE copy recurrence, source/destination low-byte carry correction, wrapped map stride, outer DEC flags, and return modeled explicitly"
+
 
 
 
@@ -10908,6 +11452,7 @@ decoder = "exact 33-byte body checked; saved pointers, fixed three-byte rows, HL
 
 
 
+
 [[function]]
 assembly_symbol = "CheckForBoulderCollisionWithSprites"
 assembly_source = "engine/overworld/player_state.asm"
@@ -10921,6 +11466,7 @@ observables = [
 ]
 proof_domain = "all register/flag/global/coordinate inputs; setup plus exhaustive vertical and horizontal per-sprite transitions compose inductively for every sprite count, including zero's 256 iterations"
 decoder = "exact 102-byte body checked; boulder-index nibble swap, coordinate capture, orientation dispatch, both adjacency comparisons, wrapped coordinate arithmetic, collision/success results, sprite stride, 16-bit add flags, and loop count modeled explicitly"
+
 
 
 
@@ -10942,6 +11488,7 @@ decoder = "exact 100-byte body checked; four facing paths, wrapped range arithme
 
 
 
+
 [[function]]
 assembly_symbol = "BattleTransition_OutwardSpiral_"
 assembly_source = "engine/battle/battle_transitions.asm"
@@ -10955,6 +11502,7 @@ observables = [
 ]
 proof_domain = "all register/flag/pointer/direction/probed-tile inputs across all five direction dispatch classes and both occupied/unoccupied neighbor outcomes"
 decoder = "exact 100-byte body checked; signed vertical strides, wrapped pointer motion, neighbor probes, direction retention/rotation, tile writes, pointer stores, 16-bit add flags, and invalid-direction fallthrough modeled explicitly"
+
 
 
 
@@ -10976,6 +11524,7 @@ decoder = "exact 57-byte body checked; saved row pointer, both horizontal direct
 
 
 
+
 [[function]]
 assembly_symbol = "CheckForTilePairCollisions"
 assembly_source = "home/overworld.asm"
@@ -10989,6 +11538,7 @@ observables = [
 ]
 proof_domain = "all register/flag/tile/tileset/table inputs; setup and every table-entry outcome compose inductively through arbitrary-length tables to the $ff terminator"
 decoder = "exact 52-byte body checked; HLI table reads, tileset skips, both pair orientations, overlapping-entry retry pointers, terminator carry clear, collision SCF flags, and all comparison flags modeled explicitly"
+
 
 
 
@@ -11010,6 +11560,7 @@ decoder = "exact 35-byte body checked; 16-bit DE shift through carry, visited/un
 
 
 
+
 [[function]]
 assembly_symbol = "UpdateMovingBgTiles"
 assembly_source = "home/vcopy.asm"
@@ -11023,6 +11574,7 @@ observables = [
 ]
 proof_domain = "all register/flag/counter/animation/source/VRAM inputs; exhaustive dispatch, both water rotations, water completion, all flower-frame choices, and byte-copy recurrence compose for every live count including zero's 256 iterations"
 decoder = "exact 91-byte body checked; early returns, wrapped counters, water direction selection, RRCA/RLCA bytes, HLI writes, carry-sensitive reset, three flower sources, DE writes, and both DEC recurrences modeled explicitly"
+
 
 
 
@@ -11044,6 +11596,7 @@ decoder = "exact 33-byte entry and 67-byte shared tail checked; enable return, S
 
 
 
+
 [[function]]
 assembly_symbol = "VBlankCopyDouble"
 assembly_source = "home/vcopy.asm"
@@ -11057,6 +11610,7 @@ observables = [
 ]
 proof_domain = "all register/flag/SP/source/destination/size/byte inputs; setup and exhaustive eight-source/sixteen-write tile transition compose inductively for every size including zero's disabled entry"
 decoder = "exact 92-byte body checked; SP save/swap/restore, four POP pairs, byte doubling, low-byte-only writes plus final full INC HL, pointer writeback, transfer disable, flags, and B recurrence modeled explicitly"
+
 
 
 
@@ -11078,6 +11632,7 @@ decoder = "exact 96-byte body checked; SP save/swap/restore, eight POP pairs, lo
 
 
 
+
 [[function]]
 assembly_symbol = "TitleScroll"
 assembly_source = "engine/movie/title2.asm"
@@ -11094,6 +11649,7 @@ decoder = "exact 18-byte entry body checked; inward/outward table pointers, star
 
 
 
+
 [[function]]
 assembly_symbol = "OakSpeechSlidePicRight"
 assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
@@ -11106,6 +11662,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 7-byte entry body checked; screen-coordinate pointer, slide geometry, zero direction flags, and OakSpeechSlidePicCommon fallthrough modeled explicitly"
+
 
 
 
@@ -11127,6 +11684,7 @@ decoder = "exact 71-byte entry and 67-byte shared tail checked; SP save/restore,
 
 
 
+
 [[function]]
 assembly_symbol = "RedrawRowOrColumn"
 assembly_source = "home/vcopy.asm"
@@ -11140,6 +11698,7 @@ observables = [
 ]
 proof_domain = "all register/flag/mode/destination/source/write inputs; exhaustive selector, column-pair, half-row-pair, and between-halves transitions compose for 18 column pairs or two 10-pair row halves"
 decoder = "exact 86-byte body checked; mode clearing, column/row dispatch, HLI source reads, DE writes, vertical 32-byte stride and BG-map wrap, horizontal five-bit wrap, saved DE, both halves, flags, and count recurrences modeled explicitly"
+
 
 
 
@@ -11162,6 +11721,7 @@ decoder = "exact 1-byte RETI body checked; registers and flags preserved, two-by
 
 
 
+
 [[function]]
 assembly_symbol = "DrawTileBlock"
 assembly_source = "home/overworld.asm"
@@ -11175,6 +11735,7 @@ observables = [
 ]
 proof_domain = "all register/flag/block-ID/pointer/source/write inputs; block-pointer setup and exhaustive four-byte row transition compose for the fixed four rows, including arbitrary transition counts"
 decoder = "exact 48-byte body checked; saved destination HL, nibble-swapped 16-byte block offset, 16-bit add flags, DE source, three HLI plus one stationary write, 24-tile destination stride, BC stack restoration, and C recurrence modeled explicitly"
+
 
 
 
@@ -11196,6 +11757,7 @@ decoder = "exact 97-byte body checked; saved DE, wrapped map stride, pointer HLI
 
 
 
+
 [[function]]
 assembly_symbol = "BattleTransition_CopyTiles2"
 assembly_source = "engine/battle/battle_transitions.asm"
@@ -11209,6 +11771,7 @@ observables = [
 ]
 proof_domain = "all register/flag/offset/source/write inputs; setup, saved-row entry, exhaustive 18-byte inner transition, nine-column outer transition, and 18-row fill transition compose, including arbitrary zero-count recurrences"
 decoder = "exact 63-byte body checked; offset globals, BC/HL/DE stack state, strided source/destination low-byte adds with carry correction, cross-popped pointers, 16-bit column offset, outer C restoration, final DE=20 fill, flags, and all three recurrences modeled explicitly"
+
 
 
 
@@ -11230,6 +11793,7 @@ decoder = "exact 3-byte CALL body checked; return address, proven saved-register
 
 
 
+
 [[function]]
 assembly_symbol = "ApplyBadgeStatBoosts"
 assembly_source = "engine/battle/core.asm"
@@ -11243,6 +11807,7 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, link state, badge byte, and all 16-bit stat values; guard, badge dispatch, saturating helper, and four-stat advance recurrence compose"
 decoder = "exact 63-byte body checked; conditional link return, alternating badge-bit consumption, 16-bit HL advance, 12.5-percent boost with 16-bit wrap, and 999 saturation modeled explicitly"
+
 
 
 
@@ -11265,6 +11830,7 @@ decoder = "exact 60-byte body checked; stack preservation, D=0 256-iteration cas
 
 
 
+
 [[function]]
 assembly_symbol = "PewterGuys"
 assembly_source = "engine/events/pewter_guys.asm"
@@ -11282,6 +11848,7 @@ decoder = "exact 69-byte executable body and all 87 linked coordinate/movement b
 
 
 
+
 [[function]]
 assembly_symbol = "TextBoxBorder"
 assembly_source = "home/text.asm"
@@ -11295,6 +11862,7 @@ observables = [
 ]
 proof_domain = "all register/flag, width, height, pointer, saved-pointer, and write-state inputs; top, character-run, middle-row, bottom, and both recurrences compose"
 decoder = "exact 51-byte body checked; C=0 and B=0 256-iteration cases, all immediate-versus-A stores, 20-byte row stride with 16-bit wrap, saved row pointer, and final flags modeled explicitly"
+
 
 
 
@@ -11317,6 +11885,7 @@ decoder = "exact 106-byte body and complete three-byte speed table checked; SGB 
 
 
 
+
 [[function]]
 assembly_symbol = "PlaceMenuCursor"
 assembly_source = "home/window.asm"
@@ -11331,6 +11900,7 @@ observables = [
 ]
 proof_domain = "all register/flag, menu-global, layout, fetched-tile, saved-pointer, and write-state inputs; top-Y, shared row, X adjustment, old/current item selection, both 20/40-tile spacing modes, arrow clear/save, and finish transitions compose"
 decoder = "exact 112-byte body checked; incoming-HL zero-Y case, Y=0 and item=0 skip domains, 16-bit stride wrap, saved AF/layout-bit spacing, old-arrow conditional clear, new-tile preservation, cursor pointer writes, last-item update, and final flags modeled explicitly"
+
 
 
 
@@ -11352,6 +11922,7 @@ decoder = "exact 74-byte interrupt body checked; PUSH/POP AF canonical flag adap
 
 
 
+
 [[function]]
 assembly_symbol = "LoadSpecialWarpData"
 assembly_source = "engine/overworld/special_warps.asm"
@@ -11365,6 +11936,7 @@ observables = [
 ]
 proof_domain = "all register/flag, cable/serial/status/map, fetched/write, offset, and destination inputs across fixed-selector and finalizer transitions; all linked cable/new-game specs, all 12 dungeon destination/ID entries, and all 13 fly destinations; fixed/generic copy, dungeon-scan, and fly-scan recurrences compose"
 decoder = "exact 192-byte executable body and all 267 linked table bytes checked; cable clock selection, debug/new-game gates, dungeon/escape/fly routing, status-bit resets, six-byte offset accumulation, pointer-table HLI behavior, seven/six-byte copies, tileset/offset/warp-ID writes, arithmetic flags, and 16-bit pointer wrap modeled explicitly"
+
 
 
 
@@ -11387,6 +11959,7 @@ decoder = "exact 138-byte body, complete 121-byte trainer-class list, and four-e
 
 
 
+
 [[function]]
 assembly_symbol = "PrintNumber"
 assembly_source = "home/print_num.asm"
@@ -11402,6 +11975,7 @@ observables = [
 ]
 proof_domain = "all register/flag, caller-valid 1/2/3-byte and 2-through-7-digit configurations, arbitrary source bytes, number, power, saved-number, write, stack-shadow, and leading-zero inputs; entry decoding, all five decimal places, every three-byte subtraction/borrow/rollback path, division-by-ten, tens/ones finalization, and NextDigit behavior compose"
 decoder = "exact 312-byte body checked; input-width loads, digit dispatch, all five linked power-of-ten constants, SM83 compare/subtract/inc/dec/AND/OR/ADD/BIT flags, quotient recurrence, nested borrow across all three bytes, underflow restoration, leading-zero tile emission, past-digit marker, pointer wrap, and saved BC/DE restoration modeled explicitly"
+
 
 
 
@@ -11428,6 +12002,7 @@ decoder = "exact 475-byte body plus the exact 16-byte CancelledEvolution tail ch
 
 
 
+
 [[function]]
 assembly_symbol = "Evolution_ReloadTilesetTilePatterns"
 assembly_source = "engine/pokemon/evos_moves.asm"
@@ -11441,6 +12016,7 @@ observables = [
 ]
 proof_domain = "all register/flag, link-state, and prior call-observation inputs across trading and non-trading paths"
 decoder = "exact 9-byte body checked; link-state load, CP flags, RET Z, tail JP, and reload call observation modeled explicitly"
+
 
 
 
@@ -11465,6 +12041,7 @@ decoder = "exact 55-byte body checked; shared wCurSpecies/wNameListIndex address
 
 
 
+
 [[function]]
 assembly_symbol = "AIMoveChoiceModification1"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -11480,6 +12057,7 @@ observables = [
 ]
 proof_domain = "all register/flag, player-status, move, power, effect, score, pointer, and prior-call/write inputs across the early return, shared four-slot recurrence, damaging/non-damaging split, every 8-bit effect, and score adjustment"
 decoder = "exact 55-byte body and exact 5-byte status-effect table checked; status gate, DEC B/INC HL/HLI-like move traversal, zero move terminator, ReadMove boundary, power gate, IsInArray membership, ADD 5 flags, score write, and loop continuation modeled explicitly"
+
 
 
 
@@ -11503,6 +12081,7 @@ decoder = "exact 48-byte body checked; CP/RET NZ gate, fixed buffer/enemy-move s
 
 
 
+
 [[function]]
 assembly_symbol = "AIMoveChoiceModification3"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -11517,6 +12096,7 @@ observables = [
 ]
 proof_domain = "all register/flag, move, effect, type, power, type-effectiveness, score, pointer, and prior-call/write inputs; shared four-slot traversal, neutral/super-effective/not-effective routing, all nested better-move scan paths, special-effect recognition, same-type suppression, damaging-different-type fallback, and final encouragement/discouragement compose"
 decoder = "exact 108-byte body checked; fixed outer/inner scan setup, ReadMove and type-effectiveness boundaries, compare-to-neutral routing, Super Fang/special-damage/Fly recognition, type/power checks, scan terminators, saved-register restoration semantics, DEC/INC [HL] with A preservation, and loop continuation modeled explicitly"
+
 
 
 
@@ -11539,6 +12119,7 @@ decoder = "generic Z80 encodings verified; the shared CP (HL) half-carry correct
 
 
 
+
 [[function]]
 assembly_symbol = "HasEnoughMoney"
 assembly_source = "home/money.asm"
@@ -11553,6 +12134,7 @@ observables = [
 ]
 proof_domain = "all 16,777,216 pairs of 3-byte values held in wPlayerMoney and hMoney; the tail delegates the byte-wise comparison to StringCmp, whose port is proven, and the register setup (DE=wPlayerMoney, HL=hMoney, C=3) is constant"
 decoder = "generic Z80 encodings verified; the shared CP (HL) half-carry correction is applied at StringCmp+1 exactly as in the StringCmp proof"
+
 
 
 
@@ -11578,6 +12160,7 @@ decoder = "exact 7-byte linked body and linked PalPacket_Black / BlkPacket_Battl
 
 
 
+
 [[function]]
 assembly_symbol = "SetPal_TownMap"
 assembly_source = "engine/gfx/palettes.asm"
@@ -11595,6 +12178,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 7-byte linked body and linked PalPacket_TownMap / BlkPacket_WholeScreen addresses verified with generic Z80 semantics"
+
 
 
 
@@ -11620,6 +12204,7 @@ decoder = "exact 7-byte linked body and linked PalPacket_PartyMenu / wPartyMenuB
 
 
 
+
 [[function]]
 assembly_symbol = "SetPal_Slots"
 assembly_source = "engine/gfx/palettes.asm"
@@ -11637,6 +12222,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 7-byte linked body and linked PalPacket_Slots / BlkPacket_Slots addresses verified with generic Z80 semantics"
+
 
 
 
@@ -11662,6 +12248,7 @@ decoder = "exact 7-byte linked body and linked PalPacket_Titlescreen / BlkPacket
 
 
 
+
 [[function]]
 assembly_symbol = "SetPal_Generic"
 assembly_source = "engine/gfx/palettes.asm"
@@ -11683,6 +12270,7 @@ decoder = "exact 7-byte linked body and linked PalPacket_Generic / BlkPacket_Who
 
 
 
+
 [[function]]
 assembly_symbol = "SetPal_NidorinoIntro"
 assembly_source = "engine/gfx/palettes.asm"
@@ -11700,6 +12288,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 7-byte linked body and linked PalPacket_NidorinoIntro / BlkPacket_NidorinoIntro addresses verified with generic Z80 semantics"
+
 
 
 
@@ -11726,6 +12315,7 @@ decoder = "exact 12-byte linked body verified; the SM83 absolute store to wDefau
 
 
 
+
 [[function]]
 assembly_symbol = "PrintPlayerMon1Text"
 assembly_source = "engine/battle/common_text.asm"
@@ -11743,6 +12333,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 4-byte linked body and linked PlayerMon1Text address verified with generic Z80 semantics"
+
 
 
 
@@ -11768,6 +12359,7 @@ decoder = "exact 4-byte linked body and linked ComeBackText address verified wit
 
 
 
+
 [[function]]
 assembly_symbol = "LoadPresentsGraphic"
 assembly_source = "engine/movie/intro.asm"
@@ -11785,6 +12377,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact single-byte RET verified with generic Z80 semantics"
+
 
 
 
@@ -11811,6 +12404,7 @@ decoder = "exact 5-byte linked body verified; the SM83 absolute store to wSafari
 
 
 
+
 [[function]]
 assembly_symbol = "InGameTrade_CopyData"
 assembly_source = "engine/events/in_game_trades.asm"
@@ -11832,6 +12426,7 @@ decoder = "exact 8-byte linked body checked; the cross-bank `call CopyData` is i
 
 
 
+
 [[function]]
 assembly_symbol = "SaveScreenTilesToBuffer2"
 assembly_source = "home/tilemap.asm"
@@ -11849,6 +12444,7 @@ observables = [
 ]
 proof_domain = "all A/F inputs and every symbolic 360-byte (SCREEN_AREA) source buffer; HL, DE and BC are fixed to the tile-map, wTileMapBackup2 and SCREEN_AREA constants and are left mutated by the delegated CopyData loop, which is proven independently"
 decoder = "exact 13-byte linked body checked; the cross-bank `call CopyData` is inlined as a real-memory copy across a symbolic source/destination buffer, proving the bytes are transferred"
+
 
 
 
@@ -11875,6 +12471,7 @@ decoder = "exact 20-byte linked body checked; the `ldh` stores to hAutoBGTransfe
 
 
 
+
 [[function]]
 assembly_symbol = "LoadScreenTilesFromBuffer2DisableBGTransfer"
 assembly_source = "home/tilemap.asm"
@@ -11893,6 +12490,7 @@ observables = [
 ]
 proof_domain = "all A/F inputs and every symbolic 360-byte source buffer; hAutoBGTransferEnabled is written to 0 and HL/DE/BC are fixed to wTileMapBackup2, the tile map and SCREEN_AREA and left mutated by the delegated CopyData loop (proven independently)"
 decoder = "exact 16-byte linked body checked; the `ldh` store to hAutoBGTransferEnabled and the `call CopyData` are modeled explicitly as real-memory writes/copy"
+
 
 
 
@@ -11919,6 +12517,7 @@ decoder = "exact 8-byte linked body checked; the `call`, `ldh` store to hAutoBGT
 
 
 
+
 [[function]]
 assembly_symbol = "SaveScreenTilesToBuffer1"
 assembly_source = "home/tilemap.asm"
@@ -11936,6 +12535,7 @@ observables = [
 ]
 proof_domain = "all A/F inputs and every symbolic 360-byte (SCREEN_AREA) source buffer; HL, DE and BC are fixed to the tile-map, wTileMapBackup and SCREEN_AREA constants and are left mutated by the delegated CopyData loop (proven independently); the routine jumps rather than calls CopyData so CopyData returns to the caller"
 decoder = "exact 11-byte linked body checked; the `jp CopyData` is inlined as a real-memory copy across a symbolic source/destination buffer, proving the bytes are transferred"
+
 
 
 
@@ -11960,6 +12560,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 possible byte values in the three 8-byte OAM/swap buffers (wShadowOAMSprite36, wShadowOAMSprite38, wBuffer)"
 decoder = "exact 36-byte linked body checked; the two `call CopyData` sites and the tail `jp CopyData` are modeled explicitly and apply the proven port_copy_data transition across the real absolute buffers"
+
 
 
 
@@ -11997,6 +12598,7 @@ decoder = "exact 42-byte linked body checked; the twelve memory stores are model
 
 
 
+
 [[function]]
 assembly_symbol = "MovePicLeft"
 assembly_source = "engine/movie/oak_speech/oak_speech.asm"
@@ -12016,6 +12618,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; rWX and rBGP are the only memory observables and the loop bound is the concrete constant 119 down to 7, so pathwise equivalence holds over the single concrete control-flow path"
 decoder = "exact 25-byte linked body checked; the two `call DelayFrame` sites are modeled as no-op tail jumps and the rWX / rBGP high-memory loads and stores use the proven SM83 shims"
+
 
 
 
@@ -12042,6 +12645,7 @@ decoder = "exact 7-byte linked body checked; the tail `jp FillMemory` applies th
 
 
 
+
 [[function]]
 assembly_symbol = "UnusedPlayerNameLengthFunc"
 assembly_source = "engine/events/diploma.asm"
@@ -12064,6 +12668,7 @@ decoder = "exact 12-byte linked body checked; the loop runs natively (ld a,[hli]
 
 
 
+
 [[function]]
 assembly_symbol = "GetQuantityOfItemInBag"
 assembly_source = "engine/items/get_bag_item_quantity.asm"
@@ -12082,6 +12687,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs including the symbolic wNumBagItems item table; the $ff ($ff) terminator always bounds the scan within the table, so pathwise equivalence holds over every match/not-found position"
 decoder = "exact 21-byte linked body checked; `call GetPredefRegisters` skipped (b passes through, hl overwritten), `ld a,[hli]` (0x2A) and `cp $ff`/`cp b` shimmed for SM83 semantics, the loop control (inc hl / jr z / jr nz / ret) runs natively"
+
 
 
 
@@ -12110,6 +12716,7 @@ decoder = "exact 16-byte linked body checked; the three SM83 EA absolute stores 
 
 
 
+
 [[function]]
 assembly_symbol = "HoFRecordMonInfo"
 assembly_source = "engine/movie/hall_of_fame.asm"
@@ -12121,6 +12728,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs including the symbolic wHoFPartyMonIndex (record slot), wHoFMonSpecies, wHoFMonLevel, and the 11-byte wNameBuffer; the record is written at the data-dependent address wHallOfFame + HOF_MON * wHoFPartyMonIndex"
 decoder = "exact 34-byte linked body checked; `ld a,[a16]` (0xFA) loads are shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged), the two `ld [hli],a` (0x22) stores are shimmed, and the `jp CopyData` tail is inlined as a CopyDataSim that copies NAME_LENGTH bytes from wNameBuffer into the record and returns; the post-CopyData registers are scratch and excluded from the observable record"
+
 
 
 
@@ -12140,6 +12748,7 @@ decoder = "exact 42-byte linked body checked; `ld a,[a16]` (0xFA) loads are shim
 
 
 
+
 [[function]]
 assembly_symbol = "DecrementPP"
 assembly_source = "engine/battle/decrement_pp.asm"
@@ -12152,6 +12761,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; the used move id (read from [de]) and the three battle-status bytes (wPlayerBattleStatus1/2/3) stay symbolic, while the move index and party-mon number are fixed concrete so the two PP addresses are concrete"
 decoder = "exact 47-byte linked body checked; `ld a,[hli]` (0x2A) and the three `ld a,[a16]` (0xFA) loads are shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged), and the internal `call .DecrementPP` is run natively; `dec [hl]`, `bit`, `and`, `cp`, and the conditional returns run natively under the pcode engine, yielding the same five terminal paths (Struggle / status1 mask / Rage early-exit with no write, battle-only decrement on Transform, and full double decrement)"
+
 
 
 
@@ -12174,6 +12784,7 @@ decoder = "exact 50-byte linked body checked; the two `ldh a,[a8]` (0xF0) loads 
 
 
 
+
 [[function]]
 assembly_symbol = "AICureStatus"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -12191,6 +12802,7 @@ decoder = "exact 23-byte linked body checked; `ld a,[a16]` (0xFA) and `ld [a16],
 
 
 
+
 [[function]]
 assembly_symbol = "ReadMove"
 assembly_source = "engine/battle/trainer_ai.asm"
@@ -12202,6 +12814,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; the 1-based move id in A is fixed concrete (1 -> index 0) so the Moves-table source address is concrete, while the six move-data bytes stay symbolic and shared between the asm and native paths"
 decoder = "exact 23-byte linked body checked; `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged) and `call CopyData` is modeled as a BC-byte copy from [HL] to [DE] (CopyDataSim); `ld hl,nn`/`ld bc,nn`/`ld de,nn`/`dec a`/push/pop/`ret` run natively under the pcode engine"
+
 
 
 
@@ -12222,6 +12835,7 @@ decoder = "exact 49-byte linked body checked; `call AddNTimes` is modeled as `hl
 
 
 
+
 [[function]]
 assembly_symbol = "SpinPlayerSprite"
 assembly_source = "engine/overworld/player_animations.asm"
@@ -12234,6 +12848,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; the HL input pointer is fixed concrete (0xC600) so the store/copy addresses are concrete, while the image-index source byte and the four facing-list entries stay symbolic and shared between the asm and native paths"
 decoder = "exact 25-byte linked body checked; `call CopyData` is modeled as a BC-byte forward copy from [HL] to [DE] (CopyDataSim), which rotates the list down by one entry; `ld [a16],a` (0xEA, writing wSpritePlayerStateData1ImageIndex and wFacingDirectionList+3) and `ld a,[a16]` (0xFA, reading the rotated former-first entry) are shimmed (absent from z80), and `ld a,[hl]`/`push hl`/`ld hl,nn`/`ld de,nn`/`ld bc,nn`/`pop hl`/`ret` run natively"
+
 
 
 
@@ -12253,6 +12868,7 @@ decoder = "exact 25-byte linked body checked; `call CopyData` is modeled as a BC
 
 
 
+
 [[function]]
 assembly_symbol = "TradeCenter_PlaceSelectedEnemyMonMenuCursor"
 assembly_source = "engine/link/cable_club.asm"
@@ -12264,6 +12880,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; the selected row read from [wSerialSyncAndExchangeNybbleReceiveData] is fixed concrete (rows 0..5 covered) so the tilemap store address is concrete, while the other general registers stay symbolic"
 decoder = "exact 15-byte linked body checked; `ld a,[a16]` (0xFA, reading the row) is shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (bc = SCREEN_WIDTH), and `ld hl,nn`/`ld bc,nn`/`ld [hl],imm` (0x36, writing $ec)/`ret` run natively"
+
 
 
 
@@ -12286,6 +12903,7 @@ decoder = "exact 77-byte linked body checked; `call AddNTimes` (computing the pa
 
 
 
+
 [[function]]
 assembly_symbol = "GetMachineName"
 assembly_source = "home/names.asm"
@@ -12297,6 +12915,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; [wNamedObjectIndex] is fixed concrete per test, the HiddenPrefix/TechnicalPrefix ROM bytes are concrete, while the four general registers stay symbolic"
 decoder = "exact 73-byte linked body checked; `call CopyData` is modeled as a 2-byte forward copy from [HL] (HiddenPrefix/TechnicalPrefix) to [DE] (wNameBuffer) (CopyDataSim); `ld a,[a16]` (0xFA, reading wNamedObjectIndex) and `ld [a16],a` (0xEA, writing wNamedObjectIndex) are shimmed (absent from z80); `ld hl,nn`/`ld de,nn`/`ld bc,nn`/`sub a,imm`/`ld b,imm`/`add a,imm`/`add b`/`ld [de],a`/`inc de`/`pop af`/`push af`/`ret` run natively"
+
 
 
 
@@ -12316,6 +12935,7 @@ decoder = "exact 10-byte linked body checked; tail `jp FillMemory` is modeled as
 
 
 
+
 [[function]]
 assembly_symbol = "DelayFrames"
 assembly_source = "home/delay.asm"
@@ -12327,6 +12947,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; C is fixed concrete per test, all other registers concrete zero, DelayFrame inlined as no-op"
 decoder = "exact 6-byte linked body checked; `call DelayFrame` inlined as no-op (CallDelayFrameSim); `dec c`/`jr nz`/`ret` run natively"
+
 
 
 
@@ -12346,6 +12967,7 @@ decoder = "exact 21-byte linked body checked; `ld a,[a16]` (0xFA) reading wDamag
 
 
 
+
 [[function]]
 assembly_symbol = "PlaySoundWaitForCurrent"
 assembly_source = "home/delay.asm"
@@ -12357,6 +12979,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; WaitForSoundToFinish and PlaySound inlined as no-op returns"
 decoder = "exact 6-byte linked body checked; `call WaitForSoundToFinish` and `jp PlaySound` modeled as no-op returns; `push af`/`pop af` run natively"
+
 
 
 
@@ -12376,6 +12999,7 @@ decoder = "exact 16-byte linked body checked; `jp PlaySound` modeled as no-op re
 
 
 
+
 [[function]]
 assembly_symbol = "Random"
 assembly_source = "home/random.asm"
@@ -12387,6 +13011,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; Random_ inlined as a symbolic rDIV-based update to hRandomAdd/hRandomSub"
 decoder = "exact 14-byte linked body checked; `farcall Random_` modeled as a symbolic update to hRandomAdd/hRandomSub based on independent rDIV samples; `push`/`pop`/`ret` run natively"
+
 
 
 
@@ -12406,6 +13031,7 @@ decoder = "exact 21-byte linked body checked; `call WaitForSoundToFinish` modele
 
 
 
+
 [[function]]
 assembly_symbol = "CopyVideoDataDouble"
 assembly_source = "home/copy2.asm"
@@ -12417,6 +13043,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; DelayFrame inlined as no-op return; source bank, source address, dest address, tile count fixed concrete per test"
 decoder = "exact 67-byte linked body checked; `ldh [a8],a`/`ldh a,[a8]` (0xE0/0xF0) on I/O registers modeled as direct memory access; `call DelayFrame` modeled as no-op return; `ld a,[a16]`/`ld [a16],a` (0xFA/0xEA) shimmed; `ldh [a8],a`/`ldh a,[a8]`/`cp imm`/`jr`/`sub a,imm`/`jr` run natively"
+
 
 
 
@@ -12436,6 +13063,7 @@ decoder = "exact 48-byte linked body checked; `call GetRowColAddressBgMap` inlin
 
 
 
+
 [[function]]
 assembly_symbol = "GiveItem"
 assembly_source = "home/give.asm"
@@ -12447,6 +13075,7 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs; AddItemToInventory_ inlined as state machine, GetMachineName for TM/HM, GetName predef modeled as placeholder, CopyToStringBuffer inlined"
 decoder = "exact 60-byte linked body checked; `call AddItemToInventory_` inlined as state machine (port_add_item_to_inventory); `call GetItemName` inlined with TM/HM branch to GetMachineName and placeholder for GetName predef; `call CopyToStringBuffer` inlined; `ld [a16],a` (0xEA) shimmed for wNamedObjectIndex/wCurItem/wItemQuantity"
+
 
 
 
@@ -12466,6 +13095,7 @@ decoder = "exact 10-byte linked body checked; `homecall` modeled as bank switch 
 
 
 
+
 [[function]]
 assembly_symbol = "IsKeyItem_"
 assembly_source = "engine/items/item_effects.asm"
@@ -12477,6 +13107,7 @@ observables = [
 ]
 proof_domain = "all 256 initial [wCurItem] values and all 15-byte KeyItemFlags tables; models call CopyData (bc=15), predef FlagActionPredef (FLAG_TEST on bit (item-1)), and call IsItemHM"
 decoder = "exact linked body checked; SM83 `cp`/`xor` flags shimmed; `call CopyData`, `predef FlagActionPredef`, and `call IsItemHM` modeled as state-preserving SimProcedures"
+
 
 
 
@@ -12495,6 +13126,7 @@ proof_domain = "all 3-byte wPlayerMoney and hMoney packed-BCD values; AddBCDPred
 decoder = "C port adds the 3-byte hMoney to wPlayerMoney using the same AddBCD algorithm as the assembly: per-byte packed-BCD addition with carry propagation and final $99 saturation when the most-significant carry is set, then writes wTextBoxID = MONEY_BOX (0x13). Full pathwise symbolic equivalence is pending an angr native run."
 
 
+
 [[function]]
 assembly_symbol = "SubtractAmountPaidFromMoney_"
 assembly_source = "engine/items/subtract_paid_money.asm"
@@ -12511,6 +13143,7 @@ decoder = "exact 33-byte linked body checked (StringCmp call, ret c, predef SubB
 
 
 
+
 [[function]]
 assembly_symbol = "FarCopyData"
 assembly_source = "home/copy.asm"
@@ -12520,6 +13153,7 @@ status = "partial"
 observables = ["[DE]..[DE+BC-1] (destination bytes)", "[HL]..[HL+BC-1] (source bytes)", "registers BC/DE/HL (preserved across the ROM bank switch)"]
 proof_domain = "all BC (copy length), HL (source), DE (destination) register values; arbitrary source bytes in the flat memory model"
 decoder = "Flat-memory model: the ROM bank switch (wBuffer + hLoadedROMBank/rROMB) is a no-op, so port_far_copy_data copies BC bytes from [HL] to [DE] using the same byte loop CopyData performs. Equivalence is pending the angr proof."
+
 
 
 
@@ -12535,6 +13169,7 @@ decoder = "Identical observable behavior to FarCopyData except it stashes the so
 
 
 
+
 [[function]]
 assembly_symbol = "FarCopyData3"
 assembly_source = "home/copy2.asm"
@@ -12547,6 +13182,7 @@ decoder = "Reverse direction of FarCopyData: the asm pushes HL and DE, swaps the
 
 
 
+
 [[function]]
 assembly_symbol = "TossItem"
 assembly_source = "home/item.asm"
@@ -12556,6 +13192,7 @@ status = "partial"
 observables = ["carry flag (set = item NOT tossed, clear = tossed)", "inventory at [HL] (slot removed on toss)", "[wNamedObjectIndex]", "[wTextBoxID]", "[wIsKeyItem] (written by IsKeyItem_)", "[wWhichPokemon]", "[wItemQuantity]", "menu-list bookkeeping (wListScrollOffset, wCurrentMenuItem, wBagSavedMenuItem, wSavedListScrollOffset, wListCount, wMaxMenuItem)"]
 proof_domain = "all HL (inventory base), [wCurItem], [wWhichPokemon], [wItemQuantity], [wMenuExitMethod], [wIsKeyItem] inputs; HM/TM range and KeyItemFlags table"
 decoder = "Wrapper TossItem (home/item.asm) bank-switches and calls TossItem_ (engine/items/item_effects.asm); ported as port_toss_item. It refuses to toss HMs (IsItemHM carry iff HM01<=id<TM01) and key items (IsKeyItem_ sets [wIsKeyItem]); otherwise it reads the Yes/No menu result from [wMenuExitMethod] and, on 'Yes' (value != CHOSE_SECOND_ITEM), removes the slot via RemoveItemFromInventory. Text rendering and the menu UI are no-ops in the flat model, and the ROM/HRAM bank switch is a no-op. The menu-list bookkeeping writes are modeled through the helper's internal state (inherited from port_remove_item_from_inventory) rather than written back to the canonical WRAM locations. Equivalence is pending the angr proof."
+
 
 
 [[function]]
@@ -12572,6 +13209,7 @@ proof_domain = "all wCurItem values: regular items (id < HM01 = 0xC4) indexed th
 decoder = "C port reads [wCurItem]. For a regular item it dereferences the wItemPrices pointer to a 3-byte-per-entry table and copies entry (wCurItem-1) into hItemPrice. For a TM/HM item it computes the TechnicalMachinePrices byte address (0x7fa7 + (wCurItem-TM01)/2), loads that byte as fetched, calls the proven port_get_machine_price, and copies the resulting item_price[0..2] into hItemPrice when carry is clear (TM); for HMs (carry set) hItemPrice is left unchanged. Full pathwise symbolic equivalence is pending an angr native run."
 
 
+
 [[function]]
 assembly_symbol = "UseItem_"
 assembly_source = "engine/items/item_effects.asm"
@@ -12584,6 +13222,7 @@ observables = [
 ]
 proof_domain = "all wCurItem values; dispatch target resolved as ItemUseTMHM (0x6479) for TM/HM items (id >= HM01 = 0xC4) or as the ItemUsePtrTable (0x55e1) entry indexed by 2*(wCurItem-1) for regular items, under the flat-memory model"
 decoder = "C port of UseItem_ (the routine reached through the `farjp UseItem_` wrapper in home/item.asm). It writes wActionResultOrTookBattleTurn = 1, then for a TM/HM item sets the dispatch target to ItemUseTMHM and otherwise loads the 16-bit handler address from ItemUsePtrTable[(wCurItem-1)*2]. The final indirect `jp hl` is a compositional boundary: the resolved handler address is reported in state->dispatched_hl for the caller to continue. Pathwise equivalence is pending composition with the individual ItemUse* handlers."
+
 
 
 [[function]]
@@ -12603,6 +13242,7 @@ observables = [
 proof_domain = "all wPartyCount / wBoxCount / wCurrentBoxNum combinations; the called subroutines (SetPokedexOwnedFlag, AddPartyMon, SendNewMonToBox, LoadEnemyMonData, PrintText and the predefs) are modeled as compositional boundaries and are not inlined"
 decoder = "C port of _GivePokemon (the routine reached through the `farjp _GivePokemon` wrapper in home/give.asm). It clears wAddedToParty, then branches on party/box counts: party-has-room -> wAddedToParty=1, wDoNotWait...=1, carry set; box-has-room -> wEnemyBattleStatus3=0, wEnemyMonSpecies2=wCurPartySpecies, and writes the 1-based box number as text into wStringBuffer (single digit, or '1'+digit for box >= 9, terminated by '@'), carry set; box full -> carry cleared. The sub-call side effects (Pokedex flag, party/box mutation, text printing) are left to composition. Pathwise equivalence is pending composition with those subroutines."
 
+
 [[function]]
 assembly_symbol = "Joypad"
 assembly_source = "home/joypad.asm"
@@ -12620,6 +13260,7 @@ observables = [
 ]
 proof_domain = "all HRAM/WRAM inputs except the PAD_BUTTONS soft-reset sentinel; the diff logic (released/pressed edges, held mask, disable-joypad discard) is covered for every combination of hJoyInput, hJoyLast, wStatusFlags5 and wJoyIgnore"
 decoder = "C port implements _Joypad (the routine reached through the `Joypad` homecall wrapper). hJoyReleased=(last^input)&last, hJoyPressed=(last^input)&input, hJoyLast=input, hJoyHeld=input (zeroed and returned early when wStatusFlags5 has BIT_DISABLE_JOYPAD set; otherwise masked with ~wJoyIgnore when wJoyIgnore!=0). The PAD_BUTTONS (=all four buttons) soft-reset branch is not modeled: it diverts into a DelayFrame/SoftReset loop and performs none of the stores above, so hJoy* are left unchanged on that input. angr equivalence is pending."
+
 
 [[function]]
 assembly_symbol = "JoypadLowSensitivity"
@@ -12639,6 +13280,7 @@ observables = [
 ]
 proof_domain = "all combinations of hJoy7, hJoy6, hJoyPressed, hJoyHeld and hFrameCounter feeding the three reporting modes and the delay/debounce state machine; the embedded _Joypad update (port_joypad) is covered for every joypad-input combination"
 decoder = "C port first refreshes the joypad state via port_joypad. [hJoy5] is set to [hJoyPressed] when [hJoy7]==0 else to [hJoyHeld]. A nonzero [hJoyPressed] arms hFrameCounter=30 and returns. Otherwise, if hFrameCounter!=0 it forces [hJoy5]=0 and returns. Once hFrameCounter==0, if A/B are held and [hJoy6]==0 it forces [hJoy5]=0; finally hFrameCounter=5 is armed. angr equivalence is pending."
+
 
 [[function]]
 assembly_symbol = "ManualTextScroll"
@@ -12662,6 +13304,7 @@ observables = [
 proof_domain = "both branches (link battle vs normal) for every value of wLinkState; the normal branch defers to the WaitForTextScrollButtonPress model for all joypad/blink-counter inputs"
 decoder = "C port reads [wLinkState]; when it equals LINK_STATE_BATTLING (4) it returns after the delay-only (DelayFrames 65) path, which has no WRAM/HRAM observable; otherwise it calls port_wait_for_text_scroll_button_press to wait for an A/B press. The final ld a,SFX_PRESS_AB / jp PlaySound and the DelayFrames call are audio/timing side effects with no observable memory state and are not modeled. angr equivalence is pending."
 
+
 [[function]]
 assembly_symbol = "WaitForTextScrollButtonPress"
 assembly_source = "home/joypad2.asm"
@@ -12682,3 +13325,53 @@ observables = [
 ]
 proof_domain = "all initial hDownArrowBlinkCount1/2 and joypad-state inputs; the poll-until-A/B loop is modeled and terminates whenever hJoy5 reports A/B (the per-iteration animation/link calls are treated as unobservable side effects)"
 decoder = "C port saves hDownArrowBlinkCount1/2, sets them to 0 and 6, then loops calling port_joypad_low_sensitivity until [hJoy5] & (PAD_A|PAD_B) is nonzero, and finally restores the saved blink counters. The per-iteration TownMapSpriteBlinkingAnimation, HandleDownArrowBlinkTiming and CableClub_Run predef are animation/link side effects with no WRAM/HRAM observable and are not invoked. angr equivalence is pending."
+
+[[function]]
+assembly_symbol = "Music_Cities1AlternateTempo"
+assembly_source = "audio/alternate_tempo.asm"
+c_symbol = "port_music_cities1_alternate_tempo"
+c_source = "verification/ports/music_cities1_alternate_tempo.c"
+status = "partial"
+observables = ["wAudioFadeOutCounterReloadValue", "wAudioFadeOutCounter", "wAudioFadeOutControl", "wChannelCommandPointers[0..1] (Ch1 -> Music_Cities1_Ch1_AlternateTempo)", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "registers A/C/HL/DE"]
+proof_domain = "no inputs; all operands are constant immediates (10, $ff, 100, BANK(Music_Cities1)=2, MUSIC_CITIES1=0xc3, Music_Cities1_Ch1_AlternateTempo=0x6a6f). Single execution path."
+decoder = "Arms an audio fade-out (wAudioFadeOutCounterReloadValue=10, wAudioFadeOutCounter=10, wAudioFadeOutControl=$ff), calls DelayFrames(100) via the ported leaf, then reproduces PlayMusic's unconditional top-level RAM writes (wNewSoundID=0xc3, wAudioROMBank=2, wAudioSavedROMBank=2, wAudioFadeOutControl=0 — overwriting the $ff set earlier), and finally performs a single Audio1_OverwriteChannelPointer store into wChannelCommandPointers for the Ch1 alternate-tempo measure. Equivalence is pending the angr proof."
+
+[[function]]
+assembly_symbol = "Music_PokeFluteInBattle"
+assembly_source = "audio/poke_flute.asm"
+c_symbol = "port_music_poke_flute_in_battle"
+c_source = "verification/ports/music_poke_flute_in_battle.c"
+status = "partial"
+observables = ["wChannelCommandPointers[8..9] (Ch5 -> SFX_Pokeflute_Ch5)", "wChannelCommandPointers[10..11] (Ch6 -> SFX_Pokeflute_Ch6)", "wChannelCommandPointers[12..13] (Ch7 -> SFX_Pokeflute_Ch7)", "wNewSoundID (via forwarded PlaySoundWaitForCurrent = SFX_CAUGHT_MON)", "registers A/HL/DE"]
+proof_domain = "no inputs; all operands are constant immediates (SFX_CAUGHT_MON=0x9a, SFX_Pokeflute_Ch5=0x6322, SFX_Pokeflute_Ch6=0x6325, SFX_Pokeflute_Ch7=0x449b, CHAN5*2 offset). Single execution path."
+decoder = "Loads SFX_CAUGHT_MON into A and forwards to the ported PlaySoundWaitForCurrent leaf, then performs three Audio2_OverwriteChannelPointer stores starting at wChannelCommandPointers + CHAN5*2 (little-endian 16-bit writes, hl advanced by 2 per channel) for the Ch5/Ch6/Ch7 pokeflute SFX data. Equivalence is pending the angr proof."
+
+[[function]]
+assembly_symbol = "Music_RivalAlternateStart"
+assembly_source = "audio/alternate_tempo.asm"
+c_symbol = "port_music_rival_alternate_start"
+c_source = "verification/ports/music_rival_alternate_start.c"
+status = "partial"
+observables = ["wChannelCommandPointers[0..1] (Ch1 -> Music_MeetRival_Ch1_AlternateStart)", "wChannelCommandPointers[2..3] (Ch2 -> Music_MeetRival_Ch2_AlternateStart)", "wChannelCommandPointers[4..5] (Ch3 -> Music_MeetRival_Ch3_AlternateStart)", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "wAudioFadeOutControl", "registers A/C/HL/DE"]
+proof_domain = "no inputs; all operands are constant immediates (BANK(Music_MeetRival)=2, MUSIC_MEET_RIVAL=0xde, and the three alternate-start data pointers). Single execution path."
+decoder = "Loads the music id and bank into A/C then reproduces PlayMusic's unconditional top-level RAM writes (wNewSoundID, wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl=0). It then performs the three Audio1_OverwriteChannelPointer stores via a little-endian 16-bit write into wChannelCommandPointers (low byte at [hl], high byte at [hl+1], hl advanced by 2) for the Ch1/Ch2/Ch3 alternate-start measures. PlayMusic's deeper channel-initialization (inside PlaySound) is owned by the dedicated PlayMusic port; this wrapper's observable contract is the channel-pointer overwrite plus the globals. Equivalence is pending the angr proof."
+
+[[function]]
+assembly_symbol = "Music_RivalAlternateStartAndTempo"
+assembly_source = "audio/alternate_tempo.asm"
+c_symbol = "port_music_rival_alternate_start_and_tempo"
+c_source = "verification/ports/music_rival_alternate_start_and_tempo.c"
+status = "partial"
+observables = ["wChannelCommandPointers[0..1] (Ch1 -> Music_MeetRival_Ch1_AlternateStartAndTempo)", "wChannelCommandPointers[2..3] (Ch2 -> Music_MeetRival_Ch2_AlternateStart, preserved)", "wChannelCommandPointers[4..5] (Ch3 -> Music_MeetRival_Ch3_AlternateStart, preserved)", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "wAudioFadeOutControl", "registers A/C/HL/DE"]
+proof_domain = "no inputs; all operands are constant immediates; the forwarded Music_RivalAlternateStart path plus the final Ch1 overwrite with Music_MeetRival_Ch1_AlternateStartAndTempo=0x719b. Single execution path."
+decoder = "Forwards to the Music_RivalAlternateStart port (which sets Ch1/Ch2/Ch3 to their alternate-start measures and writes the PlayMusic globals), then resets hl to wChannelCommandPointers and overwrites only Ch1 with the combined alternate-start-and-tempo measure. The forwarded call reuses the dedicated port; the final store uses the same little-endian channel-pointer write convention. Equivalence is pending the angr proof."
+
+[[function]]
+assembly_symbol = "Music_RivalAlternateTempo"
+assembly_source = "audio/alternate_tempo.asm"
+c_symbol = "port_music_rival_alternate_tempo"
+c_source = "verification/ports/music_rival_alternate_tempo.c"
+status = "partial"
+observables = ["wChannelCommandPointers[0..1] (Ch1 -> Music_MeetRival_Ch1_AlternateTempo)", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "wAudioFadeOutControl", "registers A/C/HL/DE"]
+proof_domain = "no inputs; all operands are constant immediates (BANK(Music_MeetRival)=2, MUSIC_MEET_RIVAL=0xde, Music_MeetRival_Ch1_AlternateTempo=0x7119). Single execution path."
+decoder = "Loads the music id and bank into A/C then reproduces PlayMusic's unconditional top-level RAM writes (wNewSoundID, wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl=0). It then performs a single Audio1_OverwriteChannelPointer store into wChannelCommandPointers for the Ch1 alternate-tempo measure. Equivalence is pending the angr proof."
