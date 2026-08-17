@@ -17084,11 +17084,11 @@ decoder = "C port of _GivePokemon (the routine reached through the `farjp _GiveP
 
 
 [[function]]
-assembly_symbol = "Joypad"
+assembly_symbol = "_Joypad"
 assembly_source = "home/joypad.asm"
 c_symbol = "port_joypad"
 c_source = "verification/ports/joypad.c"
-status = "partial"
+status = "proven"
 observables = [
     "hJoyInput",
     "hJoyLast",
@@ -17099,7 +17099,7 @@ observables = [
     "wJoyIgnore",
 ]
 proof_domain = "all HRAM/WRAM inputs except the PAD_BUTTONS soft-reset sentinel; the diff logic (released/pressed edges, held mask, disable-joypad discard) is covered for every combination of hJoyInput, hJoyLast, wStatusFlags5 and wJoyIgnore"
-decoder = "C port implements _Joypad (the routine reached through the `Joypad` homecall wrapper). hJoyReleased=(last^input)&last, hJoyPressed=(last^input)&input, hJoyLast=input, hJoyHeld=input (zeroed and returned early when wStatusFlags5 has BIT_DISABLE_JOYPAD set; otherwise masked with ~wJoyIgnore when wJoyIgnore!=0). The PAD_BUTTONS (=all four buttons) soft-reset branch is not modeled: it diverts into a DelayFrame/SoftReset loop and performs none of the stores above, so hJoy* are left unchanged on that input. angr equivalence is pending."
+decoder = "angr pathwise equivalence proven (verification/tests/test_joypad_equivalence.py) on _Joypad: hJoyReleased=(last^input)&last, hJoyPressed=(last^input)&input, hJoyLast=input, hJoyHeld=input, with hJoyHeld/hJoyPressed/hJoyReleased zeroed when wStatusFlags5 has BIT_DISABLE_JOYPAD set, and hJoyHeld/hJoyPressed masked with ~wJoyIgnore when wJoyIgnore!=0. The PAD_BUTTONS soft-reset sentinel is modeled as an early return leaving hJoy* unchanged, matching port_joypad; the Z80 SLEIGH flag-forks (jp z / jr nz / ret z) are handled by _Fork shims and the SM83 CP/BIT/AND/ldh/ld[a16] shims."
 
 
 

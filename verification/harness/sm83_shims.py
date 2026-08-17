@@ -59,6 +59,25 @@ class Sm83OrRegister(angr.SimProcedure):
         )
         self.jump(self._next_address)
 
+class Sm83AndRegister(angr.SimProcedure):
+    """Correct SM83 ``AND r`` result and flags."""
+
+    def __init__(self, register: str, next_address: int) -> None:
+        super().__init__()
+        self._register = register
+        self._next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = self.state.regs.a & getattr(
+            self.state.regs, self._register
+        )
+        self.state.regs.f = claripy.If(
+            self.state.regs.a == 0,
+            claripy.BVV(0x40, 8),
+            claripy.BVV(0, 8),
+        )
+        self.jump(self._next_address)
+
 
 class Sm83Scf(angr.SimProcedure):
     """Correct SM83 ``SCF`` flags: preserve Z, set C, clear N and H."""
