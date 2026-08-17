@@ -10587,3 +10587,32 @@ observables = [
 ]
 proof_domain = "all 256 initial [wCurItem] values and all 15-byte KeyItemFlags tables; models call CopyData (bc=15), predef FlagActionPredef (FLAG_TEST on bit (item-1)), and call IsItemHM"
 decoder = "exact linked body checked; SM83 `cp`/`xor` flags shimmed; `call CopyData`, `predef FlagActionPredef`, and `call IsItemHM` modeled as state-preserving SimProcedures"
+
+[[function]]
+assembly_symbol = "AddAmountSoldToMoney"
+assembly_source = "home/inventory.asm"
+c_symbol = "port_add_amount_sold_to_money"
+c_source = "verification/ports/add_amount_sold_to_money.c"
+status = "proven"
+observables = [
+    "wPlayerMoney (3 bytes)",
+    "wTextBoxID",
+    "A (low-health-alarm derived, via WaitForSoundToFinish)",
+    "F (low-health-alarm derived, via WaitForSoundToFinish)",
+]
+proof_domain = "all 3-byte wPlayerMoney and hMoney BCD values and the low-health-alarm byte; models predef AddBCDPredef as a faithful symbolic BCD addition, call DisplayTextBoxID as a no-op, and call PlaySoundWaitForCurrent / jp WaitForSoundToFinish via the proven audio ports"
+decoder = "exact 29-byte linked body checked; `ld [wTextBoxID],a` (EA) shimmed for SM83; `predef AddBCDPredef` modeled as a symbolic BCD add with $99 saturation; `call DisplayTextBoxID` and `call PlaySoundWaitForCurrent` modeled as A/F-preserving no-ops; `jp WaitForSoundToFinish` modeled as the proven WaitForSoundToFinish flag computation returning to the GB sentinel"
+
+[[function]]
+assembly_symbol = "SubtractAmountPaidFromMoney_"
+assembly_source = "engine/items/subtract_paid_money.asm"
+c_symbol = "port_subtract_amount_paid_from_money"
+c_source = "verification/ports/subtract_amount_paid_from_money.c"
+status = "partial"
+observables = [
+    "wPlayerMoney (3 bytes, packed BCD)",
+    "wTextBoxID",
+    "carry",
+]
+proof_domain = "all 3-byte packed-BCD wPlayerMoney and hMoney inputs; byte-wise StringCmp carry (wPlayerMoney < hMoney) gates the SubBCDPredef subtraction (digit-wise packed-BCD borrow), and wTextBoxID is set to MONEY_BOX (0x13) on success"
+decoder = "exact 33-byte linked body checked (StringCmp call, ret c, predef SubBCDPredef, ld [wTextBoxID],a, DisplayTextBoxID, and a); the native C port implements the same byte-wise comparison and digit-wise packed-BCD subtraction; full pathwise symbolic equivalence is pending an angr native-branch-constraint fix on the optimized subtraction path"
