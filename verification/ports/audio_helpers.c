@@ -467,13 +467,11 @@ port_audio2_set_sfx_tempo(struct audio_sfx_tempo_state *state)
 	if ((state->registers.f & PORT_FLAG_C) == 0) {
 		state->registers.b = state->channel8_sound_id;
 		state->registers.a = state->channel5_sound_id | state->registers.b;
-		if (state->registers.a >= 0x9d && state->registers.a < 0xea) {
-			state->registers.f = PORT_FLAG_C;
-		} else if (state->registers.a == 0xea) {
-			state->registers.f = PORT_FLAG_Z;
-		} else {
-			state->registers.f = 0;
-		}
+		if (state->registers.a >= 0x9d && state->registers.a != 0xea) {
+  state->registers.f = PORT_FLAG_C;
+} else {
+  state->registers.f = 0;
+}
 	}
 	if (state->registers.f & PORT_FLAG_C)
 		audio_apply_sfx_tempo(state);
@@ -529,13 +527,11 @@ port_audio2_apply_frequency_modifier(struct audio_frequency_modifier_state *stat
 	if ((state->registers.f & PORT_FLAG_C) == 0) {
 		state->registers.b = state->channel8_sound_id;
 		state->registers.a = state->channel5_sound_id | state->registers.b;
-		if (state->registers.a >= 0x9d && state->registers.a < 0xea) {
-			state->registers.f = PORT_FLAG_C;
-		} else if (state->registers.a == 0xea) {
-			state->registers.f = PORT_FLAG_Z;
-		} else {
-			state->registers.f = 0;
-		}
+		if (state->registers.a >= 0x9d && state->registers.a != 0xea) {
+  state->registers.f = PORT_FLAG_C;
+} else {
+  state->registers.f = 0;
+}
 	}
 	if (state->registers.f & PORT_FLAG_C)
 		audio_apply_frequency_value(state);
@@ -607,13 +603,11 @@ audio_wave_apply_modifier(struct audio_wave_frequency_state *state, int battle_s
 	if (!applies && battle_sfx) {
 		state->registers.b = state->channel8_sound_id;
 		state->registers.a = state->channel5_sound_id | state->registers.b;
-		if (state->registers.a >= 0x9d && state->registers.a < 0xea) {
-			state->registers.f = PORT_FLAG_C;
-		} else if (state->registers.a == 0xea) {
-			state->registers.f = PORT_FLAG_Z;
-		} else {
-			state->registers.f = 0;
-		}
+		if (state->registers.a >= 0x9d && state->registers.a != 0xea) {
+  state->registers.f = PORT_FLAG_C;
+} else {
+  state->registers.f = 0;
+}
 		applies = (state->registers.f & PORT_FLAG_C) != 0;
 	}
 	if (!applies)
