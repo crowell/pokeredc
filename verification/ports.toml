@@ -10237,7 +10237,7 @@ observables = [
     "every sequential source read and destination write",
 ]
 proof_domain = "all register/flag inputs, all 16-bit HL/BC/DE values including source/destination wraparound, overlap, and the 65536-iteration initial-HL=BC case; exhaustive recurrence covers both high-byte and low-byte continuation paths"
-decoder = "exact 12-byte body checked; symbolic HLI read, DE store/increment, both CP operations and loop branches, final return, and sequential overlap semantics modeled explicitly"
+decoder = "angr pathwise equivalence proven (verification/tests/test_copy_data_until_equivalence.py): the routine copies [HL]->[DE] until HL==BC. The step reuses port_copy_data_until_step and models the loop body (ld a,[hli]; ld [de],a; inc de; ld a,h; cp b; jr nz; ld a,l; cp c; jr nz; ret) with the comparison packed into the shim-Z80 flag layout so assembly_registers converts it to match the native raw F (N always set; Z/H/C from copy_until_compare), and a = If(h==b, l, h) matching the C's early return."
 
 
 
