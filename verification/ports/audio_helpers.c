@@ -48,10 +48,8 @@ port_audio2_is_battle_sfx(struct audio_battle_sfx_state *state)
 	state->registers.b = state->registers.a;
 	state->registers.a = state->channel5_sound_id;
 	state->registers.a |= state->registers.b;
-	if (state->registers.a >= 0x9d && state->registers.a < 0xea) {
+	if (state->registers.a >= 0x9d && state->registers.a != 0xea) {
 		state->registers.f = PORT_FLAG_C;
-	} else if (state->registers.a == 0xea) {
-		state->registers.f = PORT_FLAG_Z;
 	} else {
 		state->registers.f = 0;
 	}
