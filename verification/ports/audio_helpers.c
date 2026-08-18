@@ -4,10 +4,12 @@ static void
 audio_set_is_cry(struct cpu_register_state *registers, port_u8 sound_id)
 {
 	registers->a = sound_id;
-	if (registers->a >= 0x14 && registers->a < 0x86) {
+	/* Carry set when sound_id >= 0x14 and sound_id != 0x86; carry clear
+	 * otherwise. The assembly's .yes and .no both end in `ret`, so no Z flag
+	 * is ever produced; the prior port wrongly set Z for 0x86 and cleared
+	 * carry for >0x86. */
+	if (registers->a >= 0x14 && registers->a != 0x86) {
 		registers->f = PORT_FLAG_C;
-	} else if (registers->a == 0x86) {
-		registers->f = PORT_FLAG_Z;
 	} else {
 		registers->f = 0;
 	}
