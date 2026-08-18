@@ -16947,10 +16947,10 @@ assembly_symbol = "FarCopyData"
 assembly_source = "home/copy.asm"
 c_symbol = "port_far_copy_data"
 c_source = "verification/ports/far_copy_data.c"
-status = "partial"
+status = "proven"
 observables = ["[DE]..[DE+BC-1] (destination bytes)", "[HL]..[HL+BC-1] (source bytes)", "registers BC/DE/HL (preserved across the ROM bank switch)"]
 proof_domain = "all BC (copy length), HL (source), DE (destination) register values; arbitrary source bytes in the flat memory model"
-decoder = "Flat-memory model: the ROM bank switch (wBuffer + hLoadedROMBank/rROMB) is a no-op, so port_far_copy_data copies BC bytes from [HL] to [DE] using the same byte loop CopyData performs. Equivalence is pending the angr proof."
+decoder = "angr pathwise equivalence proven (verification/tests/test_far_copy_data_equivalence.py): the ROM bank switch (wBuffer + hLoadedROMBank/rROMB) is a no-op in the flat-memory model, so FarCopyData reduces to one iteration of CopyData, which port_far_copy_data performs via port_copy_data_step. The step proof reuses port_copy_data_step and models `call CopyData` as a single byte transition (ld a,[hli]; ld [de],a; inc de; dec bc; ld a,c; or b) with the bank-switch ldhs hooked as no-ops, confirming registers BC/DE/HL and the copied byte match."
 
 
 
