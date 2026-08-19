@@ -17748,3 +17748,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and every 16-bit HL pointer; the two HRAM bytes (destination low = L, high = H) are checked exactly, and the final A equals L with all flags cleared"
 decoder = "exact 9-byte body checked (7ce0bd7de0bcc3d73d); the two ldh [a8], a stores and the two ld a, r register loads are shimmed for SM83 flag/opcode semantics, and the jp Delay3 tail is an explicit boundary. Pathwise equivalence proven against port_battle_anim_copy_tilemap_to_vram."
+
+[[function]]
+assembly_symbol = "NextChar"
+assembly_source = "engine/text/text.asm"
+c_symbol = "port_next_char"
+c_source = "verification/ports/next_char.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "DE (low and high bytes)",
+]
+proof_domain = "all register/flag inputs and every 16-bit DE; DE is incremented modulo 65536, and all other registers (A, F, B, C, H, L) and the flags are preserved"
+decoder = "exact 4-byte body checked (13 c3 56 19); the inc de is proven natively and the jp PlaceNextChar tail is an explicit boundary. Pathwise equivalence proven against port_next_char."
