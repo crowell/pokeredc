@@ -17916,4 +17916,22 @@ observables = [
 ]
 proof_domain = "all 256 initial A/F and the remaining register inputs; the two 16-bit/8-bit immediates are bound to the constants (B=$1c, HL=$487e)."
 decoder = "exact 8-byte body checked (061c217e48c3d635); the tail `jp` is an explicit boundary. Pathwise equivalence proven against port_handle_mid_jump across all register/flag inputs, including F (LD r,imm and LD rr,nn do not affect flags)."
-decoder = "exact 33-byte body checked (fa9cd84f21a5d816002a473ab0280114c5012c0009c10d20f07afe02d24b67a7c9); LD A,(a16), LD A,(HL+), LD A,(HL-) and CP 2 are shimmed and the JP NC tail is an explicit boundary. Pathwise equivalence proven against port_ai_switch_if_enough_mons for c = 1..6."
+
+[[function]]
+assembly_symbol = "CheckWarpsNoCollisionRetry1"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_warps_no_collision_retry1"
+c_source = "verification/ports/check_warps_no_collision_retry1.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "all 256 initial A/F and the remaining register inputs; the tail `jp` is an explicit boundary (the shared retry routine)."
+decoder = "exact 6-byte body checked (232323c3b507); the tail `jp` is an explicit boundary. Pathwise equivalence proven against port_check_warps_no_collision_retry1 across all register/flag inputs, including F (INC HL does not affect flags, so HL advances by 3 with F preserved)."
