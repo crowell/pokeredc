@@ -57,8 +57,9 @@ port_calc_checksum_finish(struct checksum_loop_state *state)
 {
 	state->registers.a = state->registers.d;
 	state->registers.a = (port_u8)~state->registers.a;
-	state->registers.f &= PORT_FLAG_Z | PORT_FLAG_C;
-	state->registers.f |= PORT_FLAG_N | PORT_FLAG_H;
+	state->registers.f = (state->registers.f & PORT_FLAG_C) |
+		PORT_FLAG_N | PORT_FLAG_H |
+		(state->registers.a == 0 ? PORT_FLAG_Z : 0);
 }
 
 /* Port of CalcCheckSum in engine/menus/save.asm. */
