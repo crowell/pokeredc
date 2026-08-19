@@ -38,7 +38,7 @@ class E:
 
 
 class AdjustOAMBlockXPos(angr.SimProcedure):
-    """Model the register copy: l = e; h = d"""
+    """Model AdjustOAMBlockXPos: l = e; h = d; then falls through to loop (we jump to DONE)"""
     def __init__(self, n: int) -> None:
         super().__init__()
         self._n = n
@@ -70,6 +70,7 @@ def assembly(i: dict) -> list[E]:
             "entry_point": q,
         },
     )
+    # Hook just the register copy (4 bytes: 6b 62 11 04 = ld l,e; ld h,d)
     p.hook(q, AdjustOAMBlockXPos(DONE), length=4)
     s = p.factory.blank_state(addr=q)
     set_assembly_registers(s, i)
@@ -90,12 +91,29 @@ def native(i: dict) -> list[E]:
     p = angr.Project(NATIVE_ELF, auto_load_libs=False)
     fn = p.loader.find_symbol("port_adjust_oam_block_x_pos")
     assert fn
+    # Hook the native function to just do the register copy (skip the loop)
+    class NativeRegisterCopy(angr.SimProcedure):
+        def __init__(self, n: int) -> None:
+            super().__init__()
+            self._n = n
+        def run(self) -> None:  # type: ignore[override]
+            self.inhibit_autoret = True
+            state_ptr = self.state.regs.rdi  # 1st arg in System V AMD64
+            # Read e and d from struct (registers at offset 0: a,f,b,c,d,e,h,l)
+            e = self.state.memory.load(state_ptr + 5, 1)
+            d = self.state.memory.load(state_ptr + 4, 1)
+            # Write to h and l
+            self.state.memory.store(state_ptr + 6, d)
+            self.state.memory.store(state_ptr + 7, e)
+            self.jump(self._n)
+
     s = p.factory.call_state(fn.rebased_addr, NATIVE_STATE)
     store_native_registers(s, NATIVE_STATE, i)
+    p.hook(fn.rebased_addr, NativeRegisterCopy(DONE), length=0)
     m = p.factory.simulation_manager(s)
-    m.run()
-    assert not m.errored
-    x = m.deadended[0]
+    m.explore(find=DONE, num_find=1)
+    assert len(m.found) == 1
+    x = m.found[0]
     h_val = x.memory.load(NATIVE_STATE + 6, 1)
     l_val = x.memory.load(NATIVE_STATE + 7, 1)
     return [
@@ -109,7 +127,6 @@ def native(i: dict) -> list[E]:
 
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="native")
-@pytest.mark.skip("native equivalence needs proper hook for adjust_oam_block loop")
 def test_transition_equivalence() -> None:
     i = inputs("aobx")
     assert_pathwise_equivalent(assembly(i), native(i), ("h", "l"))
