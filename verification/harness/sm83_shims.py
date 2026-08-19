@@ -574,6 +574,22 @@ class Sm83LoadAFromImmediate(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
         self.state.regs.a = self.state.memory.load(self._immediate_address, 1)
         self.state.regs.f = claripy.BVV(0, 8)
+
+
+class Sm83LoadAFromRegister(angr.SimProcedure):
+    """Implement SM83 ``LD A, r`` (opcodes 78-7F) for a register operand:
+    load the source register into A and clear Z/N/H/C. The Z80 pcode backend
+    leaves/modifies flags incorrectly (e.g. sets C) for register loads, which
+    SM83 does not do."""
+
+    def __init__(self, source_register: str, next_address: int) -> None:
+        super().__init__()
+        self._source_register = source_register
+        self._next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = getattr(self.state.regs, self._source_register)
+        self.state.regs.f = claripy.BVV(0, 8)
         self.jump(self._next_address)
 
 

@@ -17734,3 +17734,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs; the single stored HRAM byte equals the incoming A, and A/F are preserved (ldh [a8], a does not modify them)"
 decoder = "exact 5-byte body checked (e0bd c3d73d); the ldh [a8], a store is shimmed for SM83 and the jp Delay3 tail is an explicit boundary. Pathwise equivalence proven against port_title_screen_copy_tilemap_to_vram."
+
+[[function]]
+assembly_symbol = "BattleAnimCopyTileMapToVRAM"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_battle_anim_copy_tilemap_to_vram"
+c_source = "verification/ports/battle_anim_copy_tilemap.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferDest",
+    "hAutoBGTransferDest + 1",
+]
+proof_domain = "all register/flag inputs and every 16-bit HL pointer; the two HRAM bytes (destination low = L, high = H) are checked exactly, and the final A equals L with all flags cleared"
+decoder = "exact 9-byte body checked (7ce0bd7de0bcc3d73d); the two ldh [a8], a stores and the two ld a, r register loads are shimmed for SM83 flag/opcode semantics, and the jp Delay3 tail is an explicit boundary. Pathwise equivalence proven against port_battle_anim_copy_tilemap_to_vram."
