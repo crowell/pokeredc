@@ -17934,4 +17934,22 @@ observables = [
     "L",
 ]
 proof_domain = "all 256 initial A/F and the remaining register inputs; the tail `jp` is an explicit boundary (the shared retry routine)."
-decoder = "exact 6-byte body checked (232323c3b507); the tail `jp` is an explicit boundary. Pathwise equivalence proven against port_check_warps_no_collision_retry1 across all register/flag inputs, including F (INC HL does not affect flags, so HL advances by 3 with F preserved)."
+
+[[function]]
+assembly_symbol = "TextScriptEndingText"
+assembly_source = "home/overworld_text.asm"
+c_symbol = "port_text_script_ending_text"
+c_source = "verification/ports/text_script_ending_text.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "all 256 initial A/F and the remaining register inputs; the tail `ret` is an explicit boundary (the caller frame)."
+decoder = "exact 5-byte body checked (5021d624c9); the tail `ret` is an explicit boundary reached via an sp sentinel. Pathwise equivalence proven against port_text_script_ending_text across all register/flag inputs, including F (LD D,B and LD HL,nn do not affect flags)."
