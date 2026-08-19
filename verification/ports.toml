@@ -9740,7 +9740,7 @@ observables = [
     "every byte fetched from HL",
 ]
 proof_domain = "all register/flag inputs, every 16-bit HL/BC pair including wraparound and BC=0's 65536 iterations, and every finite symbolic input byte sequence; setup/finish compose with an exhaustive recurrence"
-decoder = "exact 13-byte body checked; symbolic HLI fetch, ADD flags, DEC BC, OR flags, both loop paths, CPL flags, and return modeled explicitly"
+decoder = "exact 13-byte body checked; begin, one-iteration loop step (fetched byte, all registers, OR flags, and exit bit), and finish (complemented result, N/H/Z with C preserved) each have a pathwise angr equivalence test against their port; the do/while recurrence over BC covers wraparound and BC=0's 65536 iterations"
 
 
 
