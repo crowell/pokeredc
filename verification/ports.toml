@@ -17787,3 +17787,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs; DE is stored little-endian into the temp sprite buffer at 0xd0ab/0xd0ac, HL becomes 0xd0ac, and A/F/B/C/D/E are preserved (LD (HL),r and INC HL do not affect them)"
 decoder = "exact 9-byte body checked (21abd0732372c3fd24); the LD (HL),r stores and INC HL are run natively and the jp 0x24fd tail is an explicit boundary. Pathwise equivalence proven against port_uncompress_sprite_from_de across all register/flag inputs with the buffer writes as observables."
+
+[[function]]
+assembly_symbol = "PrintBCDDigit"
+assembly_source = "home/print_bcd.asm"
+c_symbol = "port_print_bcd_digit"
+c_source = "verification/ports/print_bcd_digit.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs; A is masked to its low nibble, B/C/D/E/H/L are preserved, and F is Z=(A==0), N=0, H=1, C=0 (the final AND A sets the flags)"
+decoder = "exact 5-byte body checked (e60fa72815); the AND instructions are run natively and the JR Z tail is an explicit boundary. Pathwise equivalence proven against port_print_bcd_digit across all register/flag inputs."
