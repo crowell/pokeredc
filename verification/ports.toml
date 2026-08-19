@@ -17799,3 +17799,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs; A is masked to its low nibble, B/C/D/E/H/L are preserved, and F is Z=(A==0), N=0, H=1, C=0 (the final AND A sets the flags)"
 decoder = "exact 5-byte body checked (e60fa72815); the AND instructions are run natively and the JR Z tail is an explicit boundary. Pathwise equivalence proven against port_print_bcd_digit across all register/flag inputs."
+
+[[function]]
+assembly_symbol = "CheckWarpsNoCollisionRetry2"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_warps_no_collision_retry2"
+c_source = "verification/ports/check_warps_no_collision_retry2.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "HL (low and high bytes)",
+]
+proof_domain = "all register/flag inputs and every 16-bit HL; HL is incremented by two modulo 65536, and A/F/B/C/D/E are preserved (INC HL is 16-bit and affects no flags)"
+decoder = "exact 5-byte body checked (2323c3b507); the INC HL instructions are run natively and the JP 0x7b5 tail is an explicit boundary. Pathwise equivalence proven against port_check_warps_no_collision_retry2 across all register/flag inputs."
