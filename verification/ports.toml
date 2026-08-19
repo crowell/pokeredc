@@ -17825,3 +17825,21 @@ observables = [
 ]
 proof_domain = "all register/flag inputs; B is incremented and C is decremented modulo 256, and A/D/E/H/L are preserved. F is set per SM83 semantics (Z=(C==0), N=1, H from the low-nibble borrow, C preserved) but is excluded from the proof"
 decoder = "exact 5-byte body checked (040dc2cc06); the INC B and DEC C are run natively and the JP NZ tail is an explicit boundary. Pathwise data-path equivalence (a/b/c/d/e/h/l) is proven against port_continue_check_warps_no_collision_loop. F is excluded because angr's pcode Z80 backend composes the flag register incorrectly for 8-bit INC/DEC."
+
+[[function]]
+assembly_symbol = "CalcDSquared"
+assembly_source = "engine/pokemon/experience.asm"
+c_symbol = "port_calc_d_squared"
+c_source = "verification/ports/calc_d_squared.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "hMultiplicand",
+    "hMultiplicand+1",
+    "hMultiplicand+2",
+    "hMultiplier",
+]
+proof_domain = "all register/flag inputs; the 24-bit multiplicand is initialised to d (high bytes zero) and the multiplier to d, then tail-calls Multiply. A = d and F = 0 (the final LD A, D clears flags)."
+decoder = "exact 13-byte body checked (afe096e0977ae098e099c3ac38); the two LDH high-store shims and LD A, D are shimmed for correct SM83 semantics, and the JP Multiply tail is an explicit boundary. Pathwise equivalence proven against port_calc_d_squared across all register/flag inputs."
+
