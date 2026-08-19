@@ -17812,3 +17812,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and every 16-bit HL; HL is incremented by two modulo 65536, and A/F/B/C/D/E are preserved (INC HL is 16-bit and affects no flags)"
 decoder = "exact 5-byte body checked (2323c3b507); the INC HL instructions are run natively and the JP 0x7b5 tail is an explicit boundary. Pathwise equivalence proven against port_check_warps_no_collision_retry2 across all register/flag inputs."
+
+[[function]]
+assembly_symbol = "ContinueCheckWarpsNoCollisionLoop"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_continue_check_warps_no_collision_loop"
+c_source = "verification/ports/continue_check_warps_no_collision_loop.c"
+status = "proven"
+observables = [
+    "all registers except F",
+    "B and C (low bytes)",
+]
+proof_domain = "all register/flag inputs; B is incremented and C is decremented modulo 256, and A/D/E/H/L are preserved. F is set per SM83 semantics (Z=(C==0), N=1, H from the low-nibble borrow, C preserved) but is excluded from the proof"
+decoder = "exact 5-byte body checked (040dc2cc06); the INC B and DEC C are run natively and the JP NZ tail is an explicit boundary. Pathwise data-path equivalence (a/b/c/d/e/h/l) is proven against port_continue_check_warps_no_collision_loop. F is excluded because angr's pcode Z80 backend composes the flag register incorrectly for 8-bit INC/DEC."
