@@ -17897,4 +17897,23 @@ observables = [
 ]
 proof_domain = "the combined fossil-event flag byte at 0xd7f6 is an arbitrary symbolic byte; the remaining register inputs are arbitrary. F is excluded (the RGBDS AND sets SM83 flags that the C port does not replicate)."
 decoder = "exact 9-byte body checked (faf6d7e6c0ca1932c9); LD A,(a16) and AND imm are shimmed and the JP Z tail is an explicit boundary (RET is the other terminal). Pathwise equivalence proven against port_mt_moon_b2f_check_got_a_fossil across the masked flag byte and all register inputs."
+
+[[function]]
+assembly_symbol = "HandleMidJump"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_handle_mid_jump"
+c_source = "verification/ports/handle_mid_jump.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "all 256 initial A/F and the remaining register inputs; the two 16-bit/8-bit immediates are bound to the constants (B=$1c, HL=$487e)."
+decoder = "exact 8-byte body checked (061c217e48c3d635); the tail `jp` is an explicit boundary. Pathwise equivalence proven against port_handle_mid_jump across all register/flag inputs, including F (LD r,imm and LD rr,nn do not affect flags)."
 decoder = "exact 33-byte body checked (fa9cd84f21a5d816002a473ab0280114c5012c0009c10d20f07afe02d24b67a7c9); LD A,(a16), LD A,(HL+), LD A,(HL-) and CP 2 are shimmed and the JP NC tail is an explicit boundary. Pathwise equivalence proven against port_ai_switch_if_enough_mons for c = 1..6."
