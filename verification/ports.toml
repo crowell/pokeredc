@@ -17843,3 +17843,21 @@ observables = [
 proof_domain = "all register/flag inputs; the 24-bit multiplicand is initialised to d (high bytes zero) and the multiplier to d, then tail-calls Multiply. A = d and F = 0 (the final LD A, D clears flags)."
 decoder = "exact 13-byte body checked (afe096e0977ae098e099c3ac38); the two LDH high-store shims and LD A, D are shimmed for correct SM83 semantics, and the JP Multiply tail is an explicit boundary. Pathwise equivalence proven against port_calc_d_squared across all register/flag inputs."
 
+
+
+[[function]]
+assembly_symbol = "AISwitchIfEnoughMons"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_ai_switch_if_enough_mons"
+c_source = "verification/ports/ai_switch_if_enough_mons.c"
+status = "proven"
+observables = [
+    "A",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "party count c in 1..6 (valid wEnemyMonPartyCount range); each slot's leading 16-bit field (2 bytes at wEnemyMonOT + 0x2c*slot) is an arbitrary symbolic pair. F and B are excluded."
+decoder = "exact 33-byte body checked (fa9cd84f21a5d816002a473ab0280114c5012c0009c10d20f07afe02d24b67a7c9); LD A,(a16), LD A,(HL+), LD A,(HL-) and CP 2 are shimmed and the JP NC tail is an explicit boundary. Pathwise equivalence proven against port_ai_switch_if_enough_mons for c = 1..6."
