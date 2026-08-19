@@ -17860,4 +17860,23 @@ observables = [
     "L",
 ]
 proof_domain = "party count c in 1..6 (valid wEnemyMonPartyCount range); each slot's leading 16-bit field (2 bytes at wEnemyMonOT + 0x2c*slot) is an arbitrary symbolic pair. F and B are excluded."
+
+[[function]]
+assembly_symbol = "LoadBattleTransitionTile"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_load_battle_transition_tile"
+c_source = "verification/ports/load_battle_transition_tile.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "all 256 initial A/F and the remaining register inputs; the three 16-bit immediates are bound to the RGBDS constants (HL=wTilemap, DE=BattleTransitionTile, BC=len)."
+decoder = "exact 12-byte body checked (21f08f11594a01011cc34818); the tail `jp` is an explicit boundary. Pathwise equivalence proven against port_load_battle_transition_tile across all register/flag inputs, including F (LD rr,nn and JP do not affect flags)."
 decoder = "exact 33-byte body checked (fa9cd84f21a5d816002a473ab0280114c5012c0009c10d20f07afe02d24b67a7c9); LD A,(a16), LD A,(HL+), LD A,(HL-) and CP 2 are shimmed and the JP NC tail is an explicit boundary. Pathwise equivalence proven against port_ai_switch_if_enough_mons for c = 1..6."
