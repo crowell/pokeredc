@@ -17761,3 +17761,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and every 16-bit DE; DE is incremented modulo 65536, and all other registers (A, F, B, C, H, L) and the flags are preserved"
 decoder = "exact 4-byte body checked (13 c3 56 19); the inc de is proven natively and the jp PlaceNextChar tail is an explicit boundary. Pathwise equivalence proven against port_next_char."
+
+[[function]]
+assembly_symbol = "GetwMoves"
+assembly_source = "home/pokemon.asm"
+c_symbol = "port_get_w_moves"
+c_source = "verification/ports/get_w_moves.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs and every 8-bit A (move id); HL = 0xd0dc + A, C = A, B = 0, A = mem[0xd0dc + A] with F preserving the input Z flag (ADD HL, BC never carries for a valid id, so N/H/C stay 0), and the table bytes at 0xd0dc are arbitrary but identical on both sides"
+decoder = "exact 9-byte body checked (21dcd04f0600097ec9); the LD/ADD/ret are run natively and the ret tail is an explicit boundary. Pathwise equivalence proven against port_get_w_moves across all register/flag inputs with a shared symbolic table."
