@@ -17773,3 +17773,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and every 8-bit A (move id); HL = 0xd0dc + A, C = A, B = 0, A = mem[0xd0dc + A] with F preserving the input Z flag (ADD HL, BC never carries for a valid id, so N/H/C stay 0), and the table bytes at 0xd0dc are arbitrary but identical on both sides"
 decoder = "exact 9-byte body checked (21dcd04f0600097ec9); the LD/ADD/ret are run natively and the ret tail is an explicit boundary. Pathwise equivalence proven against port_get_w_moves across all register/flag inputs with a shared symbolic table."
+
+[[function]]
+assembly_symbol = "UncompressSpriteFromDE"
+assembly_source = "home/tilemap.asm"
+c_symbol = "port_uncompress_sprite_from_de"
+c_source = "verification/ports/uncompress_sprite_from_de.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "memory at 0xd0ab (sprite buffer low)",
+    "memory at 0xd0ac (sprite buffer high)",
+]
+proof_domain = "all register/flag inputs; DE is stored little-endian into the temp sprite buffer at 0xd0ab/0xd0ac, HL becomes 0xd0ac, and A/F/B/C/D/E are preserved (LD (HL),r and INC HL do not affect them)"
+decoder = "exact 9-byte body checked (21abd0732372c3fd24); the LD (HL),r stores and INC HL are run natively and the jp 0x24fd tail is an explicit boundary. Pathwise equivalence proven against port_uncompress_sprite_from_de across all register/flag inputs with the buffer writes as observables."
