@@ -17707,3 +17707,17 @@ observables = [
 ]
 proof_domain = "all HL (StoppedEvolvingText pointer) and register inputs; the PrintText + ClearScreen observable sequence"
 decoder = "C port calls port_print_text (PrintText with the text pointer already in HL) then port_clear_screen (ClearScreen). The trailing `pop hl` and `jp Evolution_PartyMonLoop` continuation is a compositional boundary (the party-mon loop tail) modeled as a return. Pathwise equivalence is pending."
+
+[[function]]
+assembly_symbol = "CreditsCopyTileMapToVRAM"
+assembly_source = "engine/movie/credits.asm"
+c_symbol = "port_credits_copy_tilemap_to_vram"
+c_source = "verification/ports/credits_copy_tilemap.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferDest (+1)",
+    "hAutoBGTransferEnabled",
+]
+proof_domain = "all register/flag inputs and every 16-bit HL pointer; the three HRAM bytes (destination low/high and the enable flag) are checked exactly, and the final flag state after `ld a, 1` is all-clear"
+decoder = "exact 13-byte body checked (7d e0bc 7c e0bd 3e01 e0ba c3d73d); the three `ldh [a8], a` stores and the `ld a, n` immediate load are shimmed for SM83 flag semantics, and the `jp Delay3` tail is an explicit boundary. Pathwise equivalence proven against port_credits_copy_tilemap_to_vram."

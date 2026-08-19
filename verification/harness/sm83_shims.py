@@ -562,6 +562,21 @@ class Sm83LoadAImmediate(angr.SimProcedure):
         self.jump(self._next_address)
 
 
+class Sm83LoadAFromImmediate(angr.SimProcedure):
+    """Implement SM83 ``LD A, n`` (opcode 3E): load the immediate into A and
+    clear Z/N/H/C. The Z80 pcode backend sets H here, which SM83 does not."""
+
+    def __init__(self, immediate_address: int, next_address: int) -> None:
+        super().__init__()
+        self._immediate_address = immediate_address
+        self._next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = self.state.memory.load(self._immediate_address, 1)
+        self.state.regs.f = claripy.BVV(0, 8)
+        self.jump(self._next_address)
+
+
 class Sm83StoreAHighImmediate(Sm83StoreAImmediate):
     """Implement SM83 ``LDH [a8], A`` (opcode E0), absent from the Z80."""
 
