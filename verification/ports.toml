@@ -17342,10 +17342,20 @@ assembly_symbol = "Music_RivalAlternateStartAndTempo"
 assembly_source = "audio/alternate_tempo.asm"
 c_symbol = "port_music_rival_alternate_start_and_tempo"
 c_source = "verification/ports/music_rival_alternate_start_and_tempo.c"
-status = "partial"
-observables = ["wChannelCommandPointers[0..1] (Ch1 -> Music_MeetRival_Ch1_AlternateStartAndTempo)", "wChannelCommandPointers[2..3] (Ch2 -> Music_MeetRival_Ch2_AlternateStart, preserved)", "wChannelCommandPointers[4..5] (Ch3 -> Music_MeetRival_Ch3_AlternateStart, preserved)", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "wAudioFadeOutControl", "registers A/C/HL/DE"]
-proof_domain = "no inputs; all operands are constant immediates; the forwarded Music_RivalAlternateStart path plus the final Ch1 overwrite with Music_MeetRival_Ch1_AlternateStartAndTempo=0x719b. Single execution path."
-decoder = "Forwards to the Music_RivalAlternateStart port (which sets Ch1/Ch2/Ch3 to their alternate-start measures and writes the PlayMusic globals), then resets hl to wChannelCommandPointers and overwrites only Ch1 with the combined alternate-start-and-tempo measure. The forwarded call reuses the dedicated port; the final store uses the same little-endian channel-pointer write convention. Equivalence is pending the angr proof."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "channel1_pointer",
+    "channel2_pointer",
+    "channel3_pointer",
+    "sound_id",
+    "audio_rom_bank",
+    "audio_saved_bank",
+    "fade_out_control",
+    "play_music_called",
+]
+proof_domain = "all symbolic initial registers and pointer/audio state; the forwarded PlayMusic/alternate-start boundary and final Ch1 overwrite are exercised on the single constant-immediate path"
+decoder = "PC-portable C contract for Music_RivalAlternateStartAndTempo: forwards the explicit Music_RivalAlternateStart audio state, then changes only Ch1 to 0x719b while preserving Ch2=0x721d and Ch3=0x72b5; final HL is 0xc008. The angr test proves all registers and explicit audio state against the branching-call summary and retains the exact linked body."
 
 
 
