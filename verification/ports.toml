@@ -19095,3 +19095,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn preserves flags); the local RET is an explicit path boundary."
 decoder = "4-byte body checked (21edcfc9: ld hl,$cfed; ret); no CALL/PUSH/POP; F-preserving operation."
+
+[[function]]
+assembly_symbol = "ExtraWarpCheck.useFunction2"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_extra_warp_check_use_function2"
+c_source = "verification/ports/extra_warp_check_use_function2.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch jp is an explicit boundary."
+decoder = "8-byte body checked (214e440603c3d635: ld hl,$444e; ld b,$03; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
