@@ -18507,3 +18507,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "5-byte body checked (06c8c30560: ld b,$c8; jp $6005); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ItemUseMaxRepel"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_item_use_max_repel"
+c_source = "verification/ports/item_use_max_repel.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "5-byte body checked (06fac30560: ld b,$fa; jp $6005); no CALL/PUSH/POP; F-preserving ops only."
