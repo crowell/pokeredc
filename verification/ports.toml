@@ -20352,3 +20352,26 @@ observables = [
 ]
 proof_domain = "first move-animation tileset (wWhichBattleAnimTileset=0), arbitrary incoming registers and prior temporary tile-count byte"
 decoder = "tileset-zero table entry and pre-CopyVideoData register setup are modeled; CopyVideoData remains the explicit downstream continuation"
+
+[[function]]
+assembly_symbol = "MoveAnimation"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_move_animation_finished"
+c_source = "verification/ports/move_animation.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wSubAnimSubEntryAddr",
+    "wUnusedMoveAnimByte",
+    "wSubAnimTransform",
+    "wAnimSoundID",
+]
+proof_domain = "MoveAnimation.animationFinished branch after saved-register restoration, arbitrary incoming registers and prior output bytes"
+decoder = "finish-branch stores modeled; WaitForSoundToFinish and entry save/restore are explicit branch boundaries"
