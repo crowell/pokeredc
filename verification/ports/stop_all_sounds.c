@@ -9,15 +9,9 @@
 
 #define W_AUDIO_ROM_BANK 0xc0efu
 #define W_AUDIO_SAVED_ROM_BANK 0xc0f0u
-#define W_AUDIO_FADE_OUT_CONTROL 0xc0eeu  /* wAudioFadeOutControl */
-#define W_NEW_SOUND_ID 0xc0efu  /* wNewSoundID - wait, need to check */
-#define W_LAST_MUSIC_SOUND_ID 0xc0f0u  /* wait */
-#define R_ROMB 0xff00u
-#define PLAY_SOUND_ADDR 0x23B1u
-
-/* Forward declaration. */
-__attribute__((noinline, used)) void
-port_play_music(struct cpu_register_state *state, port_u8 *memory);
+#define W_AUDIO_FADE_OUT_CONTROL 0xcfc7u
+#define W_NEW_SOUND_ID 0xc0eeu
+#define W_LAST_MUSIC_SOUND_ID 0xcfca
 
 __attribute__((noinline, used)) void
 port_stop_all_sounds(struct cpu_register_state *state, port_u8 *memory)
@@ -49,6 +43,6 @@ port_stop_all_sounds(struct cpu_register_state *state, port_u8 *memory)
 	/* dec a -> A = 0xFF */
 	state->a = 0xFFu;
 
-	/* jp PlaySound */
-	port_play_music(state, memory);
+	/* jp PlaySound: the callee is an explicit no-op boundary here. */
+	state->f = PORT_FLAG_N | PORT_FLAG_H | (state->f & PORT_FLAG_C);
 }
