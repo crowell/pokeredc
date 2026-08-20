@@ -20289,3 +20289,23 @@ observables = [
 ]
 proof_domain = "one frame-block tile, FRAMEBLOCKMODE_02, no transformation (wSubAnimTransform=0), fixed source and destination pointers, arbitrary base coordinates and tile bytes"
 decoder = "entry prologue and one-tile no-transformation body checked with explicit SM83 absolute-load/store shims; native implementation includes all four coordinate/flag transformation formulas but mode-02 completion is the proved path"
+
+[[function]]
+assembly_symbol = "PlayAnimation"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_play_animation_over"
+c_source = "verification/ports/play_animation.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "animation-command source byte",
+]
+proof_domain = "PlayAnimation.animationLoop -> .AnimationOver branch with command byte $FF, arbitrary non-pointer register inputs, fixed command pointer"
+decoder = "animation-loop LD A,[HL+], CP $FF, JR Z, and RET path checked with explicit SM83 LD/CP shims; no special-effect or subanimation calls are modeled"
