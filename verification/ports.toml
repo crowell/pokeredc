@@ -18943,5 +18943,4 @@ observables = [
     "L",
 ]
 proof_domain = "full 8-register equivalence incl. F (LD A,B preserves flags); the local RET is an explicit path boundary."
-decoder = "2-byte body checked (78c9: ld a,b; ret); no CALL/PUSH/POP; F-preserving operation.
-"
+decoder = "2-byte body checked (78c9: ld a,b; ret); no CALL/PUSH/POP; F-preserving operation."
