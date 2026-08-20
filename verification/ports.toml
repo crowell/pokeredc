@@ -18773,3 +18773,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "10-byte body checked (06002110c43e31c36d3e: ld b,$00; ld hl,$c410; ld a,$31; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "FillFourRowsWithBlack"
+assembly_source = "engine/movie/credits.asm"
+c_symbol = "port_fill_four_rows_with_black"
+c_source = "verification/ports/fill_four_rows_with_black.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (0150003e7ec3e036: ld bc,$0050; ld a,$7e; jp $36e0); no CALL/PUSH/POP; F-preserving ops only."
