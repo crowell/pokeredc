@@ -21116,3 +21116,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the initial wild/trainer branch after loading and decrementing wIsInBattle"
 decoder = "SM83 absolute load and DEC A flags are modeled exactly; subsequent text, cry, and sound branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintSendOutMonMessage"
+assembly_source = "engine/battle/common_text.asm"
+c_symbol = "port_print_send_out_mon_message"
+c_source = "verification/ports/print_send_out_mon_message.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and enemy-HP-byte inputs through the GoText branch after OR-ing current enemy HP"
+decoder = "HL initialization, HL-increment HP loads, OR flags, and GoText pointer setup are modeled exactly; the text-printing and percentage branches remain beyond the explicit boundary"
