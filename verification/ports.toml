@@ -21154,3 +21154,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first alive-enemy search loop after clearing battle flags and initializing the enemy HP pointer"
 decoder = "XOR-A/INC-A flags, four initialization stores, HL/BC/DE setup, and the first-loop boundary are modeled exactly"
+
+[[function]]
+assembly_symbol = "EnemyRan"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_enemy_ran"
+c_source = "verification/ports/enemy_ran.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the wild/link text branch after comparing wLinkState with LINK_STATE_BATTLING"
+decoder = "LoadScreenTilesFromBuffer1 and text printing are explicit boundaries; SM83 absolute load, CP flags, and WildRanText pointer setup are modeled exactly"
