@@ -17971,3 +17971,22 @@ observables = [
 ]
 proof_domain = "all 256 initial A/F and the remaining register inputs; the tail `jp` is an explicit boundary (the shared map routine)."
 decoder = "exact 8-byte body checked (061c21ba45c3d635); the tail `jp` is an explicit boundary. Pathwise equivalence proven against port_leave_map_anim across all register/flag inputs, including F (LD r,imm and LD rr,nn do not affect flags)."
+
+[[function]]
+assembly_symbol = "LoadTrainerInfoTextBoxTiles"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_load_trainer_info_text_box_tiles"
+c_source = "verification/ports/load_trainer_info_text_box_tiles.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn and `lb bc`->LD BC,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "12-byte body checked (11987b21609701090bc34818: ld de,$7b98; ld hl,$9760; lb bc,$0b,$09 -> LD BC,$0b09; jp CopyVideoData); no CALL/PUSH/POP; F-preserving ops only."
