@@ -20974,3 +20974,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the wIsInBattle CP 2 branch boundary"
 decoder = "SM83 absolute load and CP 2 flags are modeled exactly; both trainer/normal branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PlayApplyingAttackSound"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_play_applying_attack_sound"
+c_source = "verification/ports/play_applying_attack_sound.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wFrequencyModifier",
+    "wTempoModifier",
+]
+proof_domain = "all register/flag inputs through the PlaySound call boundary for weak, neutral, and super-effective multipliers 9, 10, and 11"
+decoder = "WaitForSoundToFinish and PlaySound are explicit boundaries; SM83 masking, CP flags, branch-selected modifiers, and sound IDs are modeled exactly"
