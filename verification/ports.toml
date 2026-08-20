@@ -19152,3 +19152,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch jp is an explicit boundary."
 decoder = "8-byte body checked (0607218a49c3d635: ld b,$07; ld hl,$498a; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "RunNPCMovementScript.playerStepOutFromDoor"
+assembly_source = "home/npc_movement.asm"
+c_symbol = "port_run_npc_movement_script_player_step_out_from_door"
+c_source = "verification/ports/run_npc_movement_script_player_step_out_from_door.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch jp is an explicit boundary."
+decoder = "8-byte body checked (060621e063c3d635: ld b,$06; ld hl,$63e0; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
