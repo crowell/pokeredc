@@ -18811,3 +18811,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "9-byte body checked (11dd5f01011ec34818: ld de,$5fdd; ld bc,$1e01; jp $1848); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "InitPartyMenuBlkPacket"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_init_party_menu_blk_packet"
+c_source = "verification/ports/init_party_menu_blk_packet.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "12-byte body checked (21f462112ecf013000c3b500: ld hl,$62f4; ld de,$cf2e; ld bc,$0030; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
