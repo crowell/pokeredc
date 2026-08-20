@@ -20673,3 +20673,15 @@ observables = [
 proof_domain = "all register/flag inputs, arbitrary initial wSlideMonDelay, and the entry setup through the private slide-loop continuation boundary"
 decoder = "entry ld E,8, ld A,3, global store, and jump boundary modeled exactly with SM83 immediate-load semantics; _AnimationSlideMonOff remains downstream"
 
+[[function]]
+assembly_symbol = "AnimationSlideEnemyMonOff"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_slide_enemy_mon_off"
+c_source = "verification/ports/animation_slide_enemy_mon_off.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through loading AnimationSlideMonOff into HL and the CallWithTurnFlipped continuation boundary"
+decoder = "ld HL,AnimationSlideMonOff is modeled exactly; CallWithTurnFlipped remains the explicit downstream continuation"
+
