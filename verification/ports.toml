@@ -20886,3 +20886,16 @@ observables = [
 proof_domain = "all register/flag and species-memory inputs through the GetMonHeader continuation on both turn branches"
 decoder = "LDH/AND-A, species loads/stores, XOR-A flags, and temporary player-species replacement are modeled; GetMonHeader remains the explicit boundary"
 
+[[function]]
+assembly_symbol = "InitMultipleObjectsOAM"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_init_multiple_objects_oam"
+c_source = "verification/ports/init_multiple_objects_oam.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wWhichBattleAnimTileset",
+]
+proof_domain = "all register/flag inputs and initial tileset byte through the LoadMoveAnimationTiles continuation"
+decoder = "push/pop setup and SM83 absolute store are modeled exactly; the tileset write precedes the explicit LoadMoveAnimationTiles boundary"
+
