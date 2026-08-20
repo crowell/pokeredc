@@ -17804,10 +17804,23 @@ assembly_symbol = "LoadFrontSpriteByMonIndex"
 assembly_source = "home/pokemon.asm"
 c_symbol = "port_load_front_sprite_by_mon_index"
 c_source = "verification/ports/load_front_sprite_by_mon_index.c"
-status = "partial"
-observables = ["wPokedexNum", "wCurPartySpecies", "hStartTileID", "wSpriteFlipped"]
-proof_domain = "Rhydon trap fully covered (dex 0 or > 151 => wCurPartySpecies = RHYDON); valid path sets hStartTileID=0 and wSpriteFlipped=0. Dex number carried in A per the harness model."
-decoder = "Restores wPokedexNum (popped from stack), then applies the Rhydon trap (invalid dex number -> wCurPartySpecies = RHYDON) and, for a valid dex number, sets hStartTileID = 0 and wSpriteFlipped = 0. predef IndexToPokedex (dex input carried in A), LoadMonFrontSprite, CopyUncompressedPicToHL, and the hLoadedROMBank/rROMB push/pop are explicit boundaries. Equivalence pending."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "saved_pokedex_num",
+    "dex_number",
+    "pokedex_num",
+    "cur_party_species",
+    "start_tile_id",
+    "sprite_flipped",
+    "load_front_sprite_called",
+    "copy_pic_called",
+    "loaded_rom_bank",
+    "saved_rom_bank",
+    "rom_bank",
+]
+proof_domain = "all symbolic initial registers, saved/current Pokedex state, and every 8-bit dex result: dex=0, dex=1..151, and dex=152..255; exact SM83/Z80 flag outcomes for AND A, CP 152, and final XOR A are compared"
+decoder = "PC-portable C contract for LoadFrontSpriteByMonIndex: restores pokedex_num, applies the Rhydon trap with exact final A/F flags for zero and out-of-range dex values, or records LoadMonFrontSprite/CopyUncompressedPicToHL and clears hStartTileID/wSpriteFlipped for valid values. Bank restoration is explicit state. The angr test proves all three dex domains and all registers against a branching assembly summary and retains the exact 71-byte linked body."
 
 
 
