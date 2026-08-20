@@ -21337,3 +21337,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the DisplayPartyMenu call after selecting BATTLE_PARTY_MENU"
 decoder = "constant menu-type load, absolute store, and DisplayPartyMenu continuation are modeled exactly"
+
+[[function]]
+assembly_symbol = "HandlePlayerBlackOut"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_handle_player_black_out"
+c_source = "verification/ports/handle_player_black_out.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the initial wLinkState comparison"
+decoder = "SM83 absolute load and CP flags are modeled exactly; rival, palette, text, and blackout paths remain beyond the explicit boundary"
