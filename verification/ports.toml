@@ -21312,3 +21312,15 @@ observables = [
 ]
 proof_domain = "all register/flag and player-mon-number inputs through the first FlagActionPredef call"
 decoder = "player-mon load, C/HL/B setup, and FlagActionPredef continuation are modeled exactly"
+
+[[function]]
+assembly_symbol = "DoUseNextMonDialogue"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_do_use_next_mon_dialogue"
+c_source = "verification/ports/do_use_next_mon_dialogue.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the trainer-battle return after SaveScreenTilesToBuffer1 and wIsInBattle decrement"
+decoder = "callee boundaries, high-memory AND-A, and DEC-A flags are modeled exactly; wild-battle yes/no and run-selection paths remain beyond the explicit boundary"
