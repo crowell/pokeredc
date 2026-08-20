@@ -17808,13 +17808,29 @@ assembly_symbol = "CancelledEvolution"
 assembly_source = "engine/pokemon/evos_moves.asm"
 c_symbol = "port_cancelled_evolution"
 c_source = "verification/ports/cancelled_evolution.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wTextBoxID (set by PrintText to MESSAGE_BOX)",
-    "screen / VRAM (cleared by ClearScreen)",
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "reload_a",
+    "reload_f",
+    "reload_b",
+    "reload_c",
+    "reload_d",
+    "reload_e",
+    "reload_h",
+    "reload_l",
+    "saved_h",
+    "saved_l",
 ]
-proof_domain = "all HL (StoppedEvolvingText pointer) and register inputs; the PrintText + ClearScreen observable sequence"
-decoder = "C port calls port_print_text (PrintText with the text pointer already in HL) then port_clear_screen (ClearScreen). The trailing `pop hl` and `jp Evolution_PartyMonLoop` continuation is a compositional boundary (the party-mon loop tail) modeled as a return. Pathwise equivalence is pending."
+proof_domain = "full 8-register compositional pathwise equivalence; PrintText, ClearScreen, and Evolution_ReloadTilesetTilePatterns are explicit callee summaries, and the party-loop JP is the boundary."
+decoder = "16-byte body checked (21486fcd493ccd0f19e1cd526fc32e6d: ld hl,$6f48; call PrintText; call ClearScreen; pop hl; call Evolution_ReloadTilesetTilePatterns; jp Evolution_PartyMonLoop); no raw memory dependency."
 
 [[function]]
 assembly_symbol = "CreditsCopyTileMapToVRAM"

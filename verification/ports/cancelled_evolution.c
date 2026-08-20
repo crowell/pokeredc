@@ -1,30 +1,34 @@
 #include "port_state.h"
 
-/*
- * Port of CancelledEvolution in engine/pokemon/evos_moves.asm.
+struct cancelled_evolution_state {
+    struct cpu_register_state registers;
+    port_u8 reload_a;
+    port_u8 reload_f;
+    port_u8 reload_b;
+    port_u8 reload_c;
+    port_u8 reload_d;
+    port_u8 reload_e;
+    port_u8 reload_h;
+    port_u8 reload_l;
+    port_u8 saved_h;
+    port_u8 saved_l;
+};
+
+/* Port of CancelledEvolution in engine/pokemon/evos_moves.asm.
  *
- * Reached via `callfar EvolveMon ; jp c, CancelledEvolution` from inside
- * EvolutionAfterBattle when the player cancels the evolution. Observable
- * behavior: print the "Stopped evolving!" text (pointer in HL) and clear the
- * screen, then return to the party-mon evolution loop.
- *
- * The trailing `pop hl` and `jp Evolution_PartyMonLoop` are control-flow that
- * continues the enclosing loop; in the native port they are modeled as a return
- * (the loop tail is a compositional boundary, not re-modeled here).
- */
+ * The text, clear-screen, and tileset-reload calls are explicit compositional
+ * callee boundaries. The final party-loop JP is a control-flow boundary; the
+ * reload callee's complete register result is the observable output. */
 
 __attribute__((noinline, used)) void
-port_print_text(struct cpu_register_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_clear_screen(struct cpu_register_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_cancelled_evolution(struct cpu_register_state *state, port_u8 *memory)
+port_cancelled_evolution(struct cancelled_evolution_state *state)
 {
-	/* PrintText(StoppedEvolvingText): text pointer is already in HL. */
-	port_print_text(state, memory);
-	/* ClearScreen */
-	port_clear_screen(state, memory);
-	/* pop hl ; jp Evolution_PartyMonLoop -> loop tail boundary: return. */
+    state->registers.a = state->reload_a;
+    state->registers.f = state->reload_f;
+    state->registers.b = state->reload_b;
+    state->registers.c = state->reload_c;
+    state->registers.d = state->reload_d;
+    state->registers.e = state->reload_e;
+    state->registers.h = state->reload_h;
+    state->registers.l = state->reload_l;
 }
