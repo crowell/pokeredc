@@ -16966,10 +16966,30 @@ assembly_symbol = "FarCopyData2"
 assembly_source = "home/copy2.asm"
 c_symbol = "port_far_copy_data2"
 c_source = "verification/ports/far_copy_data2.c"
-status = "partial"
-observables = ["[DE]..[DE+BC-1] (destination bytes)", "[HL]..[HL+BC-1] (source bytes)", "registers BC/DE/HL (preserved across the ROM bank switch)"]
-proof_domain = "all BC (copy length), HL (source), DE (destination) register values; arbitrary source bytes in the flat memory model"
-decoder = "Identical observable behavior to FarCopyData except it stashes the source bank in hROMBankTemp instead of wBuffer; the bank switch is a no-op in the flat model. port_far_copy_data2 copies BC bytes from [HL] to [DE]. Equivalence is pending the angr proof."
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "requested_bank",
+    "loaded_bank",
+    "rom_bank",
+    "copy_a",
+    "copy_f",
+    "copy_b",
+    "copy_c",
+    "copy_d",
+    "copy_e",
+    "copy_h",
+    "copy_l",
+]
+proof_domain = "full 8-register compositional pathwise equivalence plus explicit bank and CopyData-return state; the bank-save/switch/restore instructions are executed and CopyData is the explicit callee boundary."
+decoder = "22-byte body checked (e08bf0b8f5f08be0b8ea0020cdb500f1e0b8ea0020c9: save/load banks, call CopyData, restore bank, ret); no raw memory pointer in the PC-portable contract."
 
 
 
