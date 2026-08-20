@@ -18184,3 +18184,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (21ad7d0605c3d635: ld hl,$7dad; ld b,$05; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ItemUsePokedex"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_item_use_pokedex"
+c_source = "verification/ports/item_use_pokedex.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "5-byte body checked (3e29c36d3e: ld a,$29; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
