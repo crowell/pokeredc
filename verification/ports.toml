@@ -17633,10 +17633,19 @@ assembly_symbol = "PlayBattleAnimationGotID"
 assembly_source = "engine/battle/effects.asm"
 c_symbol = "port_play_battle_animation_got_id"
 c_source = "verification/ports/play_battle_animation_got_id.c"
-status = "partial"
-observables = ["(register preservation only; no observable memory/flag writes)"]
-proof_domain = "Function body preserves HL/DE/BC and runs the MoveAnimation predef (boundary); has no observable memory/flag effect at the C level."
-decoder = "Pushes HL/DE/BC and runs the MoveAnimation predef for the animation ID in wAnimationID, then restores them. MoveAnimation is not ported, so its sprite/animation effects are an explicit boundary; the function itself performs no observable memory or flag writes beyond register preservation that the C calling convention already provides. Equivalence pending (depends on porting MoveAnimation)."
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register compositional pathwise equivalence; MoveAnimation's returned A/F are explicit shared state inputs, while the balanced PUSH/POP sequence preserves BC/DE/HL."
+decoder = "12-byte body checked (e5d5c53e08cd6d3ec1d1e1c9: push hl; push de; push bc; ld a,$08; call MoveAnimation; pop bc; pop de; pop hl; ret); no memory writes modeled beyond the explicit callee boundary."
 
 
 
