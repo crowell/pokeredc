@@ -18830,3 +18830,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "12-byte body checked (21f462112ecf013000c3b500: ld hl,$62f4; ld de,$cf2e; ld bc,$0030; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "FillMiddleOfScreenWithWhite"
+assembly_source = "engine/movie/credits.asm"
+c_symbol = "port_fill_middle_of_screen_with_white"
+c_source = "verification/ports/fill_middle_of_screen_with_white.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "11-byte body checked (21f0c301c8003e7fc3e036: ld hl,$c3f0; ld bc,$00c8; ld a,$7f; jp $36e0); no CALL/PUSH/POP; F-preserving ops only."
