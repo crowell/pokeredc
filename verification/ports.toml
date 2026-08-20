@@ -19247,3 +19247,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD DE,nn / JP nn are flag-neutral); the local PlaceString jp is an explicit boundary."
 decoder = "6-byte body checked (11972fc35519: ld de,$2f97; jp $1955); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ChoosePlayerName.done"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_choose_player_name_done"
+c_source = "verification/ports/choose_player_name_done.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText jp is an explicit boundary."
+decoder = "6-byte body checked (219f69c3493c: ld hl,$699f; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
