@@ -19437,3 +19437,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
 decoder = "6-byte body checked (212c45c3493c: ld hl,$452c; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "HiddenCoins.roomInCoinCase"
+assembly_source = "engine/events/hidden_items.asm"
+c_symbol = "port_hidden_coins_room_in_coin_case"
+c_source = "verification/ports/hidden_coins_room_in_coin_case.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD A,imm / JP nn are flag-neutral); the local text-dispatch JP is an explicit boundary."
+decoder = "5-byte body checked (3e2bc3f53e: ld a,$2b; jp $3ef5); no CALL/PUSH/POP; F-preserving ops only."
