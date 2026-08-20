@@ -20309,3 +20309,25 @@ observables = [
 ]
 proof_domain = "PlayAnimation.animationLoop -> .AnimationOver branch with command byte $FF, arbitrary non-pointer register inputs, fixed command pointer"
 decoder = "animation-loop LD A,[HL+], CP $FF, JR Z, and RET path checked with explicit SM83 LD/CP shims; no special-effect or subanimation calls are modeled"
+
+[[function]]
+assembly_symbol = "LoadSubanimation"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_load_subanimation_normal"
+c_source = "verification/ports/load_subanimation.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wSubAnimCounter",
+    "wSubAnimTransform",
+    "wSubAnimSubEntryAddr",
+]
+proof_domain = "non-enemy normal subanimation, player's turn, fixed pointer-table and subanimation addresses, arbitrary incoming registers and prior output bytes"
+decoder = "post-GetSubanimationTransform1 normal path modeled through the transformation store and subentry-address calculation; native implementation follows the linked pointer-table byte order and masks the packed frame count"
