@@ -21250,3 +21250,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the wild/trainer branch after ReadPlayerMonCurHPAndStatus and wIsInBattle decrement"
 decoder = "ReadPlayerMonCurHPAndStatus is an explicit boundary; SM83 absolute load and DEC A flags are modeled exactly"
+
+[[function]]
+assembly_symbol = "ReplaceFaintedEnemyMon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_replace_fainted_enemy_mon"
+c_source = "verification/ports/replace_fainted_enemy_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the GetBattleHealthBarColor call after setting the enemy HP-bar color destination"
+decoder = "HL destination and E=$30 setup are modeled exactly; health-color, link-battle, and send-out branches remain beyond the explicit boundary"
