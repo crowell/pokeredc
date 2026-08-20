@@ -19190,3 +19190,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD HL,nn / LD BC,nn / JP nn are flag-neutral); the local transfer jp is an explicit boundary."
 decoder = "12-byte body checked (11805a210088018004c38618: ld de,$5a80; ld hl,$8800; ld bc,$0480; jp $1886); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "LoadHpBarAndStatusTilePatterns.on"
+assembly_source = "home/load_font.asm"
+c_symbol = "port_load_hp_bar_and_status_tile_patterns_on"
+c_source = "verification/ports/load_hp_bar_and_status_tile_patterns_on.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD HL,nn / LD BC,nn / JP nn are flag-neutral); the local transfer jp is an explicit boundary."
+decoder = "12-byte body checked (11a05e212096011e04c34818: ld de,$5ea0; ld hl,$9620; ld bc,$041e; jp $1848); no CALL/PUSH/POP; F-preserving ops only."
