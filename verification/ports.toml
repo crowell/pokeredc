@@ -21166,3 +21166,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the wild/link text branch after comparing wLinkState with LINK_STATE_BATTLING"
 decoder = "LoadScreenTilesFromBuffer1 and text printing are explicit boundaries; SM83 absolute load, CP flags, and WildRanText pointer setup are modeled exactly"
+
+[[function]]
+assembly_symbol = "MainInBattleLoop"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_main_in_battle_loop"
+c_source = "verification/ports/main_in_battle_loop.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and player-HP-byte inputs through the initial HandlePlayerMonFainted branch"
+decoder = "ReadPlayerMonCurHPAndStatus is an explicit boundary; player HP OR flags and battle-mon pointer setup are modeled exactly"
