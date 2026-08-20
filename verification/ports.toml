@@ -19798,3 +19798,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F; LD D,H / LD E,L / LD HL,nn / LD BC,nn / JP nn are flag-neutral, modeled with explicit SM83 instruction shims; the local CopyData JP is the boundary."
 decoder = "11-byte body checked (545d216dcd010b00c3b500: ld d,h; ld e,l; ld hl,$cd6d; ld bc,$000b; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "SilphCo6FBeatGiovanniPrintDEOrPrintHLScript.beat_giovanni"
+assembly_source = "scripts/SilphCo6F.asm"
+c_symbol = "port_silph_co6f_beat_giovanni_print_de_or_hl"
+c_source = "verification/ports/silph_co6f_beat_giovanni_print_de_or_hl.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F; LD H,D / LD L,E / JP nn are flag-neutral, modeled with explicit SM83 register-copy shims; the local PrintText JP is the boundary."
+decoder = "5-byte body checked (626bc3493c: ld h,d; ld l,e; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
