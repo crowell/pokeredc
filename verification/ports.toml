@@ -21141,3 +21141,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the DisplayTextBoxID call after loading MESSAGE_BOX"
 decoder = "LoadPlayerBackPic and DisplayTextBoxID are explicit boundaries; flag-neutral MESSAGE_BOX setup and wTextBoxID store are modeled exactly"
+
+[[function]]
+assembly_symbol = "StartBattle"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_start_battle"
+c_source = "verification/ports/start_battle.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "initial battle-state bytes",
+]
+proof_domain = "all register/flag inputs through the first alive-enemy search loop after clearing battle flags and initializing the enemy HP pointer"
+decoder = "XOR-A/INC-A flags, four initialization stores, HL/BC/DE setup, and the first-loop boundary are modeled exactly"
