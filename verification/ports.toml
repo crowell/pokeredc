@@ -20764,3 +20764,17 @@ observables = [
 proof_domain = "all register/flag inputs and arbitrary direction bytes through the AnimCopyRowLeft/AnimCopyRowRight continuation branches"
 decoder = "direction load and CP 0 branch are shimmed exactly; C=3 is checked at both row-copy continuation targets; downstream row-copy routines remain explicit boundaries"
 
+[[function]]
+assembly_symbol = "_AnimationShootBallsUpward"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_shoot_balls_upward"
+c_source = "verification/ports/animation_shoot_balls_upward.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wBaseCoordY",
+    "wWhichBattleAnimTileset",
+]
+proof_domain = "all register/flag inputs and arbitrary base-Y/tileset bytes through the first BattleAnimWriteOAMEntry continuation boundary"
+decoder = "XOR/store, LoadMoveAnimationTiles continuation, HL setup, base-Y load, and fixed D=0x7a prefix are modeled with explicit shims"
+
