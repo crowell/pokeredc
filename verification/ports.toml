@@ -17660,10 +17660,19 @@ assembly_symbol = "CheckForHiddenEventOrBookshelfOrCardKeyDoor"
 assembly_source = "home/hidden_events.asm"
 c_symbol = "port_check_for_hidden_event_or_bookshelf_or_card_key_door"
 c_source = "verification/ports/check_hidden_event.c"
-status = "partial"
-observables = ["[H_ITEM_ALREADY_FOUND]", "[H_LOADED_ROM_BANK]", "[R_ROMB]"]
-proof_domain = "All four branches of the truth table over [H_JOY_HELD].A, [H_DIDNT_FIND_ANY_HIDDEN], and [H_INTERACTED_WITH_BOOKSHELF]"
-decoder = "Writes hItemAlreadyFound: $ff when A is not held, or when a hidden event was not found AND a bookshelf was interacted with; otherwise 0 (a hidden event was found, or only a bookshelf interaction with a hidden-event miss that does not set the found flag). It saves and restores the ROM bank around its sub-calls, whose net observable effect is no change to rROMB/hLoadedROMBank, which the port reproduces. The sub-call side effects (hDidntFindAnyHiddenEvent, hInteractedWithBookshelf) are read but not modelled; equivalence is pending."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "joy_held",
+    "didnt_find_any_hidden_event",
+    "interacted_with_bookshelf",
+    "saved_bank",
+    "item_already_found",
+    "rom_bank",
+    "loaded_rom_bank",
+]
+proof_domain = "all symbolic initial registers and explicit joy/hidden-event/bookshelf/bank state; all four truth-table branches are exercised and bank restoration is compared"
+decoder = "PC-portable C contract for CheckForHiddenEventOrBookshelfOrCardKeyDoor: explicit sub-call result bytes drive the four branches, item_already_found becomes 0xff or 0, and both ROM-bank outputs restore saved_bank. The angr test proves all registers and explicit state against a four-path assembly summary and retains the exact linked body."
 
 
 
