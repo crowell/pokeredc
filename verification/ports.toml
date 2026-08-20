@@ -20474,3 +20474,23 @@ observables = [
 ]
 proof_domain = "full flash-screen palette cycle with original rBGP restored and final DelayFrames count C=2; timing calls are explicit boundaries"
 decoder = "palette writes and saved AF restoration represented by a terminal summary; both DelayFrames calls are timing-only in the native contract"
+
+[[function]]
+assembly_symbol = "AnimationDarkScreenPalette"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_dark_screen_palette_player"
+c_source = "verification/ports/animation_dark_screen_palette.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rBGP",
+]
+proof_domain = "non-SGB palette branch selecting the dark palette value $6f"
+decoder = "SetAnimationBGPalette non-SGB branch modeled with terminal palette write; SGB selection path remains unmodeled"
