@@ -16945,14 +16945,15 @@ assembly_symbol = "SubtractAmountPaidFromMoney_"
 assembly_source = "engine/items/subtract_paid_money.asm"
 c_symbol = "port_subtract_amount_paid_from_money"
 c_source = "verification/ports/subtract_amount_paid_from_money.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wPlayerMoney (3 bytes, packed BCD)",
-    "wTextBoxID",
-    "carry",
+    "A/F",
+    "player_money[3] (packed BCD)",
+    "price[3] (packed BCD)",
+    "text_box_id",
 ]
-proof_domain = "all 3-byte packed-BCD wPlayerMoney and hMoney inputs; byte-wise StringCmp carry (wPlayerMoney < hMoney) gates the SubBCDPredef subtraction (digit-wise packed-BCD borrow), and wTextBoxID is set to MONEY_BOX (0x13) on success"
-decoder = "exact 33-byte linked body checked (StringCmp call, ret c, predef SubBCDPredef, ld [wTextBoxID],a, DisplayTextBoxID, and a); the native C port implements the same byte-wise comparison and digit-wise packed-BCD subtraction; full pathwise symbolic equivalence is pending an angr native-branch-constraint fix on the optimized subtraction path"
+proof_domain = "all symbolic A/F/B/C/D/E/H/L, all 3-byte player_money and price inputs, and text_box_id; both insufficient-funds return and successful packed-BCD subtraction paths are exercised"
+decoder = "PC-portable C contract for SubtractAmountPaidFromMoney_: StringCmp's carry result is the lexicographic player_money < price boundary; failure returns carry with money and text_box_id unchanged, while success performs SubBCDPredef-equivalent digit-wise subtraction, stores MONEY_BOX (0x13), sets A to MONEY_BOX, and models the final and-a flags (H set, C/Z/N clear). The angr test proves both paths against a branching assembly summary and retains the exact 35-byte linked-body regression."
 
 
 
