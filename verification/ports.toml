@@ -18241,3 +18241,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "7-byte body checked (0e003e31c36d3e: ld c,$00; ld a,$31; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "RemoveItemByIDBank12"
+assembly_source = "scripts/CeladonMartRoof.asm"
+c_symbol = "port_remove_item_by_id_bank12"
+c_source = "verification/ports/remove_item_by_id_bank12.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (060521377fc3d635: ld b,$05; ld hl,$7f37; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
