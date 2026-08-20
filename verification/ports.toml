@@ -19551,3 +19551,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD DE,nn / LD BC,nn / JP nn are flag-neutral); the local CopyData JP is an explicit boundary."
 decoder = "12-byte body checked (2100c3115bcc016000c3b500: ld hl,$c300; ld de,$cc5b; ld bc,$0060; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "DisplayWildLocations.done"
+assembly_source = "engine/items/town_map.asm"
+c_symbol = "port_display_wild_locations_done"
+c_source = "verification/ports/display_wild_locations_done.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD DE,nn / LD BC,nn / JP nn are flag-neutral); the local CopyData JP is an explicit boundary."
+decoder = "12-byte body checked (2100c31108c501a000c3b500: ld hl,$c300; ld de,$c508; ld bc,$00a0; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
