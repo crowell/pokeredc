@@ -18754,3 +18754,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "6-byte body checked (21d74ec3493c: ld hl,$4ed7; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "HoFLoadMonPlayerPicTileIDs"
+assembly_source = "engine/movie/hall_of_fame.asm"
+c_symbol = "port_hof_load_mon_player_pic_tile_ids"
+c_source = "verification/ports/hof_load_mon_player_pic_tile_ids.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "10-byte body checked (06002110c43e31c36d3e: ld b,$00; ld hl,$c410; ld a,$31; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
