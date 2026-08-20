@@ -17112,13 +17112,17 @@ assembly_symbol = "UseItem_"
 assembly_source = "engine/items/item_effects.asm"
 c_symbol = "port_use_item_"
 c_source = "verification/ports/use_item.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wActionResultOrTookBattleTurn",
-    "HL (dispatched handler address, reported in state->dispatched_hl)",
+    "A/F",
+    "current_item",
+    "action_result",
+    "item_handler_address",
+    "dispatched_hl",
+    "tm_hm_dispatch",
 ]
-proof_domain = "all wCurItem values; dispatch target resolved as ItemUseTMHM (0x6479) for TM/HM items (id >= HM01 = 0xC4) or as the ItemUsePtrTable (0x55e1) entry indexed by 2*(wCurItem-1) for regular items, under the flat-memory model"
-decoder = "C port of UseItem_ (the routine reached through the `farjp UseItem_` wrapper in home/item.asm). It writes wActionResultOrTookBattleTurn = 1, then for a TM/HM item sets the dispatch target to ItemUseTMHM and otherwise loads the 16-bit handler address from ItemUsePtrTable[(wCurItem-1)*2]. The final indirect `jp hl` is a compositional boundary: the resolved handler address is reported in state->dispatched_hl for the caller to continue. Pathwise equivalence is pending composition with the individual ItemUse* handlers."
+proof_domain = "all symbolic registers, all 8-bit current-item values, and the regular-item table-boundary handler address; regular (<0xc4) and TM/HM (>=0xc4) dispatch paths are exercised with exact CP flags"
+decoder = "PC-portable C contract for UseItem_: writes action_result=1, computes exact SM83 CP(HM01) flags, routes TM/HM items to ItemUseTMHM at 0x6479, and routes regular items through the explicit ItemUsePtrTable handler-address boundary. The angr test proves both dispatch paths for all item values and retains the exact 26-byte body."
 
 
 
