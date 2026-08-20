@@ -17133,17 +17133,23 @@ assembly_symbol = "_GivePokemon"
 assembly_source = "engine/events/give_pokemon.asm"
 c_symbol = "port_give_pokemon"
 c_source = "verification/ports/give_pokemon.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wAddedToParty",
-    "carry (PORT_FLAG_C = success, 0 = box full)",
-    "wEnemyBattleStatus3",
-    "wEnemyMonSpecies2",
-    "wDoNotWaitForButtonPressAfterDisplayingText (set in the addToParty path)",
-    "wStringBuffer (box-number text in the box path)",
+    "A/F/B/C/D/E/H/L",
+    "party_count",
+    "box_count",
+    "added_to_party",
+    "do_not_wait",
+    "enemy_battle_status3",
+    "enemy_mon_species2",
+    "current_box_num",
+    "cur_party_species",
+    "string_buffer[3]",
+    "add_party_mon_called",
+    "send_to_box_called",
 ]
-proof_domain = "all wPartyCount / wBoxCount / wCurrentBoxNum combinations; the called subroutines (SetPokedexOwnedFlag, AddPartyMon, SendNewMonToBox, LoadEnemyMonData, PrintText and the predefs) are modeled as compositional boundaries and are not inlined"
-decoder = "C port of _GivePokemon (the routine reached through the `farjp _GivePokemon` wrapper in home/give.asm). It clears wAddedToParty, then branches on party/box counts: party-has-room -> wAddedToParty=1, wDoNotWait...=1, carry set; box-has-room -> wEnemyBattleStatus3=0, wEnemyMonSpecies2=wCurPartySpecies, and writes the 1-based box number as text into wStringBuffer (single digit, or '1'+digit for box >= 9, terminated by '@'), carry set; box full -> carry cleared. The sub-call side effects (Pokedex flag, party/box mutation, text printing) are left to composition. Pathwise equivalence is pending composition with those subroutines."
+proof_domain = "all symbolic registers, party/box counts, current box number, current species, and all three mutually exclusive paths: party room, box full, and box insertion"
+decoder = "PC-portable C contract for _GivePokemon: party room sets added_to_party/do_not_wait and records AddPartyMon; box full returns with carry clear; otherwise records SendNewMonToBox, copies the current species, and formats single- or double-digit box text. The angr test proves all registers and explicit state against three assembly paths and retains the exact 71-byte linked body."
 
 
 
