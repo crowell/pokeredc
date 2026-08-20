@@ -20648,3 +20648,15 @@ observables = [
 proof_domain = "all register/flag inputs, arbitrary base-X and droplet-tile bytes, initial OAM bytes, and the sole caller's base-Y values 16 or 24"
 decoder = "full 52-byte helper body checked; HLI OAM stores, SM83 global-load/store and CP shims, row/column loop recurrence, and AnimationCleanOAM terminal clear modeled explicitly"
 
+[[function]]
+assembly_symbol = "AnimationSlideMonDown"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_slide_mon_down"
+c_source = "verification/ports/animation_slide_mon_down.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the entry XOR A and the GetTileIDList continuation boundary"
+decoder = "entry XOR A semantics are shimmed exactly; GetTileIDList is an explicit downstream continuation boundary"
+
