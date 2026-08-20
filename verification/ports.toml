@@ -18697,3 +18697,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "5-byte body checked (0e64c33937: ld c,$64; jp $3739); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "Trade_Delay80"
+assembly_source = "engine/trade.asm"
+c_symbol = "port_trade_delay80"
+c_source = "verification/ports/trade_delay80.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "5-byte body checked (0e50c33937: ld c,$50; jp $3739); no CALL/PUSH/POP; F-preserving ops only."
