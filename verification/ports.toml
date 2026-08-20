@@ -18716,3 +18716,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "5-byte body checked (0e50c33937: ld c,$50; jp $3739); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "Route16Gate1FIsBicycleInBagScript"
+assembly_source = "scripts/Route16Gate1F.asm"
+c_symbol = "port_route16_gate1f_is_bicycle_in_bag_script"
+c_source = "verification/ports/route16_gate1f_is_bicycle_in_bag_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "5-byte body checked (0606c39334: ld b,$06; jp $3493); no CALL/PUSH/POP; F-preserving ops only."
