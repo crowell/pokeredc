@@ -17358,10 +17358,18 @@ assembly_symbol = "Music_RivalAlternateTempo"
 assembly_source = "audio/alternate_tempo.asm"
 c_symbol = "port_music_rival_alternate_tempo"
 c_source = "verification/ports/music_rival_alternate_tempo.c"
-status = "partial"
-observables = ["wChannelCommandPointers[0..1] (Ch1 -> Music_MeetRival_Ch1_AlternateTempo)", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "wAudioFadeOutControl", "registers A/C/HL/DE"]
-proof_domain = "no inputs; all operands are constant immediates (BANK(Music_MeetRival)=2, MUSIC_MEET_RIVAL=0xde, Music_MeetRival_Ch1_AlternateTempo=0x7119). Single execution path."
-decoder = "Loads the music id and bank into A/C then reproduces PlayMusic's unconditional top-level RAM writes (wNewSoundID, wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl=0). It then performs a single Audio1_OverwriteChannelPointer store into wChannelCommandPointers for the Ch1 alternate-tempo measure. Equivalence is pending the angr proof."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "channel1_pointer",
+    "sound_id",
+    "audio_rom_bank",
+    "audio_saved_bank",
+    "fade_out_control",
+    "play_music_called",
+]
+proof_domain = "all symbolic initial registers and pointer/audio state; the single constant-immediate path is exercised, including the PlayMusic boundary and channel-1 pointer write"
+decoder = "PC-portable C contract for Music_RivalAlternateTempo: PlayMusic state records sound_id=0xde, bank/saved-bank=2, fade_out_control=0, and play_music_called=1; the Ch1 pointer becomes 0x7119 and final HL is 0xc008. The angr test proves all registers and explicit audio state against a one-path assembly summary and retains the exact linked body."
 
 
 
