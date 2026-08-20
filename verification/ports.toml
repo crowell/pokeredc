@@ -21238,3 +21238,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the FaintEnemyPokemon call after clearing wInHandlePlayerMonFainted"
 decoder = "SM83 XOR-A flags and absolute zero store are modeled exactly; FaintEnemyPokemon and subsequent party-status branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "FaintEnemyPokemon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_faint_enemy_pokemon"
+c_source = "verification/ports/faint_enemy_pokemon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the wild/trainer branch after ReadPlayerMonCurHPAndStatus and wIsInBattle decrement"
+decoder = "ReadPlayerMonCurHPAndStatus is an explicit boundary; SM83 absolute load and DEC A flags are modeled exactly"
