@@ -18009,7 +18009,7 @@ observables = [
     "L",
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
-decoder = "8-byte body checked (213f780601c3d635: ld hl,$783f; ld b,$01; jp $36d6 = jpfar DrainHPEffect_); no CALL/PUSH/POP; F-preserving ops only."
+decoder = "8-byte body checked (213f780601c3d635: ld hl,$783f; ld b,$01; jp $35d6 = jpfar DrainHPEffect_); no CALL/PUSH/POP; F-preserving ops only."
 
 
 [[function]]
@@ -18049,7 +18049,7 @@ observables = [
     "L",
 ]
 proof_domain = "full 8-register equivalence incl. F (LD B,imm and JP nn are flag-neutral); tail `jp` is an explicit boundary."
-decoder = "5-byte body checked (060fc3d635: ld b,$0f; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
+decoder = "5-byte body checked (060fc3d635: ld b,$0f; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
 
 
 [[function]]
@@ -18088,7 +18088,7 @@ observables = [
     "L",
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
-decoder = "8-byte body checked (212c790604c3d635: ld hl,$792c; ld b,$04; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
+decoder = "8-byte body checked (212c790604c3d635: ld hl,$792c; ld b,$04; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
 assembly_symbol = "LeechSeedEffect"
@@ -18107,7 +18107,7 @@ observables = [
     "L",
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
-decoder = "8-byte body checked (21a97e060ac3d635: ld hl,$7ea9; ld b,$0a; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
+decoder = "8-byte body checked (21a97e060ac3d635: ld hl,$7ea9; ld b,$0a; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
 assembly_symbol = "ReflectLightScreenEffect"
@@ -18126,7 +18126,7 @@ observables = [
     "L",
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
-decoder = "8-byte body checked (21977b060ec3d635: ld hl,$7b97; ld b,$0e; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
+decoder = "8-byte body checked (21977b060ec3d635: ld hl,$7b97; ld b,$0e; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
 assembly_symbol = "MistEffect"
