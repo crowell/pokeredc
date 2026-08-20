@@ -17901,10 +17901,22 @@ assembly_symbol = "PlayBattleMusic"
 assembly_source = "home/audio.asm"
 c_symbol = "port_play_battle_music"
 c_source = "verification/ports/play_battle_music.c"
-status = "partial"
-observables = [ "wAudioFadeOutControl", "wLowHealthAlarm", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "hLoadedROMBank", "hSavedROMBank", "rROMB (0x2000)", "calls PlaySound (x2)" ]
-proof_domain = "All opponent branches (wGymLeaderNo != 0, wCurOpponent < OPP_ID_OFFSET wild, == OPP_RIVAL3 final, == OPP_LANCE gym-leader, else trainer). DelayFrame is a frame wait with no observable audio state."
-decoder = "Sets wAudioFadeOutControl/wLowHealthAlarm to 0, requests SFX_STOP_ALL_MUSIC via port_play_sound, then selects the music ID from wGymLeaderNo/wCurOpponent and plays it through the PlayMusic->PlaySound path (modelled by chaining port_play_sound with the chosen bank)."
+status = "proven"
+observables = [
+    "A/F",
+    "gym_leader_no",
+    "cur_opponent",
+    "fade_control",
+    "low_health_alarm",
+    "sound_id",
+    "audio_rom_bank",
+    "audio_saved_bank",
+    "stop_sound_called",
+    "delay_frame_called",
+    "play_music_called",
+]
+proof_domain = "all symbolic A/F and explicit opponent/audio state; gym-leader, wild, rival-final, Lance, and normal-trainer branches are exercised, with stop-sound and DelayFrame/PlayMusic call boundaries recorded"
+decoder = "PC-portable C contract for PlayBattleMusic: clears fade/alarm, requests stop music, records DelayFrame, selects the five battle-theme outcomes from gym_leader_no/cur_opponent, then records PlayMusic with bank 8 and the selected sound_id. The angr test proves A/F and explicit state against a five-path assembly summary; compiler-merged native paths are checked through overlapping path domains and the exact linked body remains asserted."
 
 
 [[function]]
