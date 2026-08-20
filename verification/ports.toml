@@ -20790,3 +20790,16 @@ observables = [
 proof_domain = "all register/flag inputs through the FillMemory continuation after loading wTempPic, zeroing A, and loading PIC_SIZE tiles (0x0310)"
 decoder = "entry setup is modeled as a deterministic prefix with SM83 XOR flags; FillMemory is an explicit downstream continuation boundary"
 
+[[function]]
+assembly_symbol = "_AnimationSlideMonOff"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_slide_mon_off_private"
+c_source = "verification/ports/animation_slide_mon_off_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hWhoseTurn",
+]
+proof_domain = "all register/flag inputs and arbitrary hWhoseTurn bytes through the first PlayerNextTile/EnemyNextTile continuation boundary"
+decoder = "both LDH loads and AND-A flags are shimmed exactly; turn-dependent tilemap coordinates and loop counters are modeled; per-tile helpers remain explicit boundaries"
+
