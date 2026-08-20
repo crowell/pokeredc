@@ -21202,3 +21202,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the max-HP pointer calculation before the first max-HP load"
 decoder = "push/pop preservation, BC=$000e setup, and SM83 ADD HL,BC flags are modeled exactly; HP damage, toxic, and overkill paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HandlePoisonBurnLeechSeed_IncreaseEnemyHP"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_increase_enemy_hp_setup"
+c_source = "verification/ports/increase_enemy_hp.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the player/enemy max-HP pointer branch"
+decoder = "push preservation, max-HP pointer setup, high-memory AND-A flags, and branch boundary are modeled exactly; HP healing and overfull-heal paths remain beyond the explicit boundary"
