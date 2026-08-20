@@ -18165,3 +18165,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (2101660614c3d635: ld hl,$6601; ld b,$14; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "SubstituteEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_substitute_effect"
+c_source = "verification/ports/substitute_effect.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (21ad7d0605c3d635: ld hl,$7dad; ld b,$05; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
