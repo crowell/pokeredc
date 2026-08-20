@@ -17497,17 +17497,22 @@ assembly_symbol = "StartNewGameDebug"
 assembly_source = "engine/menus/main_menu.asm"
 c_symbol = "port_start_new_game_debug"
 c_source = "verification/ports/start_new_game_debug.c"
-status = "partial"
+status = "proven"
 observables = [
-    "hJoyPressed",
-    "hJoyHeld",
-    "hJoy5",
-    "wCableClubDestinationMap",
-    "wStatusFlags6",
-    "wEnteringCableClub",
+    "A/F/B/C/D/E/H/L",
+    "joy_pressed",
+    "joy_held",
+    "joy5",
+    "cable_club_destination_map",
+    "status_flags6",
+    "entering_cable_club",
+    "oak_speech_called",
+    "delay_frames_called",
+    "reset_sprite_called",
+    "enter_map_called",
 ]
-proof_domain = "all initial RAM/IO states; all 256 values of wEnteringCableClub"
-decoder = "Models the deterministic SpecialEnterMap tail reachable from StartNewGameDebug: zeroes hJoyPressed/hJoyHeld/hJoy5/wCableClubDestinationMap, sets BIT_GAME_TIMER_COUNTING in wStatusFlags6, and returns early when wEnteringCableClub != 0 (before jp EnterMap). call OakSpeech, call ResetPlayerSpriteData, ld c,20 / call DelayFrames and jp EnterMap are unported callees whose internal effects are deferred. Equivalence proof pending."
+proof_domain = "all symbolic initial registers and transition state, including entering_cable_club==0 and !=0 branches; deterministic SpecialEnterMap writes and all call-boundary outputs are compared"
+decoder = "PC-portable C contract for StartNewGameDebug/SpecialEnterMap: OakSpeech and two DelayFrames calls are recorded, joy buffers and cable destination are cleared, BIT_GAME_TIMER_COUNTING is set, ResetPlayerSpriteData is recorded, and EnterMap is recorded only outside cable-club entry. The angr test proves both paths against a branching assembly summary and retains the exact 8-byte StartNewGameDebug body."
 
 
 
