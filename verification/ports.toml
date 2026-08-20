@@ -18545,3 +18545,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "6-byte body checked (010b00c3b500: ld bc,$000b; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "LoadEDTile"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_load_ed_tile"
+c_source = "verification/ports/load_ed_tile.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "12-byte body checked (11676721008f010100c38618: ld de,$6767; ld hl,$8f00; ld bc,$0001; jp $1886); no CALL/PUSH/POP; F-preserving ops only."
