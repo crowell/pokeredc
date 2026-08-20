@@ -18962,3 +18962,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD BC,nn / JP nn are flag-neutral); the local branch's tail jp is an explicit boundary."
 decoder = "9-byte body checked (114ad0010d00c3b500: ld de,$d04a; ld bc,$000d; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "PrintNumber.inc"
+assembly_source = "home/print_num.asm"
+c_symbol = "port_print_number_inc"
+c_source = "verification/ports/print_number_inc.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (INC HL preserves flags); the local RET is an explicit path boundary."
+decoder = "2-byte body checked (23c9: inc hl; ret); no CALL/PUSH/POP; F-preserving operation."
