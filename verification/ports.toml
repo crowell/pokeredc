@@ -18659,3 +18659,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (061821eb50c3d635: ld b,$18; ld hl,$50eb; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "IsMoveHM"
+assembly_source = "home/names.asm"
+c_symbol = "port_is_move_hm"
+c_source = "verification/ports/is_move_hm.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "9-byte body checked (215230110100c3ab3d: ld hl,$3052; ld de,$0001; jp $3dab); no CALL/PUSH/POP; F-preserving ops only."
