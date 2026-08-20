@@ -21226,3 +21226,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the player/enemy HP-bar branch after selecting player-bar coordinates"
 decoder = "HL coordinate setup, high-memory AND-A flags, LD A,1, and branch boundary are modeled exactly; UpdateHPBar2 remains the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "HandleEnemyMonFainted"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_handle_enemy_mon_fainted"
+c_source = "verification/ports/handle_enemy_mon_fainted.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the FaintEnemyPokemon call after clearing wInHandlePlayerMonFainted"
+decoder = "SM83 XOR-A flags and absolute zero store are modeled exactly; FaintEnemyPokemon and subsequent party-status branches remain beyond the explicit boundary"
