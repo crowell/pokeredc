@@ -19209,3 +19209,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD HL,nn / LD BC,nn / JP nn are flag-neutral); the local transfer jp is an explicit boundary."
 decoder = "12-byte body checked (11a05e212096011e04c34818: ld de,$5ea0; ld hl,$9620; ld bc,$041e; jp $1848); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "InitBattleVariables.notSafariBattle"
+assembly_source = "engine/battle/init_battle_variables.asm"
+c_symbol = "port_init_battle_variables_not_safari_battle"
+c_source = "verification/ports/init_battle_variables_not_safari_battle.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch jp is an explicit boundary."
+decoder = "8-byte body checked (21c6500602c3d635: ld hl,$50c6; ld b,$02; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
