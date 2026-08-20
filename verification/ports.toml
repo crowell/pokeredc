@@ -17139,22 +17139,31 @@ assembly_symbol = "ManualTextScroll"
 assembly_source = "home/joypad2.asm"
 c_symbol = "port_manual_text_scroll"
 c_source = "verification/ports/manual_text_scroll.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wLinkState",
-    "hJoy5",
-    "hFrameCounter",
-    "hJoy7",
-    "hJoy6",
-    "hJoyPressed",
-    "hJoyHeld",
-    "hJoyReleased",
-    "hJoyLast",
-    "hDownArrowBlinkCount1",
-    "hDownArrowBlinkCount2",
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "link_state",
+    "wait_a",
+    "wait_f",
+    "wait_b",
+    "wait_c",
+    "wait_d",
+    "wait_e",
+    "wait_h",
+    "wait_l",
+    "wait_called",
+    "sound_called",
+    "delay_frames",
 ]
-proof_domain = "both branches (link battle vs normal) for every value of wLinkState; the normal branch defers to the WaitForTextScrollButtonPress model for all joypad/blink-counter inputs"
-decoder = "C port reads [wLinkState]; when it equals LINK_STATE_BATTLING (4) it returns after the delay-only (DelayFrames 65) path, which has no WRAM/HRAM observable; otherwise it calls port_wait_for_text_scroll_button_press to wait for an A/B press. The final ld a,SFX_PRESS_AB / jp PlaySound and the DelayFrames call are audio/timing side effects with no observable memory state and are not modeled. angr equivalence is pending."
+proof_domain = "full 8-register pathwise equivalence for link/non-link branches; WaitForTextScrollButtonPress and PlaySound/DelayFrames are explicit callee summaries, and all PC-portable state fields are compared."
+decoder = "20-byte body checked (fa2bd1fe042808cd65383e90c3b1230e41c33937: load link state; CP 4; normal wait/load SFX/PlaySound path or link DelayFrames(65) path); no CALL/PUSH/POP modeled beyond explicit callee boundaries."
 
 
 

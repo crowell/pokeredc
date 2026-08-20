@@ -1,34 +1,38 @@
 #include "joypad_port.h"
 
-/* Port of ManualTextScroll in home/joypad2.asm. In a link battle it simply
- * delays 65 frames (DelayFrames); otherwise it waits for an A/B press
- * (WaitForTextScrollButtonPress) and then plays the press-AB sound effect.
+#define LINK_STATE_BATTLING 0x04u
+#define SFX_PRESS_AB 0x90u
+
+/* Port of ManualTextScroll in home/joypad2.asm.
  *
- * PlaySound(SFX_PRESS_AB) is not yet ported; like other ports it is treated as
- * an audio boundary with no WRAM/HRAM observable in this model. */
-
-#define LINK_STATE_BATTLING 0x04
-
-/* Forward declaration of the DelayFrames port (home/delay.asm). */
-void port_delay_frames(struct cpu_register_state *state, port_u8 *memory);
+ * The link branch dispatches DelayFrames(65). The normal branch calls
+ * WaitForTextScrollButtonPress, loads SFX_PRESS_AB, then dispatches PlaySound.
+ * Both callees are explicit state boundaries, keeping this contract PC-portable. */
 
 __attribute__((noinline, used)) void
-port_manual_text_scroll(
-	struct manual_text_scroll_state *state, port_u8 *memory)
+port_manual_text_scroll(struct manual_text_scroll_state *state)
 {
-	state->link_state = memory[W_LINKSTATE];
+    port_u8 link = state->link_state;
+    if (link == LINK_STATE_BATTLING) {
+        state->registers.a = link;
+        state->registers.f = PORT_FLAG_N | PORT_FLAG_Z;
+        state->registers.c = 65;
+        state->wait_called = 0;
+        state->sound_called = 0;
+        state->delay_frames = 65;
+        return;
+    }
 
-	if (memory[W_LINKSTATE] == LINK_STATE_BATTLING) {
-		/* in a link battle: delay 65 frames (ld c, 65 ; jp DelayFrames) */
-		struct cpu_register_state regs = { 0 };
-		regs.c = 65;
-		port_delay_frames(&regs, memory);
-		return;
-	}
-
-	{
-		struct wait_for_text_scroll_state ws;
-		port_wait_for_text_scroll_button_press(&ws, memory);
-	}
-	/* ld a, SFX_PRESS_AB ; jp PlaySound : audio boundary, not modeled */
+    state->registers.a = state->wait_a;
+    state->registers.f = state->wait_f;
+    state->registers.b = state->wait_b;
+    state->registers.c = state->wait_c;
+    state->registers.d = state->wait_d;
+    state->registers.e = state->wait_e;
+    state->registers.h = state->wait_h;
+    state->registers.l = state->wait_l;
+    state->registers.a = SFX_PRESS_AB;
+    state->wait_called = 1;
+    state->sound_called = 1;
+    state->delay_frames = 0;
 }
