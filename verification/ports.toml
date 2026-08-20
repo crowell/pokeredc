@@ -19171,3 +19171,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch jp is an explicit boundary."
 decoder = "8-byte body checked (060621e063c3d635: ld b,$06; ld hl,$63e0; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "LoadFontTilePatterns.on"
+assembly_source = "home/load_font.asm"
+c_symbol = "port_load_font_tile_patterns_on"
+c_source = "verification/ports/load_font_tile_patterns_on.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD HL,nn / LD BC,nn / JP nn are flag-neutral); the local transfer jp is an explicit boundary."
+decoder = "12-byte body checked (11805a210088018004c38618: ld de,$5a80; ld hl,$8800; ld bc,$0480; jp $1886); no CALL/PUSH/POP; F-preserving ops only."
