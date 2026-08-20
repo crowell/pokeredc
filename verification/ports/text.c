@@ -96,8 +96,11 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 	for (;;) {
 		c = memory[src];
 		if (c == TX_END) {
+			state->a = c;
 			state->b = (port_u8)(dest >> 8);
 			state->c = (port_u8)dest;
+			state->d = (port_u8)(src >> 8);
+			state->e = (port_u8)src;
 			state->f = PORT_FLAG_N | PORT_FLAG_Z;
 			break;
 		}
