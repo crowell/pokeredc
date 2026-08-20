@@ -19000,3 +19000,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD B,A preserves flags); the local RET is an explicit path boundary."
 decoder = "2-byte body checked (47c9: ld b,a; ret); no CALL/PUSH/POP; F-preserving operation."
+
+[[function]]
+assembly_symbol = "CheckForBoulderCollisionWithSprites.failure"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_check_for_boulder_collision_failure"
+c_source = "verification/ports/check_for_boulder_collision_failure.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD A,imm preserves flags); the local failure RET is an explicit path boundary."
+decoder = "3-byte body checked (3effc9: ld a,$ff; ret); no CALL/PUSH/POP; F-preserving operation."
