@@ -21078,3 +21078,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first BattleTransition_Circle_Sub2 call after loading A from B"
 decoder = "push/pop setup and flag-neutral LD A,B are modeled exactly; BattleTransition_Circle_Sub2 remains the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "BattleTransition_TransferDelay3"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition_transfer_delay3"
+c_source = "verification/ports/battle_transition_transfer_delay3.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferEnabled",
+]
+proof_domain = "all register/flag inputs through the complete Delay3 transfer-toggle sequence"
+decoder = "flag-neutral LD A,1, both SM83 high-memory stores, and XOR-A flags are modeled exactly; Delay3 is an explicit no-register-effect boundary"
