@@ -19304,3 +19304,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD DE,nn / LD BC,nn / JP nn are flag-neutral); the local PlaceString jp is an explicit boundary."
 decoder = "12-byte body checked (21e2c31147da010201c35f3c: ld hl,$c3e2; ld de,$da47; ld bc,$0102; jp $3c5f); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ItemUseSurfboard.cannotStopSurfing"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_item_use_surfboard_cannot_stop_surfing"
+c_source = "verification/ports/item_use_surfboard_cannot_stop_surfing.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText jp is an explicit boundary."
+decoder = "6-byte body checked (21515ac3493c: ld hl,$5a51; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
