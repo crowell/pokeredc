@@ -18336,3 +18336,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (21da790604c3d635: ld hl,$79da; ld b,$04; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "HealEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_heal_effect"
+c_source = "verification/ports/heal_effect.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (21ec79060ec3d635: ld hl,$79ec; ld b,$0e; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
