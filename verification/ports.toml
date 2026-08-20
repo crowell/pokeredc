@@ -19513,3 +19513,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch JP is an explicit boundary."
 decoder = "8-byte body checked (061121d74fc3d635: ld b,$11; ld hl,$4fd7; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "CopyTempPicToMonPic.next"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_copy_temp_pic_to_mon_pic_next"
+c_source = "verification/ports/copy_temp_pic_to_mon_pic_next.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD BC,nn / JP nn are flag-neutral); the local video-copy JP is an explicit boundary."
+decoder = "9-byte body checked (11e8c6013100c34818: ld de,$c6e8; ld bc,$0031; jp $1848); no CALL/PUSH/POP; F-preserving ops only."
