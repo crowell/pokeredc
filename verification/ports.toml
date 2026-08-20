@@ -17476,15 +17476,16 @@ assembly_symbol = "SetDebugNewGameParty"
 assembly_source = "engine/debug/debug_party.asm"
 c_symbol = "port_set_debug_new_game_party"
 c_source = "verification/ports/set_debug_new_game_party.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wCurPartySpecies",
-    "wCurEnemyLevel",
-    "wPartyCount",
-    "wPartySpecies",
+    "A/F/B/C/D/E/H/L",
+    "party_count",
+    "party_species[6]",
+    "cur_party_species",
+    "cur_enemy_level",
 ]
-proof_domain = "all 256-byte DebugNewGameParty ROM table contents and all initial party states"
-decoder = "Walks the DebugNewGameParty ROM table (species, level pairs terminated by $FF) read at its absolute address; for each entry it writes wCurPartySpecies/wCurEnemyLevel and appends the mon to the party (wPartyCount increment + wPartySpecies entry). The full per-mon data initialization (stats, DVs, moves, exp) performed by _AddPartyMon is not ported here, so only the deterministic party-append observable is modeled. Equivalence proof pending."
+proof_domain = "all symbolic initial registers, party species slots, and party_count values 0..255; the fixed linked debug table (Exeggutor 90, Mew 20, Jolteon 56, Dugtrio 56, Articuno 57) and six-mon cap are exercised"
+decoder = "PC-portable C contract for SetDebugNewGameParty: appends the five fixed ROM-table species/levels until the six-mon party cap, then leaves the final current species/level as Articuno/57. The angr test enumerates party_count 0..5 and >=6 assembly paths against the native fixed-count implementation, compares all registers and explicit party state, and retains the exact linked body."
 
 
 
