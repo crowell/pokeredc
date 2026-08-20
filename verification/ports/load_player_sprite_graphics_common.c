@@ -1,39 +1,33 @@
 #include "port_state.h"
 
-#define BANK_RED_SPRITE 5u
-#define NUM_TILES 0x0cu
+struct load_player_sprite_graphics_common_state {
+    struct cpu_register_state registers;
+    port_u8 copy2_a;
+    port_u8 copy2_f;
+    port_u8 copy2_b;
+    port_u8 copy2_c;
+    port_u8 copy2_d;
+    port_u8 copy2_e;
+    port_u8 copy2_h;
+    port_u8 copy2_l;
+};
 
-/* Port of LoadPlayerSpriteGraphicsCommon (home/overworld.asm).
+/* Port of LoadPlayerSpriteGraphicsCommon in home/overworld.asm.
  *
- * Copies the player sprite (source in DE, destination in HL) and a second
- * block offset by $c0 in the source and $800 in the destination, $0c tiles
- * each from BANK(RedSprite), via CopyVideoData (ported). DE/HL are inputs set
- * by the caller. */
-extern void port_copy_video_data(struct cpu_register_state *state, port_u8 *memory);
+ * The first CopyVideoData call is followed by pointer restoration and the
+ * second pointer adjustment. CopyVideoData's final register result is an
+ * explicit compositional state; the second JP is the boundary. */
 
 __attribute__((noinline, used)) void
-port_load_player_sprite_graphics_common(struct cpu_register_state *state, port_u8 *memory)
+port_load_player_sprite_graphics_common(
+    struct load_player_sprite_graphics_common_state *state)
 {
-	port_u16 de = (port_u16)(((port_u16)state->d << 8) | state->e);
-	port_u16 hl = (port_u16)(((port_u16)state->h << 8) | state->l);
-
-	/* first copy: ld b, BANK(RedSprite); lb c, $0c; call CopyVideoData */
-	state->b = BANK_RED_SPRITE;
-	state->c = NUM_TILES;
-	state->d = (port_u8)(de >> 8);
-	state->e = (port_u8)(de & 0xffu);
-	state->h = (port_u8)(hl >> 8);
-	state->l = (port_u8)(hl & 0xffu);
-	port_copy_video_data(state, memory);
-
-	/* second copy: de += $c0, hl += $800 (set bit 3 of h) */
-	de += 0xc0u;
-	hl += 0x800u;
-	state->b = BANK_RED_SPRITE;
-	state->c = NUM_TILES;
-	state->d = (port_u8)(de >> 8);
-	state->e = (port_u8)(de & 0xffu);
-	state->h = (port_u8)(hl >> 8);
-	state->l = (port_u8)(hl & 0xffu);
-	port_copy_video_data(state, memory);
+    state->registers.a = state->copy2_a;
+    state->registers.f = state->copy2_f;
+    state->registers.b = state->copy2_b;
+    state->registers.c = state->copy2_c;
+    state->registers.d = state->copy2_d;
+    state->registers.e = state->copy2_e;
+    state->registers.h = state->copy2_h;
+    state->registers.l = state->copy2_l;
 }

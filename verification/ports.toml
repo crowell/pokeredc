@@ -17680,10 +17680,27 @@ assembly_symbol = "LoadPlayerSpriteGraphicsCommon"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_load_player_sprite_graphics_common"
 c_source = "verification/ports/load_player_sprite_graphics_common.c"
-status = "partial"
-observables = ["VRAM (vNPCSprites region)", "b", "c", "d", "e", "h", "l"]
-proof_domain = "Both CopyVideoData blocks fully covered via the ported port_copy_video_data."
-decoder = "Copies $0c tiles from BANK(RedSprite) = 5 at DE to HL, then a second $0c-tile block at DE + $c0 / HL + $800, via port_copy_video_data. DE and HL are inputs supplied by the caller. Faithful to the observable; equivalence pending."
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "copy2_a",
+    "copy2_f",
+    "copy2_b",
+    "copy2_c",
+    "copy2_d",
+    "copy2_e",
+    "copy2_h",
+    "copy2_l",
+]
+proof_domain = "full 8-register compositional pathwise equivalence plus the second CopyVideoData register result; the push/restore, carry branch, pointer adjustment, and second JP boundary are exercised."
+decoder = "25-byte body checked (d5e5010c05cd4818e1d13ec0835f300114cbdc010c05c34818: push/push; first CopyVideoData; restore; DE/HL adjustment; second CopyVideoData JP); PC-portable explicit callee state."
 
 
 
