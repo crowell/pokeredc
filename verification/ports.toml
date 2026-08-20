@@ -18981,3 +18981,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (INC HL preserves flags); the local RET is an explicit path boundary."
 decoder = "2-byte body checked (23c9: inc hl; ret); no CALL/PUSH/POP; F-preserving operation."
+
+[[function]]
+assembly_symbol = "SetSpriteCollisionValues.ok"
+assembly_source = "engine/overworld/sprite_collisions.asm"
+c_symbol = "port_set_sprite_collision_values_ok"
+c_source = "verification/ports/set_sprite_collision_values_ok.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD B,A preserves flags); the local RET is an explicit path boundary."
+decoder = "2-byte body checked (47c9: ld b,a; ret); no CALL/PUSH/POP; F-preserving operation."
