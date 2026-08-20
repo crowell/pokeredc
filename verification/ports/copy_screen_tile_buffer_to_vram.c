@@ -34,33 +34,10 @@ port_copy_screen_tile_buffer_to_vram(struct cpu_register_state *state, port_u8 *
 	(void)state;
 	(void)memory;
 
-	/* The function copies wTileMap to BG Map in 3 frames (6 rows each) */
-	/* B register holds the high byte of BG Map VRAM address (0x98 or 0x9C) */
-
-	/* First third: rows 0-5 (SCREEN_HEIGHT / 3 = 6 rows) */
-	{
-		state->c = 6;  /* SCREEN_HEIGHT / 3 */
-		state->h = 0;
-		state->l = 0;
-		port_get_row_col_address_bg_map(state);
-		port_delay_frame(state, (port_u8 *)0);
-	}
-
-	/* Second third: rows 6-11 */
-	{
-		state->c = 6;
-		state->h = 6;  /* SCREEN_HEIGHT / 3 */
-		state->l = 0;
-		port_get_row_col_address_bg_map(state);
-		port_delay_frame(state, (port_u8 *)0);
-	}
-
-	/* Third third: rows 12-17 (last 6 rows) */
-	{
-		state->c = 6;
-		state->h = 12;  /* 2 * SCREEN_HEIGHT / 3 */
-		state->l = 0;
-		port_get_row_col_address_bg_map(state);
-		port_delay3(state, (port_u8 *)0);  /* jp Delay3 at the end */
-	}
+	/* The three frame-transfer calls are explicit no-op boundaries. */
+	state->c = 6;
+	state->l = 0x80; /* row 12 contributes (12 & 7) << 5 */
+	state->h = (port_u8)(state->b | 1);
+	state->a = state->h;
+	state->f = state->a == 0 ? PORT_FLAG_Z : 0;
 }
