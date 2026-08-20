@@ -21091,3 +21091,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the complete Delay3 transfer-toggle sequence"
 decoder = "flag-neutral LD A,1, both SM83 high-memory stores, and XOR-A flags are modeled exactly; Delay3 is an explicit no-register-effect boundary"
+
+[[function]]
+assembly_symbol = "BattleTransition_Circle_Sub2"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition_circle_sub2"
+c_source = "verification/ports/battle_transition_circle_sub2.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "circle quadrant and pointer fields",
+]
+proof_domain = "all register/flag and five-byte circle-data inputs through the BattleTransition_Circle_Sub3 jump"
+decoder = "SM83 absolute stores, HL-increment data loads, pointer reconstruction, and JP continuation are modeled exactly; BattleTransition_Circle_Sub3 remains the explicit boundary"
