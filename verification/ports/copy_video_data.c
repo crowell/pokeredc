@@ -19,24 +19,17 @@
 
 #define DELAYFRAME_ADDR 0x3739u
 
-/* Forward declaration of the DelayFrame port. */
-__attribute__((noinline, used)) void
-port_delay_frame(struct cpu_register_state *state, port_u8 *memory);
 
 __attribute__((noinline, used)) void
 port_copy_video_data(struct cpu_register_state *state, port_u8 *memory)
 {
 	(void)state;
-
-	/* Save auto BG transfer state and disable it */
-
-	/* Save current ROM bank to hROMBankTemp */
-	memory[0xFF8B] = memory[0xFFB8];
-
-	/* Switch to source ROM bank (in B register) */
-	memory[0xFF8B] = state->b;  /* hROMBankTemp = B */
-	memory[0xFFB8] = state->b;  /* hLoadedROMBank = B */
-	memory[0xFF00] = state->b;  /* rROMB = B */
+	port_u8 saved_auto = memory[H_AUTO_BG_TRANSFER_ENABLED];
+	port_u8 saved_bank = memory[H_LOADED_ROM_BANK];
+	memory[H_AUTO_BG_TRANSFER_ENABLED] = 0;
+	memory[H_ROM_BANK_TEMP] = saved_bank;
+	memory[H_LOADED_ROM_BANK] = state->b;
+	memory[R_ROMB] = state->b;
 
 	/* Set up VBlank copy source (DE) */
 	memory[0xFFC7] = state->e;  /* hVBlankCopySource = E */
@@ -52,31 +45,16 @@ port_copy_video_data(struct cpu_register_state *state, port_u8 *memory)
 		memory[0xFFC6] = 8;  /* hVBlankCopySize = 8 */
 
 		/* Wait for next VBlank */
-		{
-			struct cpu_register_state delay_state = *state;
-			port_delay_frame(&delay_state, (port_u8 *)0);
-		}
+		/* DelayFrame is the explicit no-op timing boundary. */
 
 		/* Decrement remaining tile count */
 		state->c -= 8;
 	}
 
-	/* Copy remaining tiles (less than 8) */
-	if (state->c > 0) {
-		memory[0xFFC6] = state->c;  /* hVBlankCopySize = remaining */
-		{
-			struct cpu_register_state delay_state = *state;
-			port_delay_frame(&delay_state, (port_u8 *)0);
-		}
-	}
+	/* Copy remaining tiles (less than 8), including zero. */
+	memory[0xFFC6] = state->c;
 
-	/* Restore original ROM bank from hROMBankTemp */
-	memory[0xFFB8] = memory[0xFF8B];  /* hLoadedROMBank = hROMBankTemp */
-	memory[0xFF00] = memory[0xFF8B];  /* rROMB = hROMBankTemp */
-
-	/* Restore auto BG transfer state (from saved value on stack in asm) */
-	/* In the C port we don't have a stack to restore from, so we use the saved value */
-	/* The original asm does: pop af; ldh [hAutoBGTransferEnabled], a */
-	/* Since we saved it in a local variable, we can't easily restore it without state */
-	/* For the port, we'll skip this as the test will handle it */
+	memory[H_LOADED_ROM_BANK] = saved_bank;
+	memory[R_ROMB] = saved_bank;
+	memory[H_AUTO_BG_TRANSFER_ENABLED] = saved_auto;
 }
