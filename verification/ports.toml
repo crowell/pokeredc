@@ -20924,3 +20924,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, all move IDs, both modifier bytes, and the non-cry animation paths (animation IDs 0 and 1); GetCryData remains an explicit compositional boundary in the native contract"
 decoder = "the indexed MoveSoundTable setup, SM83 absolute/high-memory loads and stores, ADD A,[HL] flags, and the non-cry terminal path are modeled explicitly"
+
+[[function]]
+assembly_symbol = "AnimationFallingObjects"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_falling_objects_setup"
+c_source = "verification/ports/animation_falling_objects.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the InitMultipleObjectsOAM call boundary after loading C with the object count and A with tileset ID 1"
+decoder = "LD C,A and flag-neutral LD A,1 are modeled exactly; InitMultipleObjectsOAM remains the explicit continuation boundary"
