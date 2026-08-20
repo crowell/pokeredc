@@ -19475,3 +19475,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
 decoder = "6-byte body checked (21277ec3493c: ld hl,$7e27; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "DisplayPokemartDialogue_.isThereEnoughMoney"
+assembly_source = "engine/events/pokemart.asm"
+c_symbol = "port_display_pokemart_dialogue_is_there_enough_money"
+c_source = "verification/ports/display_pokemart_dialogue_is_there_enough_money.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD HL,nn / LD C,imm / JP nn are flag-neutral); the local StringCmp JP is an explicit boundary."
+decoder = "11-byte body checked (1147d3219fff0e03c38e3a: ld de,$d347; ld hl,$ff9f; ld c,$03; jp $3a8e); no CALL/PUSH/POP; F-preserving ops only."
