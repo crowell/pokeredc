@@ -19532,3 +19532,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD BC,nn / JP nn are flag-neutral); the local video-copy JP is an explicit boundary."
 decoder = "9-byte body checked (11e8c6013100c34818: ld de,$c6e8; ld bc,$0031; jp $1848); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "WriteMonPartySpriteOAM.makeCopy"
+assembly_source = "engine/gfx/mon_icons.asm"
+c_symbol = "port_write_mon_party_sprite_oam_make_copy"
+c_source = "verification/ports/write_mon_party_sprite_oam_make_copy.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD DE,nn / LD BC,nn / JP nn are flag-neutral); the local CopyData JP is an explicit boundary."
+decoder = "12-byte body checked (2100c3115bcc016000c3b500: ld hl,$c300; ld de,$cc5b; ld bc,$0060; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
