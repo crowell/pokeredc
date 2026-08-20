@@ -21287,3 +21287,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the PlayMusic call after stopping current music and selecting defeated-trainer music bank"
 decoder = "AF preservation, stop-music sound store, PlaySoundWaitForCurrent boundary, C=8 setup, and AF restoration are modeled exactly"
+
+[[function]]
+assembly_symbol = "HandlePlayerMonFainted"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_handle_player_mon_fainted"
+c_source = "verification/ports/handle_player_mon_fainted.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wInHandlePlayerMonFainted",
+]
+proof_domain = "all register/flag inputs through the RemoveFaintedPlayerMon call after setting the handling flag"
+decoder = "flag-neutral LD A,1 and absolute flag store are modeled exactly; RemoveFaintedPlayerMon and subsequent party checks remain beyond the explicit boundary"
