@@ -21128,3 +21128,16 @@ observables = [
 ]
 proof_domain = "all register/flag and enemy-HP-byte inputs through the GoText branch after OR-ing current enemy HP"
 decoder = "HL initialization, HL-increment HP loads, OR flags, and GoText pointer setup are modeled exactly; the text-printing and percentage branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SlidePlayerAndEnemySilhouettesOnScreen"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_slide_player_enemy_silhouettes"
+c_source = "verification/ports/slide_player_enemy_silhouettes.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wTextBoxID",
+]
+proof_domain = "all register/flag inputs through the DisplayTextBoxID call after loading MESSAGE_BOX"
+decoder = "LoadPlayerBackPic and DisplayTextBoxID are explicit boundaries; flag-neutral MESSAGE_BOX setup and wTextBoxID store are modeled exactly"
