@@ -20415,3 +20415,22 @@ observables = [
 ]
 proof_domain = "full OAM clear with saved-register restoration; DelayFrame is timing-only"
 decoder = "push/call/restore wrapper represented by an explicit terminal summary; ClearSprites output is proven as zero across all 160 OAM bytes"
+
+[[function]]
+assembly_symbol = "DoSpecialEffectByAnimationId"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_do_special_effect_no_match"
+c_source = "verification/ports/special_effect.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "no-match branch after IsInArray reports carry clear, with saved BC/DE/HL restored and arbitrary AF inputs"
+decoder = "done label POP BC/DE/HL and RET body checked with an explicit stack return; matching special-effect dispatch remains unmodeled"
