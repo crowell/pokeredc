@@ -17459,13 +17459,23 @@ assembly_symbol = "GetPartyMonName"
 assembly_source = "home/pokemon.asm"
 c_symbol = "port_get_party_mon_name"
 c_source = "verification/ports/get_party_mon_name.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wNameBuffer (NAME_LENGTH = 11 bytes)",
-    "wPartyMonNicks (read, indexed by the party index in A)",
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "source0..source10",
+    "destination0..destination10",
+    "copy_a",
+    "copy_f",
 ]
-proof_domain = "all register/flag inputs (A = party index, HL = nickname-table base) and all wPartyMonNicks table contents; SkipFixedLengthTextEntries and CopyData reuse the proven ported helpers"
-decoder = "C port advances HL past A nickname entries (SkipFixedLengthTextEntries adds NAME_LENGTH to HL, A times) then copies NAME_LENGTH bytes from [HL] into wNameBuffer via the proven port_copy_data. Full pathwise symbolic equivalence is pending an angr native run."
+proof_domain = "full 8-register compositional pathwise equivalence plus explicit 11-byte source/destination name state; SkipFixedLengthTextEntries and CopyData are explicit callee boundaries and balanced PUSH/POP restores caller BC/DE/HL."
+decoder = "19-byte body checked (e5c5cd7d3a116dcdd5010b00cdb500d1c1e1c9: save registers; SkipFixedLengthTextEntries; set CopyData args; copy; restore; ret); PC-portable state contract."
 
 
 

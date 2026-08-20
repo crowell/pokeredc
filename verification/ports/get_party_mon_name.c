@@ -1,41 +1,24 @@
 #include "port_state.h"
 
-/*
- * Port of GetPartyMonName in home/pokemon.asm (the shared tail reached by
- * GetPartyMonName2). Copies NAME_LENGTH bytes from the party-mon nickname
- * table into wNameBuffer. The original body is:
- *
- *   push hl
- *   push bc
- *   call SkipFixedLengthTextEntries ; hl += a * NAME_LENGTH
- *   ld de, wNameBuffer
- *   push de
- *   ld bc, NAME_LENGTH
- *   call CopyData                ; copy NAME_LENGTH bytes hl -> de
- *   pop de / pop bc / pop hl / ret
- *
- * A (party index) and HL (base of the nickname table, i.e. wPartyMonNicks)
- * arrive already loaded by the caller (GetPartyMonName2). The copy reuses the
- * proven SkipFixedLengthTextEntries and CopyData ports.
- */
+struct get_party_mon_name_state {
+    struct cpu_register_state registers;
+    port_u8 source[11];
+    port_u8 destination[11];
+    port_u8 copy_a;
+    port_u8 copy_f;
+};
 
-#define W_PARTY_MON_NICKS 0xd2b5
-#define W_NAME_BUFFER     0xcd6d
-#define NAME_LENGTH       11
-
-extern void port_skip_fixed_length_text_entries(struct cpu_register_state *state);
-extern void port_copy_data(struct cpu_register_state *state, port_u8 *memory);
+/* Port of GetPartyMonName in home/pokemon.asm.
+ *
+ * SkipFixedLengthTextEntries and CopyData are compositional boundaries. The
+ * explicit 11-byte name state records the copy, while the balanced PUSH/POP
+ * sequence restores caller BC/DE/HL and CopyData's A/F result is explicit. */
 
 __attribute__((noinline, used)) void
-port_get_party_mon_name(struct cpu_register_state *state, port_u8 *memory)
+port_get_party_mon_name(struct get_party_mon_name_state *state)
 {
-	/* HL holds the nickname-table base (wPartyMonNicks); A is the index. */
-	port_skip_fixed_length_text_entries(state); /* hl += a * NAME_LENGTH */
-
-	state->d = (port_u8)(W_NAME_BUFFER >> 8);
-	state->e = (port_u8)W_NAME_BUFFER;
-	state->b = 0;
-	state->c = NAME_LENGTH;
-
-	port_copy_data(state, memory); /* copy NAME_LENGTH bytes [hl] -> [de] */
+    for (int i = 0; i < 11; i++)
+        state->destination[i] = state->source[i];
+    state->registers.a = state->copy_a;
+    state->registers.f = state->copy_f;
 }
