@@ -95,8 +95,12 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 
 	for (;;) {
 		c = memory[src];
-		if (c == TX_END)
+		if (c == TX_END) {
+			state->b = (port_u8)(dest >> 8);
+			state->c = (port_u8)dest;
+			state->f = PORT_FLAG_N | PORT_FLAG_Z;
 			break;
+		}
 
 		if (c == TX_NEXT) {
 			port_u16 adv = (port_u16)(2 * SCREEN_WIDTH);
