@@ -21178,3 +21178,15 @@ observables = [
 ]
 proof_domain = "all register/flag and player-HP-byte inputs through the initial HandlePlayerMonFainted branch"
 decoder = "ReadPlayerMonCurHPAndStatus is an explicit boundary; player HP OR flags and battle-mon pointer setup are modeled exactly"
+
+[[function]]
+assembly_symbol = "HandlePoisonBurnLeechSeed"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_handle_poison_burn_leech_seed"
+c_source = "verification/ports/handle_poison_burn_leech_seed.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the player/enemy status branch after selecting the initial HP/status pointers"
+decoder = "high-memory AND-A flags and player pointer setup are modeled exactly; poison, burn, leech-seed, and fainting paths remain beyond the explicit boundary"
