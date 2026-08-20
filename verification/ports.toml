@@ -17621,10 +17621,21 @@ assembly_symbol = "NotYetMoving"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_not_yet_moving"
 c_source = "verification/ports/not_yet_moving.c"
-status = "partial"
-observables = ["wSpriteStateData1 + hCurrentSpriteOffset + 8"]
-proof_domain = "Zero write to the sprite's ANIMFRAMECOUNTER field fully covered; jp UpdateSpriteImage is a separate, modeled tail (boundary)."
-decoder = "Writes 0 to the sprite's ANIMFRAMECOUNTER field at wSpriteStateData1 + (hCurrentSpriteOffset + 8), matching the 8-bit low-byte wrap of the original `add SPRITESTATEDATA1_ANIMFRAMECOUNTER`, then jumps to UpdateSpriteImage (boundary). Equivalence pending."
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "sprite_offset",
+    "anim_frame",
+]
+proof_domain = "full 8-register equivalence incl. F plus explicit sprite_offset/anim_frame state; ADD A,8 hardware flags and the UpdateSpriteImage JP boundary are modeled."
+decoder = "12-byte body checked (26c1f0dac6086f3600c35751: ld h,$c1; ldh a,[hCurrentSpriteOffset]; add $08; ld l,a; ld [hl],$00; jp UpdateSpriteImage); PC-portable explicit state, no raw addresses."
 
 
 

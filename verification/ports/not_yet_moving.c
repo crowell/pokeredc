@@ -1,22 +1,34 @@
 #include "port_state.h"
 
-#define W_SPRITE_STATE_DATA1 0xc100u
-#define H_CURRENT_SPRITE_OFFSET 0xffdau
-#define SPRITESTATEDATA1_ANIMFRAMECOUNTER 8u
+struct not_yet_moving_state {
+    struct cpu_register_state registers;
+    port_u8 sprite_offset;
+    port_u8 anim_frame;
+};
 
-/* Port of NotYetMoving (engine/overworld/movement.asm).
+#define ANIM_FRAME_OFFSET 0x08u
+#define SPRITE_STATE_HIGH 0xc1u
+
+/* Port of NotYetMoving in engine/overworld/movement.asm.
  *
- * Writes 0 to the sprite's ANIMFRAMECOUNTER field, then jumps to
- * UpdateSpriteImage (separate, modeled tail). The direct observable is the
- * zero write; the jp UpdateSpriteImage is an explicit boundary. The address is
- * fixed at HIGH(wSpriteStateData1) with LOW = (hCurrentSpriteOffset + 8),
- * matching the 8-bit add (no carry into the high byte). */
+ * ld h,$c1; ldh a,[hCurrentSpriteOffset]; add $08; ld l,a;
+ * ld [hl],$00; jp UpdateSpriteImage. Explicit state replaces raw WRAM/I/O addresses. */
+
 __attribute__((noinline, used)) void
-port_not_yet_moving(struct cpu_register_state *state, port_u8 *memory)
+port_not_yet_moving(struct not_yet_moving_state *state)
 {
-	(void)state;
-	port_u8 offset = memory[H_CURRENT_SPRITE_OFFSET];
-	port_u16 addr = (port_u16)(W_SPRITE_STATE_DATA1 +
-		((port_u16)offset + SPRITESTATEDATA1_ANIMFRAMECOUNTER) % 0x100u);
-	memory[addr] = 0;
+    port_u8 input = state->sprite_offset;
+    port_u16 result = (port_u16)input + ANIM_FRAME_OFFSET;
+    port_u8 flags = 0;
+    if ((port_u8)result == 0)
+        flags |= PORT_FLAG_Z;
+    if ((input & 0x0f) + ANIM_FRAME_OFFSET > 0x0f)
+        flags |= PORT_FLAG_H;
+    if (result > 0xff)
+        flags |= PORT_FLAG_C;
+    state->registers.h = SPRITE_STATE_HIGH;
+    state->registers.a = (port_u8)result;
+    state->registers.f = flags;
+    state->registers.l = (port_u8)result;
+    state->anim_frame = 0;
 }
