@@ -19760,3 +19760,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
 decoder = "6-byte body checked (217169c3493c: ld hl,$6971; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ChangeMonPic.done"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_change_mon_pic_done"
+c_source = "verification/ports/change_mon_pic_done.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD B,imm / JP nn are flag-neutral); the local palette-command JP is an explicit boundary."
+decoder = "5-byte body checked (0601c3ef3d: ld b,$01; jp $3def); no CALL/PUSH/POP; F-preserving ops only."
