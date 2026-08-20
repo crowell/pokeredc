@@ -18374,3 +18374,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (21b17a060ec3d635: ld hl,$7ab1; ld b,$0e; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ScrollTrainerPicAfterBattle"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_scroll_trainer_pic_after_battle"
+c_source = "verification/ports/scroll_trainer_pic_after_battle.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (21d356060ec3d635: ld hl,$56d3; ld b,$0e; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
