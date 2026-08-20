@@ -17638,10 +17638,19 @@ assembly_symbol = "UpdateCinnabarGymGateTileBlocks"
 assembly_source = "home/hidden_events.asm"
 c_symbol = "port_update_cinnabar_gym_gate_tile_blocks"
 c_source = "verification/ports/cinnabar_gym_gate.c"
-status = "partial"
-observables = ["[H_GYM_GATE_INDEX]", "[H_BACKUP_GYM_GATE_INDEX]", "[W_GYM_GATE_TILE_BLOCK]", "[W_NEW_TILE_BLOCK_ID]", "[W_EVENT_FLAGS + k]", "[W_OVERWORLD_MAP + tile]"]
-proof_domain = "All six gates (index 6..1), both unlocked and locked, with covered [W_CUR_MAP_WIDTH] and [W_EVENT_FLAGS]"
-decoder = "Ports UpdateCinnabarGymGateTileBlocks_ (the `farjp` target; UpdateCinnabarGymGateTileBlocks in home/hidden_events.asm is just the farjp). For each gate it reads its CinnabarGymGateCoords entry (x,y,block), tests EVENT_CINNABAR_GYM_GATE0_UNLOCKED+idx via FlagAction, writes [wGymGateTileBlock]=block, [wNewTileBlockID]=unlocked?$0e:block, and performs the ReplaceTileBlock write into wOverworldMap at the computed tile. hGymGateIndex/hBackupGymGateIndex are written exactly as in the assembly. The VRAM redraw part of ReplaceTileBlock is display-only and omitted; equivalence of the tile-block write is pending."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "map_width",
+    "gate_unlocked[6]",
+    "new_tile_block[6]",
+    "overworld_block[6]",
+    "map_offset_lo[6], map_offset_hi[6]",
+    "gate_index",
+    "backup_gate_index",
+]
+proof_domain = "all symbolic initial registers, map width, and six independent gate-unlock flags; all 64 locked/unlocked combinations are exercised with the fixed six-gate loop and computed tile offsets"
+decoder = "PC-portable C contract for the farjp target: each gate records its open block (0x0e) or locked block, the corresponding overworld tile block and computed ReplaceTileBlock offset, then leaves gate_index=0 and backup_gate_index=1. The angr test enumerates all 64 assembly flag paths and proves them against the branchless native result, while retaining the exact wrapper body check."
 
 
 
