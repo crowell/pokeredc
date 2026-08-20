@@ -20816,3 +20816,15 @@ observables = [
 proof_domain = "all register/flag inputs and arbitrary hWhoseTurn bytes through the CopyVideoData jump continuation"
 decoder = "LDH load and AND-A flags are shimmed exactly; turn-dependent vBackPic/vFrontPic source, wTempPic destination, and PIC_SIZE count are modeled"
 
+[[function]]
+assembly_symbol = "AnimationWavyScreen"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_wavy_screen"
+c_source = "verification/ports/animation_wavy_screen.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the BattleAnimCopyTileMapToVRAM continuation call"
+decoder = "entry LD HL,vBGMap0 setup is modeled exactly; BattleAnimCopyTileMapToVRAM remains the explicit downstream boundary"
+
