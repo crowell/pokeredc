@@ -19703,3 +19703,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (two 16-bit INC HL instructions and JP preserve flags); the local evolution-loop JP is an explicit boundary."
 decoder = "5-byte body checked (2323c3716d: inc hl; inc hl; jp $6d71); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "HandlePrizeChoice.bagFull"
+assembly_source = "engine/events/prize_menu.asm"
+c_symbol = "port_handle_prize_choice_bag_full"
+c_source = "verification/ports/handle_prize_choice_bag_full.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
+decoder = "6-byte body checked (216b69c3493c: ld hl,$696b; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
