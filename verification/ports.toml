@@ -20911,3 +20911,16 @@ observables = [
 proof_domain = "all register/flag inputs through the ADD HL,DE continuation after setting the tilemap destination and 7x7 dimensions"
 decoder = "push/pop preservation, LD E,A, LD D,0, HL tilemap origin, and BC=0x0707 setup are modeled exactly"
 
+[[function]]
+assembly_symbol = "GetMoveSound"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_get_move_sound"
+c_source = "verification/ports/get_move_sound.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wFrequencyModifier",
+    "wTempoModifier",
+]
+proof_domain = "all register/flag inputs, all move IDs, both modifier bytes, and the non-cry animation paths (animation IDs 0 and 1); GetCryData remains an explicit compositional boundary in the native contract"
+decoder = "the indexed MoveSoundTable setup, SM83 absolute/high-memory loads and stores, ADD A,[HL] flags, and the non-cry terminal path are modeled explicitly"
