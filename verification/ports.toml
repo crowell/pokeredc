@@ -20331,3 +20331,24 @@ observables = [
 ]
 proof_domain = "non-enemy normal subanimation, player's turn, fixed pointer-table and subanimation addresses, arbitrary incoming registers and prior output bytes"
 decoder = "post-GetSubanimationTransform1 normal path modeled through the transformation store and subentry-address calculation; native implementation follows the linked pointer-table byte order and masks the packed frame count"
+
+[[function]]
+assembly_symbol = "LoadMoveAnimationTiles"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_load_move_animation_tiles_zero"
+c_source = "verification/ports/load_move_animation_tiles.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wTempTilesetNumTiles",
+    "wWhichBattleAnimTileset",
+]
+proof_domain = "first move-animation tileset (wWhichBattleAnimTileset=0), arbitrary incoming registers and prior temporary tile-count byte"
+decoder = "tileset-zero table entry and pre-CopyVideoData register setup are modeled; CopyVideoData remains the explicit downstream continuation"
