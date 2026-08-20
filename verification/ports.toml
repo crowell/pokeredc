@@ -21014,3 +21014,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first BattleTransition_InwardSpiral_ call after initializing the tilemap pointer, row counter, and screen-update counter"
 decoder = "constant register setup and SM83 absolute store are modeled exactly; BattleTransition_InwardSpiral_ remains the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "BattleTransition_InwardSpiral_"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition_inward_spiral_step"
+c_source = "verification/ports/battle_transition_inward_spiral_step.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "first tile write",
+]
+proof_domain = "all register/flag inputs with update counter 1 through the first BattleTransition_TransferDelay3 call"
+decoder = "SM83 LD [HL],$FF, ADD HL,DE, absolute counter load, and DEC A flags are modeled exactly; BattleTransition_TransferDelay3 remains the explicit boundary"
