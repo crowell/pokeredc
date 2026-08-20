@@ -17294,10 +17294,16 @@ assembly_symbol = "Music_PokeFluteInBattle"
 assembly_source = "audio/poke_flute.asm"
 c_symbol = "port_music_poke_flute_in_battle"
 c_source = "verification/ports/music_poke_flute_in_battle.c"
-status = "partial"
-observables = ["wChannelCommandPointers[8..9] (Ch5 -> SFX_Pokeflute_Ch5)", "wChannelCommandPointers[10..11] (Ch6 -> SFX_Pokeflute_Ch6)", "wChannelCommandPointers[12..13] (Ch7 -> SFX_Pokeflute_Ch7)", "wNewSoundID (via forwarded PlaySoundWaitForCurrent = SFX_CAUGHT_MON)", "registers A/HL/DE"]
-proof_domain = "no inputs; all operands are constant immediates (SFX_CAUGHT_MON=0x9a, SFX_Pokeflute_Ch5=0x6322, SFX_Pokeflute_Ch6=0x6325, SFX_Pokeflute_Ch7=0x449b, CHAN5*2 offset). Single execution path."
-decoder = "Loads SFX_CAUGHT_MON into A and forwards to the ported PlaySoundWaitForCurrent leaf, then performs three Audio2_OverwriteChannelPointer stores starting at wChannelCommandPointers + CHAN5*2 (little-endian 16-bit writes, hl advanced by 2 per channel) for the Ch5/Ch6/Ch7 pokeflute SFX data. Equivalence is pending the angr proof."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "channel5_pointer",
+    "channel6_pointer",
+    "channel7_pointer",
+    "sound_called",
+]
+proof_domain = "all symbolic initial registers and pointer/sound state; the single constant-immediate execution path is exercised, including the PlaySoundWaitForCurrent boundary and all three channel-pointer writes"
+decoder = "PC-portable C contract for Music_PokeFluteInBattle: the sound boundary is recorded with sound_called, Ch5/Ch6/Ch7 pointers become 0x6322/0x6325/0x449b, and the final Audio2_OverwriteChannelPointer leaves A=0x44 and HL=0xc014. The angr test proves all registers and explicit pointer/callee state against a one-path assembly summary and retains the exact linked body."
 
 
 
