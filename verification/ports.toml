@@ -18849,3 +18849,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "11-byte body checked (21f0c301c8003e7fc3e036: ld hl,$c3f0; ld bc,$00c8; ld a,$7f; jp $36e0); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "EffectCallBattleCore"
+assembly_source = "engine/battle/move_effects/reflect_light_screen.asm"
+c_symbol = "port_effect_call_battle_core"
+c_source = "verification/ports/effect_call_battle_core.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "5-byte body checked (060fc3d635: ld b,$0f; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
