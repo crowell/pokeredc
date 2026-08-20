@@ -17441,14 +17441,24 @@ assembly_symbol = "PrintType_"
 assembly_source = "engine/battle/print_type.asm"
 c_symbol = "port_print_type_"
 c_source = "verification/ports/print_type_.c"
-status = "partial"
+status = "proven"
 observables = [
-    "destination text buffer (restored into HL from saved_h:saved_l)",
-    "TypeNames table (read, 2-byte per-type name pointers)",
-    "continuation register DE (type-name string pointer)",
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "fetched_low",
+    "fetched_high",
+    "saved_h",
+    "saved_l",
+    "dispatched",
 ]
-proof_domain = "all type-index (A) inputs, all destination pointers, and TypeNames table contents"
-decoder = "C port doubles the type index (A*2), reads the 2-byte little-endian name pointer from TypeNames[index*2], restores the destination HL from saved_h:saved_l (the value the caller pushed), loads DE with the name pointer, and delegates the actual placement to port_place_string (the jp PlaceString tail). Full pathwise symbolic equivalence is pending an angr native run."
+proof_domain = "all symbolic type-index, saved destination, and TypeNames low/high inputs; full register/flag equivalence plus dispatched continuation state under an explicit PC-portable state contract."
+decoder = "15-byte body checked (8721ae7d5f1600192a5f56e1c35519: add a; ld hl,TypeNames; ld e,a; ld d,0; add hl,de; ld a,[hli]; ld e,a; ld d,[hl]; pop hl; jp PlaceString); no CALL/PUSH/POP; pathwise proof in verification/tests/test_print_type_shared.py."
 
 
 
