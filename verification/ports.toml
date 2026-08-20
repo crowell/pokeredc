@@ -18393,3 +18393,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (21d356060ec3d635: ld hl,$56d3; ld b,$0e; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "TrainerFlagAction"
+assembly_source = "home/trainers.asm"
+c_symbol = "port_trainer_flag_action"
+c_source = "verification/ports/trainer_flag_action.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "5-byte body checked (3e10c36d3e: ld a,$10; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
