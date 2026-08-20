@@ -18010,3 +18010,23 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (213f780601c3d635: ld hl,$783f; ld b,$01; jp $36d6 = jpfar DrainHPEffect_); no CALL/PUSH/POP; F-preserving ops only."
+
+
+[[function]]
+assembly_symbol = "Evolution_FlagAction"
+assembly_source = "engine/pokemon/evos_moves.asm"
+c_symbol = "port_evolution_flag_action"
+c_source = "verification/ports/evolution_flag_action.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD A,imm and JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "6-byte body checked (3e10c36d3ed8: ld a,$10; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
