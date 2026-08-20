@@ -17940,10 +17940,23 @@ assembly_symbol = "PlaySound"
 assembly_source = "home/audio.asm"
 c_symbol = "port_play_sound"
 c_source = "verification/ports/play_sound.c"
-status = "partial"
-observables = [ "wChannelSoundIDs+4..7 (SFX channels 5-8)", "wNewSoundID", "wLastMusicSoundID", "wAudioFadeOutControl", "wAudioFadeOutCounterReload", "wAudioFadeOutCounter", "hSavedROMBank", "hLoadedROMBank", "rROMB (0x2000)" ]
-proof_domain = "Dispatcher bookkeeping for any requested sound ID: with/without a sound already playing, with/without a pending fade-out, and the music-stopped (wLastMusicSoundID==0xFF) immediate-start case. ROM-bank dispatch (Audio1/2/3) is recognised but the engine channel load is a separate proven boundary."
-decoder = "Implements the channel-clear, fade-out deferral/immediate-start, and the save/restore bankswitch exactly as the asm. The final AudioX_PlaySound channel load is a separately proven port and is treated as the equivalence boundary (not inlined)."
+status = "proven"
+observables = [
+    "A/F",
+    "new_sound_id",
+    "audio_rom_bank",
+    "fade_control",
+    "fade_reload",
+    "fade_counter",
+    "last_music_sound_id",
+    "channel_sound_ids[4]",
+    "saved_rom_bank",
+    "loaded_rom_bank",
+    "rom_bank",
+    "dispatch_called",
+]
+proof_domain = "all symbolic A/F, requested sound ID, fade state, channel IDs, audio-bank state, and four dispatcher paths: no fade, pending fade with no new sound, queued fade, and stopped-music immediate start"
+decoder = "PC-portable C contract for PlaySound: clears SFX channels when a sound is already active, returns during an empty pending fade, queues a sound behind a fade unless music was stopped, or dispatches immediately with save/restore bank bookkeeping. The angr test proves all four paths against a branching summary and retains the exact linked body."
 
 
 [[function]]
