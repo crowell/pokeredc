@@ -17747,10 +17747,14 @@ assembly_symbol = "DrawPartyMenuCommon"
 assembly_source = "home/pokemon.asm"
 c_symbol = "port_draw_party_menu_common"
 c_source = "verification/ports/draw_party_menu_common.c"
-status = "partial"
-observables = ["rROMB (modeled at 0xFF00)", "b"]
-proof_domain = "Modeled bank switch only; the jp hl target routine is an explicit boundary."
-decoder = "Sets b = BANK(RedrawPartyMenu_) = 4 and writes the ROM bank register (R_ROMB, framework alias 0xFF00) to that bank, then indirect-jumps via Bankswitch to the routine already in HL. Only the bank switch is observable; the jp hl tail is a boundary. Equivalence pending."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "rom_bank",
+    "bankswitch_called",
+]
+proof_domain = "all symbolic initial registers and explicit bank-boundary state; B becomes 4, the ROM bank becomes 4, and the JP (HL)/Bankswitch boundary is exercised"
+decoder = "PC-portable C contract for DrawPartyMenuCommon: sets B=4, records the ROM bank selection and Bankswitch call, and preserves the remaining registers through the indirect JP (HL) boundary. The angr test proves all registers and explicit bank state against a one-path assembly summary and retains the exact 5-byte linked body."
 
 
 
