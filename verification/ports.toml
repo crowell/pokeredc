@@ -20867,3 +20867,22 @@ observables = [
 proof_domain = "all register/flag and status-byte inputs through the first AnimationSlideMonDown/AnimationSlideMonOff continuation"
 decoder = "turn/status loads, SM83 AND-A, and BIT 4 flags are shimmed exactly; selected minimized-state pointer and branch calls are modeled"
 
+[[function]]
+assembly_symbol = "ChangeMonPic"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_change_mon_pic"
+c_source = "verification/ports/change_mon_pic.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hWhoseTurn",
+    "wChangeMonPicEnemyTurnSpecies",
+    "wChangeMonPicPlayerTurnSpecies",
+    "wCurPartySpecies",
+    "wBattleMonSpecies2",
+    "wCurSpecies",
+    "wSpriteFlipped",
+]
+proof_domain = "all register/flag and species-memory inputs through the GetMonHeader continuation on both turn branches"
+decoder = "LDH/AND-A, species loads/stores, XOR-A flags, and temporary player-species replacement are modeled; GetMonHeader remains the explicit boundary"
+
