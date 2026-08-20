@@ -21300,3 +21300,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the RemoveFaintedPlayerMon call after setting the handling flag"
 decoder = "flag-neutral LD A,1 and absolute flag store are modeled exactly; RemoveFaintedPlayerMon and subsequent party checks remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "RemoveFaintedPlayerMon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_remove_fainted_player_mon"
+c_source = "verification/ports/remove_fainted_player_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and player-mon-number inputs through the first FlagActionPredef call"
+decoder = "player-mon load, C/HL/B setup, and FlagActionPredef continuation are modeled exactly"
