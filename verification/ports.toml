@@ -21066,3 +21066,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the BattleTransition_FlashScreen_ return and automatic-BG-transfer disable"
 decoder = "LD B,3, the FlashScreen_ callee boundary, SM83 XOR-A flags, and high-memory store are modeled exactly"
+
+[[function]]
+assembly_symbol = "BattleTransition_Circle_Sub1"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition_circle_sub1"
+c_source = "verification/ports/battle_transition_circle_sub1.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the first BattleTransition_Circle_Sub2 call after loading A from B"
+decoder = "push/pop setup and flag-neutral LD A,B are modeled exactly; BattleTransition_Circle_Sub2 remains the explicit continuation boundary"
