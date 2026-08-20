@@ -20612,4 +20612,5 @@ observables = [
     "L",
 ]
 proof_domain = "predef-jump wrapper at AnimationShakeScreenVertically, with the shake predef as an explicit continuation boundary"
-decoder = "single predef jump entry represented by an explicit terminal summary; PredefShakeScreenVertically remains the downstream boundary"
+decoder = "The wrapper's single predef jump is an explicit terminal continuation; register identity is proven, while PredefShakeScreenVertically remains downstream"
+
