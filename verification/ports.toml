@@ -18222,3 +18222,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "5-byte body checked (3e10c36d3e: ld a,$10; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "CopyTileIDsFromList_ZeroBaseTileID"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_copy_tile_ids_from_list_zero_base_tile_id"
+c_source = "verification/ports/copy_tile_ids_from_list_zero_base_tile_id.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "7-byte body checked (0e003e31c36d3e: ld c,$00; ld a,$31; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
