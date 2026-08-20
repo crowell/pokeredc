@@ -19323,3 +19323,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText jp is an explicit boundary."
 decoder = "6-byte body checked (21515ac3493c: ld hl,$5a51; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ItemUsePokeFlute.noSnorlaxToWakeUp"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_item_use_poke_flute_no_snorlax_to_wake_up"
+c_source = "verification/ports/item_use_poke_flute_no_snorlax_to_wake_up.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
+decoder = "6-byte body checked (210b62c3493c: ld hl,$620b; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
