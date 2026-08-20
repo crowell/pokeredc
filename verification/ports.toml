@@ -19779,3 +19779,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD B,imm / JP nn are flag-neutral); the local palette-command JP is an explicit boundary."
 decoder = "5-byte body checked (0601c3ef3d: ld b,$01; jp $3def); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "AskName.declinedNickname"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_ask_name_declined_nickname"
+c_source = "verification/ports/ask_name_declined_nickname.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F; LD D,H / LD E,L / LD HL,nn / LD BC,nn / JP nn are flag-neutral, modeled with explicit SM83 instruction shims; the local CopyData JP is the boundary."
+decoder = "11-byte body checked (545d216dcd010b00c3b500: ld d,h; ld e,l; ld hl,$cd6d; ld bc,$000b; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
