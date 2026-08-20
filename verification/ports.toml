@@ -17654,10 +17654,20 @@ assembly_symbol = "SpritePositionBankswitch"
 assembly_source = "home/trainers.asm"
 c_symbol = "port_sprite_position_bankswitch"
 c_source = "verification/ports/sprite_position_bankswitch.c"
-status = "partial"
-observables = ["rROMB (modeled at 0xFF00)", "b"]
-proof_domain = "Modeled bank switch only; the jp hl target routine is an explicit boundary."
-decoder = "Sets b = BANK(\"Trainer Sight\") = 21 and writes the ROM bank register (R_ROMB, framework alias 0xFF00) to that bank, then indirect-jumps via Bankswitch to the routine already in HL. Only the bank switch is observable; the jp hl tail is a boundary. Equivalence pending."
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rom_bank",
+]
+proof_domain = "full 8-register pathwise equivalence plus explicit ROM-bank state; LD B,imm is flag-neutral and the Bankswitch JP is the boundary."
+decoder = "5-byte body checked (0615c3d635: ld b,$15; jp $35d6); PC-portable state records rom_bank = 21, with no raw memory-address dependency."
 
 
 
