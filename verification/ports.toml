@@ -18621,3 +18621,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "12-byte body checked (21bfc3114acd010482c35f3c: ld hl,$c3bf; ld de,$cd4a; ld bc,$8204; jp $3c5f); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "CeladonMartElevatorShakeScript"
+assembly_source = "scripts/CeladonMartElevator.asm"
+c_symbol = "port_celadon_mart_elevator_shake_script"
+c_source = "verification/ports/celadon_mart_elevator_shake_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (061e21157fc3d635: ld b,$1e; ld hl,$7f15; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
