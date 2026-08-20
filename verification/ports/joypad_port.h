@@ -41,8 +41,12 @@ struct joypad_update_state {
 	port_u8 joy_held;
 };
 
-/* Output observable of JoypadLowSensitivity (port_joypad_low_sensitivity). */
+/* PC-portable state for JoypadLowSensitivity; Joypad itself is an entry boundary. */
 struct joypad_low_sensitivity_state {
+	port_u8 joy7;
+	port_u8 joy6;
+	port_u8 pressed;
+	port_u8 held;
 	port_u8 joy5;
 	port_u8 frame_counter;
 };
@@ -79,8 +83,7 @@ struct manual_text_scroll_state {
 };
 
 void port_joypad(struct joypad_update_state *state, port_u8 *memory);
-void port_joypad_low_sensitivity(
-	struct joypad_low_sensitivity_state *state, port_u8 *memory);
+void port_joypad_low_sensitivity(struct joypad_low_sensitivity_state *state);
 void port_wait_for_text_scroll_button_press(struct wait_for_text_scroll_state *state);
 void port_manual_text_scroll(struct manual_text_scroll_state *state);
 

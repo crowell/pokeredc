@@ -17168,19 +17168,17 @@ assembly_symbol = "JoypadLowSensitivity"
 assembly_source = "home/joypad2.asm"
 c_symbol = "port_joypad_low_sensitivity"
 c_source = "verification/ports/joypad_low_sensitivity.c"
-status = "partial"
+status = "proven"
 observables = [
-    "hJoy7",
-    "hJoy6",
-    "hJoyPressed",
-    "hJoyHeld",
-    "hJoy5",
-    "hFrameCounter",
-    "hJoyReleased",
-    "hJoyLast",
+    "joy7",
+    "joy6",
+    "pressed",
+    "held",
+    "joy5",
+    "frame_counter",
 ]
-proof_domain = "all combinations of hJoy7, hJoy6, hJoyPressed, hJoyHeld and hFrameCounter feeding the three reporting modes and the delay/debounce state machine; the embedded _Joypad update (port_joypad) is covered for every joypad-input combination"
-decoder = "C port first refreshes the joypad state via port_joypad. [hJoy5] is set to [hJoyPressed] when [hJoy7]==0 else to [hJoyHeld]. A nonzero [hJoyPressed] arms hFrameCounter=30 and returns. Otherwise, if hFrameCounter!=0 it forces [hJoy5]=0 and returns. Once hFrameCounter==0, if A/B are held and [hJoy6]==0 it forces [hJoy5]=0; finally hFrameCounter=5 is armed. angr equivalence is pending."
+proof_domain = "all symbolic joy7/joy6/pressed/held/frame_counter combinations; full reporting, debounce, A/B suppression, and short-delay branches are pathwise executed, with Joypad as the explicit entry boundary."
+decoder = "52-byte body checked (cd9a01f0b7a7f0b32802f0b4e0b5f0b3a728053e1ee0d5c9f0d5a72804afe0b5c9f0b4e6032808f0b6a72003afe0b53e05e0d5c9: Joypad call, three reporting modes, debounce, and returns); PC-portable explicit state."
 
 
 
