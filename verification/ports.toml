@@ -21274,3 +21274,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the gym-leader branch after EndLowHealthAlarm and wGymLeaderNo test"
 decoder = "EndLowHealthAlarm is an explicit boundary; music selection setup, high-memory AND-A flags, and branch boundary are modeled exactly"
+
+[[function]]
+assembly_symbol = "PlayBattleVictoryMusic"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_play_battle_victory_music"
+c_source = "verification/ports/play_battle_victory_music.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wNewSoundID",
+]
+proof_domain = "all register/flag inputs through the PlayMusic call after stopping current music and selecting defeated-trainer music bank"
+decoder = "AF preservation, stop-music sound store, PlaySoundWaitForCurrent boundary, C=8 setup, and AF restoration are modeled exactly"
