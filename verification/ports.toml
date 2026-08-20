@@ -17687,10 +17687,28 @@ assembly_symbol = "TradeAnimCommon"
 assembly_source = "engine/movie/trade.asm"
 c_symbol = "port_trade_anim_common"
 c_source = "verification/ports/trade_anim_common.c"
-status = "partial"
-observables = ["wOptions", "hSCY", "hSCX"]
-proof_domain = "Save/zero/restore of the three globals fully covered; the per-function animation loop (jp hl per entry) is an explicit boundary."
-decoder = "Saves wOptions/hSCY/hSCX, zeroes them for the duration of the trade-animation sequence, then restores them at the end. The trade-function sequence loop (jp hl per entry) is an explicit boundary. Net effect: the three globals are unchanged; equivalence pending."
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "options",
+    "scy",
+    "scx",
+    "loop_b",
+    "loop_c",
+    "loop_d",
+    "loop_e",
+    "loop_h",
+    "loop_l",
+]
+proof_domain = "full 8-register compositional pathwise equivalence plus explicit options/SCY/SCX and trade-loop register state; the per-entry JP HL loop is an explicit callee boundary."
+decoder = "54-byte body checked (fa55d3f5f0aff5f0aef5afea55d3e0afe0aed5d11afeff281213d5215f51874f0600092a666f111551d5e9f1e0aef1e0aff1ea55d3c9); save/zero/loop/restore path is exercised and the loop is summarized compositionally."
 
 
 [[function]]

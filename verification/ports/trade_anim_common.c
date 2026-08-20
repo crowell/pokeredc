@@ -1,28 +1,35 @@
 #include "port_state.h"
 
-#define W_OPTIONS 0xd355u
-#define H_SCY 0xffafu
-#define H_SCX 0xffaeu
+struct trade_anim_common_state {
+    struct cpu_register_state registers;
+    port_u8 options;
+    port_u8 scy;
+    port_u8 scx;
+    port_u8 loop_b;
+    port_u8 loop_c;
+    port_u8 loop_d;
+    port_u8 loop_e;
+    port_u8 loop_h;
+    port_u8 loop_l;
+};
 
-/* Port of TradeAnimCommon (engine/movie/trade.asm).
+/* Port of TradeAnimCommon in engine/movie/trade.asm.
  *
- * Saves wOptions/hSCY/hSCX, zeroes them for the duration of the trade-animation
- * sequence, then restores them at the end. The per-function animation steps in
- * the sequence (jp hl per entry) are explicit boundaries, so the save/zero/
- * restore of the three globals is modeled; the net effect is that they are
- * unchanged (the zeroed window is the documented boundary region). */
+ * The setup zeroes options/SCY/SCX, dispatches the trade-function loop, and
+ * restores the three saved bytes. The loop's returned register set is an
+ * explicit compositional input; the final POP AF restores the original F and
+ * options byte. No raw Game Boy memory addresses remain in the contract. */
+
 __attribute__((noinline, used)) void
-port_trade_anim_common(struct cpu_register_state *state, port_u8 *memory)
+port_trade_anim_common(struct trade_anim_common_state *state)
 {
-	(void)state;
-	port_u8 saved_options = memory[W_OPTIONS];
-	port_u8 saved_scy = memory[H_SCY];
-	port_u8 saved_scx = memory[H_SCX];
-	memory[W_OPTIONS] = 0;
-	memory[H_SCY] = 0;
-	memory[H_SCX] = 0;
-	/* run the trade-function sequence (jp hl per entry) -- boundary */
-	memory[H_SCX] = saved_scx;
-	memory[H_SCY] = saved_scy;
-	memory[W_OPTIONS] = saved_options;
+    port_u8 original_f = state->registers.f;
+    state->registers.b = state->loop_b;
+    state->registers.c = state->loop_c;
+    state->registers.d = state->loop_d;
+    state->registers.e = state->loop_e;
+    state->registers.h = state->loop_h;
+    state->registers.l = state->loop_l;
+    state->registers.a = state->options;
+    state->registers.f = original_f;
 }
