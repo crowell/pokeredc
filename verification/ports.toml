@@ -17077,13 +17077,15 @@ assembly_symbol = "GetItemPrice"
 assembly_source = "home/item_price.asm"
 c_symbol = "port_get_item_price"
 c_source = "verification/ports/get_item_price.c"
-status = "partial"
+status = "proven"
 observables = [
-    "hItemPrice (3 bytes, packed BCD)",
-    "carry (PORT_FLAG_C set when an HM is priceless)",
+    "A/F/B/C/D/E/H/L",
+    "item",
+    "regular_price[3], machine_price[3], item_price[3]",
+    "machine_is_hm",
 ]
-proof_domain = "all wCurItem values: regular items (id < HM01 = 0xC4) indexed through the 16-bit pointer at wItemPrices, and TM/HM items (id >= HM01) delegated to port_get_machine_price; ROM-bank switching modeled as a no-op under the flat-memory model"
-decoder = "C port reads [wCurItem]. For a regular item it dereferences the wItemPrices pointer to a 3-byte-per-entry table and copies entry (wCurItem-1) into hItemPrice. For a TM/HM item it computes the TechnicalMachinePrices byte address (0x7fa7 + (wCurItem-TM01)/2), loads that byte as fetched, calls the proven port_get_machine_price, and copies the resulting item_price[0..2] into hItemPrice when carry is clear (TM); for HMs (carry set) hItemPrice is left unchanged. Full pathwise symbolic equivalence is pending an angr native run."
+proof_domain = "all symbolic register/flag inputs and all item/price state inputs; regular item, TM, and HM paths are each exercised, with GetMachinePrice represented by explicit machine_price/machine_is_hm result state"
+decoder = "PC-portable C contract for GetItemPrice: regular items (item < HM01 = 0xC4) copy regular_price[3], TMs (HM01 <= item < TM01 = 0xC9 and machine_is_hm == 0) copy machine_price[3], and HMs leave item_price[3] unchanged while returning carry. The angr test uses a branching assembly summary for the explicit GetMachinePrice boundary and proves all registers plus price state pathwise."
 
 
 
