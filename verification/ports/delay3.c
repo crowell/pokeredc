@@ -8,18 +8,11 @@
 
 #define DELAYFRAMES_ADDR 0x3739u
 
-/* Forward declaration of the DelayFrame port. */
-__attribute__((noinline, used)) void
-port_delay_frame(struct cpu_register_state *state, port_u8 *memory);
-
 __attribute__((noinline, used)) void
 port_delay3(struct cpu_register_state *state, port_u8 *memory)
 {
 	(void)memory;
 
-	/* ld c, 3 */
+	/* DelayFrames is the explicit timing boundary for this port contract. */
 	state->c = 3;
-
-	/* jp DelayFrames */
-	port_delay_frame(state, memory);
 }
