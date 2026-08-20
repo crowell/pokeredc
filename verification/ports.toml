@@ -20739,3 +20739,15 @@ observables = [
 proof_domain = "all register/flag inputs and arbitrary player/enemy species bytes through the ChangeMonPic continuation boundary"
 decoder = "both SM83 absolute loads/stores and the second species load are shimmed; species copies and final A are checked exactly; ChangeMonPic remains downstream"
 
+[[function]]
+assembly_symbol = "AnimationShowMonPic"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_show_mon_pic"
+c_source = "verification/ports/animation_show_mon_pic.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the entry XOR A and the GetTileIDList continuation boundary"
+decoder = "entry XOR A semantics are shimmed exactly; GetTileIDList is an explicit downstream continuation boundary"
+
