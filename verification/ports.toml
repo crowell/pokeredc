@@ -20614,3 +20614,22 @@ observables = [
 proof_domain = "predef-jump wrapper at AnimationShakeScreenVertically, with the shake predef as an explicit continuation boundary"
 decoder = "The wrapper's single predef jump is an explicit terminal continuation; register identity is proven, while PredefShakeScreenVertically remains downstream"
 
+[[function]]
+assembly_symbol = "AnimationShakeScreenHorizontallyFast"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_shake_screen_horizontally_fast"
+c_source = "verification/ports/animation_shake_horizontal.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "predef-jump wrapper with the horizontal shake predef as an explicit continuation boundary"
+decoder = "The wrapper's single predef jump is an explicit terminal continuation; register identity is proven, while PredefShakeScreenHorizontally remains downstream"
+
