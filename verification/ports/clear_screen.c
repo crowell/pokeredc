@@ -7,7 +7,7 @@
  *
  * Modifies: A, B, C, H, L, F. */
 
-#define SCREEN_AREA 0x03C0u  /* 20 * 18 = 360 = 0x168, but SCREEN_AREA = 20*18 = 360 = 0x168 */
+#define SCREEN_AREA 0x0168u  /* 20 * 18 = 360 bytes */
 #define H_COORD 0xC3A0u  /* hlcoord 0, 0 -> $C3A0 */
 #define DELAY3_ADDR 0x3E37u
 
