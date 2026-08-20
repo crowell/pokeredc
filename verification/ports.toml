@@ -20828,3 +20828,15 @@ observables = [
 proof_domain = "all register/flag inputs through the BattleAnimCopyTileMapToVRAM continuation call"
 decoder = "entry LD HL,vBGMap0 setup is modeled exactly; BattleAnimCopyTileMapToVRAM remains the explicit downstream boundary"
 
+[[function]]
+assembly_symbol = "AnimationSubstitute"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_substitute"
+c_source = "verification/ports/animation_substitute.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the initial FillMemory continuation after clearing wTempPic"
+decoder = "wTempPic/PIC_SIZE tiles setup and SM83 XOR-A flags are modeled exactly; FillMemory remains the explicit downstream boundary"
+
