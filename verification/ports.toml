@@ -18887,3 +18887,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (060321c755c3d635: ld b,$03; ld hl,$55c7; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "EndNPCMovementScript"
+assembly_source = "home/npc_movement.asm"
+c_symbol = "port_end_npc_movement_script_thunk"
+c_source = "verification/ports/end_npc_movement_script_thunk.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F for the outer thunk; LD HL,nn / LD B,imm / JP nn are flag-neutral and the tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (0606211d64c3d635: ld b,$06; ld hl,$641d; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
