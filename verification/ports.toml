@@ -18583,3 +18583,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (010a003e7fc3e036: ld bc,$000a; ld a,$7f; jp $36e0); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "SlotMachine_PrintCreditCoins"
+assembly_source = "engine/slots/slot_machine.asm"
+c_symbol = "port_slot_machine_print_credit_coins"
+c_source = "verification/ports/slot_machine_print_credit_coins.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "11-byte body checked (21b9c311a4d50e02c3cd15: ld hl,$c3b9; ld de,$d5a4; ld c,$02; jp $15cd); no CALL/PUSH/POP; F-preserving ops only."
