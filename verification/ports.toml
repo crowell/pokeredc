@@ -17990,3 +17990,23 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn and `lb bc`->LD BC,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "12-byte body checked (11987b21609701090bc34818: ld de,$7b98; ld hl,$9760; lb bc,$0b,$09 -> LD BC,$0b09; jp CopyVideoData); no CALL/PUSH/POP; F-preserving ops only."
+
+
+[[function]]
+assembly_symbol = "DrainHPEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_drain_hp_effect"
+c_source = "verification/ports/drain_hp_effect.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (213f780601c3d635: ld hl,$783f; ld b,$01; jp $36d6 = jpfar DrainHPEffect_); no CALL/PUSH/POP; F-preserving ops only."
