@@ -795,7 +795,6 @@ def _oam_write_native(inputs: dict[str, claripy.ast.BV]) -> OamWriteEndpoint:
     [
         ("GetSubanimationTransform1", "port_get_subanimation_transform1"),
         ("GetSubanimationTransform2", "port_get_subanimation_transform2"),
-        ("IsCryMove", "port_is_cry_move"),
     ],
 )
 def test_battle_animation_helper_symbolic_equivalence(

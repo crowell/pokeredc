@@ -37,7 +37,7 @@ port_is_cry_move(struct cry_move_state *state)
 {
 	state->registers.a = state->animation_id;
 	if (state->registers.a == 0x2d || state->registers.a == 0x2e) {
-		state->registers.f = PORT_FLAG_C;
+		state->registers.f = PORT_FLAG_Z | PORT_FLAG_C;
 		return;
 	}
 	state->registers.f = 0;

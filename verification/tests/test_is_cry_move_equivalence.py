@@ -10,17 +10,14 @@ from archinfo import ArchPcode
 
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
+    assembly_registers,
     native_registers,
     set_assembly_registers,
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import (
-    linked_bytes,
-    rom_window,
-    symbol_location,
-    z80_flags_to_sm83,
-)
+from verification.harness.rom import linked_bytes, rom_window, symbol_location
+from verification.harness.sm83_shims import Sm83CpImmediate
 
 ROOT = Path(__file__).resolve().parents[2]
 NATIVE_ELF = ROOT / "verification/build/ports.elf"
@@ -34,7 +31,7 @@ ROAR = 0x2E
 
 
 @dataclass(frozen=True)
-class E:
+class Endpoint:
     a: claripy.ast.BV
     f: claripy.ast.BV
     b: claripy.ast.BV
@@ -46,36 +43,48 @@ class E:
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class IsCryMove(angr.SimProcedure):
-    def __init__(self, n: int) -> None:
+class LoadAnimationID(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = self.state.globals["animation_id"]
+        self.jump(self.state.addr + 3)
+
+
+class BranchZ(angr.SimProcedure):
+    def __init__(self, taken: int, fallthrough: int) -> None:
         super().__init__()
-        self._n = n
+        self.taken = taken
+        self.fallthrough = fallthrough
 
     def run(self) -> None:  # type: ignore[override]
         self.inhibit_autoret = True
-        # IsCryMove: a = [wAnimationID]; if a==GROWL or a==ROAR: scf; else: and a; ret
-        a = self.state.memory.load(W_ANIMATION_ID, 1)
-        is_cry = claripy.Or(a == GROWL, a == ROAR)
-        self.state.regs.a = a
-        # Z80 flags: C=bit0(0x01), N=bit1(0x02), H=bit4(0x10), Z=bit6(0x40)
-        f = claripy.If(
-            is_cry,
-            claripy.BVV(0x01, 8),  # scf -> C=1
-            claripy.If(a == 0, claripy.BVV(0x40, 8), claripy.BVV(0x00, 8))  # and a -> Z if a==0
+        condition = (self.state.regs.f & 0x40) != 0
+        self.successors.add_successor(self.state.copy(), self.taken, condition, "Ijk_Boring")
+        self.successors.add_successor(
+            self.state.copy(), self.fallthrough, claripy.Not(condition), "Ijk_Boring"
         )
-        self.state.regs.f = f
-        self.jump(self._n)
 
 
-def inputs(p: str) -> dict:
-    i = symbolic_registers(p)
-    return i
+class AndA(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.f = claripy.If(self.state.regs.a == 0, claripy.BVV(0x40, 8), claripy.BVV(0, 8))
+        self.jump(self.state.addr + 1)
 
 
-def assembly(i: dict) -> list[E]:
+class Scf(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.f = (self.state.regs.f & 0x40) | 1
+        self.jump(self.state.addr + 1)
+
+
+class Boundary(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.jump(DONE)
+
+
+def _assembly(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     loc = symbol_location(SYMBOLS, "IsCryMove")
-    q = loc.address
-    p = angr.Project(
+    base = loc.address
+    project = angr.Project(
         rom_window(ROM, loc.bank),
         auto_load_libs=False,
         rebase_granularity=0x100,
@@ -83,64 +92,51 @@ def assembly(i: dict) -> list[E]:
             "backend": "blob",
             "arch": ArchPcode("z80:LE:16:default"),
             "base_addr": 0,
-            "entry_point": q,
+            "entry_point": base,
         },
     )
-    p.hook(q, IsCryMove(DONE), length=15)
-    s = p.factory.blank_state(addr=q)
-    s.memory.store(W_ANIMATION_ID, i["a"])  # initial a is symbolic, but asm loads from RAM
-    set_assembly_registers(s, i)
-    m = p.factory.simulation_manager(s)
-    m.explore(find=DONE, num_find=1)
-    assert len(m.found) == 1
-    x = m.found[0]
-    return [
-        E(
-            a=x.regs.a,
-            f=z80_flags_to_sm83(x.regs.f),
-            b=x.regs.b,
-            c=x.regs.c,
-            d=x.regs.d,
-            e=x.regs.e,
-            h=x.regs.h,
-            l=x.regs.l,
-            constraints=tuple(x.solver.constraints),
-        )
-    ]
+    project.hook(base, LoadAnimationID(), length=3)
+    project.hook(base + 3, Sm83CpImmediate(GROWL, base + 5), length=2)
+    project.hook(base + 5, BranchZ(base + 13, base + 7), length=2)
+    project.hook(base + 7, Sm83CpImmediate(ROAR, base + 9), length=2)
+    project.hook(base + 9, BranchZ(base + 13, base + 11), length=2)
+    project.hook(base + 11, AndA(), length=1)
+    project.hook(base + 12, Boundary(), length=1)
+    project.hook(base + 13, Scf(), length=1)
+    project.hook(base + 14, Boundary(), length=1)
+    state = project.factory.blank_state(addr=base)
+    set_assembly_registers(state, inputs)
+    state.globals["animation_id"] = inputs["a"]
+    manager = project.factory.simulation_manager(state)
+    manager.explore(find=DONE, num_find=3)
+    assert len(manager.found) == 3
+    return [Endpoint(**assembly_registers(end), constraints=tuple(end.solver.constraints)) for end in manager.found]
 
 
-def native(i: dict) -> list[E]:
-    p = angr.Project(NATIVE_ELF, auto_load_libs=False)
-    fn = p.loader.find_symbol("port_is_cry_move")
-    assert fn
-    s = p.factory.call_state(fn.rebased_addr, NATIVE_STATE)
-    store_native_registers(s, NATIVE_STATE, i)
-    s.memory.store(NATIVE_STATE + 8, i["a"])  # animation_id at offset 8
-    m = p.factory.simulation_manager(s)
-    m.run()
-    assert not m.errored
-    x = m.deadended[0]
-    nr = native_registers(x, NATIVE_STATE)
-    return [
-        E(
-            a=nr["a"],
-            f=nr["f"],
-            b=nr["b"],
-            c=nr["c"],
-            d=nr["d"],
-            e=nr["e"],
-            h=nr["h"],
-            l=nr["l"],
-            constraints=tuple(x.solver.constraints),
-        )
-    ]
+def _native(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+    project = angr.Project(NATIVE_ELF, auto_load_libs=False)
+    function = project.loader.find_symbol("port_is_cry_move")
+    assert function is not None
+    state = project.factory.call_state(function.rebased_addr, NATIVE_STATE)
+    store_native_registers(state, NATIVE_STATE, inputs)
+    state.memory.store(NATIVE_STATE + 8, inputs["a"])
+    manager = project.factory.simulation_manager(state)
+    manager.run()
+    assert not manager.errored
+    assert len(manager.deadended) == 1
+    end = manager.deadended[0]
+    return [Endpoint(**native_registers(end, NATIVE_STATE), constraints=tuple(end.solver.constraints))]
 
 
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="native")
+@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 def test_transition_equivalence() -> None:
-    i = inputs("icm")
-    assert_pathwise_equivalent(assembly(i), native(i), ("a", "f", "b", "c", "d", "e", "h", "l"))
+    inputs = symbolic_registers("icm")
+    assert_pathwise_equivalent(
+        _assembly(inputs),
+        _native(inputs),
+        ("a", "f", "b", "c", "d", "e", "h", "l"),
+    )
 
 
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
