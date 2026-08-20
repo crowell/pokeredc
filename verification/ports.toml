@@ -17278,10 +17278,22 @@ assembly_symbol = "Music_Cities1AlternateTempo"
 assembly_source = "audio/alternate_tempo.asm"
 c_symbol = "port_music_cities1_alternate_tempo"
 c_source = "verification/ports/music_cities1_alternate_tempo.c"
-status = "partial"
-observables = ["wAudioFadeOutCounterReloadValue", "wAudioFadeOutCounter", "wAudioFadeOutControl", "wChannelCommandPointers[0..1] (Ch1 -> Music_Cities1_Ch1_AlternateTempo)", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "registers A/C/HL/DE"]
-proof_domain = "no inputs; all operands are constant immediates (10, $ff, 100, BANK(Music_Cities1)=2, MUSIC_CITIES1=0xc3, Music_Cities1_Ch1_AlternateTempo=0x6a6f). Single execution path."
-decoder = "Arms an audio fade-out (wAudioFadeOutCounterReloadValue=10, wAudioFadeOutCounter=10, wAudioFadeOutControl=$ff), calls DelayFrames(100) via the ported leaf, then reproduces PlayMusic's unconditional top-level RAM writes (wNewSoundID=0xc3, wAudioROMBank=2, wAudioSavedROMBank=2, wAudioFadeOutControl=0 — overwriting the $ff set earlier), and finally performs a single Audio1_OverwriteChannelPointer store into wChannelCommandPointers for the Ch1 alternate-tempo measure. Equivalence is pending the angr proof."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "channel1_pointer",
+    "fade_counter_reload",
+    "fade_counter",
+    "fade_control",
+    "delay_frames_requested",
+    "delay_called",
+    "sound_id",
+    "audio_rom_bank",
+    "audio_saved_bank",
+    "play_music_called",
+]
+proof_domain = "all symbolic initial registers and fade/delay/audio state; the single constant-immediate path exercises fade setup, DelayFrames(100), PlayMusic, and the final Ch1 pointer write"
+decoder = "PC-portable C contract for Music_Cities1AlternateTempo: fade counter reload/counter become 10, DelayFrames is recorded as requested 100 and called, PlayMusic state becomes sound_id=0xc3, bank/saved-bank=2, fade_control=0, and play_music_called=1; Ch1 becomes 0x6a6f and final HL is 0xc008. The angr test proves all registers and explicit state against a one-path assembly summary and retains the exact linked body."
 
 
 
