@@ -19855,3 +19855,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F plus explicit source/frequency/tempo memory observables; LD A,[HL+], LD [a16],A, LD A,B, and RET are modeled with SM83 shims and an explicit state struct."
 decoder = "10-byte body checked (2aeaf1c02aeaf2c078c9: ld a,[hli]; ld [wFrequencyModifier],a; ld a,[hli]; ld [wTempoModifier],a; ld a,b; ret); no CALL/PUSH/POP."
+
+[[function]]
+assembly_symbol = "GetIntroMoveSound"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_get_intro_move_sound"
+c_source = "verification/ports/get_intro_move_sound.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register compositional pathwise equivalence; LD A,B / LD B,A are flag-neutral, and the GetMoveSound callee's returned A/F are explicit shared state inputs."
+decoder = "6-byte body checked (78cd6f5847c9: ld a,b; call GetMoveSound; ld b,a; ret); CALL is modeled by an explicit callee-result summary, no PUSH/POP."
