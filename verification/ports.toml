@@ -19570,3 +19570,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD DE,nn / LD BC,nn / JP nn are flag-neutral); the local CopyData JP is an explicit boundary."
 decoder = "12-byte body checked (2100c31108c501a000c3b500: ld hl,$c300; ld de,$c508; ld bc,$00a0; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "MistEffect_.mistAlreadyInUse"
+assembly_source = "engine/battle/move_effects/mist.asm"
+c_symbol = "port_mist_effect_mist_already_in_use"
+c_source = "verification/ports/mist_effect_mist_already_in_use.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch JP is an explicit boundary."
+decoder = "8-byte body checked (21537b060fc3d635: ld hl,$7b53; ld b,$0f; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
