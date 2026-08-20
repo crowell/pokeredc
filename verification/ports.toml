@@ -19874,3 +19874,22 @@ observables = [
 ]
 proof_domain = "full 8-register compositional pathwise equivalence; LD A,B / LD B,A are flag-neutral, and the GetMoveSound callee's returned A/F are explicit shared state inputs."
 decoder = "6-byte body checked (78cd6f5847c9: ld a,b; call GetMoveSound; ld b,a; ret); CALL is modeled by an explicit callee-result summary, no PUSH/POP."
+
+[[function]]
+assembly_symbol = "EraseType2Text"
+assembly_source = "engine/battle/print_type.asm"
+c_symbol = "port_erase_type2_text"
+c_source = "verification/ports/erase_type2_text.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F; the ADD HL,BC hardware H/C flags are modeled explicitly, and the transfer JP is the boundary."
+decoder = "12-byte body checked (3e7f01130009010600c3e036: ld a,$7f; ld bc,$0013; add hl,bc; ld bc,$0006; jp $36e0); no CALL/PUSH/POP."
