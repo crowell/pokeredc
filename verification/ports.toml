@@ -20852,3 +20852,18 @@ observables = [
 proof_domain = "all register/flag inputs through the FarCopyData2 jump continuation"
 decoder = "TILE_SIZE count and MonsterSprite bank load are modeled with exact flag preservation; FarCopyData2 remains the explicit downstream boundary"
 
+[[function]]
+assembly_symbol = "HideSubstituteShowMonAnim"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_hide_substitute_show_mon_anim"
+c_source = "verification/ports/animation_substitute_hide.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hWhoseTurn",
+    "wPlayerBattleStatus2",
+    "wEnemyBattleStatus2",
+]
+proof_domain = "all register/flag and status-byte inputs through the first AnimationSlideMonDown/AnimationSlideMonOff continuation"
+decoder = "turn/status loads, SM83 AND-A, and BIT 4 flags are shimmed exactly; selected minimized-state pointer and branch calls are modeled"
+
