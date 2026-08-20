@@ -19342,3 +19342,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
 decoder = "6-byte body checked (210b62c3493c: ld hl,$620b; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "UsedCut.nothingToCut"
+assembly_source = "engine/overworld/cut.asm"
+c_symbol = "port_used_cut_nothing_to_cut"
+c_source = "verification/ports/used_cut_nothing_to_cut.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
+decoder = "6-byte body checked (217d6fc3493c: ld hl,$6f7d; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
