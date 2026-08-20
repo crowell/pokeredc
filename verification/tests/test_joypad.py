@@ -1,22 +1,27 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-from verification.harness.rom import linked_bytes, symbol_location
+from verification.harness.equivalence import assert_pathwise_equivalent
+from verification.tests import test_joypad_equivalence as joypad
 
 
-ROOT = Path(__file__).resolve().parents[2]
-ROM = ROOT / "pokered.gbc"
-SYMBOLS = ROOT / "pokered.sym"
-
-EXPECTED_BODY = bytes.fromhex(
-    "f0b8f53e03e0b8ea0020cd0040f1e0b8ea0020c9"
+@pytest.mark.skipif(not joypad.NATIVE_ELF.exists(), reason="run native")
+@pytest.mark.skipif(
+    not joypad.ROM.exists() or not joypad.SYMBOLS.exists(),
+    reason="run `make red`",
 )
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_joypad_exact_linked_body() -> None:
-    location = symbol_location(SYMBOLS, "Joypad")
-    assert linked_bytes(ROM, location, len(EXPECTED_BODY)) == EXPECTED_BODY
+def test_joypad_pathwise_equivalence() -> None:
+    assert_pathwise_equivalent(
+        joypad._assembly_endpoints(),
+        joypad._native_endpoints(),
+        (
+            "hJoyInput",
+            "hJoyLast",
+            "hJoyReleased",
+            "hJoyPressed",
+            "hJoyHeld",
+            "wStatusFlags5",
+            "wJoyIgnore",
+        ),
+    )
