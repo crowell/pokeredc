@@ -21001,3 +21001,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first Delay3 call after enabling automatic BG transfer"
 decoder = "flag-neutral LD A,1 and SM83 high-memory store are modeled exactly; Delay3 remains the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "BattleTransition_InwardSpiral"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition_inward_spiral"
+c_source = "verification/ports/battle_transition_inward_spiral.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wInwardSpiralUpdateScreenCounter",
+]
+proof_domain = "all register/flag inputs through the first BattleTransition_InwardSpiral_ call after initializing the tilemap pointer, row counter, and screen-update counter"
+decoder = "constant register setup and SM83 absolute store are modeled exactly; BattleTransition_InwardSpiral_ remains the explicit continuation boundary"
