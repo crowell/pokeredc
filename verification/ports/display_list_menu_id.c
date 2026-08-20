@@ -153,6 +153,7 @@ port_display_list_menu_id(struct display_list_menu_id_state *state,
 	memory[W_MENU_WATCHED_KEYS] =
 		(1u << B_PAD_A) | (1u << B_PAD_B) | (1u << B_PAD_SELECT);
 	/* DelayFrames(10): timing-only. */
+	memory[H_AUTO_BG_TRANSFER_ENABLED] = 1;
 
 	/* --- DisplayListMenuIDLoop: one iteration (58-195) --- */
 	if (battle_type != 0) {
