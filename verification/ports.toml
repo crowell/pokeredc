@@ -19380,3 +19380,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
 decoder = "6-byte body checked (21dd4fc3493c: ld hl,$4fdd; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "VendingMachineMenu.notThirsty"
+assembly_source = "engine/events/vending_machine.asm"
+c_symbol = "port_vending_machine_menu_not_thirsty"
+c_source = "verification/ports/vending_machine_menu_not_thirsty.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
+decoder = "6-byte body checked (21e24fc3493c: ld hl,$4fe2; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
