@@ -20899,3 +20899,15 @@ observables = [
 proof_domain = "all register/flag inputs and initial tileset byte through the LoadMoveAnimationTiles continuation"
 decoder = "push/pop setup and SM83 absolute store are modeled exactly; the tileset write precedes the explicit LoadMoveAnimationTiles boundary"
 
+[[function]]
+assembly_symbol = "ClearMonPicFromTileMap"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_clear_mon_pic_from_tilemap_wrapper"
+c_source = "verification/ports/clear_mon_pic_from_tilemap_wrapper.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the ADD HL,DE continuation after setting the tilemap destination and 7x7 dimensions"
+decoder = "push/pop preservation, LD E,A, LD D,0, HL tilemap origin, and BC=0x0707 setup are modeled exactly"
+
