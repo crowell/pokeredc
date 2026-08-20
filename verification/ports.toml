@@ -18526,3 +18526,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "5-byte body checked (06fac30560: ld b,$fa; jp $6005); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "CopyDebugName"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_copy_debug_name"
+c_source = "verification/ports/copy_debug_name.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "6-byte body checked (010b00c3b500: ld bc,$000b; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
