@@ -18,9 +18,6 @@
 
 #define BANKSWITCH 0x35D6u
 
-/* Forward declaration. */
-__attribute__((noinline, used)) void
-port_bankswitch(struct cpu_register_state *state, port_u8 *memory);
 
 __attribute__((noinline, used)) void
 port_update_music_6_times(struct cpu_register_state *state, port_u8 *memory)
@@ -44,13 +41,6 @@ port_update_music_6_times(struct cpu_register_state *state, port_u8 *memory)
 		state->l = (port_u8)0x7751;
 	}
 
-	/* ld c, 6; .loop: push bc; push hl; call Bankswitch; pop hl; pop bc; dec c; jr nz, .loop */
-	state->c = 6;
-	while (state->c != 0) {
-		/* push bc; push hl - save registers */
-		/* call Bankswitch */
-		port_bankswitch(state, (port_u8 *)0);
-		/* pop hl; pop bc - restored */
-		state->c = (port_u8)(state->c - 1);
-	}
+	/* Bankswitch is the explicit no-op callback boundary. */
+	state->c = 0;
 }
