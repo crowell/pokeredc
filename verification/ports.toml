@@ -21324,3 +21324,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the trainer-battle return after SaveScreenTilesToBuffer1 and wIsInBattle decrement"
 decoder = "callee boundaries, high-memory AND-A, and DEC-A flags are modeled exactly; wild-battle yes/no and run-selection paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ChooseNextMon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_choose_next_mon"
+c_source = "verification/ports/choose_next_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wPartyMenuTypeOrMessageID",
+]
+proof_domain = "all register/flag inputs through the DisplayPartyMenu call after selecting BATTLE_PARTY_MENU"
+decoder = "constant menu-type load, absolute store, and DisplayPartyMenu continuation are modeled exactly"
