@@ -17005,10 +17005,24 @@ assembly_symbol = "FarCopyData3"
 assembly_source = "home/copy2.asm"
 c_symbol = "port_far_copy_data3"
 c_source = "verification/ports/far_copy_data3.c"
-status = "partial"
-observables = ["[HL]..[HL+BC-1] (destination bytes)", "[DE]..[DE+BC-1] (source bytes)", "registers BC/DE/HL (preserved across the ROM bank switch)"]
-proof_domain = "all BC (copy length), HL (destination), DE (source) register values; arbitrary source bytes in the flat memory model"
-decoder = "Reverse direction of FarCopyData: the asm pushes HL and DE, swaps them (DE=original HL, HL=original DE), then calls CopyData, so it copies BC bytes from [DE] to [HL]. port_far_copy_data3 implements exactly that. The ROM bank switch (hROMBankTemp + hLoadedROMBank/rROMB) is a no-op in the flat model. Equivalence is pending the angr proof."
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "requested_bank",
+    "loaded_bank",
+    "rom_bank",
+    "copy_b",
+    "copy_c",
+]
+proof_domain = "full 8-register compositional pathwise equivalence plus explicit bank and CopyData-return B/C state; the bank-save/switch/restore and PUSH/POP register-restoration path is executed."
+decoder = "30-byte body checked (e08bf0b8f5f08be0b8ea0020e5d5d5545de1cdb500d1e1f1e0b8ea0020c9); CopyData is the explicit callee boundary and no raw memory pointer remains."
 
 
 
