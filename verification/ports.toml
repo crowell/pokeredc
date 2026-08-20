@@ -17944,10 +17944,21 @@ assembly_symbol = "PlayDefaultMusicCommon"
 assembly_source = "home/audio.asm"
 c_symbol = "port_play_default_music_common"
 c_source = "verification/ports/play_default_music_common.c"
-status = "partial"
-observables = [ "wAudioROMBank", "wAudioSavedROMBank", "wAudioFadeOutControl", "wLastMusicSoundID", "wNewSoundID", "wWalkBikeSurfState", "wMapMusicSoundID", "wMapMusicROMBank", "calls PlaySound" ]
-proof_domain = "Walking (reconcile audio bank via CompareMapMusicBankWithCurrentBank and the already-playing check), biking, and surfing branches; caller registers c (fade-out length) and d (fade-current-first flag) covering 0 and non-zero."
-decoder = "Selects default music from wWalkBikeSurfState (map music for walking, bike/surf themes otherwise), replicates CompareMapMusicBankWithCurrentBank's bank reconciliation and already-playing short-circuit, then starts playback through PlaySound. The final PlaySound is the separately proven dispatcher port."
+status = "proven"
+observables = [
+    "A/F",
+    "surf_state",
+    "map_music_sound",
+    "map_music_bank",
+    "audio_rom_bank",
+    "audio_saved_bank",
+    "last_music_sound",
+    "new_sound_id",
+    "fade_control",
+    "play_sound_called",
+]
+proof_domain = "all symbolic A/F, caller C/D, and explicit walking/biking/surfing/audio state; bank-different, bank-equal/already-playing, bank-equal/new, bike, and surf paths are exercised"
+decoder = "PC-portable C contract for PlayDefaultMusicCommon: walking reconciles map/current banks and either returns for already-playing music or records playback; biking/surfing select their fixed themes and reconcile bank 0x1f similarly. The angr test exercises 12 assembly summary paths against compiler-merged native paths, compares A/F and all explicit audio state, and retains the exact linked body."
 [[function]]
 assembly_symbol = "CancelledEvolution"
 assembly_source = "engine/pokemon/evos_moves.asm"
