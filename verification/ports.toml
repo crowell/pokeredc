@@ -19133,3 +19133,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD B,imm / JP nn are flag-neutral); the local bankswitch jp is an explicit boundary."
 decoder = "5-byte body checked (0603c3d635: ld b,$03; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "DisplayTitleScreen.doClearSaveDialogue"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_display_title_screen_do_clear_save_dialogue"
+c_source = "verification/ports/display_title_screen_do_clear_save_dialogue.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch jp is an explicit boundary."
+decoder = "8-byte body checked (0607218a49c3d635: ld b,$07; ld hl,$498a; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
