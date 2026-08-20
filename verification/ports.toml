@@ -18050,3 +18050,23 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD B,imm and JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "5-byte body checked (060fc3d635: ld b,$0f; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
+
+
+[[function]]
+assembly_symbol = "CinnabarGymGateFlagAction"
+assembly_source = "engine/events/hidden_events/cinnabar_gym_quiz.asm"
+c_symbol = "port_cinnabar_gym_gate_flag_action"
+c_source = "verification/ports/cinnabar_gym_gate_flag_action.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD A,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (219cd73e10c36d3e: ld hl,$d79c; ld a,$10; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
