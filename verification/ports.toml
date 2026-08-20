@@ -20711,3 +20711,15 @@ observables = [
 proof_domain = "all register/flag inputs and arbitrary initial base-coordinate bytes through the first BattleAnimWriteOAMEntry continuation boundary"
 decoder = "setup loads/stores and HL pointer are shimmed for SM83 semantics; fixed B=5/C=7/D=0/E=0x30 prefix is checked; BattleAnimWriteOAMEntry remains downstream"
 
+[[function]]
+assembly_symbol = "AnimationBlinkEnemyMon"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_blink_enemy_mon"
+c_source = "verification/ports/animation_blink_enemy_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through loading AnimationBlinkMon into HL and the CallWithTurnFlipped continuation boundary"
+decoder = "ld HL,AnimationBlinkMon is modeled exactly; CallWithTurnFlipped remains the explicit downstream continuation"
+
