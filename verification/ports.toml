@@ -19817,3 +19817,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F; LD H,D / LD L,E / JP nn are flag-neutral, modeled with explicit SM83 register-copy shims; the local PrintText JP is the boundary."
 decoder = "5-byte body checked (626bc3493c: ld h,d; ld l,e; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "GetDefaultName.foundName"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_get_default_name_found_name"
+c_source = "verification/ports/get_default_name_found_name.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F; LD H,D / LD L,E / LD DE,nn / LD BC,nn / JP nn are flag-neutral, modeled with explicit input-backed SM83 shims; the local CopyData JP is the boundary."
+decoder = "11-byte body checked (626b116dcd011400c3b500: ld h,d; ld l,e; ld de,$cd6d; ld bc,$0014; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
