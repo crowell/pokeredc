@@ -21053,3 +21053,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first CopyData call after saving the 16-bit tile-copy offset"
 decoder = "offset byte stores, C=8 loop setup, and BC=SCREEN_WIDTH setup are modeled exactly; CopyData remains the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "BattleTransition_FlashScreen"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition_flash_screen_wrapper"
+c_source = "verification/ports/battle_transition_flash_screen_wrapper.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferEnabled",
+]
+proof_domain = "all register/flag inputs through the BattleTransition_FlashScreen_ return and automatic-BG-transfer disable"
+decoder = "LD B,3, the FlashScreen_ callee boundary, SM83 XOR-A flags, and high-memory store are modeled exactly"
