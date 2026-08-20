@@ -20434,3 +20434,23 @@ observables = [
 ]
 proof_domain = "no-match branch after IsInArray reports carry clear, with saved BC/DE/HL restored and arbitrary AF inputs"
 decoder = "done label POP BC/DE/HL and RET body checked with an explicit stack return; matching special-effect dispatch remains unmodeled"
+
+[[function]]
+assembly_symbol = "FlashScreenLongDelay"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_flash_screen_long_delay_counter3"
+c_source = "verification/ports/flash_screen_long_delay.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wFlashScreenLongCounter",
+]
+proof_domain = "counter value 3, producing DelayFrames count C=2; DelayFrames is the explicit continuation boundary"
+decoder = "counter-three branch setup checked through an explicit terminal summary; timing implementation remains delegated to DelayFrames"
