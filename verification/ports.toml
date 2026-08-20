@@ -17717,10 +17717,23 @@ assembly_symbol = "InitBattleCommon"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_init_battle_common"
 c_source = "verification/ports/init_battle_common.c"
-status = "partial"
-observables = ["wLetterPrintingDelayFlags", "wEnemyMonSpecies2", "wTrainerClass", "hStartTileID", "wAICount", "wEnemyMonPartyPos", "wIsInBattle"]
-proof_domain = "Trainer path (wEnemyMonSpecies2 >= OPP_ID_OFFSET) fully covered for the deterministic writes; wild carry path delegates to InitWildBattle (separate, not ported)."
-decoder = "Clears BIT_TEXT_DELAY in wLetterPrintingDelayFlags. For a trainer battle (no carry after sub OPP_ID_OFFSET) it writes wTrainerClass = enemy - 200, zeroes wEnemyMonSpecies2 and hStartTileID, sets wAICount = 0xff, wEnemyMonPartyPos = 0xff, wIsInBattle = 2. The InitBattleVariables callfar, GetTrainerInformation/ReadTrainer/DoBattleTransitionAndInitBattleVariables/_LoadTrainerPic calls, predef CopyUncompressedPicToTilemap and the _InitBattleCommon tail are explicit boundaries. Equivalence pending."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "letter_printing_delay_flags",
+    "enemy_mon_species2",
+    "trainer_class",
+    "ai_count",
+    "enemy_mon_party_pos",
+    "is_in_battle",
+    "start_tile_id",
+    "init_battle_variables_called",
+    "init_wild_battle_called",
+    "trainer_information_called",
+    "init_battle_common_called",
+]
+proof_domain = "all symbolic initial registers and battle state; wild (enemy species < 200) and trainer (>=200) paths are exercised, including deterministic writes and call-boundary results"
+decoder = "PC-portable C contract for InitBattleCommon: clears BIT_TEXT_DELAY, records InitBattleVariables, then records InitWildBattle/in-battle=1 for wild opponents or trainer setup (species/AI/party position/tile/in-battle=2) and _InitBattleCommon for trainers. The angr test proves both paths and all explicit state against a branching assembly summary, retaining the exact 78-byte linked body."
 
 
 

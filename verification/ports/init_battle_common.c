@@ -1,53 +1,41 @@
 #include "port_state.h"
 
-#define W_LETTER_PRINTING_DELAY_FLAGS 0xd358u
-#define W_ENEMY_MON_SPECIES2 0xcfd8u
-#define W_TRAINER_CLASS 0xd031u
-#define W_AI_COUNT 0xccdfu
-#define W_ENEMY_MON_PARTY_POS 0xcfe8u
-#define W_IS_IN_BATTLE 0xd057u
-#define H_START_TILE_ID 0xffe1u
+struct init_battle_common_state {
+    struct cpu_register_state registers;
+    port_u8 letter_printing_delay_flags;
+    port_u8 enemy_mon_species2;
+    port_u8 trainer_class;
+    port_u8 ai_count;
+    port_u8 enemy_mon_party_pos;
+    port_u8 is_in_battle;
+    port_u8 start_tile_id;
+    port_u8 init_battle_variables_called;
+    port_u8 init_wild_battle_called;
+    port_u8 trainer_information_called;
+    port_u8 init_battle_common_called;
+};
+
 #define OPP_ID_OFFSET 200u
 #define BIT_TEXT_DELAY 1u
 
-/* Port of InitBattleCommon (engine/battle/core.asm).
- *
- * Clears the text-delay flag, then (after the InitBattleVariables callfar
- * boundary) reads wEnemyMonSpecies2 and subtracts OPP_ID_OFFSET. With a carry
- * it is a wild battle (delegate to InitWildBattle, a separate boundary).
- * Otherwise it is a trainer battle: stores the trainer class, zeroes several
- * battle fields, and jumps to _InitBattleCommon. The callfar/ predef/ call
- * tails are explicit boundaries; the deterministic writes below are modeled. */
+/* Port of InitBattleCommon in engine/battle/core.asm. The callfar/predef/
+ * battle-transition boundaries are represented by explicit call state. */
 __attribute__((noinline, used)) void
-port_init_battle_common(struct cpu_register_state *state, port_u8 *memory)
+port_init_battle_common(struct init_battle_common_state *state)
 {
-	(void)state;
-	/* res BIT_TEXT_DELAY, [wLetterPrintingDelayFlags] */
-	port_u8 flags = memory[W_LETTER_PRINTING_DELAY_FLAGS];
-	flags &= (port_u8)~(1u << BIT_TEXT_DELAY);
-	memory[W_LETTER_PRINTING_DELAY_FLAGS] = flags;
-
-	/* callfar InitBattleVariables (boundary) */
-
-	/* ld a, [wEnemyMonSpecies2]; sub OPP_ID_OFFSET; jp c, InitWildBattle */
-	port_u8 enemy = memory[W_ENEMY_MON_SPECIES2];
-	int carry = (enemy < OPP_ID_OFFSET);
-	port_u8 trainer_class = (port_u8)(enemy - OPP_ID_OFFSET);
-	if (carry) {
-		/* InitWildBattle (separate symbol): sets wIsInBattle = 1 and sprite
-		 * fields. Not ported here; modeled as a boundary. */
-		return;
-	}
-
-	/* trainer path */
-	memory[W_TRAINER_CLASS] = trainer_class;
-	/* GetTrainerInformation / ReadTrainer /
-	 * DoBattleTransitionAndInitBattleVariables / _LoadTrainerPic (boundaries) */
-	memory[W_ENEMY_MON_SPECIES2] = 0;
-	memory[H_START_TILE_ID] = 0;
-	memory[W_AI_COUNT] = 0xffu;
-	/* predef CopyUncompressedPicToTilemap (boundary) */
-	memory[W_ENEMY_MON_PARTY_POS] = 0xffu;
-	memory[W_IS_IN_BATTLE] = 0x02u;
-	/* jp _InitBattleCommon (boundary) */
+    state->letter_printing_delay_flags &= (port_u8)~(1u << BIT_TEXT_DELAY);
+    state->init_battle_variables_called = 1;
+    if (state->enemy_mon_species2 < OPP_ID_OFFSET) {
+        state->init_wild_battle_called = 1;
+        state->is_in_battle = 1;
+        return;
+    }
+    state->trainer_class = (port_u8)(state->enemy_mon_species2 - OPP_ID_OFFSET);
+    state->trainer_information_called = 1;
+    state->enemy_mon_species2 = 0;
+    state->start_tile_id = 0;
+    state->ai_count = 0xff;
+    state->enemy_mon_party_pos = 0xff;
+    state->is_in_battle = 2;
+    state->init_battle_common_called = 1;
 }
