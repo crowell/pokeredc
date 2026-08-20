@@ -17730,10 +17730,15 @@ assembly_symbol = "ClearMonPicFromTileMap"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_clear_mon_pic_from_tilemap"
 c_source = "verification/ports/clear_mon_pic_from_tilemap.c"
-status = "partial"
-observables = ["wTileMap + a (7x7 tile block)"]
-proof_domain = "Given A=offset, clears the 7x7 block starting at wTileMap+A via the ported port_clear_screen_area."
-decoder = "Computes HL = wTileMap + A and BC = 7,7, then delegates to port_clear_screen_area which fills the block with the blank tile (0x7f). Faithful to the observable; equivalence pending."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "start_offset",
+    "tile_writes[49] (7x7 ordered writes)",
+    "clear_called",
+]
+proof_domain = "all symbolic initial registers and A offsets; the 7x7 ClearScreenArea write sequence is exercised through the explicit call-boundary state"
+decoder = "PC-portable C contract for ClearMonPicFromTileMap: start_offset records A, clear_called records the ClearScreenArea boundary, and all 49 ordered tile writes become the blank tile 0x7f. The angr test proves all registers and explicit write state against a one-path assembly summary and retains the exact 20-byte linked body."
 
 
 
