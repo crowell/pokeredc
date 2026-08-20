@@ -18279,3 +18279,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (21867f0609c3d635: ld hl,$7f86; ld b,$09; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "PayDayEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_pay_day_effect"
+c_source = "verification/ports/pay_day_effect.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (21b87e060bc3d635: ld hl,$7eb8; ld b,$0b; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
