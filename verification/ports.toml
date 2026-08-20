@@ -21190,3 +21190,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the player/enemy status branch after selecting the initial HP/status pointers"
 decoder = "high-memory AND-A flags and player pointer setup are modeled exactly; poison, burn, leech-seed, and fainting paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HandlePoisonBurnLeechSeed_DecreaseOwnHP"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_decrease_own_hp_setup"
+c_source = "verification/ports/decrease_own_hp.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the max-HP pointer calculation before the first max-HP load"
+decoder = "push/pop preservation, BC=$000e setup, and SM83 ADD HL,BC flags are modeled exactly; HP damage, toxic, and overkill paths remain beyond the explicit boundary"
