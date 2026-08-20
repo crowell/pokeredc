@@ -18108,3 +18108,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (21a97e060ac3d635: ld hl,$7ea9; ld b,$0a; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ReflectLightScreenEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_reflect_light_screen_effect"
+c_source = "verification/ports/reflect_light_screen_effect.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (21977b060ec3d635: ld hl,$7b97; ld b,$0e; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
