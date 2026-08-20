@@ -17705,10 +17705,17 @@ assembly_symbol = "DetermineWildOpponent"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_determine_wild_opponent"
 c_source = "verification/ports/determine_wild_opponent.c"
-status = "partial"
-observables = ["wStatusFlags6", "hJoyHeld", "wNumberOfNoRandomBattleStepsLeft", "wLetterPrintingDelayFlags", "wTrainerClass", "wEnemyMonSpecies2", "hStartTileID", "wAICount", "wEnemyMonPartyPos", "wIsInBattle"]
-proof_domain = "Debug-mode B-button gate and no-random-battle-step gate fully covered; InitBattleCommon tail covered by port_init_battle_common; callfar TryDoWildEncounter modeled as always proceeding (encounter found)."
-decoder = "Implements the two early-return gates (debug flag + B button held, and wNumberOfNoRandomBattleStepsLeft != 0) faithfully, then delegates to port_init_battle_common. The callfar TryDoWildEncounter boundary is modeled as always proceeding to the fall-through; equivalence is pending."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "status_flags6",
+    "joy_held",
+    "no_random_battle_steps_left",
+    "encounter_found",
+    "init_battle_common_called",
+]
+proof_domain = "all symbolic initial registers and gate state; debug+B, debug without B, and no-random-step gate combinations are exercised, plus the encounter-found fallthrough"
+decoder = "PC-portable C contract for DetermineWildOpponent: returns at the debug-mode+B gate or nonzero no-random-step gate; otherwise records TryDoWildEncounter success and the InitBattleCommon boundary. The angr test proves all registers and explicit gate/call state against a five-path assembly summary and retains the exact 12-byte linked body."
 
 
 
