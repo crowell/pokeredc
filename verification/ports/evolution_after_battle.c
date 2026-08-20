@@ -137,7 +137,7 @@ port_evolution_animation_transition(struct evolution_after_battle_state *s)
 	s->is_evolving_text_called = 1;
 	r->c = 50;
 	r->a = 0; r->f = PORT_FLAG_Z; s->auto_bg_transfer_enabled = r->a;
-	r->h = 0xc3; r->l = 0xa0; r->b = 12; r->c = 20;
+	r->h = 0x7d; r->l = 0xe9; r->b = 0x1e; r->c = 20;
 	r->a = 1; s->auto_bg_transfer_enabled = r->a;
 	r->a = 0xff; s->update_sprites_enabled = r->a;
 	s->clear_sprites_called = 1; s->evolve_mon_called = 1;
