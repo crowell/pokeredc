@@ -21027,3 +21027,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with update counter 1 through the first BattleTransition_TransferDelay3 call"
 decoder = "SM83 LD [HL],$FF, ADD HL,DE, absolute counter load, and DEC A flags are modeled exactly; BattleTransition_TransferDelay3 remains the explicit boundary"
+
+[[function]]
+assembly_symbol = "BattleTransition_FlashScreen_"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition_flash_screen"
+c_source = "verification/ports/battle_transition_flash_screen.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "rBGP",
+]
+proof_domain = "all register/flag inputs through the first DelayFrames call after loading the first flash palette"
+decoder = "palette-table first entry, CP 1 flags, SM83 high-memory store, and LD C,2 are modeled exactly; DelayFrames remains the explicit continuation boundary"
