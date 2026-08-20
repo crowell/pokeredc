@@ -17952,4 +17952,22 @@ observables = [
     "L",
 ]
 proof_domain = "all 256 initial A/F and the remaining register inputs; the tail `ret` is an explicit boundary (the caller frame)."
-decoder = "exact 5-byte body checked (5021d624c9); the tail `ret` is an explicit boundary reached via an sp sentinel. Pathwise equivalence proven against port_text_script_ending_text across all register/flag inputs, including F (LD D,B and LD HL,nn do not affect flags)."
+
+[[function]]
+assembly_symbol = "LeaveMapAnim"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_leave_map_anim"
+c_source = "verification/ports/leave_map_anim.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "all 256 initial A/F and the remaining register inputs; the tail `jp` is an explicit boundary (the shared map routine)."
+decoder = "exact 8-byte body checked (061c21ba45c3d635); the tail `jp` is an explicit boundary. Pathwise equivalence proven against port_leave_map_anim across all register/flag inputs, including F (LD r,imm and LD rr,nn do not affect flags)."
