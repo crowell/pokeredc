@@ -17742,10 +17742,20 @@ assembly_symbol = "HandleMenuInput_"
 assembly_source = "home/window.asm"
 c_symbol = "port_handle_menu_input_"
 c_source = "verification/ports/handle_menu_input_.c"
-status = "partial"
-observables = ["wAnimCounter", "wCurrentMenuItem", "wCheckFor180DegreeTurn", "wMenuWrappingEnabled", "wMenuJoypadPollCount", "a (return value)"]
-proof_domain = "Single-step model: wAnimCounter=0; up/down navigation with top/bottom wrap using wMenuWrappingEnabled and wMaxMenuItem; giveUp (A=0) when hJoy5==0 and poll counter exhausts. Re-loop on an unwatched key is modeled as a single exit."
-decoder = "Sets wAnimCounter=0. If hJoy5==0, decrements wMenuJoypadPollCount until 0 then giveUp (wMenuWrappingEnabled=0, A=0). If hJoy5!=0: writes wCheckFor180DegreeTurn=0, navigates wCurrentMenuItem up (priority) or down with top/bottom wrap, then wMenuWrappingEnabled=0, A=hJoy5. PlaceMenuCursor, Delay3, AnimatePartyMon, JoypadLowSensitivity, HandleDownArrowBlinkTiming and PlaySound are explicit boundaries; the poll loop is bounded by the constant hJoy5 input. Equivalence pending."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "joy5",
+    "menu_joypad_poll_count",
+    "menu_wrapping_enabled",
+    "current_menu_item",
+    "max_menu_item",
+    "check_for_180_degree_turn",
+    "anim_counter",
+    "menu_watched_keys",
+]
+proof_domain = "all symbolic registers, joy/menu state, up/down/other-key navigation and top/bottom wrapping; concrete poll counts 0, 1, and 3 cover the bounded no-key loop"
+decoder = "PC-portable C contract for HandleMenuInput_: clears anim_counter, drains the bounded no-key poll counter and returns A=0, or clears the 180-degree flag, navigates up/down with wrapping, disables wrapping, and returns the pressed joy byte. The angr test proves all registers and explicit menu state for poll counts 0/1/3 against a branching assembly summary and retains the exact 13-byte entry body."
 
 
 

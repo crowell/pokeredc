@@ -1,88 +1,45 @@
 #include "port_state.h"
 
-#define W_ANIM_COUNTER 0xd08bu
-#define H_JOY5 0xffb5u
-#define W_MENU_JOYPAD_POLL_COUNT 0xcc34u
-#define W_MENU_WRAPPING_ENABLED 0xcc4au
-#define W_CHECK_FOR_180_DEGREE_TURN 0xcc4bu
-#define W_CURRENT_MENU_ITEM 0xcc26u
-#define W_MAX_MENU_ITEM 0xcc28u
-#define W_MENU_WATCHED_KEYS 0xcc29u
+struct handle_menu_input_state {
+    struct cpu_register_state registers;
+    port_u8 joy5;
+    port_u8 menu_joypad_poll_count;
+    port_u8 menu_wrapping_enabled;
+    port_u8 current_menu_item;
+    port_u8 max_menu_item;
+    port_u8 check_for_180_degree_turn;
+    port_u8 anim_counter;
+    port_u8 menu_watched_keys;
+};
+
 #define PAD_UP 0x40u
 #define PAD_DOWN 0x80u
 
-/* Port of HandleMenuInput_ (home/window.asm).
- *
- * Polls the joypad until a watched key is pressed (or the poll counter
- * expires), navigates the menu cursor up/down, and returns the pressed key in
- * A. PlaceMenuCursor, Delay3, AnimatePartyMon, JoypadLowSensitivity,
- * HandleDownArrowBlinkTiming and PlaySound are explicit boundaries. The
- * observable writes (wAnimCounter, wCurrentMenuItem, wCheckFor180DegreeTurn,
- * wMenuWrappingEnabled, the joypad-poll counter) are modeled directly. The
- * poll loop is bounded by the model's constant hJoy5 input; if a key is
- * pressed that is not in wMenuWatchedKeys the asm re-loops (infinite with a
- * constant hJoy5), so the exit path is modeled. */
+/* Port of HandleMenuInput_ in home/window.asm. UI, timing, joypad-refresh,
+ * and sound calls are represented by the explicit menu state. */
 __attribute__((noinline, used)) void
-port_handle_menu_input_(struct cpu_register_state *state, port_u8 *memory)
+port_handle_menu_input_(struct handle_menu_input_state *state)
 {
-	port_u8 joy = memory[H_JOY5];
-	int key_pressed = (joy != 0);
-
-	memory[W_ANIM_COUNTER] = 0;
-
-	if (!key_pressed) {
-		/* .loop2: wait until a key is polled or the poll counter hits 0 */
-		port_u8 poll = memory[W_MENU_JOYPAD_POLL_COUNT];
-		while (poll != 0) {
-			poll--;
-			memory[W_MENU_JOYPAD_POLL_COUNT] = poll;
-			if (memory[H_JOY5] != 0) {
-				key_pressed = 1;
-				joy = memory[H_JOY5];
-				break;
-			}
-			if (poll == 0)
-				break; /* .giveUpWaiting */
-		}
-	}
-
-	if (!key_pressed) {
-		/* .giveUpWaiting: restore blink counts (net unchanged), disable
-		 * wrapping, return A = 0 */
-		memory[W_MENU_WRAPPING_ENABLED] = 0;
-		state->a = 0;
-		return;
-	}
-
-	/* .keyPressed */
-	memory[W_CHECK_FOR_180_DEGREE_TURN] = 0;
-	{
-		port_u8 b = joy;
-		port_u8 cur = memory[W_CURRENT_MENU_ITEM];
-		port_u8 max = memory[W_MAX_MENU_ITEM];
-		int wrapping = (memory[W_MENU_WRAPPING_ENABLED] != 0);
-
-		if (b & PAD_UP) {
-			if (cur != 0)
-				cur--;
-			else if (wrapping)
-				cur = max;
-			/* else: already at top, no wrapping -> unchanged */
-		} else if (b & PAD_DOWN) {
-			cur++;
-			if (cur > max) {
-				if (wrapping)
-					cur = 0;
-				else
-					cur = max; /* stay at bottom */
-			}
-		}
-		memory[W_CURRENT_MENU_ITEM] = cur;
-	}
-
-	/* .checkOtherKeys / .checkIfAButtonOrBButtonPressed: if the pressed key
-	 * is not in wMenuWatchedKeys the asm re-loops (infinite with a constant
-	 * joy input); the PlaySound boundary has no memory effect. Model exit. */
-	memory[W_MENU_WRAPPING_ENABLED] = 0;
-	state->a = joy; /* ldh a, [hJoy5]; ret */
+    port_u8 joy = state->joy5;
+    state->anim_counter = 0;
+    if (joy == 0) {
+        while (state->menu_joypad_poll_count != 0)
+            state->menu_joypad_poll_count--;
+        state->menu_wrapping_enabled = 0;
+        state->registers.a = 0;
+        return;
+    }
+    state->check_for_180_degree_turn = 0;
+    if (joy & PAD_UP) {
+        if (state->current_menu_item != 0)
+            state->current_menu_item--;
+        else if (state->menu_wrapping_enabled)
+            state->current_menu_item = state->max_menu_item;
+    } else if (joy & PAD_DOWN) {
+        state->current_menu_item++;
+        if (state->current_menu_item > state->max_menu_item)
+            state->current_menu_item = state->menu_wrapping_enabled ? 0 : state->max_menu_item;
+    }
+    state->menu_wrapping_enabled = 0;
+    state->registers.a = joy;
 }
