@@ -20962,3 +20962,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first DelayFrames call after saving and offsetting SCX"
 decoder = "SM83 high-memory/absolute loads and stores, ADD A,D flags, and LD C,2 are modeled exactly; DelayFrames remains the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "TossBallAnimation"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_toss_ball_animation"
+c_source = "verification/ports/toss_ball_animation.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the wIsInBattle CP 2 branch boundary"
+decoder = "SM83 absolute load and CP 2 flags are modeled exactly; both trainer/normal branches remain beyond the explicit boundary"
