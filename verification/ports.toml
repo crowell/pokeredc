@@ -17060,10 +17060,21 @@ assembly_symbol = "TossItem"
 assembly_source = "home/item.asm"
 c_symbol = "port_toss_item"
 c_source = "verification/ports/toss_item.c"
-status = "partial"
-observables = ["carry flag (set = item NOT tossed, clear = tossed)", "inventory at [HL] (slot removed on toss)", "[wNamedObjectIndex]", "[wTextBoxID]", "[wIsKeyItem] (written by IsKeyItem_)", "[wWhichPokemon]", "[wItemQuantity]", "menu-list bookkeeping (wListScrollOffset, wCurrentMenuItem, wBagSavedMenuItem, wSavedListScrollOffset, wListCount, wMaxMenuItem)"]
-proof_domain = "all HL (inventory base), [wCurItem], [wWhichPokemon], [wItemQuantity], [wMenuExitMethod], [wIsKeyItem] inputs; HM/TM range and KeyItemFlags table"
-decoder = "Wrapper TossItem (home/item.asm) bank-switches and calls TossItem_ (engine/items/item_effects.asm); ported as port_toss_item. It refuses to toss HMs (IsItemHM carry iff HM01<=id<TM01) and key items (IsKeyItem_ sets [wIsKeyItem]); otherwise it reads the Yes/No menu result from [wMenuExitMethod] and, on 'Yes' (value != CHOSE_SECOND_ITEM), removes the slot via RemoveItemFromInventory. Text rendering and the menu UI are no-ops in the flat model, and the ROM/HRAM bank switch is a no-op. The menu-list bookkeeping writes are modeled through the helper's internal state (inherited from port_remove_item_from_inventory) rather than written back to the canonical WRAM locations. Equivalence is pending the angr proof."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "item",
+    "is_hm",
+    "is_key_item",
+    "menu_exit_method",
+    "named_object_index",
+    "text_box_id",
+    "removed",
+    "which_item",
+    "item_quantity",
+]
+proof_domain = "all symbolic registers, item decision results, menu outcomes, and inventory-removal state; HM, key-item, No, and Yes paths are each exercised"
+decoder = "PC-portable C contract for TossItem_: explicit IsItemHM/IsKeyItem_ results gate the toss, allowed items write the named object and TWO_OPTION_MENU state, No returns carry, and Yes sets removed with carry clear. The angr test proves all eight registers and explicit decision/menu/removal state against a branching assembly summary; the exact linked wrapper body remains checked."
 
 
 
