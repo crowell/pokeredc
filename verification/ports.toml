@@ -20697,3 +20697,17 @@ observables = [
 proof_domain = "all register/flag inputs through the first slide-loop CopyData continuation boundary; PIC_WIDTH is the fixed count 7"
 decoder = "push prefix and ld BC,PIC_WIDTH are executed; CopyData is an explicit downstream continuation boundary"
 
+[[function]]
+assembly_symbol = "ShakeEnemyHUD_WritePlayerMonPicOAM"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_enemy_hud_write_player_mon_pic_oam"
+c_source = "verification/ports/shake_enemy_hud_oam.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wBaseCoordX",
+    "wBaseCoordY",
+]
+proof_domain = "all register/flag inputs and arbitrary initial base-coordinate bytes through the first BattleAnimWriteOAMEntry continuation boundary"
+decoder = "setup loads/stores and HL pointer are shimmed for SM83 semantics; fixed B=5/C=7/D=0/E=0x30 prefix is checked; BattleAnimWriteOAMEntry remains downstream"
+
