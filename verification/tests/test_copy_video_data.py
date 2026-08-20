@@ -53,7 +53,7 @@ class CopyVideoSummary(angr.SimProcedure):
         self.state.globals["copy_source_high"] = self.state.regs.d
         self.state.globals["copy_dest"] = self.state.regs.l
         self.state.globals["copy_dest_high"] = self.state.regs.h
-        self.state.globals["copy_size"] = claripy.BVV(0, 8)
+        self.state.globals["copy_size"] = self.state.regs.c
         self.jump(DONE)
 
 
@@ -68,7 +68,7 @@ def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
     values["copy_dest"] = claripy.BVS(f"{prefix}_copy_dest", 8)
     values["copy_dest_high"] = claripy.BVS(f"{prefix}_copy_dest_high", 8)
     values["copy_size"] = claripy.BVS(f"{prefix}_copy_size", 8)
-    values["c"] = claripy.BVV(0, 8)
+    values["c"] = claripy.BVS(f"{prefix}_tile_count", 8)
     return values
 
 
@@ -95,6 +95,7 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     for address, field in zip(MEMORY_ADDRESSES, MEMORY_FIELDS):
         state.memory.store(address, values[field])
         state.globals[field] = values[field]
+    state.add_constraints(values["c"] < 8)
     manager = project.factory.simulation_manager(state)
     manager.explore(find=DONE, num_find=1)
     assert not manager.errored
@@ -115,6 +116,7 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     store_native_registers(state, NATIVE_STATE, values)
     for address, field in zip(MEMORY_ADDRESSES, MEMORY_FIELDS):
         state.memory.store(NATIVE_MEMORY + address, values[field])
+    state.add_constraints(values["c"] < 8)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
@@ -129,6 +131,6 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_copy_video_data_zero_count_pathwise_equivalence() -> None:
-    values = _inputs("copy_video_zero")
+def test_copy_video_data_small_count_pathwise_equivalence() -> None:
+    values = _inputs("copy_video_small")
     assert_pathwise_equivalent(_assembly(values), _native(values), ("memory",))
