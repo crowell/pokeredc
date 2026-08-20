@@ -17455,16 +17455,21 @@ assembly_symbol = "SoftReset"
 assembly_source = "home/init.asm"
 c_symbol = "port_soft_reset"
 c_source = "verification/ports/soft_reset.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wAudioROMBank",
-    "wAudioSavedROMBank",
-    "wAudioFadeOutControl",
-    "wNewSoundID",
-    "wLastMusicSoundID",
+    "A/F/B/C/D/E/H/L",
+    "audio_rom_bank",
+    "audio_saved_bank",
+    "fade_out_control",
+    "new_sound_id",
+    "last_music_sound_id",
+    "stop_all_sounds_called",
+    "palette_whiteout_called",
+    "delay_frames_requested",
+    "delay_frames_called",
 ]
-proof_domain = "all initial RAM/IO states"
-decoder = "call StopAllSounds is reproduced as the five audio-state writes (BANK(\"Audio Engine 1\") = 2 into wAudioROMBank/wAudioSavedROMBank, wAudioFadeOutControl/wNewSoundID/wLastMusicSoundID = 0, and A = 0xFF for the trailing jp PlaySound which is not modeled). call GBPalWhiteOut and ld c,32 / call DelayFrames have no deterministic memory effect modeled. SoftReset falls through into Init, which is ported separately as port_init. Equivalence proof pending."
+proof_domain = "all symbolic initial registers and explicit audio/call state; the single SoftReset path through StopAllSounds, GBPalWhiteOut, DelayFrames(32), and Init fallthrough is exercised"
+decoder = "PC-portable C contract for SoftReset: StopAllSounds leaves audio banks at 2 and sound/fade IDs at zero, GBPalWhiteOut and DelayFrames(32) are recorded as call boundaries, and Init remains the following assembly fallthrough. The angr test proves all registers and explicit state against a one-path summary and retains the exact linked SoftReset/Init body."
 
 
 

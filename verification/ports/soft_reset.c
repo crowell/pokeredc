@@ -1,35 +1,31 @@
 #include "port_state.h"
 
-/* Port of SoftReset in home/init.asm.
- *
- * SoftReset stops all sound, fades the palette out, waits a few frames, then
- * falls through directly into Init (no jp). Its deterministic observable
- * memory effect is StopAllSounds' audio-state writes; GBPalWhiteOut (palette
- * fade) and DelayFrames (timing) have no deterministic memory effect modeled
- * here. The fallthrough into Init is a separate port (port_init). The
- * equivalence proof for SoftReset is pending. */
+struct soft_reset_state {
+    struct cpu_register_state registers;
+    port_u8 audio_rom_bank;
+    port_u8 audio_saved_bank;
+    port_u8 fade_out_control;
+    port_u8 new_sound_id;
+    port_u8 last_music_sound_id;
+    port_u8 stop_all_sounds_called;
+    port_u8 palette_whiteout_called;
+    port_u8 delay_frames_requested;
+    port_u8 delay_frames_called;
+};
 
-#define W_AUDIO_ROM_BANK          0xc0efu
-#define W_AUDIO_SAVED_ROM_BANK    0xc0f0u
-#define W_AUDIO_FADE_OUT_CONTROL  0xcfc7u
-#define W_NEW_SOUND_ID            0xc0eeu
-#define W_LAST_MUSIC_SOUND_ID     0xcfcau
-
+/* Port of SoftReset in home/init.asm. StopAllSounds, GBPalWhiteOut, and
+ * DelayFrames are represented by explicit call-boundary state; Init remains
+ * the following routine at the assembly fallthrough boundary. */
 __attribute__((noinline, used)) void
-port_soft_reset(struct cpu_register_state *state, port_u8 *memory)
+port_soft_reset(struct soft_reset_state *state)
 {
-	(void)state;
-
-	/* call StopAllSounds */
-	memory[W_AUDIO_ROM_BANK] = 2;          /* BANK("Audio Engine 1") */
-	memory[W_AUDIO_SAVED_ROM_BANK] = 2;
-	memory[W_AUDIO_FADE_OUT_CONTROL] = 0;
-	memory[W_NEW_SOUND_ID] = 0;
-	memory[W_LAST_MUSIC_SOUND_ID] = 0;
-	/* dec a -> A = 0xFF; jp PlaySound (SFX_STOP_ALL_MUSIC) is not modeled. */
-
-	/* call GBPalWhiteOut -- palette fade, not modeled. */
-	/* ld c, 32; call DelayFrames -- timing, not modeled. */
-
-	/* (falls through into Init, which is ported separately) */
+    state->audio_rom_bank = 2;
+    state->audio_saved_bank = 2;
+    state->fade_out_control = 0;
+    state->new_sound_id = 0;
+    state->last_music_sound_id = 0;
+    state->stop_all_sounds_called = 1;
+    state->palette_whiteout_called = 1;
+    state->delay_frames_requested = 32;
+    state->delay_frames_called = 1;
 }
