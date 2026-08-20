@@ -19228,3 +19228,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch jp is an explicit boundary."
 decoder = "8-byte body checked (21c6500602c3d635: ld hl,$50c6; ld b,$02; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "PrintListMenuEntries.printCancelMenuItem"
+assembly_source = "home/list_menu.asm"
+c_symbol = "port_print_list_menu_entries_print_cancel_menu_item"
+c_source = "verification/ports/print_list_menu_entries_print_cancel_menu_item.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD DE,nn / JP nn are flag-neutral); the local PlaceString jp is an explicit boundary."
+decoder = "6-byte body checked (11972fc35519: ld de,$2f97; jp $1955); no CALL/PUSH/POP; F-preserving ops only."
