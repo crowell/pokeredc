@@ -20660,3 +20660,16 @@ observables = [
 proof_domain = "all register/flag inputs through the entry XOR A and the GetTileIDList continuation boundary"
 decoder = "entry XOR A semantics are shimmed exactly; GetTileIDList is an explicit downstream continuation boundary"
 
+[[function]]
+assembly_symbol = "AnimationSlideMonOff"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_slide_mon_off"
+c_source = "verification/ports/animation_slide_mon_off.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wSlideMonDelay",
+]
+proof_domain = "all register/flag inputs, arbitrary initial wSlideMonDelay, and the entry setup through the private slide-loop continuation boundary"
+decoder = "entry ld E,8, ld A,3, global store, and jump boundary modeled exactly with SM83 immediate-load semantics; _AnimationSlideMonOff remains downstream"
+
