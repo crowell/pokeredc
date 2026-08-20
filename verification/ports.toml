@@ -20988,3 +20988,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the PlaySound call boundary for weak, neutral, and super-effective multipliers 9, 10, and 11"
 decoder = "WaitForSoundToFinish and PlaySound are explicit boundaries; SM83 masking, CP flags, branch-selected modifiers, and sound IDs are modeled exactly"
+
+[[function]]
+assembly_symbol = "BattleTransition"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition"
+c_source = "verification/ports/battle_transition.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferEnabled",
+]
+proof_domain = "all register/flag inputs through the first Delay3 call after enabling automatic BG transfer"
+decoder = "flag-neutral LD A,1 and SM83 high-memory store are modeled exactly; Delay3 remains the explicit continuation boundary"
