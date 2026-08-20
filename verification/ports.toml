@@ -20375,3 +20375,23 @@ observables = [
 ]
 proof_domain = "MoveAnimation.animationFinished branch after saved-register restoration, arbitrary incoming registers and prior output bytes"
 decoder = "finish-branch stores modeled; WaitForSoundToFinish and entry save/restore are explicit branch boundaries"
+
+[[function]]
+assembly_symbol = "PlaySubanimation"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_play_subanimation_finished"
+c_source = "verification/ports/play_subanimation.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wSubAnimCounter",
+]
+proof_domain = "terminal frame path with wSubAnimCounter=1, after DrawFrameBlock and DoSpecialEffectByAnimationId boundaries"
+decoder = "DEC/store/RET-Z terminal sequence checked through an explicit branch summary; downstream frame-loop continuation is not modeled"
