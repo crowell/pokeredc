@@ -20778,3 +20778,15 @@ observables = [
 proof_domain = "all register/flag inputs and arbitrary base-Y/tileset bytes through the first BattleAnimWriteOAMEntry continuation boundary"
 decoder = "XOR/store, LoadMoveAnimationTiles continuation, HL setup, base-Y load, and fixed D=0x7a prefix are modeled with explicit shims"
 
+[[function]]
+assembly_symbol = "AnimationMinimizeMon"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_minimize_mon"
+c_source = "verification/ports/animation_minimize_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the FillMemory continuation after loading wTempPic, zeroing A, and loading PIC_SIZE tiles (0x0310)"
+decoder = "entry setup is modeled as a deterministic prefix with SM83 XOR flags; FillMemory is an explicit downstream continuation boundary"
+
