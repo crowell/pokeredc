@@ -20948,3 +20948,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the GetTileIDList call boundary after GetPredefRegisters, base-tile transfer, and move-index setup"
 decoder = "GetPredefRegisters and GetTileIDList are explicit boundaries; LD A,C, SM83 high-memory store, and LD A,B preserve the exact register/flag state"
+
+[[function]]
+assembly_symbol = "ShakeEnemyHUD_ShakeBG"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_enemy_hud_shake_bg"
+c_source = "verification/ports/shake_enemy_hud_shake_bg.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hSCX",
+    "wTempSCX",
+]
+proof_domain = "all register/flag inputs through the first DelayFrames call after saving and offsetting SCX"
+decoder = "SM83 high-memory/absolute loads and stores, ADD A,D flags, and LD C,2 are modeled exactly; DelayFrames remains the explicit continuation boundary"
