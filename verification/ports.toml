@@ -20554,3 +20554,23 @@ observables = [
 ]
 proof_domain = "non-SGB palette branch selecting B=C=$ff"
 decoder = "SetAnimationBGPalette non-SGB branch modeled with terminal palette write; SGB selection path remains unmodeled"
+
+[[function]]
+assembly_symbol = "AnimationUnusedPalette3"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_unused_palette3_player"
+c_source = "verification/ports/animation_unused_palette3.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rBGP",
+]
+proof_domain = "non-SGB palette branch selecting B=C=$00"
+decoder = "SetAnimationBGPalette non-SGB branch modeled with terminal palette write; SGB selection path remains unmodeled"
