@@ -19494,3 +19494,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD HL,nn / LD C,imm / JP nn are flag-neutral); the local StringCmp JP is an explicit boundary."
 decoder = "11-byte body checked (1147d3219fff0e03c38e3a: ld de,$d347; ld hl,$ff9f; ld c,$03; jp $3a8e); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "ViridianGymPlayerSpinningScript.ViridianGymLoadSpinnerArrow"
+assembly_source = "scripts/ViridianGym.asm"
+c_symbol = "port_viridian_gym_player_spinning_script_load_spinner_arrow"
+c_source = "verification/ports/viridian_gym_player_spinning_script_load_spinner_arrow.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn are flag-neutral); the local bankswitch JP is an explicit boundary."
+decoder = "8-byte body checked (061121d74fc3d635: ld b,$11; ld hl,$4fd7; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
