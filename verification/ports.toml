@@ -18868,3 +18868,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "5-byte body checked (060fc3d635: ld b,$0f; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "UseItem"
+assembly_source = "home/item.asm"
+c_symbol = "port_use_item"
+c_source = "verification/ports/use_item.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (060321c755c3d635: ld b,$03; ld hl,$55c7; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
