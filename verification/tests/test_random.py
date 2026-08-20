@@ -1,22 +1,30 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-from verification.harness.rom import linked_bytes, symbol_location
+from verification.harness.equivalence import assert_pathwise_equivalent
+from verification.tests import test_random_equivalence as random_equivalence
 
 
-ROOT = Path(__file__).resolve().parents[2]
-ROM = ROOT / "pokered.gbc"
-SYMBOLS = ROOT / "pokered.sym"
-
-EXPECTED_BODY = bytes.fromhex(
-    "e5d5c50604218f7acdd635f0d3c1d1e1c9"
+@pytest.mark.skipif(
+    not random_equivalence.ROM.exists() or not random_equivalence.SYMBOLS.exists(),
+    reason="run `make red`",
 )
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_random_exact_linked_body() -> None:
-    location = symbol_location(SYMBOLS, "Random")
-    assert linked_bytes(ROM, location, len(EXPECTED_BODY)) == EXPECTED_BODY
+@pytest.mark.skipif(not random_equivalence.NATIVE_ELF.exists(), reason="run native")
+def test_random_pathwise_equivalence() -> None:
+    inputs = random_equivalence.inputs("random_compat")
+    assert_pathwise_equivalent(
+        random_equivalence.assembly(inputs),
+        random_equivalence.native(inputs),
+        (
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "h",
+            "l",
+            "h_random_add",
+            "h_random_sub",
+        ),
+    )
