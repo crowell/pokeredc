@@ -18127,3 +18127,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn, LD B,imm, JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (21977b060ec3d635: ld hl,$7b97; ld b,$0e; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "MistEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_mist_effect"
+c_source = "verification/ports/mist_effect.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD r,imm / LD rr,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (212b7f060cc3d635: ld hl,$7f2b; ld b,$0c; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
