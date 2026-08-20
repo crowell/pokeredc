@@ -19399,3 +19399,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
 decoder = "6-byte body checked (21e24fc3493c: ld hl,$4fe2; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "CeladonMartRoofScript_GiveDrinkToGirl.bagFull"
+assembly_source = "scripts/CeladonMartRoof.asm"
+c_symbol = "port_celadon_mart_roof_give_drink_to_girl_bag_full"
+c_source = "verification/ports/celadon_mart_roof_give_drink_to_girl_bag_full.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
+decoder = "6-byte body checked (212645c3493c: ld hl,$4526; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
