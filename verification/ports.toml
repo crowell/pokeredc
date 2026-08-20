@@ -20494,3 +20494,23 @@ observables = [
 ]
 proof_domain = "non-SGB palette branch selecting the dark palette value $6f"
 decoder = "SetAnimationBGPalette non-SGB branch modeled with terminal palette write; SGB selection path remains unmodeled"
+
+[[function]]
+assembly_symbol = "AnimationDarkenMonPalette"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_darken_mon_palette_player"
+c_source = "verification/ports/animation_darken_mon_palette.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rBGP",
+]
+proof_domain = "non-SGB palette branch selecting B=$f9 and C=$f4"
+decoder = "SetAnimationBGPalette non-SGB branch modeled with terminal palette write; SGB selection path remains unmodeled"
