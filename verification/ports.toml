@@ -16903,13 +16903,34 @@ assembly_symbol = "AddAmountSoldToMoney"
 assembly_source = "home/inventory.asm"
 c_symbol = "port_add_amount_sold_to_money"
 c_source = "verification/ports/add_amount_sold_to_money.c"
-status = "partial"
+status = "proven"
 observables = [
-    "wPlayerMoney (3 bytes, packed BCD)",
-    "wTextBoxID",
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "money0",
+    "money1",
+    "money2",
+    "price0",
+    "price1",
+    "price2",
+    "textbox",
+    "sound_a",
+    "sound_f",
+    "sound_b",
+    "sound_c",
+    "sound_d",
+    "sound_e",
+    "sound_h",
+    "sound_l",
 ]
-proof_domain = "all 3-byte wPlayerMoney and hMoney packed-BCD values; AddBCDPredef modeled as a digit-wise packed-BCD addition (equivalent to ADC+DAA over the three digit pairs, LSD first) with $99 saturation on overflow; DisplayTextBoxID, PlaySoundWaitForCurrent and WaitForSoundToFinished modeled as no-ops for money"
-decoder = "C port adds the 3-byte hMoney to wPlayerMoney using the same AddBCD algorithm as the assembly: per-byte packed-BCD addition with carry propagation and final $99 saturation when the most-significant carry is set, then writes wTextBoxID = MONEY_BOX (0x13). Full pathwise symbolic equivalence is pending an angr native run."
+proof_domain = "full 8-register compositional pathwise equivalence plus all explicit BCD money, price, textbox, and final sound-callee state fields; AddBCDPredef, DisplayTextBoxID, and audio calls are explicit boundaries."
+decoder = "29-byte body checked (1149d321a1ff0e033e0bcd6d3e3e13ea25d1cde8303eb2cd4037c34837: setup; AddBCDPredef; MONEY_BOX store; display/audio calls; WaitForSound JP); no raw memory pointer."
 
 
 
