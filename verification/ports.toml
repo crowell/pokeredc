@@ -18564,3 +18564,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "12-byte body checked (11676721008f010100c38618: ld de,$6767; ld hl,$8f00; ld bc,$0001; jp $1886); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "StatusScreen_ClearName"
+assembly_source = "engine/pokemon/status_screen.asm"
+c_symbol = "port_status_screen_clear_name"
+c_source = "verification/ports/status_screen_clear_name.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (010a003e7fc3e036: ld bc,$000a; ld a,$7f; jp $36e0); no CALL/PUSH/POP; F-preserving ops only."
