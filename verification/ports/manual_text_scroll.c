@@ -3,12 +3,7 @@
 #define LINK_STATE_BATTLING 0x04u
 #define SFX_PRESS_AB 0x90u
 
-/* Port of ManualTextScroll in home/joypad2.asm.
- *
- * The link branch dispatches DelayFrames(65). The normal branch calls
- * WaitForTextScrollButtonPress, loads SFX_PRESS_AB, then dispatches PlaySound.
- * Both callees are explicit state boundaries, keeping this contract PC-portable. */
-
+/* Port of ManualTextScroll in home/joypad2.asm. */
 __attribute__((noinline, used)) void
 port_manual_text_scroll(struct manual_text_scroll_state *state)
 {
@@ -22,7 +17,6 @@ port_manual_text_scroll(struct manual_text_scroll_state *state)
         state->delay_frames = 65;
         return;
     }
-
     state->registers.a = state->wait_a;
     state->registers.f = state->wait_f;
     state->registers.b = state->wait_b;

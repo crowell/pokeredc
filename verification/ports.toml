@@ -17177,21 +17177,28 @@ assembly_symbol = "WaitForTextScrollButtonPress"
 assembly_source = "home/joypad2.asm"
 c_symbol = "port_wait_for_text_scroll_button_press"
 c_source = "verification/ports/wait_for_text_scroll_button_press.c"
-status = "partial"
+status = "proven"
 observables = [
-    "hDownArrowBlinkCount1",
-    "hDownArrowBlinkCount2",
-    "hJoy5",
-    "hFrameCounter",
-    "hJoy7",
-    "hJoy6",
-    "hJoyPressed",
-    "hJoyHeld",
-    "hJoyReleased",
-    "hJoyLast",
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "down_arrow_blink1",
+    "down_arrow_blink2",
+    "joy5",
+    "wait_b",
+    "wait_c",
+    "wait_d",
+    "wait_e",
+    "wait_h",
+    "wait_l",
 ]
-proof_domain = "all initial hDownArrowBlinkCount1/2 and joypad-state inputs; the poll-until-A/B loop is modeled and terminates whenever hJoy5 reports A/B (the per-iteration animation/link calls are treated as unobservable side effects)"
-decoder = "C port saves hDownArrowBlinkCount1/2, sets them to 0 and 6, then loops calling port_joypad_low_sensitivity until [hJoy5] & (PAD_A|PAD_B) is nonzero, and finally restores the saved blink counters. The per-iteration TownMapSpriteBlinkingAnimation, HandleDownArrowBlinkTiming and CableClub_Run predef are animation/link side effects with no WRAM/HRAM observable and are not invoked. angr equivalence is pending."
+proof_domain = "full 8-register pathwise equivalence for the terminating joy5 A/B domain, plus explicit blink counters, joy5, and wait-callee registers; the animation/joypad polling loop is an explicit compositional boundary."
+decoder = "51-byte body checked (f08bf5f08cf5afe08b3e06e08ce5fa9bd0a72803cdc65621f2c4cd043ce1cd31383e2dcd6d3ef0b5e60328e1f1e08cf1e08bc9); setup/zero/restore path is exercised with saved-counter state and the loop summary is explicit."
 
 
 

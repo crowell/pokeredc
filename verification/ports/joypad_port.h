@@ -47,10 +47,18 @@ struct joypad_low_sensitivity_state {
 	port_u8 frame_counter;
 };
 
-/* Output observable of WaitForTextScrollButtonPress. */
+/* Output observable of WaitForTextScrollButtonPress; polling is compositional. */
 struct wait_for_text_scroll_state {
+	struct cpu_register_state registers;
 	port_u8 down_arrow_blink1;
 	port_u8 down_arrow_blink2;
+	port_u8 joy5;
+	port_u8 wait_b;
+	port_u8 wait_c;
+	port_u8 wait_d;
+	port_u8 wait_e;
+	port_u8 wait_h;
+	port_u8 wait_l;
 };
 
 /* Output observable of ManualTextScroll; wait/play/delay callees are explicit. */
@@ -73,8 +81,7 @@ struct manual_text_scroll_state {
 void port_joypad(struct joypad_update_state *state, port_u8 *memory);
 void port_joypad_low_sensitivity(
 	struct joypad_low_sensitivity_state *state, port_u8 *memory);
-void port_wait_for_text_scroll_button_press(
-	struct wait_for_text_scroll_state *state, port_u8 *memory);
+void port_wait_for_text_scroll_button_press(struct wait_for_text_scroll_state *state);
 void port_manual_text_scroll(struct manual_text_scroll_state *state);
 
 #endif
