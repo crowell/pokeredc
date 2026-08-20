@@ -20594,3 +20594,22 @@ observables = [
 ]
 proof_domain = "non-SGB palette branch selecting B=C=$40"
 decoder = "SetAnimationBGPalette non-SGB branch modeled with terminal palette write; SGB selection path remains unmodeled"
+
+[[function]]
+assembly_symbol = "AnimationShakeScreenVertically"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_shake_screen_vertically"
+c_source = "verification/ports/animation_shake_wrappers.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "predef-jump wrapper at AnimationShakeScreenVertically, with the shake predef as an explicit continuation boundary"
+decoder = "single predef jump entry represented by an explicit terminal summary; PredefShakeScreenVertically remains the downstream boundary"
