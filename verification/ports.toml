@@ -18030,3 +18030,23 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD A,imm and JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "6-byte body checked (3e10c36d3ed8: ld a,$10; jp $3e6d); no CALL/PUSH/POP; F-preserving ops only."
+
+
+[[function]]
+assembly_symbol = "CallBankF"
+assembly_source = "engine/battle/move_effects/conversion.asm"
+c_symbol = "port_call_bank_f"
+c_source = "verification/ports/call_bank_f.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD B,imm and JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "5-byte body checked (060fc3d635: ld b,$0f; jp $36d6); no CALL/PUSH/POP; F-preserving ops only."
