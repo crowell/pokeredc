@@ -21262,3 +21262,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the GetBattleHealthBarColor call after setting the enemy HP-bar color destination"
 decoder = "HL destination and E=$30 setup are modeled exactly; health-color, link-battle, and send-out branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TrainerBattleVictory"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_trainer_battle_victory"
+c_source = "verification/ports/trainer_battle_victory.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the gym-leader branch after EndLowHealthAlarm and wGymLeaderNo test"
+decoder = "EndLowHealthAlarm is an explicit boundary; music selection setup, high-memory AND-A flags, and branch boundary are modeled exactly"
