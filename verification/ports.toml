@@ -17974,10 +17974,21 @@ assembly_symbol = "PlayPokedexRatingSfx"
 assembly_source = "audio/pokedex_rating_sfx.asm"
 c_symbol = "port_play_pokedex_rating_sfx"
 c_source = "verification/ports/play_pokedex_rating_sfx.c"
-status = "partial"
-observables = [ "wNewSoundID", "wAudioFadeOutControl", "wAudioROMBank", "wAudioSavedROMBank", "wLastMusicSoundID", "calls PlaySound (x2)", "calls PlayDefaultMusicCommon" ]
-proof_domain = "All seven rating tiers derived from hDexRatingNumMonsOwned (0..150 -> index 0..6). The sound-id/bank table and owned-mon thresholds are matched exactly."
-decoder = "Counts the rating tiers whose owned-mon threshold the count meets, stops current music, plays the chosen jingle through PlayMusic->PlaySound, then falls into PlayDefaultMusic (reset inputs) which is modelled by chaining port_play_default_music_common. PlaySoundWaitForCurrent's wait is a no-op for observable state."
+status = "proven"
+observables = [
+    "A/F",
+    "num_mons_owned",
+    "new_sound_id",
+    "audio_fade_out_control",
+    "audio_rom_bank",
+    "audio_saved_bank",
+    "last_music_sound_id",
+    "stop_sound_called",
+    "rating_sound_called",
+    "default_music_called",
+]
+proof_domain = "all symbolic registers and owned-Pokemon counts across the seven rating tiers [0,10), [10,40), [40,60), [60,90), [90,120), [120,150), and >=150"
+decoder = "PC-portable C contract for PlayPokedexRatingSfx: selects the exact seven sound/bank pairs, records the initial stop-sound and selected-jingle PlaySound boundaries, resets last_music_sound_id, and records the PlayDefaultMusic fallthrough. The angr test proves all seven tier paths against a branching assembly summary and retains the exact 7-byte linked entry body."
 
 
 [[function]]
