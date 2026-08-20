@@ -19038,3 +19038,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD B,imm preserves flags); the local notInBag RET is an explicit path boundary."
 decoder = "3-byte body checked (0600c9: ld b,$00; ret); no CALL/PUSH/POP; F-preserving operation."
+
+[[function]]
+assembly_symbol = "SlotReward8Func.skip"
+assembly_source = "engine/slots/slot_machine.asm"
+c_symbol = "port_slot_reward8_func_skip"
+c_source = "verification/ports/slot_reward8_func_skip.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD B,imm / LD DE,nn preserve flags); the local RET is an explicit path boundary."
+decoder = "6-byte body checked (0602110800c9: ld b,$02; ld de,$0008; ret); no CALL/PUSH/POP; F-preserving ops only."
