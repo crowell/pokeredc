@@ -17316,10 +17316,20 @@ assembly_symbol = "Music_RivalAlternateStart"
 assembly_source = "audio/alternate_tempo.asm"
 c_symbol = "port_music_rival_alternate_start"
 c_source = "verification/ports/music_rival_alternate_start.c"
-status = "partial"
-observables = ["wChannelCommandPointers[0..1] (Ch1 -> Music_MeetRival_Ch1_AlternateStart)", "wChannelCommandPointers[2..3] (Ch2 -> Music_MeetRival_Ch2_AlternateStart)", "wChannelCommandPointers[4..5] (Ch3 -> Music_MeetRival_Ch3_AlternateStart)", "wNewSoundID", "wAudioROMBank", "wAudioSavedROMBank", "wAudioFadeOutControl", "registers A/C/HL/DE"]
-proof_domain = "no inputs; all operands are constant immediates (BANK(Music_MeetRival)=2, MUSIC_MEET_RIVAL=0xde, and the three alternate-start data pointers). Single execution path."
-decoder = "Loads the music id and bank into A/C then reproduces PlayMusic's unconditional top-level RAM writes (wNewSoundID, wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl=0). It then performs the three Audio1_OverwriteChannelPointer stores via a little-endian 16-bit write into wChannelCommandPointers (low byte at [hl], high byte at [hl+1], hl advanced by 2) for the Ch1/Ch2/Ch3 alternate-start measures. PlayMusic's deeper channel-initialization (inside PlaySound) is owned by the dedicated PlayMusic port; this wrapper's observable contract is the channel-pointer overwrite plus the globals. Equivalence is pending the angr proof."
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "channel1_pointer",
+    "channel2_pointer",
+    "channel3_pointer",
+    "sound_id",
+    "audio_rom_bank",
+    "audio_saved_bank",
+    "fade_out_control",
+    "play_music_called",
+]
+proof_domain = "all symbolic initial registers and pointer/audio state; the single constant-immediate path is exercised, including the PlayMusic boundary and all three channel-pointer writes"
+decoder = "PC-portable C contract for Music_RivalAlternateStart: PlayMusic state records sound_id=0xde, bank/saved-bank=2, fade_out_control=0, and play_music_called=1; Ch1/Ch2/Ch3 pointers become 0x71a2/0x721d/0x72b5, and final HL is 0xc00c. The angr test proves all registers and explicit audio state against a one-path assembly summary and retains the exact linked body."
 
 
 
