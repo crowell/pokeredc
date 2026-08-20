@@ -20803,3 +20803,16 @@ observables = [
 proof_domain = "all register/flag inputs and arbitrary hWhoseTurn bytes through the first PlayerNextTile/EnemyNextTile continuation boundary"
 decoder = "both LDH loads and AND-A flags are shimmed exactly; turn-dependent tilemap coordinates and loop counters are modeled; per-tile helpers remain explicit boundaries"
 
+[[function]]
+assembly_symbol = "CopyTempPicToMonPic"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_copy_temp_pic_to_mon_pic"
+c_source = "verification/ports/copy_temp_pic_to_mon_pic.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hWhoseTurn",
+]
+proof_domain = "all register/flag inputs and arbitrary hWhoseTurn bytes through the CopyVideoData jump continuation"
+decoder = "LDH load and AND-A flags are shimmed exactly; turn-dependent vBackPic/vFrontPic source, wTempPic destination, and PIC_SIZE count are modeled"
+
