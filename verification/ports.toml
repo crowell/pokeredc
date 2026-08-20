@@ -20723,3 +20723,19 @@ observables = [
 proof_domain = "all register/flag inputs through loading AnimationBlinkMon into HL and the CallWithTurnFlipped continuation boundary"
 decoder = "ld HL,AnimationBlinkMon is modeled exactly; CallWithTurnFlipped remains the explicit downstream continuation"
 
+[[function]]
+assembly_symbol = "AnimationFlashMonPic"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_flash_mon_pic"
+c_source = "verification/ports/animation_flash_mon_pic.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wBattleMonSpecies",
+    "wEnemyMonSpecies",
+    "wChangeMonPicPlayerTurnSpecies",
+    "wChangeMonPicEnemyTurnSpecies",
+]
+proof_domain = "all register/flag inputs and arbitrary player/enemy species bytes through the ChangeMonPic continuation boundary"
+decoder = "both SM83 absolute loads/stores and the second species load are shimmed; species copies and final A are checked exactly; ChangeMonPic remains downstream"
+
