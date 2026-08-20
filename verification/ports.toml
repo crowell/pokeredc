@@ -21214,3 +21214,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the player/enemy max-HP pointer branch"
 decoder = "push preservation, max-HP pointer setup, high-memory AND-A flags, and branch boundary are modeled exactly; HP healing and overfull-heal paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "UpdateCurMonHPBar"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_update_cur_mon_hp_bar"
+c_source = "verification/ports/update_cur_mon_hp_bar.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the player/enemy HP-bar branch after selecting player-bar coordinates"
+decoder = "HL coordinate setup, high-memory AND-A flags, LD A,1, and branch boundary are modeled exactly; UpdateHPBar2 remains the explicit continuation boundary"
