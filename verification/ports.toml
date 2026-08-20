@@ -21040,3 +21040,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first DelayFrames call after loading the first flash palette"
 decoder = "palette-table first entry, CP 1 flags, SM83 high-memory store, and LD C,2 are modeled exactly; DelayFrames remains the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "BattleTransition_CopyTiles1"
+assembly_source = "engine/battle/battle_transitions.asm"
+c_symbol = "port_battle_transition_copy_tiles1"
+c_source = "verification/ports/battle_transition_copy_tiles1.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wBattleTransitionCopyTilesOffset",
+]
+proof_domain = "all register/flag inputs through the first CopyData call after saving the 16-bit tile-copy offset"
+decoder = "offset byte stores, C=8 loop setup, and BC=SCREEN_WIDTH setup are modeled exactly; CopyData remains the explicit continuation boundary"
