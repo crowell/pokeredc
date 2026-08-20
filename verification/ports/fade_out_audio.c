@@ -22,7 +22,7 @@
 #define W_AUDIO_FADE_OUT_COUNTER 0xCFC9u
 #define W_AUDIO_FADE_OUT_COUNTER_RELOAD 0xCFC8u
 #define W_STATUS_FLAGS2 0xD72Cu
-#define W_NEW_SOUND_ID 0xC0EFu
+#define W_NEW_SOUND_ID 0xC0EEu
 #define W_AUDIO_ROM_BANK 0xC0EFu
 #define W_AUDIO_SAVED_ROM_BANK 0xC0F0u
 
@@ -89,14 +89,9 @@ fade_out_complete:
 	memory[W_AUDIO_FADE_OUT_CONTROL] = 0;
 	memory[0xCFC7] = 0;
 
-	/* ld a, SFX_STOP_ALL_MUSIC; ld [wNewSoundID], a; call PlaySound */
-	memory[0xC0EF] = 0xFF;
-
-	/* PlaySound would be called here - in the port we just set the globals
-	 * that PlaySound would modify. The test will handle PlaySound boundary. */
-
-	/* ld a, [wAudioSavedROMBank]; ld [wAudioROMBank], a */
-	/* ld a, b; ld [wNewSoundID], a; jp PlaySound */
+	/* PlaySound is an explicit no-op boundary; preserve its final writes. */
+	memory[W_NEW_SOUND_ID] = SFX_STOP_ALL_MUSIC;
+	memory[W_AUDIO_ROM_BANK] = memory[W_AUDIO_SAVED_ROM_BANK];
 	memory[W_NEW_SOUND_ID] = b_val;
 	}
 }
