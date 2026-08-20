@@ -18792,3 +18792,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (0150003e7ec3e036: ld bc,$0050; ld a,$7e; jp $36e0); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "LoadSmokeTile"
+assembly_source = "engine/overworld/dust_smoke.asm"
+c_symbol = "port_load_smoke_tile"
+c_source = "verification/ports/load_smoke_tile.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "9-byte body checked (11dd5f01011ec34818: ld de,$5fdd; ld bc,$1e01; jp $1848); no CALL/PUSH/POP; F-preserving ops only."
