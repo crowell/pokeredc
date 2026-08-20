@@ -18450,3 +18450,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
 decoder = "8-byte body checked (060421587ac3d635: ld b,$04; ld hl,$7a58; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "RemovePokemon"
+assembly_source = "home/move_mon.asm"
+c_symbol = "port_remove_pokemon"
+c_source = "verification/ports/remove_pokemon.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
+decoder = "8-byte body checked (21687b0601c3d635: ld hl,$7b68; ld b,$01; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
