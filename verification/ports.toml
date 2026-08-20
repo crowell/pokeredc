@@ -20936,3 +20936,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the InitMultipleObjectsOAM call boundary after loading C with the object count and A with tileset ID 1"
 decoder = "LD C,A and flag-neutral LD A,1 are modeled exactly; InitMultipleObjectsOAM remains the explicit continuation boundary"
+[[function]]
+assembly_symbol = "CopyTileIDsFromList"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_copy_tile_ids_from_list"
+c_source = "verification/ports/copy_tile_ids_from_list.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hBaseTileID",
+]
+proof_domain = "all register/flag inputs through the GetTileIDList call boundary after GetPredefRegisters, base-tile transfer, and move-index setup"
+decoder = "GetPredefRegisters and GetTileIDList are explicit boundaries; LD A,C, SM83 high-memory store, and LD A,B preserve the exact register/flag state"
