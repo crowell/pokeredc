@@ -20454,3 +20454,23 @@ observables = [
 ]
 proof_domain = "counter value 3, producing DelayFrames count C=2; DelayFrames is the explicit continuation boundary"
 decoder = "counter-three branch setup checked through an explicit terminal summary; timing implementation remains delegated to DelayFrames"
+
+[[function]]
+assembly_symbol = "AnimationFlashScreen"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_flash_screen"
+c_source = "verification/ports/animation_flash_screen.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rBGP",
+]
+proof_domain = "full flash-screen palette cycle with original rBGP restored and final DelayFrames count C=2; timing calls are explicit boundaries"
+decoder = "palette writes and saved AF restoration represented by a terminal summary; both DelayFrames calls are timing-only in the native contract"
