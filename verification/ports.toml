@@ -20395,3 +20395,23 @@ observables = [
 ]
 proof_domain = "terminal frame path with wSubAnimCounter=1, after DrawFrameBlock and DoSpecialEffectByAnimationId boundaries"
 decoder = "DEC/store/RET-Z terminal sequence checked through an explicit branch summary; downstream frame-loop continuation is not modeled"
+
+[[function]]
+assembly_symbol = "AnimationCleanOAM"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_clean_oam"
+c_source = "verification/ports/animation_clean_oam.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "OAM[0xfe00..0xfe9f]",
+]
+proof_domain = "full OAM clear with saved-register restoration; DelayFrame is timing-only"
+decoder = "push/call/restore wrapper represented by an explicit terminal summary; ClearSprites output is proven as zero across all 160 OAM bytes"
