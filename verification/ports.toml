@@ -19627,3 +19627,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local return JP is an explicit boundary."
 decoder = "6-byte body checked (210a58c3375a: ld hl,$580a; jp $5a37); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "CheckEnemyStatusConditions.notFlyOrChargeEffect"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_check_enemy_status_conditions_not_fly_or_charge_effect"
+c_source = "verification/ports/check_enemy_status_conditions_not_fly_or_charge_effect.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local enemy return JP is an explicit boundary."
+decoder = "6-byte body checked (218c68c3b86a: ld hl,$688c; jp $6ab8); no CALL/PUSH/POP; F-preserving ops only."
