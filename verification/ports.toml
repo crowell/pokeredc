@@ -20840,3 +20840,15 @@ observables = [
 proof_domain = "all register/flag inputs through the initial FillMemory continuation after clearing wTempPic"
 decoder = "wTempPic/PIC_SIZE tiles setup and SM83 XOR-A flags are modeled exactly; FillMemory remains the explicit downstream boundary"
 
+[[function]]
+assembly_symbol = "CopyMonsterSpriteData"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_copy_monster_sprite_data"
+c_source = "verification/ports/copy_monster_sprite_data.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the FarCopyData2 jump continuation"
+decoder = "TILE_SIZE count and MonsterSprite bank load are modeled with exact flag preservation; FarCopyData2 remains the explicit downstream boundary"
+
