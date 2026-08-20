@@ -19456,3 +19456,22 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD A,imm / JP nn are flag-neutral); the local text-dispatch JP is an explicit boundary."
 decoder = "5-byte body checked (3e2bc3f53e: ld a,$2b; jp $3ef5); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "SubstituteEffect_.notEnoughHP"
+assembly_source = "engine/battle/move_effects/substitute.asm"
+c_symbol = "port_substitute_effect_not_enough_hp"
+c_source = "verification/ports/substitute_effect_not_enough_hp.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
+decoder = "6-byte body checked (21277ec3493c: ld hl,$7e27; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
