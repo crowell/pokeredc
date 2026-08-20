@@ -44,6 +44,22 @@ REGISTERS_IO = {
 }
 FIELDS = tuple(REGISTERS_IO)
 
+EXTRA_MEMORY = {
+    "loaded_bank": 0xFFB8,
+    "tile_animations": 0xFFD7,
+    "auto_dest_low": 0xFFBC,
+    "auto_dest_high": 0xFFBD,
+    "soft_reset": 0xFF8A,
+    "serial_status": 0xFFAA,
+    "update_sprites": 0xCFCB,
+    "audio_bank": 0xC0EF,
+    "audio_saved_bank": 0xC0F0,
+    "audio_fade": 0xCFC7,
+    "new_sound": 0xC0EE,
+    "last_music": 0xCFCA,
+}
+DMA_CODE = bytes((0x3E, 0xC3, 0xE0, 0x46, 0x3E, 0x28, 0x3D, 0x20, 0xFD, 0xC9))
+
 
 @dataclass(frozen=True)
 class Endpoint:
@@ -78,7 +94,33 @@ class InitSummary(angr.SimProcedure):
         }
         for field, value in values.items():
             self.state.memory.store(REGISTERS_IO[field], claripy.BVV(value, 8))
+        extra_values = {
+            "loaded_bank": 0,
+            "tile_animations": 0,
+            "auto_dest_low": 0,
+            "auto_dest_high": 0x9C,
+            "soft_reset": 16,
+            "serial_status": 0xFF,
+            "update_sprites": 0xFF,
+            "audio_bank": 0x1F,
+            "audio_saved_bank": 0x1F,
+            "audio_fade": 0,
+            "new_sound": 0,
+            "last_music": 0,
+        }
+        for field, value in extra_values.items():
+            self.state.memory.store(EXTRA_MEMORY[field], claripy.BVV(value, 8))
+        for offset, value in enumerate(DMA_CODE):
+            self.state.memory.store(0xFF80 + offset, claripy.BVV(value, 8))
         self.jump(DONE)
+
+
+def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
+    return claripy.Concat(
+        *(state.memory.load(base + address, 1) for address in REGISTERS_IO.values()),
+        *(state.memory.load(base + address, 1) for address in EXTRA_MEMORY.values()),
+        *(state.memory.load(base + 0xFF80 + offset, 1) for offset in range(len(DMA_CODE))),
+    )
 
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
@@ -103,7 +145,7 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     return [
         Endpoint(
             **assembly_registers(end),
-            memory=claripy.Concat(*(end.memory.load(address, 1) for address in REGISTERS_IO.values())),
+            memory=_memory(end, 0),
             constraints=tuple(end.solver.constraints),
         )
         for end in manager.found
@@ -122,7 +164,7 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     return [
         Endpoint(
             **native_registers(end, NATIVE_STATE),
-            memory=claripy.Concat(*(end.memory.load(NATIVE_MEMORY + address, 1) for address in REGISTERS_IO.values())),
+            memory=_memory(end, NATIVE_MEMORY),
             constraints=tuple(end.solver.constraints),
         )
         for end in manager.deadended
