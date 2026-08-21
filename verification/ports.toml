@@ -23556,3 +23556,22 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through seen-Pokedex CountSetBits setup"
 decoder = "wPokedexSeen pointer and bitmap-length setup are modeled exactly; seen/owned counting, rating-table lookup, text, sound, event reset, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayPokemartDialogue_"
+assembly_source = "engine/events/pokemart.asm"
+c_symbol = "port_display_pokemart_dialogue_private"
+c_source = "verification/ports/display_pokemart_dialogue_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wSavedListScrollOffset",
+    "wBoughtOrSoldItemInMart",
+    "wListScrollOffset",
+    "wCurrentMenuItem",
+    "wPlayerMonNumber",
+    "wPrintItemPrices",
+    "wTextBoxID",
+]
+proof_domain = "all register/flag and initial Pokemart list/menu state inputs through money-box setup"
+decoder = "list-scroll save, purchase-state reset, menu-position reset, prices enable, MONEY_BOX selection, and DisplayTextBoxID continuation boundary are modeled exactly; buy/sell menus, inventory, payment, item grants, text, and continuation paths remain beyond the explicit boundary"
