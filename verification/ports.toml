@@ -23847,3 +23847,15 @@ observables = [
 ]
 proof_domain = "all register/flag and species inputs through dex-conversion guard"
 decoder = "wPokedexNum store, zero-species guard, and IndexToPokedex continuation boundary are modeled exactly; palette table lookup, pointer arithmetic, and final palette-ID result remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "UpdatePartyMenuBlkPacket"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_update_party_menu_blk_packet_private"
+c_source = "verification/ports/update_party_menu_blk_packet_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and HP-bar-index inputs through palette-color pointer setup"
+decoder = "party HP-bar color table pointer, selected-index load, DE offset setup, and AddNTimes continuation boundary are modeled exactly; palette mapping, block-packet writes, and continuation paths remain beyond the explicit boundary"
