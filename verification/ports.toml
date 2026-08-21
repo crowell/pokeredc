@@ -21498,3 +21498,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the DrawPlayerHUDAndHPBar call before DrawEnemyHUDAndHPBar"
 decoder = "DrawPlayerHUDAndHPBar is an explicit boundary; wrapper call/JP sequence preserves all CPU state"
+
+[[function]]
+assembly_symbol = "DrawPlayerHUDAndHPBar"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_draw_player_hud_and_hp_bar"
+c_source = "verification/ports/draw_player_hud_and_hp_bar.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferEnabled",
+]
+proof_domain = "all register/flag and initial HUD state inputs through ClearScreenArea"
+decoder = "XOR-A flags, automatic-BG-transfer store, player HUD coordinates, and BC dimensions are modeled exactly; HUD rendering remains beyond the explicit boundary"
