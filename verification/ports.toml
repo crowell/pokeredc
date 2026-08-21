@@ -21986,3 +21986,15 @@ observables = [
 ]
 proof_domain = "all register and flag inputs through the DrawHUDsAndHPBars call chain"
 decoder = "the JP DrawHUDsAndHPBars continuation is implemented as a C call, which invokes the ordered player/enemy HUD call chain; rendering remains beyond the explicit child boundaries"
+
+[[function]]
+assembly_symbol = "ApplyAttackToPlayerPokemon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_apply_attack_to_player_pokemon"
+c_source = "verification/ports/apply_attack_to_player_pokemon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and normal move-effect/power inputs through the zero-power check"
+decoder = "normal-effect dispatch, enemy move-power load, and AND-A flags are modeled exactly; OHKO, Super Fang, special-damage, regular damage, and continuation paths remain beyond the explicit boundary"
