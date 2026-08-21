@@ -21349,3 +21349,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the initial wLinkState comparison"
 decoder = "SM83 absolute load and CP flags are modeled exactly; rival, palette, text, and blackout paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SlideDownFaintedMonPic"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_slide_down_fainted_mon_pic"
+c_source = "verification/ports/slide_down_fainted_mon_pic.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wStatusFlags5",
+]
+proof_domain = "all register/flag and status-byte inputs through the first slide-step loop after setting BIT_NO_TEXT_DELAY"
+decoder = "status load/store, SET bit 2, and PIC_HEIGHT loop-counter setup are modeled exactly; row-copy and sliding paths remain beyond the explicit boundary"
