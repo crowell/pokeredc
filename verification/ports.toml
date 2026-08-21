@@ -24188,3 +24188,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through LoadTownMap entry"
 decoder = "LoadTownMap call dispatch is modeled as an explicit call boundary; sprite suppression, wild-location display, text, input wait, map exit, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadTownMap_Fly"
+assembly_source = "engine/items/town_map.asm"
+c_symbol = "port_load_town_map_fly_private"
+c_source = "verification/ports/load_town_map_fly_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through ClearSprites entry"
+decoder = "ClearSprites call dispatch is modeled as an explicit call boundary; map loading, bird graphics, fly-location construction, input handling, palette restoration, and continuation paths remain beyond the explicit boundary"
