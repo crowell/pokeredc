@@ -22635,3 +22635,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wLinkState inputs through the link-battle branch"
 decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; party/status synchronization, result text, delay, evolution, reset, audio, and return paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GainExperience"
+assembly_source = "engine/battle/experience.asm"
+c_symbol = "port_gain_experience"
+c_source = "verification/ports/gain_experience.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the link-battle early return"
+decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; experience division, party/stat EXP loops, level-ups, evolution, text, and continuation paths remain beyond the explicit boundary"
