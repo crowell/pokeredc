@@ -23532,3 +23532,15 @@ observables = [
 ]
 proof_domain = "all status, party-count, step-counter, and register inputs through step-frequency guard"
 decoder = "scripted-movement carry guard, party-count guard, step-counter load/mask, and no-damage branch selector are modeled exactly; daycare EXP, poison HP mutation, fainting, text/sound, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayPokemonCenterDialogue_"
+assembly_source = "engine/events/pokecenter.asm"
+c_symbol = "port_display_pokemon_center_dialogue_private"
+c_source = "verification/ports/display_pokemon_center_dialogue_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through PokemonCenterWelcomeText setup"
+decoder = "SaveScreenTilesToBuffer1 continuation boundary, welcome-text pointer setup, and PrintText continuation boundary are modeled exactly; status flags, yes/no healing flow, party healing, animation, audio, farewell text, and continuation paths remain beyond the explicit boundary"
