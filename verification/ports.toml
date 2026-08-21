@@ -21460,3 +21460,17 @@ observables = [
 ]
 proof_domain = "all register/flag and enemy-HP-byte inputs through the enemy-HP HUD branch"
 decoder = "PrintSendOutMonMessage is an explicit boundary; enemy HP OR flags and pointer setup are modeled exactly; send-out rendering and animation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AnimateRetreatingPlayerMon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_animate_retreating_player_mon"
+c_source = "verification/ports/animate_retreating_player_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wDownscaledMonSize",
+    "hBaseTileID",
+]
+proof_domain = "all register/flag and tile-state inputs through the first CopyDownscaledMonTiles call"
+decoder = "initial ClearScreenArea is an explicit boundary; coordinate/size setup, XOR-A flags, and tile-state stores are modeled exactly"
