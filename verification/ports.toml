@@ -24150,3 +24150,17 @@ observables = [
 ]
 proof_domain = "all register/flag and party-index inputs through AddNTimes entry"
 decoder = "wWhichPokemon load, party-moves HL base, PARTYMON_STRUCT_LENGTH BC setup, and AddNTimes dispatch are modeled exactly; move-number scan, AlreadyKnowsText path, PrintText, carry result, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CanLearnTM"
+assembly_source = "engine/items/tms.asm"
+c_symbol = "port_can_learn_tm_private"
+c_source = "verification/ports/can_learn_tm_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurPartySpecies",
+    "wCurSpecies",
+]
+proof_domain = "all register/flag and party-species inputs through GetMonHeader entry"
+decoder = "wCurPartySpecies load, wCurSpecies write, and GetMonHeader dispatch are modeled exactly; learnset lookup, TM scan, FlagActionPredef, and continuation paths remain beyond the explicit boundary"
