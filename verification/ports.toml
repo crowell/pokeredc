@@ -21746,3 +21746,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wPlayerMoveEffect inputs through the CHARGE_EFFECT comparison"
 decoder = "move-effect load and SM83 CP $27 flags are modeled exactly; charge/fly effect dispatch paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PlayerCheckIfFlyOrChargeEffect"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_player_check_fly_charge"
+c_source = "verification/ports/player_check_fly_charge.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and move-effect inputs through the FLY_EFFECT comparison"
+decoder = "DelayFrames is an explicit boundary; C=30 setup, move-effect load, and CP $2b flags are modeled exactly; animation and mirror-move paths remain beyond the explicit boundary"
