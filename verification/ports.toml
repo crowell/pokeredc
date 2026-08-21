@@ -22899,3 +22899,15 @@ observables = [
 ]
 proof_domain = "all register/flag and predef/type inputs through the first type load after GetMonHeader"
 decoder = "GetPredefRegisters/GetMonHeader continuation boundary, destination pointer restoration, and first mon-header type load are modeled exactly; second-type comparison, tile placement, text erasure, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintMoveType"
+assembly_source = "engine/battle/print_type.asm"
+c_symbol = "port_print_move_type_private"
+c_source = "verification/ports/print_move_type_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and predef/move-type inputs through the move-type load"
+decoder = "GetPredefRegisters continuation boundary, destination pointer restoration, and wPlayerMoveType load are modeled exactly; type-name table lookup, text placement, and continuation calls remain beyond the explicit boundary"
