@@ -21890,3 +21890,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wEnemyMovePower inputs through the zero-power return"
 decoder = "damage zeroing, enemy move-power load, AND-A flags, and D/HL setup are modeled exactly; physical/special defense, Reflect, critical-hit, and damage-calculation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GetEnemyMonStat"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_get_enemy_mon_stat"
+c_source = "verification/ports/get_enemy_mon_stat.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the link-state branch decision"
+decoder = "stack preservation, wLinkState load, and LINK_STATE_BATTLING comparison flags are modeled exactly; link-party stat lookup and non-link CalcStat path remain beyond the explicit boundary"
