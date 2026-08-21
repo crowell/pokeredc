@@ -24276,3 +24276,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through serial-player-preamble loop setup"
 decoder = "wSerialPlayerDataBlock HL setup, preamble-byte A load, six-entry B counter setup, and first loop-entry state are modeled exactly; serial preamble/data generation, exchange, battle/trade continuation, and return paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CallCurrentTradeCenterFunction"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_call_current_trade_center_function_private"
+c_source = "verification/ports/call_current_trade_center_function_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through trade-center pointer-index load"
+decoder = "TradeCenterPointerTable HL setup, B zeroing, and pointer-index dispatch entry are modeled exactly; index validation, indirect jump, title-screen fallback, and continuation paths remain beyond the explicit boundary"
