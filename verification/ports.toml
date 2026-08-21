@@ -24075,3 +24075,16 @@ observables = [
 ]
 proof_domain = "all register/flag and mon-data-source inputs through source-selection dispatch"
 decoder = "wMonDataLocation load and AND-derived source-selection flags are modeled exactly; party/enemy/box/daycare/battle move pointers, selected-move offset, PP table lookup, AddBonusPP, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "IsNextTileShoreOrWater"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_is_next_tile_shore_or_water_private"
+c_source = "verification/ports/is_next_tile_shore_or_water_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurMapTileset",
+]
+proof_domain = "all register/flag and tileset inputs through IsInArray entry"
+decoder = "current-tileset load, WaterTilesets HL setup, DE stride setup, and IsInArray dispatch are modeled exactly; water/shore membership, dock and tile exceptions, carry result, and continuation paths remain beyond the explicit boundary"
