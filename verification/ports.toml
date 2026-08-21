@@ -21926,3 +21926,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wMoveMissed inputs after the JumpMoveEffect boundary"
 decoder = "wMoveMissed load and DEC-A result flags are modeled exactly, including carry preservation; JumpMoveEffect remains the explicit call boundary"
+
+[[function]]
+assembly_symbol = "CriticalHitTest"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_critical_hit_test"
+c_source = "verification/ports/critical_hit_test.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and turn/species inputs through the GetMonHeader call boundary"
+decoder = "critical-result clearing, hWhoseTurn AND-A flags, player/enemy species selection, and wCurSpecies store are modeled exactly; GetMonHeader and critical-probability paths remain beyond the explicit boundary"
