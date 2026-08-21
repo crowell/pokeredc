@@ -23141,3 +23141,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through production DebugMenu RET"
 decoder = "production ROM encodes DebugMenu as a one-byte RET; native implementation preserves the complete register state"
+
+[[function]]
+assembly_symbol = "TestBattle"
+assembly_source = "engine/debug/debug_menu.asm"
+c_symbol = "port_test_battle_private"
+c_source = "verification/ports/test_battle_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wObtainedBadges",
+    "wStatusFlags7",
+]
+proof_domain = "all register/flag and test-battle state inputs through badge/status setup"
+decoder = "GBPalNormal continuation boundary, Earth Badge setup, test-battle status flag set, and destination pointer state are modeled exactly; party reset, debug party creation, opponent initialization, repeated battle loop, and continuation paths remain beyond the explicit boundary"
