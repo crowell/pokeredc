@@ -23013,3 +23013,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through healing-SFX load"
 decoder = "SFX_HEAL_AILMENT immediate load is modeled exactly; sound playback and continuation call remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AIUseFullRestore"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_ai_use_full_restore_private"
+c_source = "verification/ports/ai_use_full_restore_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wAIItem",
+]
+proof_domain = "all register/flag and AI-item inputs through FULL_RESTORE selection"
+decoder = "AICureStatus continuation boundary, FULL_RESTORE load, and wAIItem store are modeled exactly; HP-bar copying, status/HP updates, sound, animation, and continuation calls remain beyond the explicit boundary"
