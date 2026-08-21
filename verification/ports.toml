@@ -21734,3 +21734,15 @@ observables = [
 ]
 proof_domain = "all register/flag and selected-move inputs through the CANNOT_MOVE branch"
 decoder = "XOR-A turn setup, selected-move increment flags, and CANNOT_MOVE continuation are modeled exactly; move effects, status checks, and battle execution remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CheckIfPlayerNeedsToChargeUp"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_check_player_charge"
+c_source = "verification/ports/check_player_charge.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wPlayerMoveEffect inputs through the CHARGE_EFFECT comparison"
+decoder = "move-effect load and SM83 CP $27 flags are modeled exactly; charge/fly effect dispatch paths remain beyond the explicit boundary"
