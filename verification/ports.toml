@@ -23984,3 +23984,16 @@ observables = [
 ]
 proof_domain = "all register/flag and item-state inputs through item-use continuation dispatch"
 decoder = "battle-state load, AND-derived zero flag, repel-step write from B on the out-of-battle path, and both continuation dispatch paths are modeled exactly; ItemUseNotTime and PrintItemUseTextAndRemoveItem bodies remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "FishingInit"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_fishing_init_private"
+c_source = "verification/ports/fishing_init_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wIsInBattle",
+]
+proof_domain = "all register/flag inputs through initial battle guard"
+decoder = "battle-state load, AND-derived zero flag, battle-path carry set, and nonbattle branch entry are modeled exactly; shore/water detection, surfing guard, overworld reload, text, sound, delay, and continuation paths remain beyond the explicit boundary"
