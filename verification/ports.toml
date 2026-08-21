@@ -22094,3 +22094,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and move-effect inputs through the Dream Eater check entry"
 decoder = "player/enemy target-status, move-effect, and target-status pointer selection plus AND-A flags are modeled exactly; Dream Eater, Swift, substitute, invulnerability, mist, accuracy, and hit/miss branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CalcHitChance"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_calc_hit_chance"
+c_source = "verification/ports/calc_hit_chance.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, accuracy, and stat-modifier inputs through reflected evasion setup"
+decoder = "player/enemy accuracy pointer and modifier selection, 14-evasion subtraction, and SUB flags are modeled exactly; multiplier/division arithmetic and quotient continuation remain beyond the explicit boundary"
