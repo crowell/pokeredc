@@ -22407,3 +22407,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through CopyVideoData"
 decoder = "Pokeball tile source/destination and BC bank/count setup are modeled exactly; CopyVideoData transfer and graphics memory effects remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SetupEnemyPartyPokeballs"
+assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
+c_symbol = "port_setup_enemy_party_pokeballs"
+c_source = "verification/ports/setup_enemy_party_pokeballs.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through SetupPokeballs"
+decoder = "PlaceEnemyHUDTiles call boundary, enemy-party/party-count pointer setup, and SetupPokeballs call boundary are modeled exactly; pokeball selection, OAM coordinates, graphics offsets, and rendering remain beyond the explicit boundary"
