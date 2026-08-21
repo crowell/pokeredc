@@ -23784,3 +23784,16 @@ observables = [
 ]
 proof_domain = "all register/flag and party-index inputs through party-species pointer setup"
 decoder = "hPartyMonIndex load, party-species base pointer, and index offset setup are modeled exactly; species lookup, OAM tile selection, OAM writes, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "WriteMonPartySpriteOAMBySpecies"
+assembly_source = "engine/gfx/mon_icons.asm"
+c_symbol = "port_write_mon_party_sprite_oam_by_species_private"
+c_source = "verification/ports/write_mon_party_sprite_oam_by_species_private.c"
+status = "partial"
+observables = [
+    "A",
+    "hPartyMonIndex",
+]
+proof_domain = "all species, party-index, and register inputs through sprite-ID lookup setup"
+decoder = "party-index reset, species load, and GetPartyMonSpriteID continuation boundary are modeled exactly; OAM tile selection, OAM writes, and continuation paths remain beyond the explicit boundary"
