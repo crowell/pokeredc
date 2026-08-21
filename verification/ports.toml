@@ -23090,3 +23090,16 @@ observables = [
 ]
 proof_domain = "all register/flag and item inputs through wAIItem store"
 decoder = "wAIItem store is modeled exactly; item-name lookup, text rendering, AI-count handling, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AIPrintItemUse_"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_ai_print_item_use_name_private"
+c_source = "verification/ports/ai_print_item_use_private_name.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wNamedObjectIndex",
+]
+proof_domain = "all register/flag, wAIItem, and named-object inputs through GetItemName setup"
+decoder = "wAIItem load, wNamedObjectIndex store, and GetItemName continuation boundary are modeled exactly; item-name text pointer setup and PrintText continuation remain beyond the explicit boundary"
