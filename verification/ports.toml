@@ -23258,3 +23258,16 @@ observables = [
 ]
 proof_domain = "all register/flag and display-state inputs through initial diploma display setup"
 decoder = "screen/setup continuation boundaries, sprite-update disable, NO_TEXT_DELAY flag set, and status-pointer state are modeled exactly; graphics copy, textbox rendering, text placement, sprite drawing, cleanup, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "_DisplayPokedex"
+assembly_source = "engine/events/display_pokedex.asm"
+c_symbol = "port_display_pokedex_private"
+c_source = "verification/ports/display_pokedex_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wStatusFlags5",
+]
+proof_domain = "all register/flag and status inputs through ShowPokedexData setup"
+decoder = "NO_TEXT_DELAY status flag set, status-pointer setup, and ShowPokedexData continuation boundary are modeled exactly; map reload, delay, pokedex indexing, seen-flag update, and continuation paths remain beyond the explicit boundary"
