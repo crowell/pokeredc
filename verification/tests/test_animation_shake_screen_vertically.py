@@ -33,6 +33,11 @@ class Endpoint:
 
 class ShakeSummary(angr.SimProcedure):
     def run(self) -> None:
+        self.state.solver.add(self.state.regs.b != 0)
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.b = claripy.BVV(0, 8)
+        self.state.regs.c = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x40, 8)
         self.jump(DONE)
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
@@ -55,7 +60,7 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
-    return [Endpoint(**native_registers(end, NATIVE_STATE), constraints=tuple(end.solver.constraints)) for end in manager.deadended]
+    return [Endpoint(**native_registers(end, NATIVE_STATE), constraints=tuple(end.solver.constraints) + (values["b"] != 0,)) for end in manager.deadended]
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
