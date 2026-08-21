@@ -22767,3 +22767,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and battle-status inputs through GETTING_PUMPED bit check"
 decoder = "player/enemy status-pointer selection and GETTING_PUMPED BIT flags are modeled exactly; status mutation, animation, text, delay, and failure continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HazeEffect_"
+assembly_source = "engine/battle/move_effects/haze.asm"
+c_symbol = "port_haze_effect_private"
+c_source = "verification/ports/haze_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the first ResetStatMods call"
+decoder = "A=7 and player stat-modifier pointer setup are modeled exactly; stat resets, stat restoration, status cures, text, and continuation calls remain beyond the explicit boundary"
