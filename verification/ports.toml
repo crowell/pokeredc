@@ -21646,3 +21646,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wCurrentMenuItem inputs through the top-of-menu branch"
 decoder = "wCurrentMenuItem load and AND-A flags are modeled exactly; cursor erase and wraparound paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SelectMenuItem_CursorDown"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_select_menu_item_cursor_down"
+c_source = "verification/ports/select_menu_item_cursor_down.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, wCurrentMenuItem, and wNumMovesMinusOne inputs through the menu-limit comparison"
+decoder = "current-item/limit loads, double INC-A, CP B flags, and branch boundary are modeled exactly; cursor wraparound paths remain beyond the explicit boundary"
