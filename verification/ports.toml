@@ -22575,3 +22575,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the stat-name search loop"
 decoder = "StatModTextStrings HL and '@' delimiter C setup are modeled exactly; stat-name scanning, wStringBuffer copy, and continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintNoEffectText"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_print_no_effect_text"
+c_source = "verification/ports/print_no_effect_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the PrintText call"
+decoder = "NoEffectText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
