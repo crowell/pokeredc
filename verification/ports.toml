@@ -23663,3 +23663,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through GetPredefRegisters continuation boundary"
 decoder = "GetPredefRegisters call boundary is modeled exactly; HP scaling arithmetic, minimum-length clamp, division, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GetHPBarLength"
+assembly_source = "engine/gfx/hp_bar.asm"
+c_symbol = "port_get_hp_bar_length_private"
+c_source = "verification/ports/get_hp_bar_length_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hMultiplicand",
+]
+proof_domain = "all register/flag and BC inputs through Multiply setup"
+decoder = "multiplicand buffer initialization, 48-pixel scale factor, and Multiply continuation boundary are modeled exactly; HP scaling shifts, division, minimum-length clamp, and continuation paths remain beyond the explicit boundary"
