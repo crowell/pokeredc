@@ -23909,3 +23909,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through initial SGB packet pointer setup"
 decoder = "MltReq2Packet pointer setup and initial SGB-packet send continuation boundary are modeled exactly; hardware polling, JOYP signaling, timing, and carry-result detection remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SendMltReq1Packet"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_send_mlt_req1_packet_private"
+c_source = "verification/ports/send_mlt_req1_packet_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through MltReq1Packet pointer setup"
+decoder = "MltReq1Packet pointer setup and SendSGBPacket continuation boundary are modeled exactly; packet transmission timing and Wait7000 continuation remain beyond the explicit boundary"
