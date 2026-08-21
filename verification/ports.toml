@@ -24048,3 +24048,17 @@ observables = [
 ]
 proof_domain = "all register/flag and party-index inputs through AddNTimes entry"
 decoder = "wPartyMon1Moves HL base, PARTYMON_STRUCT_LENGTH BC setup, wWhichPokemon load, and AddNTimes dispatch are modeled exactly; party pointer arithmetic, normal PP loading, bonus-PP loop, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AddBonusPP"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_add_bonus_pp_private"
+c_source = "verification/ports/add_bonus_pp_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hDividend",
+    "hDivisor",
+]
+proof_domain = "all register/flag and PP-input values through Divide entry"
+decoder = "normal-max PP load, four-byte dividend zero-extension, divisor-five setup, B=4 iteration setup, and Divide dispatch are modeled exactly; division, PP-up extraction, capped accumulation, move-PP write, and continuation paths remain beyond the explicit boundary"
