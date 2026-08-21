@@ -22911,3 +22911,17 @@ observables = [
 ]
 proof_domain = "all register/flag and predef/move-type inputs through the move-type load"
 decoder = "GetPredefRegisters continuation boundary, destination pointer restoration, and wPlayerMoveType load are modeled exactly; type-name table lookup, text placement, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ReadTrainer"
+assembly_source = "engine/battle/read_trainer_party.asm"
+c_symbol = "port_read_trainer_private"
+c_source = "verification/ports/read_trainer_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wEnemyPartyCount",
+    "wEnemyPartySpecies",
+]
+proof_domain = "all register/flag, link-state, opponent, and party-reset inputs through current-opponent load"
+decoder = "link-battle early return, enemy-party count/species reset, and current-opponent load are modeled exactly; trainer-pointer arithmetic, trainer iteration, party construction, special moves, and continuation calls remain beyond the explicit boundary"
