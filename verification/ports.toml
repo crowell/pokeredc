@@ -22587,3 +22587,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the PrintText call"
 decoder = "NoEffectText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "PrintDidntAffectText"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_print_didnt_affect_text"
+c_source = "verification/ports/print_didnt_affect_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the PrintText call"
+decoder = "DidntAffectText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
