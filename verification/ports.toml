@@ -22347,3 +22347,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the RunPaletteCommand call"
 decoder = "SET_PAL_BATTLE_BLACK B setup is modeled exactly; palette command, silhouette slide, tile/hardware reset, and common variable initialization remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "_LoadTrainerPic"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_load_trainer_pic"
+c_source = "verification/ports/load_trainer_pic.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, trainer-pointer, and wLinkState inputs through bank selection"
+decoder = "trainer pointer load, link-state AND-A flags, Trainer Pics/RedPicFront bank selection, and decompression call boundary are modeled exactly; sprite decompression, front-pic loading, and tile/data continuation remain beyond the explicit boundary"
