@@ -23218,3 +23218,16 @@ observables = [
 ]
 proof_domain = "all register/flag, status, filtered-count, and menu-state inputs through menu setup"
 decoder = "NO_TEXT_DELAY flag set, menu-state initialization, filtered-bag count decrement, and menu coordinate setup are modeled exactly; border rendering, fossil listing, input handling, item/mon selection, text, item removal, and event continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintFossilsInBag"
+assembly_source = "engine/events/cinnabar_lab.asm"
+c_symbol = "port_print_fossils_in_bag_private"
+c_source = "verification/ports/print_fossils_in_bag_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hItemCounter",
+]
+proof_domain = "all register/flag and item-counter inputs through filtered-list loop setup"
+decoder = "filtered-bag pointer setup, hItemCounter reset, and loop-entry state are modeled exactly; item iteration, GetItemName, line placement, string rendering, and continuation paths remain beyond the explicit boundary"
