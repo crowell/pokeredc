@@ -22323,3 +22323,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the Delay3/MoveAnimation predef boundary"
 decoder = "wAnimationID store is flag-neutral and Delay3 is invoked as a C call; MoveAnimation predef setup and animation execution remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "InitWildBattle"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_init_wild_battle"
+c_source = "verification/ports/init_wild_battle.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the LoadEnemyMonData call boundary"
+decoder = "wIsInBattle=1 setup is modeled exactly; LoadEnemyMonData, battle transition/initialization, ghost handling, sprite loading, tilemap setup, and common battle initialization remain beyond the explicit boundary"
