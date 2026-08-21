@@ -24113,3 +24113,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through LoadCurrentMapView entry"
 decoder = "LoadCurrentMapView call dispatch and UpdateSprites jump continuation are modeled as an explicit call boundary; map reload, sprite processing, and continuation effects remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "FindWildLocationsOfMon"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_find_wild_locations_of_mon_private"
+c_source = "verification/ports/find_wild_locations_of_mon_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through wild-data loop setup"
+decoder = "WildDataPointers HL setup, wBuffer DE setup, loop counter C initialization, and first loop-entry state are modeled exactly; wild-data iteration, map checks, buffer writes, and continuation paths remain beyond the explicit boundary"
