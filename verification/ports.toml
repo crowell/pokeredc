@@ -24035,3 +24035,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through MoveAnimation dispatch"
 decoder = "pre-animation palette/screen/delay call sequence, TOSS_ANIM load, wAnimationID write, and MoveAnimation dispatch are modeled exactly; animation, text, item-removal, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "RestoreBonusPP"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_restore_bonus_pp_private"
+c_source = "verification/ports/restore_bonus_pp_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wWhichPokemon",
+]
+proof_domain = "all register/flag and party-index inputs through AddNTimes entry"
+decoder = "wPartyMon1Moves HL base, PARTYMON_STRUCT_LENGTH BC setup, wWhichPokemon load, and AddNTimes dispatch are modeled exactly; party pointer arithmetic, normal PP loading, bonus-PP loop, and continuation paths remain beyond the explicit boundary"
