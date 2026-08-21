@@ -22659,3 +22659,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wPartyGainExpFlags inputs through bit-count loop setup"
 decoder = "party EXP flags load, B copy, XOR-A, C=8, D=0 setup, and loop boundary are modeled exactly; bit counting, divisor early return, stat/EXP division, and memory writes remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GetTrainerName_"
+assembly_source = "engine/battle/get_trainer_name.asm"
+c_symbol = "port_get_trainer_name"
+c_source = "verification/ports/get_trainer_name.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the linked-trainer-name branch"
+decoder = "linked trainer-name pointer setup and wLinkState AND-A flags are modeled exactly; rival/trainer-name selection, GetName, buffer copy, and return continuation remain beyond the explicit boundary"
