@@ -22491,3 +22491,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the final WritePokeballOAMData call"
 decoder = "ordered LoadPartyPokeballGfx and SetupPokeballs calls plus final enemy OAM pointer setup are modeled exactly; party buffer/OAM writes and HUD rendering remain beyond the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "JumpMoveEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_jump_move_effect"
+c_source = "verification/ports/jump_move_effect.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and move-effect inputs through selected-effect dispatch"
+decoder = "inner jump-effect turn/effect selection and AND-A flags are modeled exactly; pointer-table lookup, handler jump, and public-wrapper return behavior remain beyond the explicit boundary"
