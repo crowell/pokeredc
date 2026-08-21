@@ -21854,3 +21854,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wCriticalHitOrOHKO inputs through the zero/nonzero branch"
 decoder = "wCriticalHitOrOHKO load and AND-A flags are modeled exactly; critical/OHKO text selection, clearing, and delay remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CheckForDisobedience"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_check_for_disobedience"
+c_source = "verification/ports/check_for_disobedience.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the link-battle fast path"
+decoder = "wMonIsDisobedient clear, wLinkState load, LINK_STATE_BATTLING comparison, and AND-A return flags are modeled exactly; traded-mon badge and random disobedience paths remain beyond the explicit boundary"
