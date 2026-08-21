@@ -23231,3 +23231,16 @@ observables = [
 ]
 proof_domain = "all register/flag and item-counter inputs through filtered-list loop setup"
 decoder = "filtered-bag pointer setup, hItemCounter reset, and loop-entry state are modeled exactly; item iteration, GetItemName, line placement, string rendering, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadFossilItemAndMonName"
+assembly_source = "engine/events/cinnabar_lab.asm"
+c_symbol = "port_load_fossil_item_and_mon_name_private"
+c_source = "verification/ports/load_fossil_item_and_mon_name_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wNamedObjectIndex",
+]
+proof_domain = "all register/flag and fossil-mon inputs through GetMonName setup"
+decoder = "wFossilMon load, wNamedObjectIndex store, and GetMonName continuation boundary are modeled exactly; string copy, fossil-item lookup, item-name loading, and continuation paths remain beyond the explicit boundary"
