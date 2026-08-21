@@ -23419,3 +23419,15 @@ observables = [
 ]
 proof_domain = "all register/flag and current-menu-item inputs through YesNoChoice result load"
 decoder = "TurnPageText/YesNoChoice continuation boundaries and current-menu-item result load are modeled exactly; page branch return, text pages, and script continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DoInGameTradeDialogue"
+assembly_source = "engine/events/in_game_trades.asm"
+c_symbol = "port_do_ingame_trade_dialogue_private"
+c_source = "verification/ports/do_ingame_trade_dialogue_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wWhichTrade inputs through trade-index setup"
+decoder = "SaveScreenTilesToBuffer2 continuation boundary, wWhichTrade load/copy, and trade-index register setup are modeled exactly; trade-record lookup, name loading, completion flags, dialogue selection, yes/no handling, and continuation paths remain beyond the explicit boundary"
