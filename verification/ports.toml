@@ -24312,3 +24312,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through FillMemory entry"
 decoder = "cancel-box tilemap HL setup, fill-byte A load, fill-size BC setup, and FillMemory dispatch are modeled exactly; border, cancel-text placement, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TradeCenter_DisplayStats"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_trade_center_display_stats_private"
+c_source = "verification/ports/trade_center_display_stats_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurrentMenuItem",
+    "wWhichPokemon",
+]
+proof_domain = "all register/flag and menu-index inputs through StatusScreen entry"
+decoder = "wCurrentMenuItem load, wWhichPokemon write, and StatusScreen dispatch are modeled exactly; status rendering, palette/font restoration, party-list drawing, cancel-box construction, and continuation paths remain beyond the explicit boundary"
