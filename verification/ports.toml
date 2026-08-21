@@ -21962,3 +21962,15 @@ observables = [
 ]
 proof_domain = "all register/flag and normal move-effect/power inputs through the zero-power check"
 decoder = "normal-effect dispatch, player move-power load, and AND-A flags are modeled exactly; OHKO, Super Fang, special-damage, regular damage, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ApplyDamageToEnemyPokemon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_apply_damage_to_enemy_pokemon"
+c_source = "verification/ports/apply_damage_to_enemy_pokemon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wDamage inputs through the zero-damage branch"
+decoder = "wDamage high/low load, HL setup, B copy, and OR-A zero flags are modeled exactly; substitute handling, HP subtraction, overflow capping, HP-bar animation, and HUD continuation remain beyond the explicit boundary"
