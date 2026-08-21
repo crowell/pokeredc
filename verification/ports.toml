@@ -22539,3 +22539,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the PrintText call"
 decoder = "NothingHappenedText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "CantLowerAnymore"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_cant_lower_anymore"
+c_source = "verification/ports/cant_lower_anymore.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and pointed move-effect inputs through the stat-lowering threshold comparison"
+decoder = "move-effect load and ATTACK_DOWN_SIDE_EFFECT CP flags are modeled exactly; threshold return and NothingHappenedText continuation remain beyond the explicit boundary"
