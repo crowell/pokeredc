@@ -21914,3 +21914,15 @@ observables = [
 ]
 proof_domain = "all register/flag and move-effect inputs through effect selection"
 decoder = "hWhoseTurn AND-A flags and player/enemy move-effect selection are modeled exactly; defense adjustment, OHKO/multi-hit handling, arithmetic damage calculation, and recoil remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "JumpToOHKOMoveEffect"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_jump_to_ohko_move_effect"
+c_source = "verification/ports/jump_to_ohko_move_effect.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wMoveMissed inputs after the JumpMoveEffect boundary"
+decoder = "wMoveMissed load and DEC-A result flags are modeled exactly, including carry preservation; JumpMoveEffect remains the explicit call boundary"
