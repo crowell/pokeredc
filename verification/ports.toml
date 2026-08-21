@@ -22479,3 +22479,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through PlaceHUDTiles"
 decoder = "Enemy HUD graphics CopyData call boundary, coordinate `HL` setup, and `DE = 1`/`BC` setup are modeled exactly; tile-copy effects and shared HUD placement remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SetupPlayerAndEnemyPokeballs"
+assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
+c_symbol = "port_setup_player_and_enemy_pokeballs"
+c_source = "verification/ports/setup_player_and_enemy_pokeballs.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the final WritePokeballOAMData call"
+decoder = "ordered LoadPartyPokeballGfx and SetupPokeballs calls plus final enemy OAM pointer setup are modeled exactly; party buffer/OAM writes and HUD rendering remain beyond the explicit continuation boundary"
