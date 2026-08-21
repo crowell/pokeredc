@@ -22311,3 +22311,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wLinkState inputs through the shared-random branch check"
 decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; shared random-list indexing/seed generation, local Random path, and return/carry continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PlayMoveAnimation"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_play_move_animation"
+c_source = "verification/ports/play_move_animation.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the Delay3/MoveAnimation predef boundary"
+decoder = "wAnimationID store is flag-neutral and Delay3 is invoked as a C call; MoveAnimation predef setup and animation execution remain beyond the explicit boundary"
