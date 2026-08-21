@@ -24101,3 +24101,15 @@ observables = [
 ]
 proof_domain = "all register/flag and map inputs through IsInArray entry"
 decoder = "current-map load, SuperRodData HL setup, three-byte DE stride setup, and IsInArray dispatch are modeled exactly; fishing-group lookup, random bite selection, species/level loads, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ItemUseReloadOverworldData"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_item_use_reload_overworld_data_private"
+c_source = "verification/ports/item_use_reload_overworld_data_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through LoadCurrentMapView entry"
+decoder = "LoadCurrentMapView call dispatch and UpdateSprites jump continuation are modeled as an explicit call boundary; map reload, sprite processing, and continuation effects remain beyond the explicit boundary"
