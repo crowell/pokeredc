@@ -24088,3 +24088,16 @@ observables = [
 ]
 proof_domain = "all register/flag and tileset inputs through IsInArray entry"
 decoder = "current-tileset load, WaterTilesets HL setup, DE stride setup, and IsInArray dispatch are modeled exactly; water/shore membership, dock and tile exceptions, carry result, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ReadSuperRodData"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_read_super_rod_data_private"
+c_source = "verification/ports/read_super_rod_data_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurMap",
+]
+proof_domain = "all register/flag and map inputs through IsInArray entry"
+decoder = "current-map load, SuperRodData HL setup, three-byte DE stride setup, and IsInArray dispatch are modeled exactly; fishing-group lookup, random bite selection, species/level loads, and continuation paths remain beyond the explicit boundary"
