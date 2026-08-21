@@ -21524,3 +21524,15 @@ observables = [
 ]
 proof_domain = "all register/flag and initial HUD state inputs through ClearScreenArea"
 decoder = "XOR-A flags, automatic-BG-transfer store, enemy HUD coordinates, and BC dimensions are modeled exactly; HUD rendering remains beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GetBattleHealthBarColor"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_get_battle_health_bar_color"
+c_source = "verification/ports/get_battle_health_bar_color.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and color-memory inputs through the GetHealthBarColor call"
+decoder = "HL-indirect color load and GetHealthBarColor continuation are modeled exactly; palette-update branch remains beyond the explicit boundary"
