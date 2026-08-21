@@ -22239,3 +22239,15 @@ observables = [
 ]
 proof_domain = "selected-stat wrapper call chain with zero player/enemy stat masks"
 decoder = "ordered DoubleSelectedStats then HalveSelectedStats C calls are modeled exactly for the no-selected-stat path; nonzero stat-mask arithmetic and predef register-block integration remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CalculateModifiedStats"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_calculate_modified_stats"
+c_source = "verification/ports/calculate_modified_stats.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register and flag inputs through the initial stat-loop counter setup"
+decoder = "C=0 loop initialization is modeled exactly; CalculateModifiedStat calls, stat iteration, and completion return remain beyond the explicit boundary"
