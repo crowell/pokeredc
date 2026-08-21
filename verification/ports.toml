@@ -21782,3 +21782,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wIsInBattle inputs through the wild-battle check"
 decoder = "wIsInBattle load and DEC-A flags, including carry preservation, are modeled exactly; map-range and Silph Scope checks remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CheckPlayerStatusConditions"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_check_player_status_conditions"
+c_source = "verification/ports/check_player_status_conditions.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and battle-status inputs through the sleeping/frozen branch"
+decoder = "battle-status HL setup, SLP_MASK AND-A flags, and branch boundary are modeled exactly; sleep, freeze, trap, flinch, and recharge paths remain beyond the explicit boundary"
