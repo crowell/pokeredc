@@ -23520,3 +23520,15 @@ observables = [
 ]
 proof_domain = "all register/flag and sprite-index inputs through toggleable-object scan setup"
 decoder = "EnableAutoTextBoxDrawing continuation boundary, hSpriteIndex load/copy, and toggleable-object list loop setup are modeled exactly; object scan, item lookup, GiveItem, hide-object, text, and bag-full paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ApplyOutOfBattlePoisonDamage"
+assembly_source = "engine/events/poison.asm"
+c_symbol = "port_apply_out_of_battle_poison_damage_private"
+c_source = "verification/ports/apply_out_of_battle_poison_damage_private.c"
+status = "partial"
+observables = [
+    "A",
+]
+proof_domain = "all status, party-count, step-counter, and register inputs through step-frequency guard"
+decoder = "scripted-movement carry guard, party-count guard, step-counter load/mask, and no-damage branch selector are modeled exactly; daycare EXP, poison HP mutation, fainting, text/sound, and continuation paths remain beyond the explicit boundary"
