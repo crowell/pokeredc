@@ -23354,3 +23354,16 @@ observables = [
 ]
 proof_domain = "all register/flag and quiz-answer/menu-selection inputs through answer comparison"
 decoder = "YesNoChoice continuation boundary, hGymGateAnswer load, wCurrentMenuItem load, and comparison operands are modeled exactly; correct/wrong answer branches, event flags, sound, text, opponent selection, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "UpdateCinnabarGymGateTileBlocks_"
+assembly_source = "engine/events/hidden_events/cinnabar_gym_quiz.asm"
+c_symbol = "port_update_cinnabar_gym_gate_tile_blocks_private"
+c_source = "verification/ports/update_cinnabar_gym_gate_tile_blocks_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hGymGateIndex",
+]
+proof_domain = "all register/flag and gym-gate index inputs through gate-update loop setup"
+decoder = "initial hGymGateIndex=6 setup and loop-entry state are modeled exactly; coordinate lookup, event-flag checks, tile replacement, repeated gate iteration, and continuation paths remain beyond the explicit boundary"
