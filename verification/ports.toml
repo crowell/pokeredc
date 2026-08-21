@@ -22803,3 +22803,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wMoveMissed inputs through the MoveHitTest result branch"
 decoder = "MoveHitTest call boundary, wMoveMissed load, and AND-A flags are modeled exactly; target type/seed status checks, state mutation, animation, text, and miss continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "MistEffect_"
+assembly_source = "engine/battle/move_effects/mist.asm"
+c_symbol = "port_mist_effect_private"
+c_source = "verification/ports/mist_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and battle-status inputs through PROTECTED_BY_MIST bit check"
+decoder = "player/enemy status-pointer selection and PROTECTED_BY_MIST BIT flags are modeled exactly; status mutation, animation, text, delay, and failure continuation remain beyond the explicit boundary"
