@@ -23496,3 +23496,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through first received-mon pointer setup"
 decoder = "party nickname destination pointer and NAME_LENGTH setup are modeled exactly; received-mon pointer calculation, nickname/OT/ID copying, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "OaksAideScript"
+assembly_source = "engine/events/oaks_aide.asm"
+c_symbol = "port_oaks_aide_script_private"
+c_source = "verification/ports/oaks_aide_script_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and current-menu-item inputs through YesNoChoice result load"
+decoder = "OaksAide greeting/YesNoChoice continuation boundaries and current-menu-item result load are modeled exactly; pokedex bit counting, reward checks, item grant, text, and continuation paths remain beyond the explicit boundary"
