@@ -21768,8 +21768,8 @@ status = "partial"
 observables = [
     "all registers and flags",
 ]
-proof_domain = "all register/flag inputs through the IsGhostBattle result"
-decoder = "IsGhostBattle is an explicit boundary; wrapper call and return state are modeled exactly; ghost-message branches remain beyond the explicit boundary"
+proof_domain = "all register/flag and ghost-state inputs through PrintText dispatch"
+decoder = "IsGhostBattle call, ghost/player turn dispatch, freeze/sleep mask, text-pointer setup, PrintText calls, and XOR-A returns are modeled exactly; text rendering remains beyond the explicit PrintText continuation"
 
 [[function]]
 assembly_symbol = "IsGhostBattle"
