@@ -23026,3 +23026,15 @@ observables = [
 ]
 proof_domain = "all register/flag and AI-item inputs through FULL_RESTORE selection"
 decoder = "AICureStatus continuation boundary, FULL_RESTORE load, and wAIItem store are modeled exactly; HP-bar copying, status/HP updates, sound, animation, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SwitchEnemyMon"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_switch_enemy_mon_private"
+c_source = "verification/ports/switch_enemy_mon_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and enemy-party-position inputs through AddNTimes pointer setup"
+decoder = "enemy party-position load, enemy-party roster base pointer, and PARTYMON_STRUCT_LENGTH setup are modeled exactly; party HP/status copying, withdrawal text, send-out, link-state handling, and continuation paths remain beyond the explicit boundary"
