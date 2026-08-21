@@ -23600,3 +23600,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through prize-price textbox setup"
 decoder = "price textbox coordinates and one-by-seven border dimensions are modeled exactly; coin label, price formatting, rendering, sprite updates, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HandlePrizeChoice"
+assembly_source = "engine/events/prize_menu.asm"
+c_symbol = "port_handle_prize_choice_private"
+c_source = "verification/ports/handle_prize_choice_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wWhichPrize",
+]
+proof_domain = "all register/flag and current-menu-item inputs through selected-prize setup"
+decoder = "current-menu selection load/store and prize-choice continuation state are modeled exactly; prize lookup, name rendering, yes/no handling, coin subtraction, item/Pokemon grant, bag-full, and continuation paths remain beyond the explicit boundary"
