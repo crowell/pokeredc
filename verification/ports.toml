@@ -21474,3 +21474,15 @@ observables = [
 ]
 proof_domain = "all register/flag and tile-state inputs through the first CopyDownscaledMonTiles call"
 decoder = "initial ClearScreenArea is an explicit boundary; coordinate/size setup, XOR-A flags, and tile-state stores are modeled exactly"
+
+[[function]]
+assembly_symbol = "ReadPlayerMonCurHPAndStatus"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_read_player_mon_cur_hp_status"
+c_source = "verification/ports/read_player_mon_cur_hp_status.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and player-mon-number inputs through the AddNTimes call"
+decoder = "wPlayerMonNumber load and party-pointer/structure setup are modeled exactly; HP/status copy and battle-state writes remain beyond the explicit boundary"
