@@ -22863,3 +22863,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and move-effect inputs through move-effect load"
 decoder = "player/enemy status and move-effect pointer selection plus move-effect load and AND-A flags are modeled exactly; screen/reflect bit tests, state mutation, animation, delay, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SubstituteEffect_"
+assembly_source = "engine/battle/move_effects/substitute.asm"
+c_symbol = "port_substitute_effect_private"
+c_source = "verification/ports/substitute_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and battle-status inputs through HAS_SUBSTITUTE_UP bit check"
+decoder = "player/enemy max-HP, substitute-HP, and battle-status pointer selection plus HAS_SUBSTITUTE_UP BIT flags are modeled exactly; HP arithmetic, substitute state mutation, animation, text, delay, and continuation paths remain beyond the explicit boundary"
