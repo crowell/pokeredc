@@ -21486,3 +21486,15 @@ observables = [
 ]
 proof_domain = "all register/flag and player-mon-number inputs through the AddNTimes call"
 decoder = "wPlayerMonNumber load and party-pointer/structure setup are modeled exactly; HP/status copy and battle-state writes remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DrawHUDsAndHPBars"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_draw_huds_and_hp_bars"
+c_source = "verification/ports/draw_huds_and_hp_bars.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the DrawPlayerHUDAndHPBar call before DrawEnemyHUDAndHPBar"
+decoder = "DrawPlayerHUDAndHPBar is an explicit boundary; wrapper call/JP sequence preserves all CPU state"
