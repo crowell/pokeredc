@@ -23651,3 +23651,15 @@ observables = [
 ]
 proof_domain = "all register/flag, bit-index, and flag-action inputs through flag-byte/mask setup"
 decoder = "GetPredefRegisters continuation boundary, bit-index byte offset, and bit-mask setup are modeled exactly; reset/set/read action, flagfield mutation, result return, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HPBarLength"
+assembly_source = "engine/gfx/hp_bar.asm"
+c_symbol = "port_hp_bar_length_private"
+c_source = "verification/ports/hp_bar_length_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through GetPredefRegisters continuation boundary"
+decoder = "GetPredefRegisters call boundary is modeled exactly; HP scaling arithmetic, minimum-length clamp, division, and continuation paths remain beyond the explicit boundary"
