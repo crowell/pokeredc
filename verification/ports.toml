@@ -23115,3 +23115,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through UsedMoveText pointer setup"
 decoder = "UsedMoveText pointer load and PrintText continuation boundary are modeled exactly; actor/move selection, grammar, obedience checks, move storage, and continuation text paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TryDoWildEncounter"
+assembly_source = "engine/battle/wild_encounters.asm"
+c_symbol = "port_try_do_wild_encounter_private"
+c_source = "verification/ports/try_do_wild_encounter_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wNPCMovementScriptPointerTableNum",
+    "wMovementFlags",
+]
+proof_domain = "all register/flag and initial movement-guard inputs through movement guard checks"
+decoder = "NPC movement-script and movement-flag guard loads/checks are modeled exactly; map-tile checks, map restrictions, repel handling, random encounter selection, wild-mon setup, and continuation paths remain beyond the explicit boundary"
