@@ -22166,3 +22166,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wEnemyMoveEffect inputs through the FLY comparison"
 decoder = "level-swap/DelayFrames boundary, enemy move-effect load, and FLY CP flags are modeled exactly; CHARGE comparison, animation, Mirror Move/Metronome, residual effects, miss handling, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CheckEnemyStatusConditions"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_check_enemy_status_conditions"
+c_source = "verification/ports/check_enemy_status_conditions.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wEnemyMonStatus inputs through the sleep-mask branch"
+decoder = "enemy-status HL setup, SLP_MASK AND-A flags, and branch boundary are modeled exactly; sleep countdown/text/animation, freeze, trapping, flinch, recharge, disabled moves, and continuation paths remain beyond the explicit boundary"
