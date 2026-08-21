@@ -21671,3 +21671,15 @@ observables = [
 ]
 proof_domain = "all register/flag and disabled-move inputs through the disabled-move branch"
 decoder = "STRUGGLE selection, disabled-move load/AND-A flags, and BattleMon PP pointer setup are modeled exactly; PP scan and no-moves paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SwapMovesInMenu"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_swap_moves_in_menu"
+c_source = "verification/ports/swap_moves_in_menu.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wMenuItemToSwap inputs through the no-menu-item branch"
+decoder = "wMenuItemToSwap load and AND-A flags are modeled exactly; move/PP swaps and disabled-move updates remain beyond the explicit boundary"
