@@ -23129,3 +23129,15 @@ observables = [
 ]
 proof_domain = "all register/flag and initial movement-guard inputs through movement guard checks"
 decoder = "NPC movement-script and movement-flag guard loads/checks are modeled exactly; map-tile checks, map restrictions, repel handling, random encounter selection, wild-mon setup, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DebugMenu"
+assembly_source = "engine/debug/debug_menu.asm"
+c_symbol = "port_debug_menu_private"
+c_source = "verification/ports/debug_menu_private.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through production DebugMenu RET"
+decoder = "production ROM encodes DebugMenu as a one-byte RET; native implementation preserves the complete register state"
