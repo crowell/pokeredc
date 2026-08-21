@@ -23575,3 +23575,16 @@ observables = [
 ]
 proof_domain = "all register/flag and initial Pokemart list/menu state inputs through money-box setup"
 decoder = "list-scroll save, purchase-state reset, menu-position reset, prices enable, MONEY_BOX selection, and DisplayTextBoxID continuation boundary are modeled exactly; buy/sell menus, inventory, payment, item grants, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GetPrizeMenuId"
+assembly_source = "engine/events/prize_menu.asm"
+c_symbol = "port_get_prize_menu_id_private"
+c_source = "verification/ports/get_prize_menu_id_private.c"
+status = "partial"
+observables = [
+    "A",
+    "wWhichPrizeWindow",
+]
+proof_domain = "all register/flag and hTextID inputs through prize-window selection"
+decoder = "hTextID relative-ID subtraction and wWhichPrizeWindow store are modeled exactly; prize-table pointer lookup, item/Pokemon name rendering, price display, and continuation paths remain beyond the explicit boundary"
