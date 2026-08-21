@@ -22214,3 +22214,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wLinkState inputs through the link-battle branch"
 decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; link-vs-normal initialization, transition, tile/palette loads, screen/sprite clearing, hardware writes, and variable resets remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadPlayerBackPic"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_load_player_back_pic"
+c_source = "verification/ports/load_player_back_pic.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wBattleType inputs through Red/Old Man back-picture selection"
+decoder = "battle-type DEC flags and RedPicBack/OldManPicBack pointer selection are modeled exactly; sprite decompression, scaling, OAM generation, interlacing, hardware, and tile-loading paths remain beyond the explicit boundary"
