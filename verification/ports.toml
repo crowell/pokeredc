@@ -21412,3 +21412,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wWhichPokemon inputs through the AddNTimes call"
 decoder = "wWhichPokemon load and HL/BC party-structure setup are modeled exactly; HP comparison and no-will text paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TryRunningFromBattle"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_try_running_from_battle"
+c_source = "verification/ports/try_running_from_battle.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and battle-type inputs on the non-ghost path through the Safari-battle comparison"
+decoder = "IsGhostBattle is an explicit boundary; battle-type load and CP flags are modeled exactly; escape-speed and trainer paths remain beyond the explicit boundary"
