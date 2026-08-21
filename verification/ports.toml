@@ -23001,3 +23001,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wIsInBattle inputs through initial battle-mode decrement/check"
 decoder = "initial AND-A/decrement setup and wIsInBattle check state are modeled exactly; link-battle guard, trainer-class AI pointer selection, AI-count handling, random choice, and continuation dispatch remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AIPlayRestoringSFX"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_ai_play_restoring_sfx_private"
+c_source = "verification/ports/ai_play_restoring_sfx_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through healing-SFX load"
+decoder = "SFX_HEAL_AILMENT immediate load is modeled exactly; sound playback and continuation call remain beyond the explicit boundary"
