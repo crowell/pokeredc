@@ -22827,3 +22827,15 @@ observables = [
 ]
 proof_domain = "all register/flag and hWhoseTurn inputs through target-status/type pointer setup"
 decoder = "player/enemy target-status and move-type pointer selection plus AND-A flags are modeled exactly; status/type immunity, MoveHitTest, paralysis mutation, speed reduction, animation, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PayDayEffect_"
+assembly_source = "engine/battle/move_effects/pay_day.asm"
+c_symbol = "port_pay_day_effect_private"
+c_source = "verification/ports/pay_day_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and battle-level inputs through level doubling"
+decoder = "Pay Day money reset, whose-turn level selection, and ADD-A doubling flags are modeled exactly; BCD division, money accumulation, text, and continuation calls remain beyond the explicit boundary"
