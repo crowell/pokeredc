@@ -22779,3 +22779,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first ResetStatMods call"
 decoder = "A=7 and player stat-modifier pointer setup are modeled exactly; stat resets, stat restoration, status cures, text, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HealEffect_"
+assembly_source = "engine/battle/move_effects/heal.asm"
+c_symbol = "port_heal_effect_private"
+c_source = "verification/ports/heal_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and move-number inputs through HP comparison setup"
+decoder = "player/enemy HP and max-HP pointer selection, move-number load/copy, and turn flags are modeled exactly; HP comparison, Rest/heal arithmetic, status, animation, text, and continuation paths remain beyond the explicit boundary"
