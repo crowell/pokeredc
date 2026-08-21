@@ -22335,3 +22335,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the LoadEnemyMonData call boundary"
 decoder = "wIsInBattle=1 setup is modeled exactly; LoadEnemyMonData, battle transition/initialization, ghost handling, sprite loading, tilemap setup, and common battle initialization remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "_InitBattleCommon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_init_battle_common"
+c_source = "verification/ports/init_battle_common.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the RunPaletteCommand call"
+decoder = "SET_PAL_BATTLE_BLACK B setup is modeled exactly; palette command, silhouette slide, tile/hardware reset, and common variable initialization remain beyond the explicit boundary"
