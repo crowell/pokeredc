@@ -23897,3 +23897,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through SGB packet-pointer loop setup"
 decoder = "packet-pointer table address and nine-packet loop counter setup are modeled exactly; packet pointer dereference, SendSGBPacket calls, loop iteration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CheckSGB"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_check_sgb_private"
+c_source = "verification/ports/check_sgb_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through initial SGB packet pointer setup"
+decoder = "MltReq2Packet pointer setup and initial SGB-packet send continuation boundary are modeled exactly; hardware polling, JOYP signaling, timing, and carry-result detection remain beyond the explicit boundary"
