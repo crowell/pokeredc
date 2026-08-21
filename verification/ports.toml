@@ -22755,3 +22755,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wDamage high-byte inputs through the first SRL"
 decoder = "wDamage HL setup, high-byte load, SRL result, and flags are modeled exactly; low-byte rotation, minimum-damage, HP selection/update, animation, and text continuations remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "FocusEnergyEffect_"
+assembly_source = "engine/battle/move_effects/focus_energy.asm"
+c_symbol = "port_focus_energy_effect"
+c_source = "verification/ports/focus_energy_effect.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and battle-status inputs through GETTING_PUMPED bit check"
+decoder = "player/enemy status-pointer selection and GETTING_PUMPED BIT flags are modeled exactly; status mutation, animation, text, delay, and failure continuation remain beyond the explicit boundary"
