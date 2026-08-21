@@ -23077,3 +23077,16 @@ observables = [
 ]
 proof_domain = "all register/flag, divisor, and enemy-max-HP inputs through Divide setup"
 decoder = "divisor save, enemy max-HP dividend setup, B=2 division precision, and HL/A setup are modeled exactly; division result, current-HP comparison, carry return, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AIPrintItemUse"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_ai_print_item_use_private"
+c_source = "verification/ports/ai_print_item_use_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wAIItem",
+]
+proof_domain = "all register/flag and item inputs through wAIItem store"
+decoder = "wAIItem store is modeled exactly; item-name lookup, text rendering, AI-count handling, and continuation calls remain beyond the explicit boundary"
