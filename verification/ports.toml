@@ -21721,3 +21721,16 @@ observables = [
 ]
 proof_domain = "all register/flag and player-move-list inputs through the run-command branch"
 decoder = "stop-value store, player move-list load, and LINKBATTLE_RUN comparison are modeled exactly; exchange synchronization and move-selection paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ExecutePlayerMove"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_execute_player_move"
+c_source = "verification/ports/execute_player_move.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hWhoseTurn",
+]
+proof_domain = "all register/flag and selected-move inputs through the CANNOT_MOVE branch"
+decoder = "XOR-A turn setup, selected-move increment flags, and CANNOT_MOVE continuation are modeled exactly; move effects, status checks, and battle execution remain beyond the explicit boundary"
