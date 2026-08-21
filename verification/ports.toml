@@ -23341,3 +23341,16 @@ observables = [
 ]
 proof_domain = "all facing, tileset, interaction-state, and register inputs through bookshelf dispatch setup"
 decoder = "facing-direction guard, current-tileset load, and no-match interaction flag update are modeled exactly; bookshelf tile scan, text dispatch, Card Key fallback, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CinnabarGymQuiz_AskQuestion"
+assembly_source = "engine/events/hidden_events/cinnabar_gym_quiz.asm"
+c_symbol = "port_cinnabar_gym_quiz_ask_question_private"
+c_source = "verification/ports/cinnabar_gym_quiz_ask_question_private.c"
+status = "partial"
+observables = [
+    "A",
+    "C",
+]
+proof_domain = "all register/flag and quiz-answer/menu-selection inputs through answer comparison"
+decoder = "YesNoChoice continuation boundary, hGymGateAnswer load, wCurrentMenuItem load, and comparison operands are modeled exactly; correct/wrong answer branches, event flags, sound, text, opponent selection, and continuation paths remain beyond the explicit boundary"
