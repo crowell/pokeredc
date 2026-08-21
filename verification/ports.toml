@@ -22851,3 +22851,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and move-number inputs through move-number and max-HP pointer setup"
 decoder = "player/enemy move-number selection and max-HP pointer setup are modeled exactly; damage rotation, minimum recoil, HP-bar state mutation, animation, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ReflectLightScreenEffect_"
+assembly_source = "engine/battle/move_effects/reflect_light_screen.asm"
+c_symbol = "port_reflect_light_screen_effect_private"
+c_source = "verification/ports/reflect_light_screen_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and move-effect inputs through move-effect load"
+decoder = "player/enemy status and move-effect pointer selection plus move-effect load and AND-A flags are modeled exactly; screen/reflect bit tests, state mutation, animation, delay, text, and continuation paths remain beyond the explicit boundary"
