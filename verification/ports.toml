@@ -23484,3 +23484,15 @@ observables = [
 ]
 proof_domain = "all register/flag and traded-species inputs through species setup"
 decoder = "traded-player/received species stores and species-pointer state are modeled exactly; OT/ID copying, random trainer ID, move data, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "InGameTrade_CopyDataToReceivedMon"
+assembly_source = "engine/events/in_game_trades.asm"
+c_symbol = "port_ingame_trade_copy_data_received_mon_private"
+c_source = "verification/ports/ingame_trade_copy_data_received_mon_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through first received-mon pointer setup"
+decoder = "party nickname destination pointer and NAME_LENGTH setup are modeled exactly; received-mon pointer calculation, nickname/OT/ID copying, and continuation paths remain beyond the explicit boundary"
