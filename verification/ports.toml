@@ -21622,3 +21622,15 @@ observables = [
 ]
 proof_domain = "all register/flag and move-menu-type inputs through the mimic-menu branch"
 decoder = "wMoveMenuType load and DEC-A flags are modeled exactly; mimic/relearn/regular menu paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SelectMenuItem"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_select_menu_item"
+c_source = "verification/ports/select_menu_item.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wMoveMenuType inputs through the battle/mimic branch"
+decoder = "wMoveMenuType load and AND-A flags are modeled exactly; menu rendering and input-selection paths remain beyond the explicit boundary"
