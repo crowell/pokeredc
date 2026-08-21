@@ -23859,3 +23859,16 @@ observables = [
 ]
 proof_domain = "all register/flag and HP-bar-index inputs through palette-color pointer setup"
 decoder = "party HP-bar color table pointer, selected-index load, DE offset setup, and AddNTimes continuation boundary are modeled exactly; palette mapping, block-packet writes, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SendSGBPacket"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_send_sgb_packet_private"
+c_source = "verification/ports/send_sgb_packet_private.c"
+status = "partial"
+observables = [
+    "A",
+    "B",
+]
+proof_domain = "all register/flag and SGB packet-count inputs through packet-count guard"
+decoder = "packet-header count mask, zero-packet return, and packet-loop B initialization are modeled exactly; joypad signaling, bit serialization, timing, packet iteration, and continuation paths remain beyond the explicit boundary"
