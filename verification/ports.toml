@@ -24009,3 +24009,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through wait-for-text continuation boundary"
 decoder = "ItemUseText00 HL load, PrintText continuation, heal-ailment sound load, and WaitForTextScrollButtonPress entry are modeled exactly; text rendering, sound playback, button wait, item removal, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "RemoveUsedItem"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_remove_used_item_private"
+c_source = "verification/ports/remove_used_item_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wItemQuantity",
+]
+proof_domain = "all register/flag inputs through RemoveItemFromInventory dispatch"
+decoder = "wNumBagItems HL load, one-item A load, wItemQuantity write, and RemoveItemFromInventory dispatch are modeled exactly; inventory mutation and continuation paths remain beyond the explicit boundary"
