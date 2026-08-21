@@ -22178,3 +22178,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wEnemyMonStatus inputs through the sleep-mask branch"
 decoder = "enemy-status HL setup, SLP_MASK AND-A flags, and branch boundary are modeled exactly; sleep countdown/text/animation, freeze, trapping, flinch, recharge, disabled moves, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GetCurrentMove"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_get_current_move"
+c_source = "verification/ports/get_current_move.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, selected-move, status-flags, and test-battle inputs through the selected-move store"
+decoder = "player/enemy move-number pointer selection, test-battle selected-move override, selected-move load, and BIT/AND flags are modeled exactly; name-list, move-data, PP, and text-buffer calls remain beyond the explicit boundary"
