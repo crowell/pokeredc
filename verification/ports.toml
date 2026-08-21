@@ -22251,3 +22251,15 @@ observables = [
 ]
 proof_domain = "all register and flag inputs through the initial stat-loop counter setup"
 decoder = "C=0 loop initialization is modeled exactly; CalculateModifiedStat calls, stat iteration, and completion return remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CalculateModifiedStat"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_calculate_modified_stat"
+c_source = "verification/ports/calculate_modified_stat.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, stat-index, and whose-stats inputs through target-pointer selection"
+decoder = "player/enemy battle-stat, unmodified-stat, and stat-modifier pointer selection plus BIT/AND flags are modeled exactly; modifier-ratio lookup, Multiply/Divide arithmetic, stat storage, and restoration remain beyond the explicit boundary"
