@@ -24300,3 +24300,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through GBPalWhiteOutWithDelay3 entry"
 decoder = "initial palette white-out call dispatch is modeled as an explicit boundary; map reload, variable clearing, font/status restoration, palette fade-in, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TradeCenter_DrawCancelBox"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_trade_center_draw_cancel_box_private"
+c_source = "verification/ports/trade_center_draw_cancel_box_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through FillMemory entry"
+decoder = "cancel-box tilemap HL setup, fill-byte A load, fill-size BC setup, and FillMemory dispatch are modeled exactly; border, cancel-text placement, and continuation paths remain beyond the explicit boundary"
