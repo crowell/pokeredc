@@ -21511,3 +21511,16 @@ observables = [
 ]
 proof_domain = "all register/flag and initial HUD state inputs through ClearScreenArea"
 decoder = "XOR-A flags, automatic-BG-transfer store, player HUD coordinates, and BC dimensions are modeled exactly; HUD rendering remains beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DrawEnemyHUDAndHPBar"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_draw_enemy_hud_and_hp_bar"
+c_source = "verification/ports/draw_enemy_hud_and_hp_bar.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferEnabled",
+]
+proof_domain = "all register/flag and initial HUD state inputs through ClearScreenArea"
+decoder = "XOR-A flags, automatic-BG-transfer store, enemy HUD coordinates, and BC dimensions are modeled exactly; HUD rendering remains beyond the explicit boundary"
