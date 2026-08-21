@@ -23444,3 +23444,17 @@ observables = [
 ]
 proof_domain = "all register/flag and species inputs through GetMonName setup"
 decoder = "wNamedObjectIndex store and GetMonName continuation boundary are modeled exactly; name-buffer copy and destination pointer setup remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "InGameTrade_DoTrade"
+assembly_source = "engine/events/in_game_trades.asm"
+c_symbol = "port_ingame_trade_do_trade_private"
+c_source = "verification/ports/ingame_trade_do_trade_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wPartyMenuTypeOrMessageID",
+    "wUpdateSpritesEnabled",
+]
+proof_domain = "all register/flag and initial trade-menu state inputs through DisplayPartyMenu setup"
+decoder = "party-menu type reset, sprite-update disable, and DisplayPartyMenu continuation boundary are modeled exactly; selection validation, species matching, trade data preparation, animation, evolution, item/text handling, and continuation paths remain beyond the explicit boundary"
