@@ -23367,3 +23367,18 @@ observables = [
 ]
 proof_domain = "all register/flag and gym-gate index inputs through gate-update loop setup"
 decoder = "initial hGymGateIndex=6 setup and loop-entry state are modeled exactly; coordinate lookup, event-flag checks, tile replacement, repeated gate iteration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayMonFrontSpriteInBox"
+assembly_source = "engine/events/hidden_events/museum_fossils.asm"
+c_symbol = "port_display_mon_front_sprite_in_box_private"
+c_source = "verification/ports/display_mon_front_sprite_in_box_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferEnabled",
+    "hWY",
+    "wTextBoxID",
+]
+proof_domain = "all register/flag and display-state inputs through popup textbox setup"
+decoder = "auto-BG-transfer enable, WY clear, and MON_SPRITE_POPUP textbox selection are modeled exactly; graphics save/load, sprite rendering, text wait, and continuation paths remain beyond the explicit boundary"
