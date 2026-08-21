@@ -23431,3 +23431,16 @@ observables = [
 ]
 proof_domain = "all register/flag and wWhichTrade inputs through trade-index setup"
 decoder = "SaveScreenTilesToBuffer2 continuation boundary, wWhichTrade load/copy, and trade-index register setup are modeled exactly; trade-record lookup, name loading, completion flags, dialogue selection, yes/no handling, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "InGameTrade_GetMonName"
+assembly_source = "engine/events/in_game_trades.asm"
+c_symbol = "port_ingame_trade_get_mon_name_private"
+c_source = "verification/ports/ingame_trade_get_mon_name_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wNamedObjectIndex",
+]
+proof_domain = "all register/flag and species inputs through GetMonName setup"
+decoder = "wNamedObjectIndex store and GetMonName continuation boundary are modeled exactly; name-buffer copy and destination pointer setup remain beyond the explicit boundary"
