@@ -23797,3 +23797,15 @@ observables = [
 ]
 proof_domain = "all species, party-index, and register inputs through sprite-ID lookup setup"
 decoder = "party-index reset, species load, and GetPartyMonSpriteID continuation boundary are modeled exactly; OAM tile selection, OAM writes, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "WriteMonPartySpriteOAM"
+assembly_source = "engine/gfx/mon_icons.asm"
+c_symbol = "port_write_mon_party_sprite_oam_private"
+c_source = "verification/ports/write_mon_party_sprite_oam_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and party-index inputs through first-frame OAM pointer setup"
+decoder = "hPartyMonIndex nibble shift, OAM shadow pointer, C=$10 stride, and first-frame OAM register setup are modeled exactly; symmetric/asymmetric OAM writes, saved-buffer copy, and continuation paths remain beyond the explicit boundary"
