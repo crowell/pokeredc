@@ -22939,3 +22939,15 @@ observables = [
 ]
 proof_domain = "all register/flag and bait/rock-factor inputs through safari text selection"
 decoder = "bait/rock factor decrement flags, eating/angry text pointer selection, and no-text return are modeled exactly; enemy species/catch-rate update, tile loading, text rendering, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ScaleSpriteByTwo"
+assembly_source = "engine/battle/scale_sprites.asm"
+c_symbol = "port_scale_sprite_by_two_private"
+c_source = "verification/ports/scale_sprite_by_two_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the first sprite-column scaling call"
+decoder = "input/output sprite-buffer pointer setup for the first scaling call is modeled exactly; pixel expansion, buffer writes, second chunk processing, and continuation calls remain beyond the explicit boundary"
