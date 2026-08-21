@@ -24176,3 +24176,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through LoadTownMap entry"
 decoder = "LoadTownMap call dispatch is modeled as an explicit call boundary; map rendering, cursor setup, input handling, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadTownMap_Nest"
+assembly_source = "engine/items/town_map.asm"
+c_symbol = "port_load_town_map_nest_private"
+c_source = "verification/ports/load_town_map_nest_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through LoadTownMap entry"
+decoder = "LoadTownMap call dispatch is modeled as an explicit call boundary; sprite suppression, wild-location display, text, input wait, map exit, and continuation paths remain beyond the explicit boundary"
