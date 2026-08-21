@@ -22287,3 +22287,15 @@ observables = [
 ]
 proof_domain = "all register/flag and LCD-control inputs through LCD enabled/disabled selection"
 decoder = "LCDC load and ADD-A flags plus LCD branch selection are modeled exactly; HUD tile source/destination setup, copy/video transfer, hardware, and return paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintEmptyString"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_print_empty_string"
+c_source = "verification/ports/print_empty_string.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the PrintText call"
+decoder = "empty-string HL setup and PrintText C call are modeled exactly; TextCommandProcessor rendering remains beyond the explicit continuation boundary"
