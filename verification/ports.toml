@@ -22467,3 +22467,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through PlaceHUDTiles"
 decoder = "Player HUD graphics CopyData call boundary, coordinate `HL` setup, and `DE = -1`/`BC` setup are modeled exactly; tile-copy effects and shared HUD placement remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PlaceEnemyHUDTiles"
+assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
+c_symbol = "port_place_enemy_hud_tiles"
+c_source = "verification/ports/place_enemy_hud_tiles.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through PlaceHUDTiles"
+decoder = "Enemy HUD graphics CopyData call boundary, coordinate `HL` setup, and `DE = 1`/`BC` setup are modeled exactly; tile-copy effects and shared HUD placement remain beyond the explicit boundary"
