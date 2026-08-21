@@ -22815,3 +22815,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and battle-status inputs through PROTECTED_BY_MIST bit check"
 decoder = "player/enemy status-pointer selection and PROTECTED_BY_MIST BIT flags are modeled exactly; status mutation, animation, text, delay, and failure continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ParalyzeEffect_"
+assembly_source = "engine/battle/move_effects/paralyze.asm"
+c_symbol = "port_paralyze_effect_private"
+c_source = "verification/ports/paralyze_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and hWhoseTurn inputs through target-status/type pointer setup"
+decoder = "player/enemy target-status and move-type pointer selection plus AND-A flags are modeled exactly; status/type immunity, MoveHitTest, paralysis mutation, speed reduction, animation, text, and continuation paths remain beyond the explicit boundary"
