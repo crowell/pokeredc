@@ -22419,3 +22419,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through SetupPokeballs"
 decoder = "PlaceEnemyHUDTiles call boundary, enemy-party/party-count pointer setup, and SetupPokeballs call boundary are modeled exactly; pokeball selection, OAM coordinates, graphics offsets, and rendering remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DrawEnemyPokeballs"
+assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
+c_symbol = "port_draw_enemy_pokeballs"
+c_source = "verification/ports/draw_enemy_pokeballs.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the ordered LoadPartyPokeballGfx/SetupEnemyPartyPokeballs calls"
+decoder = "ordered C calls mirror the assembly call/JP chain; party graphics transfer, HUD tile placement, pokeball selection/OAM writes, and rendering remain beyond the explicit child boundaries"
