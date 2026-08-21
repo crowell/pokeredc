@@ -24200,3 +24200,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through ClearSprites entry"
 decoder = "ClearSprites call dispatch is modeled as an explicit call boundary; map loading, bird graphics, fly-location construction, input handling, palette restoration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ExitTownMap"
+assembly_source = "engine/items/town_map.asm"
+c_symbol = "port_exit_town_map_private"
+c_source = "verification/ports/exit_town_map_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wTownMapSpriteBlinkingEnabled",
+]
+proof_domain = "all register/flag inputs through GBPalWhiteOut entry"
+decoder = "town-map blinking flag clear, zero-result flags, and GBPalWhiteOut dispatch are modeled exactly; screen/sprite/font/player reload, sprite updates, palette restoration, and continuation paths remain beyond the explicit boundary"
