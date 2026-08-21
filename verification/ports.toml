@@ -22719,3 +22719,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through TextBoxBorder"
 decoder = "LoadTextBoxTilePatterns call boundary, link-versus textbox coordinate setup, and BC dimensions are modeled exactly; text placement, tile graphics, pokeball setup, delay, and rendering remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "FormatMovesString"
+assembly_source = "engine/battle/misc.asm"
+c_symbol = "port_format_moves_string"
+c_source = "verification/ports/format_moves_string.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the move-name loop"
+decoder = "wMoves/wMovesString pointer and B counter setup are modeled exactly; move-name lookup, string copying, delimiter generation, and continuation remain beyond the explicit boundary"
