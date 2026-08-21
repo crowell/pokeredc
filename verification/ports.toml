@@ -23724,3 +23724,15 @@ observables = [
 ]
 proof_domain = "all register/flag and max/old/new HP inputs through first GetHPBarLength setup"
 decoder = "max-HP, old-HP, and new-HP memory loads into DE/BC/HL plus GetHPBarLength continuation boundary are modeled exactly; pixel calculations, stack restoration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadPokedexTilePatterns"
+assembly_source = "engine/gfx/load_pokedex_tiles.asm"
+c_symbol = "port_load_pokedex_tile_patterns_private"
+c_source = "verification/ports/load_pokedex_tile_patterns_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through first CopyVideoData setup"
+decoder = "LoadHpBarAndStatusTilePatterns continuation boundary, Pokedex tile graphic source pointer, VRAM destination pointer, and CopyVideoData bank/count setup are modeled exactly; pokeball tile loading and continuation paths remain beyond the explicit boundary"
