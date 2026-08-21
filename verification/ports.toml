@@ -21938,3 +21938,15 @@ observables = [
 ]
 proof_domain = "all register/flag and turn/species inputs through the GetMonHeader call boundary"
 decoder = "critical-result clearing, hWhoseTurn AND-A flags, player/enemy species selection, and wCurSpecies store are modeled exactly; GetMonHeader and critical-probability paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HandleCounterMove"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_handle_counter_move"
+c_source = "verification/ports/handle_counter_move.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and selected-move inputs through the Counter comparison"
+decoder = "hWhoseTurn AND-A flags and player/enemy selected-move plus power-pointer selection are modeled exactly; Counter qualification, damage doubling, MoveHitTest, and miss handling remain beyond the explicit boundary"
