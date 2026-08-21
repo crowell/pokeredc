@@ -23676,3 +23676,15 @@ observables = [
 ]
 proof_domain = "all register/flag and BC inputs through Multiply setup"
 decoder = "multiplicand buffer initialization, 48-pixel scale factor, and Multiply continuation boundary are modeled exactly; HP scaling shifts, division, minimum-length clamp, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "UpdateHPBar2"
+assembly_source = "engine/gfx/hp_bar.asm"
+c_symbol = "port_update_hp_bar2_private"
+c_source = "verification/ports/update_hp_bar2_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and old/new HP inputs through difference-calculation setup"
+decoder = "old/new HP loads into BC/DE and UpdateHPBar_CalcHPDifference continuation boundary are modeled exactly; HP difference storage, comparison, animation, rendering, delay, and continuation paths remain beyond the explicit boundary"
