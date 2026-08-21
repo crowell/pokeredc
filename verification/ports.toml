@@ -23772,3 +23772,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through LCD-disabled party-sprite loop setup"
 decoder = "DisableLCD continuation boundary, MonPartySpritePointers source pointer, animation-structure count, and BC zero-offset setup are modeled exactly; immediate VRAM transfer loop, EnableLCD cleanup, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "WriteMonPartySpriteOAMByPartyIndex"
+assembly_source = "engine/gfx/mon_icons.asm"
+c_symbol = "port_write_mon_party_sprite_oam_by_party_index_private"
+c_source = "verification/ports/write_mon_party_sprite_oam_by_party_index_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and party-index inputs through party-species pointer setup"
+decoder = "hPartyMonIndex load, party-species base pointer, and index offset setup are modeled exactly; species lookup, OAM tile selection, OAM writes, and continuation paths remain beyond the explicit boundary"
