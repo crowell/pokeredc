@@ -21448,3 +21448,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wWhichPokemon inputs through the AddNTimes call"
 decoder = "wWhichPokemon load and HL/BC enemy-party setup are modeled exactly; enemy-party copies and stat recalculation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SendOutMon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_send_out_mon"
+c_source = "verification/ports/send_out_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and enemy-HP-byte inputs through the enemy-HP HUD branch"
+decoder = "PrintSendOutMonMessage is an explicit boundary; enemy HP OR flags and pointer setup are modeled exactly; send-out rendering and animation paths remain beyond the explicit boundary"
