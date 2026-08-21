@@ -22106,3 +22106,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, accuracy, and stat-modifier inputs through reflected evasion setup"
 decoder = "player/enemy accuracy pointer and modifier selection, 14-evasion subtraction, and SUB flags are modeled exactly; multiplier/division arithmetic and quotient continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "RandomizeDamage"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_randomize_damage"
+c_source = "verification/ports/randomize_damage.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wDamage high-byte inputs through the initial zero test"
+decoder = "wDamage pointer setup, high-byte load, AND-A flags, and branch boundary are modeled exactly; low-byte early return, BattleRandom loop, Multiply/Divide arithmetic, and damage storage remain beyond the explicit boundary"
