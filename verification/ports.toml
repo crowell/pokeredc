@@ -22527,3 +22527,15 @@ observables = [
 ]
 proof_domain = "all register/flag and hWhoseTurn inputs through stat-modifier pointer selection"
 decoder = "player/enemy stat-modifier and move-effect pointer selection plus AND-A flags are modeled exactly; effect mapping, stat increment/cap, text, modified-stat recalculation, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintNothingHappenedText"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_print_nothing_happened_text"
+c_source = "verification/ports/print_nothing_happened_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the PrintText call"
+decoder = "NothingHappenedText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
