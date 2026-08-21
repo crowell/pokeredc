@@ -22887,3 +22887,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and battle-status inputs through INVULNERABLE bit-test setup"
 decoder = "turn-specific species/status pointers, the Transform player-status bug behavior, and AND-A flags are modeled exactly; invulnerability test, substitute/animation state, copying, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintMonType"
+assembly_source = "engine/battle/print_type.asm"
+c_symbol = "port_print_mon_type_private"
+c_source = "verification/ports/print_mon_type_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and predef/type inputs through the first type load after GetMonHeader"
+decoder = "GetPredefRegisters/GetMonHeader continuation boundary, destination pointer restoration, and first mon-header type load are modeled exactly; second-type comparison, tile placement, text erasure, and continuation calls remain beyond the explicit boundary"
