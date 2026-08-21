@@ -22731,3 +22731,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the move-name loop"
 decoder = "wMoves/wMovesString pointer and B counter setup are modeled exactly; move-name lookup, string copying, delimiter generation, and continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ConversionEffect_"
+assembly_source = "engine/battle/move_effects/conversion.asm"
+c_symbol = "port_conversion_effect"
+c_source = "verification/ports/conversion_effect.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and battle-status inputs through the INVULNERABLE bit check"
+decoder = "player/enemy target/user type pointer selection, status selection, and INVULNERABLE BIT flags are modeled exactly; type copying, CallBankF, text, and failure continuation remain beyond the explicit boundary"
