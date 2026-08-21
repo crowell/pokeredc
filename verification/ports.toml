@@ -21548,3 +21548,15 @@ observables = [
 ]
 proof_domain = "all register/flag and battle-type inputs through the standard/nonstandard battle branch"
 decoder = "LoadScreenTilesFromBuffer1 is an explicit boundary; battle-type high-memory load and AND-A flags are modeled exactly"
+
+[[function]]
+assembly_symbol = "BagWasSelected"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_bag_was_selected"
+c_source = "verification/ports/bag_was_selected.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and battle-type inputs through the normal/nonstandard battle branch"
+decoder = "LoadScreenTilesFromBuffer1 is an explicit boundary; battle-type load and AND-A flags are modeled exactly"
