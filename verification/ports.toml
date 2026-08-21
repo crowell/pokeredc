@@ -23712,3 +23712,15 @@ observables = [
 ]
 proof_domain = "all register/flag and HP-bar-type inputs through enemy-HUD guard"
 decoder = "wHPBarType load and enemy-HUD AND-A guard are modeled exactly; HP number conversion, layout selection, rendering, delay, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "UpdateHPBar_CalcOldNewHPBarPixels"
+assembly_source = "engine/gfx/hp_bar.asm"
+c_symbol = "port_update_hp_bar_calc_pixels_private"
+c_source = "verification/ports/update_hp_bar_calc_pixels_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and max/old/new HP inputs through first GetHPBarLength setup"
+decoder = "max-HP, old-HP, and new-HP memory loads into DE/BC/HL plus GetHPBarLength continuation boundary are modeled exactly; pixel calculations, stack restoration, and continuation paths remain beyond the explicit boundary"
