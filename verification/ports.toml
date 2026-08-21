@@ -23458,3 +23458,15 @@ observables = [
 ]
 proof_domain = "all register/flag and initial trade-menu state inputs through DisplayPartyMenu setup"
 decoder = "party-menu type reset, sprite-update disable, and DisplayPartyMenu continuation boundary are modeled exactly; selection validation, species matching, trade data preparation, animation, evolution, item/text handling, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "InGameTrade_RestoreScreen"
+assembly_source = "engine/events/in_game_trades.asm"
+c_symbol = "port_ingame_trade_restore_screen_private"
+c_source = "verification/ports/ingame_trade_restore_screen_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through GBPalWhiteOutWithDelay3 boundary"
+decoder = "first GBPalWhiteOutWithDelay3 continuation boundary is modeled exactly; screen/tile restoration, palette loading, delays, and LoadWildData continuation paths remain beyond the explicit boundary"
