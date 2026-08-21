@@ -23544,3 +23544,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through PokemonCenterWelcomeText setup"
 decoder = "SaveScreenTilesToBuffer1 continuation boundary, welcome-text pointer setup, and PrintText continuation boundary are modeled exactly; status flags, yes/no healing flow, party healing, animation, audio, farewell text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayDexRating"
+assembly_source = "engine/events/pokedex_rating.asm"
+c_symbol = "port_display_dex_rating_private"
+c_source = "verification/ports/display_dex_rating_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through seen-Pokedex CountSetBits setup"
+decoder = "wPokedexSeen pointer and bitmap-length setup are modeled exactly; seen/owned counting, rating-table lookup, text, sound, event reset, and continuation paths remain beyond the explicit boundary"
