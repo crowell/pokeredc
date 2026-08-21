@@ -21818,3 +21818,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the HurtItselfText PrintText call"
 decoder = "HurtItselfText printing is an explicit boundary; initial text-pointer setup is modeled exactly; confusion-damage calculation and animation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintMoveFailureText"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_print_move_failure_text"
+c_source = "verification/ports/print_move_failure_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the player/enemy move-effect branch"
+decoder = "player/enemy effect pointer setup and high-memory AND-A flags are modeled exactly; failure-text selection and recoil paths remain beyond the explicit boundary"
