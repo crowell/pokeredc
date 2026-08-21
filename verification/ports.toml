@@ -23588,3 +23588,15 @@ observables = [
 ]
 proof_domain = "all register/flag and hTextID inputs through prize-window selection"
 decoder = "hTextID relative-ID subtraction and wWhichPrizeWindow store are modeled exactly; prize-table pointer lookup, item/Pokemon name rendering, price display, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintPrizePrice"
+assembly_source = "engine/events/prize_menu.asm"
+c_symbol = "port_print_prize_price_private"
+c_source = "verification/ports/print_prize_price_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through prize-price textbox setup"
+decoder = "price textbox coordinates and one-by-seven border dimensions are modeled exactly; coin label, price formatting, rendering, sprite updates, and continuation paths remain beyond the explicit boundary"
