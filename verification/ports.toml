@@ -24264,3 +24264,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through DelayFrames entry"
 decoder = "80-frame delay counter initialization and DelayFrames dispatch are modeled exactly; screen/UI setup, textbox drawing, serial synchronization, battle/trade dispatch, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CableClub_DoBattleOrTradeAgain"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_cable_club_do_battle_or_trade_again_private"
+c_source = "verification/ports/cable_club_do_battle_or_trade_again_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through serial-player-preamble loop setup"
+decoder = "wSerialPlayerDataBlock HL setup, preamble-byte A load, six-entry B counter setup, and first loop-entry state are modeled exactly; serial preamble/data generation, exchange, battle/trade continuation, and return paths remain beyond the explicit boundary"
