@@ -22118,3 +22118,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wDamage high-byte inputs through the initial zero test"
 decoder = "wDamage pointer setup, high-byte load, AND-A flags, and branch boundary are modeled exactly; low-byte early return, BattleRandom loop, Multiply/Divide arithmetic, and damage storage remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ExecuteEnemyMove"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_execute_enemy_move"
+c_source = "verification/ports/execute_enemy_move.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wEnemySelectedMove inputs through the CANNOT_MOVE check"
+decoder = "selected-move load, INC-A flags, and cannot-move branch boundary are modeled exactly; PrintGhostText, link-battle, status-condition, charging, move-effect, damage, and continuation paths remain beyond the explicit boundary"
