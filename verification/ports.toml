@@ -22058,3 +22058,15 @@ observables = [
 ]
 proof_domain = "all register/flag and used-move inputs through the selected-move store"
 decoder = "player/enemy used-move selection, selected-move and move-number pointer setup, and AND-A flags are modeled exactly; Mirror Move failure/reload branches and text/data calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "MetronomePickMove"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_metronome_pick_move"
+c_source = "verification/ports/metronome_pick_move.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and hWhoseTurn inputs through the random-pick loop entry"
+decoder = "Metronome animation call boundary, player/enemy move-number and selected-move pointer setup, and AND-A flags are modeled exactly; BattleRandom validity loop, move storage, and ReloadMoveData remain beyond the explicit boundary"
