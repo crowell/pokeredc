@@ -22130,3 +22130,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wEnemySelectedMove inputs through the CANNOT_MOVE check"
 decoder = "selected-move load, INC-A flags, and cannot-move branch boundary are modeled exactly; PrintGhostText, link-battle, status-condition, charging, move-effect, damage, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CheckIfEnemyNeedsToChargeUp"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_check_if_enemy_needs_to_charge_up"
+c_source = "verification/ports/check_if_enemy_needs_to_charge_up.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wEnemyMoveEffect inputs through the CHARGE comparison"
+decoder = "enemy move-effect load and CHARGE CP flags are modeled exactly; JumpMoveEffect and FLY comparison/continuation paths remain beyond the explicit boundary"
