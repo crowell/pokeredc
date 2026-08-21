@@ -23407,3 +23407,15 @@ observables = [
 ]
 proof_domain = "all register/flag and joy-ignore inputs through SafariGameOverText setup"
 decoder = "joy-ignore clear, SafariGameOverText pointer load, and PrintText continuation boundary are modeled exactly; Safari-ball branch, TimesUp/GameOver text rendering, and script continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TurnPageSchoolNotebook"
+assembly_source = "engine/events/hidden_events/school_notebooks.asm"
+c_symbol = "port_turn_page_school_notebook_private"
+c_source = "verification/ports/turn_page_school_notebook_private.c"
+status = "partial"
+observables = [
+    "A",
+]
+proof_domain = "all register/flag and current-menu-item inputs through YesNoChoice result load"
+decoder = "TurnPageText/YesNoChoice continuation boundaries and current-menu-item result load are modeled exactly; page branch return, text pages, and script continuation paths remain beyond the explicit boundary"
