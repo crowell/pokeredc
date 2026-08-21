@@ -22190,3 +22190,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, selected-move, status-flags, and test-battle inputs through the selected-move store"
 decoder = "player/enemy move-number pointer selection, test-battle selected-move override, selected-move load, and BIT/AND flags are modeled exactly; name-list, move-data, PP, and text-buffer calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadEnemyMonData"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_load_enemy_mon_data"
+c_source = "verification/ports/load_enemy_mon_data.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the link-battle branch"
+decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; party/wild data loading, species/header, DV/stat, HP/status, type, and continuation paths remain beyond the explicit boundary"
