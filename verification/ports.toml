@@ -22503,3 +22503,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and move-effect inputs through selected-effect dispatch"
 decoder = "inner jump-effect turn/effect selection and AND-A flags are modeled exactly; pointer-table lookup, handler jump, and public-wrapper return behavior remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CheckDefrost"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_check_defrost"
+c_source = "verification/ports/check_defrost.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the frozen-status mask test"
+decoder = "FRZ AND-A mask and branch flags are modeled exactly; turn/move-type/fire checks, status writes, roster updates, text, and defrost continuation remain beyond the explicit boundary"
