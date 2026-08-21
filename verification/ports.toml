@@ -24022,3 +24022,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through RemoveItemFromInventory dispatch"
 decoder = "wNumBagItems HL load, one-item A load, wItemQuantity write, and RemoveItemFromInventory dispatch are modeled exactly; inventory mutation and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ThrowBallAtTrainerMon"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_throw_ball_at_trainer_mon_private"
+c_source = "verification/ports/throw_ball_at_trainer_mon_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wAnimationID",
+]
+proof_domain = "all register/flag inputs through MoveAnimation dispatch"
+decoder = "pre-animation palette/screen/delay call sequence, TOSS_ANIM load, wAnimationID write, and MoveAnimation dispatch are modeled exactly; animation, text, item-removal, and continuation paths remain beyond the explicit boundary"
