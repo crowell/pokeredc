@@ -22976,3 +22976,16 @@ observables = [
 ]
 proof_domain = "all register/flag and interlace-counter inputs through loop setup"
 decoder = "interlace counter initialization, BC destination offset setup, and loop-entry registers are modeled exactly; pixel expansion, buffer writes, pointer movement, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "_ScrollTrainerPicAfterBattle"
+assembly_source = "engine/battle/scroll_draw_trainer_pic.asm"
+c_symbol = "port_scroll_trainer_pic_after_battle_private"
+c_source = "verification/ports/scroll_trainer_pic_after_battle_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wEnemyMonSpecies2",
+]
+proof_domain = "all register/flag and enemy-species inputs through palette-command setup"
+decoder = "enemy species reset, XOR-A flags, and battle-palette command selector setup are modeled exactly; trainer-pic loading, tilemap scrolling, delays, rendering, and continuation calls remain beyond the explicit boundary"
