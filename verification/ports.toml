@@ -23244,3 +23244,17 @@ observables = [
 ]
 proof_domain = "all register/flag and fossil-mon inputs through GetMonName setup"
 decoder = "wFossilMon load, wNamedObjectIndex store, and GetMonName continuation boundary are modeled exactly; string copy, fossil-item lookup, item-name loading, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayDiploma"
+assembly_source = "engine/events/diploma.asm"
+c_symbol = "port_display_diploma_private"
+c_source = "verification/ports/display_diploma_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wUpdateSpritesEnabled",
+    "wStatusFlags5",
+]
+proof_domain = "all register/flag and display-state inputs through initial diploma display setup"
+decoder = "screen/setup continuation boundaries, sprite-update disable, NO_TEXT_DELAY flag set, and status-pointer state are modeled exactly; graphics copy, textbox rendering, text placement, sprite drawing, cleanup, and continuation paths remain beyond the explicit boundary"
