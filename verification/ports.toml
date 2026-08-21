@@ -22683,3 +22683,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through CopyMonPicFromBGToSpriteVRAM"
 decoder = "OBP1 palette setup is modeled exactly; sprite copy, screen clearing, ChangeMonPic, flashing, fade loops, and hardware/rendering continuations remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CopyMonPicFromBGToSpriteVRAM"
+assembly_source = "engine/battle/ghost_marowak_anim.asm"
+c_symbol = "port_copy_mon_pic_from_bg_to_sprite_vram"
+c_source = "verification/ports/copy_mon_pic_from_bg_to_sprite_vram.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through CopyVideoData"
+decoder = "front/sprite VRAM source/destination, PIC_SIZE BC setup, and CopyVideoData call boundary are modeled exactly; OAM setup, coordinate writes, animation, and rendering continuations remain beyond the explicit boundary"
