@@ -21436,3 +21436,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wWhichPokemon inputs through the AddNTimes call"
 decoder = "wWhichPokemon load and HL/BC party-structure setup are modeled exactly; party-data copies and stat recalculation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadEnemyMonFromParty"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_load_enemy_mon_from_party"
+c_source = "verification/ports/load_enemy_mon_from_party.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wWhichPokemon inputs through the AddNTimes call"
+decoder = "wWhichPokemon load and HL/BC enemy-party setup are modeled exactly; enemy-party copies and stat recalculation remain beyond the explicit boundary"
