@@ -21387,3 +21387,16 @@ observables = [
 ]
 proof_domain = "all register/flag and player-mon-number inputs through the first FlagActionPredef call"
 decoder = "HL/A/C/B setup and XOR-A flags are modeled exactly; party-flag and send-out branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "EnemySendOutFirstMon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_enemy_send_out_first_mon"
+c_source = "verification/ports/enemy_send_out_first_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "five enemy-status bytes",
+]
+proof_domain = "all register/flag and initial enemy-status inputs through the first enemy-disabled-move store"
+decoder = "XOR-A, enemy-status clearing writes, and status-pointer advancement are modeled exactly; AI/status/send-out branches remain beyond the explicit boundary"
