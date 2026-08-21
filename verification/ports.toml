@@ -21794,3 +21794,15 @@ observables = [
 ]
 proof_domain = "all register/flag and battle-status inputs through the sleeping/frozen branch"
 decoder = "battle-status HL setup, SLP_MASK AND-A flags, and branch boundary are modeled exactly; sleep, freeze, trap, flinch, and recharge paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintMoveIsDisabledText"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_print_move_is_disabled_text"
+c_source = "verification/ports/print_move_is_disabled_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the player/enemy status branch"
+decoder = "selected-move/status pointer setup and high-memory AND-A flags are modeled exactly; status clearing and disabled-text rendering remain beyond the explicit boundary"
