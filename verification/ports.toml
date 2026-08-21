@@ -22839,3 +22839,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and battle-level inputs through level doubling"
 decoder = "Pay Day money reset, whose-turn level selection, and ADD-A doubling flags are modeled exactly; BCD division, money accumulation, text, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "RecoilEffect_"
+assembly_source = "engine/battle/move_effects/recoil.asm"
+c_symbol = "port_recoil_effect_private"
+c_source = "verification/ports/recoil_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and move-number inputs through move-number and max-HP pointer setup"
+decoder = "player/enemy move-number selection and max-HP pointer setup are modeled exactly; damage rotation, minimum recoil, HP-bar state mutation, animation, text, and continuation paths remain beyond the explicit boundary"
