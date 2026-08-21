@@ -23885,3 +23885,15 @@ observables = [
 ]
 proof_domain = "all register/flag and SGB-state inputs through CheckSGB setup"
 decoder = "XOR-A reset, wOnSGB clear, and CheckSGB continuation boundary are modeled exactly; SGB detection, VRAM transfer, packet sending, palette loading, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrepareSuperNintendoVRAMTransfer"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_prepare_super_nintendo_vram_transfer_private"
+c_source = "verification/ports/prepare_super_nintendo_vram_transfer_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through SGB packet-pointer loop setup"
+decoder = "packet-pointer table address and nine-packet loop counter setup are modeled exactly; packet pointer dereference, SendSGBPacket calls, loop iteration, and continuation paths remain beyond the explicit boundary"
