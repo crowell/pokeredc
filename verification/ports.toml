@@ -23970,3 +23970,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through horizontal-shake loop setup"
 decoder = "GetPredefRegisters continuation boundary and XOR-A horizontal-shake initialization are modeled exactly; WX mutation, repeated delays, screen movement, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ItemUseRepelCommon"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_item_use_repel_common_private"
+c_source = "verification/ports/item_use_repel_common_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wIsInBattle",
+    "wRepelRemainingSteps",
+]
+proof_domain = "all register/flag and item-state inputs through item-use continuation dispatch"
+decoder = "battle-state load, AND-derived zero flag, repel-step write from B on the out-of-battle path, and both continuation dispatch paths are modeled exactly; ItemUseNotTime and PrintItemUseTextAndRemoveItem bodies remain beyond the explicit boundary"
