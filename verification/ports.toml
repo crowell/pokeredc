@@ -21585,3 +21585,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the run-selection branch after DEC A"
 decoder = "SM83 DEC-A flags are modeled exactly; party-menu, Safari-rock, and run branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SwitchPlayerMon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_switch_player_mon"
+c_source = "verification/ports/switch_player_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the initial RetreatMon text-pointer setup"
+decoder = "RetreatMon expansion remains an explicit boundary; HL=PlayerMon2Text setup is modeled exactly"
