@@ -21597,3 +21597,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the initial RetreatMon text-pointer setup"
 decoder = "RetreatMon expansion remains an explicit boundary; HL=PlayerMon2Text setup is modeled exactly"
+
+[[function]]
+assembly_symbol = "BattleMenu_RunWasSelected"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_battle_menu_run_was_selected"
+c_source = "verification/ports/battle_menu_run_was_selected.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurrentMenuItem",
+]
+proof_domain = "all register/flag and menu-state inputs through the TryRunningFromBattle call"
+decoder = "screen-restore boundary, menu-item store, speed-pointer setup, and TryRunningFromBattle continuation are modeled exactly"
