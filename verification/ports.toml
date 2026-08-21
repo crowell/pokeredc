@@ -23470,3 +23470,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through GBPalWhiteOutWithDelay3 boundary"
 decoder = "first GBPalWhiteOutWithDelay3 continuation boundary is modeled exactly; screen/tile restoration, palette loading, delays, and LoadWildData continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "InGameTrade_PrepareTradeData"
+assembly_source = "engine/events/in_game_trades.asm"
+c_symbol = "port_ingame_trade_prepare_trade_data_private"
+c_source = "verification/ports/ingame_trade_prepare_trade_data_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wTradedPlayerMonSpecies",
+    "wTradedEnemyMonSpecies",
+]
+proof_domain = "all register/flag and traded-species inputs through species setup"
+decoder = "traded-player/received species stores and species-pointer state are modeled exactly; OT/ID copying, random trainer ID, move data, and continuation paths remain beyond the explicit boundary"
