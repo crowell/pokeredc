@@ -21683,3 +21683,16 @@ observables = [
 ]
 proof_domain = "all register/flag and wMenuItemToSwap inputs through the no-menu-item branch"
 decoder = "wMenuItemToSwap load and AND-A flags are modeled exactly; move/PP swaps and disabled-move updates remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintMenuItem"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_print_menu_item"
+c_source = "verification/ports/print_menu_item.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hAutoBGTransferEnabled",
+]
+proof_domain = "all register/flag and initial HUD state inputs through TextBoxBorder"
+decoder = "XOR-A flags, automatic-BG-transfer store, menu coordinates, and BC dimensions are modeled exactly; disabled-move rendering and move-status branches remain beyond the explicit boundary"
