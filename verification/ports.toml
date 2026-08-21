@@ -22963,3 +22963,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first column-loop setup"
 decoder = "three-column loop counter and inner-loop counter initialization are modeled exactly; pixel expansion, buffer writes, pointer movement, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ScaleLastSpriteColumnByTwo"
+assembly_source = "engine/battle/scale_sprites.asm"
+c_symbol = "port_scale_last_sprite_column_by_two_private"
+c_source = "verification/ports/scale_last_sprite_column_by_two_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hSpriteInterlaceCounter",
+]
+proof_domain = "all register/flag and interlace-counter inputs through loop setup"
+decoder = "interlace counter initialization, BC destination offset setup, and loop-entry registers are modeled exactly; pixel expansion, buffer writes, pointer movement, and continuation calls remain beyond the explicit boundary"
