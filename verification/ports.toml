@@ -23822,3 +23822,15 @@ observables = [
 ]
 proof_domain = "all register/flag and species inputs through IndexToPokedex setup"
 decoder = "species store, IndexToPokedex continuation boundary, and follow-up opcode load are modeled exactly; icon-table lookup, nibble selection, bit shifts, and final sprite-ID result remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "_RunPaletteCommand"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_run_palette_command_private"
+c_source = "verification/ports/run_palette_command_private.c"
+status = "partial"
+observables = [
+    "A",
+]
+proof_domain = "all register/flag and palette-command inputs through command load"
+decoder = "GetPredefRegisters continuation boundary and B-to-A palette command load are modeled exactly; default-command lookup, party-menu special case, palette table dispatch, SGB packet generation, and continuation paths remain beyond the explicit boundary"
