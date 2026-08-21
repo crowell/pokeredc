@@ -21842,3 +21842,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through PrintText after loading DoesntAffectMonText"
 decoder = "DoesntAffectMonText pointer setup is modeled exactly; PrintText remains the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "PrintCriticalOHKOText"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_print_critical_ohko_text"
+c_source = "verification/ports/print_critical_ohko_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wCriticalHitOrOHKO inputs through the zero/nonzero branch"
+decoder = "wCriticalHitOrOHKO load and AND-A flags are modeled exactly; critical/OHKO text selection, clearing, and delay remain beyond the explicit boundary"
