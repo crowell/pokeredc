@@ -21696,3 +21696,15 @@ observables = [
 ]
 proof_domain = "all register/flag and initial HUD state inputs through TextBoxBorder"
 decoder = "XOR-A flags, automatic-BG-transfer store, menu coordinates, and BC dimensions are modeled exactly; disabled-move rendering and move-status branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SelectEnemyMove"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_select_enemy_move"
+c_source = "verification/ports/select_enemy_move.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the link-battle branch"
+decoder = "wLinkState load and SM83 SUB 4 flags are modeled exactly; link exchange and enemy-status selection paths remain beyond the explicit boundary"
