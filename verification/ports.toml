@@ -23736,3 +23736,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through first CopyVideoData setup"
 decoder = "LoadHpBarAndStatusTilePatterns continuation boundary, Pokedex tile graphic source pointer, VRAM destination pointer, and CopyVideoData bank/count setup are modeled exactly; pokeball tile loading and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadAnimSpriteGfx"
+assembly_source = "engine/gfx/mon_icons.asm"
+c_symbol = "port_load_anim_sprite_gfx_private"
+c_source = "verification/ports/load_anim_sprite_gfx_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through animated-sprite CopyVideoData offset setup"
+decoder = "BC zero-offset initialization and CopyVideoData loop-entry state are modeled exactly; sprite-graphics table iteration, VRAM destination loads, tile transfer, and continuation paths remain beyond the explicit boundary"
