@@ -22299,3 +22299,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the PrintText call"
 decoder = "empty-string HL setup and PrintText C call are modeled exactly; TextCommandProcessor rendering remains beyond the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "BattleRandom"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_battle_random"
+c_source = "verification/ports/battle_random.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the shared-random branch check"
+decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; shared random-list indexing/seed generation, local Random path, and return/carry continuation remain beyond the explicit boundary"
