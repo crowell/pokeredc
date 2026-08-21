@@ -21830,3 +21830,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the player/enemy move-effect branch"
 decoder = "player/enemy effect pointer setup and high-memory AND-A flags are modeled exactly; failure-text selection and recoil paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintDoesntAffectText"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_print_doesnt_affect_text"
+c_source = "verification/ports/print_doesnt_affect_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through PrintText after loading DoesntAffectMonText"
+decoder = "DoesntAffectMonText pointer setup is modeled exactly; PrintText remains the explicit continuation boundary"
