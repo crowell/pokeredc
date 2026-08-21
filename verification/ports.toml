@@ -22371,3 +22371,15 @@ observables = [
 ]
 proof_domain = "all register/flag, predef-HL, start-tile, and battle-state inputs through the in-battle branch"
 decoder = "predef HL load, B=4c setup, battle-state AND-A flags, and branch boundary are modeled exactly; tile writes, Delay3/DelayFrames, downscaled sprite copies, OAM, and CopyUncompressedPicToHL continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadMonBackPic"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_load_mon_back_pic"
+c_source = "verification/ports/load_mon_back_pic.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, species, and initial coordinate inputs through ClearScreenArea"
+decoder = "wBattleMonSpecies2 load, HUD coordinate/BC setup, and ClearScreenArea call boundary are modeled exactly; sprite decompression, scaling, interlacing, VRAM transfer, and rendering remain beyond the explicit boundary"
