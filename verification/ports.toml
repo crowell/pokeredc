@@ -22443,3 +22443,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through SetupPokeballs"
 decoder = "PlacePlayerHUDTiles call boundary, player-party/party-count pointer setup, and SetupPokeballs call boundary are modeled exactly; pokeball selection, coordinates, graphics offsets, OAM writes, and rendering remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SetupPokeballs"
+assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
+c_symbol = "port_setup_pokeballs"
+c_source = "verification/ports/setup_pokeballs.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the empty-buffer initialization loop"
+decoder = "party-count load, six-slot empty Poké Ball buffer initialization, buffer pointer setup, and DEC C flags are modeled exactly; PickPokeball loop and party-data/OAM continuation remain beyond the explicit boundary"
