@@ -22707,3 +22707,15 @@ observables = [
 ]
 proof_domain = "all register/flag and hTileAnimations inputs through initial XOR-A reset"
 decoder = "hTileAnimations load/store and initial XOR-A flags are modeled exactly; battle-variable clearing, Safari/map branching, sound, battle-type, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayLinkBattleVersusTextBox"
+assembly_source = "engine/battle/link_battle_versus_text.asm"
+c_symbol = "port_display_link_battle_versus_text_box"
+c_source = "verification/ports/display_link_battle_versus_text_box.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through TextBoxBorder"
+decoder = "LoadTextBoxTilePatterns call boundary, link-versus textbox coordinate setup, and BC dimensions are modeled exactly; text placement, tile graphics, pokeball setup, delay, and rendering remain beyond the explicit boundary"
