@@ -22034,3 +22034,15 @@ observables = [
 ]
 proof_domain = "all register/flag and hWhoseTurn inputs through substitute damage pointer selection"
 decoder = "SubstituteTookDamageText PrintText call, player/enemy substitute HP/status pointer selection, and AND-A flags are modeled exactly; damage subtraction, substitute break, turn flipping, animation, effect nullification, and HUD continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HandleBuildingRage"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_handle_building_rage"
+c_source = "verification/ports/handle_building_rage.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and hWhoseTurn inputs through the USING_RAGE bit check"
+decoder = "player/enemy status, stat-modifier, and move-number pointer selection plus AND-A flags are modeled exactly; Rage bit/max-modifier checks, move/effect mutation, text/stat-modifier calls, turn flipping, and restoration remain beyond the explicit boundary"
