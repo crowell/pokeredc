@@ -22154,3 +22154,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, move-effect, and wMoveMissed inputs through the missed-move branch"
 decoder = "MoveHitTest is invoked as a C call, wMoveMissed load, and AND-A flags are modeled exactly; miss-effect dispatch, level swapping, animation selection, substitute handling, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "EnemyCheckIfFlyOrChargeEffect"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_enemy_check_if_fly_or_charge_effect"
+c_source = "verification/ports/enemy_check_if_fly_or_charge_effect.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wEnemyMoveEffect inputs through the FLY comparison"
+decoder = "level-swap/DelayFrames boundary, enemy move-effect load, and FLY CP flags are modeled exactly; CHARGE comparison, animation, Mirror Move/Metronome, residual effects, miss handling, and continuation paths remain beyond the explicit boundary"
