@@ -23050,3 +23050,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through FULL_HEAL item selection"
 decoder = "AIPlayRestoringSFX/AICureStatus continuation boundaries and FULL_HEAL immediate load are modeled exactly; item-use text and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AIUseGuardSpec"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_ai_use_guard_spec_private"
+c_source = "verification/ports/ai_use_guard_spec_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through GUARD_SPEC item selection"
+decoder = "AIPlayRestoringSFX continuation boundary, enemy battle-status bit operation, and GUARD_SPEC immediate load are modeled exactly; item-use text and continuation calls remain beyond the explicit boundary"
