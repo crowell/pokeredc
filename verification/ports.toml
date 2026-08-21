@@ -24288,3 +24288,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through trade-center pointer-index load"
 decoder = "TradeCenterPointerTable HL setup, B zeroing, and pointer-index dispatch entry are modeled exactly; index validation, indirect jump, title-screen fallback, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ReturnToCableClubRoom"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_return_to_cable_club_room_private"
+c_source = "verification/ports/return_to_cable_club_room_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through GBPalWhiteOutWithDelay3 entry"
+decoder = "initial palette white-out call dispatch is modeled as an explicit boundary; map reload, variable clearing, font/status restoration, palette fade-in, and continuation paths remain beyond the explicit boundary"
