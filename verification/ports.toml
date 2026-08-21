@@ -23872,3 +23872,16 @@ observables = [
 ]
 proof_domain = "all register/flag and SGB packet-count inputs through packet-count guard"
 decoder = "packet-header count mask, zero-packet return, and packet-loop B initialization are modeled exactly; joypad signaling, bit serialization, timing, packet iteration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadSGB"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_load_sgb_private"
+c_source = "verification/ports/load_sgb_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wOnSGB",
+]
+proof_domain = "all register/flag and SGB-state inputs through CheckSGB setup"
+decoder = "XOR-A reset, wOnSGB clear, and CheckSGB continuation boundary are modeled exactly; SGB detection, VRAM transfer, packet sending, palette loading, and continuation paths remain beyond the explicit boundary"
