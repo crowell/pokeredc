@@ -21806,3 +21806,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the player/enemy status branch"
 decoder = "selected-move/status pointer setup and high-memory AND-A flags are modeled exactly; status clearing and disabled-text rendering remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HandleSelfConfusionDamage"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_handle_self_confusion_damage"
+c_source = "verification/ports/handle_self_confusion_damage.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the HurtItselfText PrintText call"
+decoder = "HurtItselfText printing is an explicit boundary; initial text-pointer setup is modeled exactly; confusion-damage calculation and animation paths remain beyond the explicit boundary"
