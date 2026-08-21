@@ -21362,3 +21362,16 @@ observables = [
 ]
 proof_domain = "all register/flag and status-byte inputs through the first slide-step loop after setting BIT_NO_TEXT_DELAY"
 decoder = "status load/store, SET bit 2, and PIC_HEIGHT loop-counter setup are modeled exactly; row-copy and sliding paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SlideTrainerPicOffScreen"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_slide_trainer_pic_off_screen"
+c_source = "verification/ports/slide_trainer_pic_off_screen.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hSlideAmount",
+]
+proof_domain = "all register/flag and slide-amount inputs through the first row loop"
+decoder = "high-memory slide amount store, C transfer, push setup, and PIC_HEIGHT loop count are modeled exactly; per-column movement and DelayFrames remain beyond the explicit boundary"
