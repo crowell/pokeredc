@@ -23062,3 +23062,18 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through GUARD_SPEC item selection"
 decoder = "AIPlayRestoringSFX continuation boundary, enemy battle-status bit operation, and GUARD_SPEC immediate load are modeled exactly; item-use text and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AICheckIfHPBelowFraction"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_ai_check_if_hp_below_fraction_private"
+c_source = "verification/ports/ai_check_if_hp_below_fraction_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hDivisor",
+    "hDividend",
+    "hDividend+1",
+]
+proof_domain = "all register/flag, divisor, and enemy-max-HP inputs through Divide setup"
+decoder = "divisor save, enemy max-HP dividend setup, B=2 division precision, and HL/A setup are modeled exactly; division result, current-HP comparison, carry return, and continuation paths remain beyond the explicit boundary"
