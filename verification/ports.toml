@@ -24125,3 +24125,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through wild-data loop setup"
 decoder = "WildDataPointers HL setup, wBuffer DE setup, loop counter C initialization, and first loop-entry state are modeled exactly; wild-data iteration, map checks, buffer writes, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HiddenItemNear"
+assembly_source = "engine/items/itemfinder.asm"
+c_symbol = "port_hidden_item_near_private"
+c_source = "verification/ports/hidden_item_near_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through hidden-item table loop setup"
+decoder = "HiddenItemCoords HL setup, hidden-item loop counter B initialization, and first loop-entry state are modeled exactly; map lookup, obtained-flag checks, coordinate checks, carry result, and continuation paths remain beyond the explicit boundary"
