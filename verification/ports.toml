@@ -22695,3 +22695,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through CopyVideoData"
 decoder = "front/sprite VRAM source/destination, PIC_SIZE BC setup, and CopyVideoData call boundary are modeled exactly; OAM setup, coordinate writes, animation, and rendering continuations remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "InitBattleVariables"
+assembly_source = "engine/battle/init_battle_variables.asm"
+c_symbol = "port_init_battle_variables"
+c_source = "verification/ports/init_battle_variables.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and hTileAnimations inputs through initial XOR-A reset"
+decoder = "hTileAnimations load/store and initial XOR-A flags are modeled exactly; battle-variable clearing, Safari/map branching, sound, battle-type, and continuation paths remain beyond the explicit boundary"
