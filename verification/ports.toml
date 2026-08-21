@@ -22226,3 +22226,16 @@ observables = [
 ]
 proof_domain = "all register/flag and wBattleType inputs through Red/Old Man back-picture selection"
 decoder = "battle-type DEC flags and RedPicBack/OldManPicBack pointer selection are modeled exactly; sprite decompression, scaling, OAM generation, interlacing, hardware, and tile-loading paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DoubleOrHalveSelectedStats"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_double_or_halve_selected_stats"
+c_source = "verification/ports/double_or_halve_selected_stats.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "selected stat bytes",
+]
+proof_domain = "selected-stat wrapper call chain with zero player/enemy stat masks"
+decoder = "ordered DoubleSelectedStats then HalveSelectedStats C calls are modeled exactly for the no-selected-stat path; nonzero stat-mask arithmetic and predef register-block integration remain beyond the explicit boundary"
