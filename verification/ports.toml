@@ -22989,3 +22989,15 @@ observables = [
 ]
 proof_domain = "all register/flag and enemy-species inputs through palette-command setup"
 decoder = "enemy species reset, XOR-A flags, and battle-palette command selector setup are modeled exactly; trainer-pic loading, tilemap scrolling, delays, rendering, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TrainerAI"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_trainer_ai_private"
+c_source = "verification/ports/trainer_ai_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wIsInBattle inputs through initial battle-mode decrement/check"
+decoder = "initial AND-A/decrement setup and wIsInBattle check state are modeled exactly; link-battle guard, trainer-class AI pointer selection, AI-count handling, random choice, and continuation dispatch remain beyond the explicit boundary"
