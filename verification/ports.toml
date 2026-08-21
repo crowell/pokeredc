@@ -22791,3 +22791,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, and move-number inputs through HP comparison setup"
 decoder = "player/enemy HP and max-HP pointer selection, move-number load/copy, and turn flags are modeled exactly; HP comparison, Rest/heal arithmetic, status, animation, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LeechSeedEffect_"
+assembly_source = "engine/battle/move_effects/leech_seed.asm"
+c_symbol = "port_leech_seed_effect_private"
+c_source = "verification/ports/leech_seed_effect_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wMoveMissed inputs through the MoveHitTest result branch"
+decoder = "MoveHitTest call boundary, wMoveMissed load, and AND-A flags are modeled exactly; target type/seed status checks, state mutation, animation, text, and miss continuation remain beyond the explicit boundary"
