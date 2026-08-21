@@ -23200,3 +23200,21 @@ observables = [
 ]
 proof_domain = "all register/flag and current-map inputs through Silph map-list setup"
 decoder = "SilphCoMapList pointer setup, current-map load/copy, and PrintCardKeyText loop-entry state are modeled exactly; door/tile checks, bag lookup, text, map mutation, sound, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GiveFossilToCinnabarLab"
+assembly_source = "engine/events/cinnabar_lab.asm"
+c_symbol = "port_give_fossil_to_cinnabar_lab_private"
+c_source = "verification/ports/give_fossil_to_cinnabar_lab_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wStatusFlags5",
+    "wCurrentMenuItem",
+    "wMenuWatchedKeys",
+    "wMaxMenuItem",
+    "wTopMenuItemY",
+    "wTopMenuItemX",
+]
+proof_domain = "all register/flag, status, filtered-count, and menu-state inputs through menu setup"
+decoder = "NO_TEXT_DELAY flag set, menu-state initialization, filtered-bag count decrement, and menu coordinate setup are modeled exactly; border rendering, fossil listing, input handling, item/mon selection, text, item removal, and event continuation paths remain beyond the explicit boundary"
