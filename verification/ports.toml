@@ -21866,3 +21866,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wLinkState inputs through the link-battle fast path"
 decoder = "wMonIsDisobedient clear, wLinkState load, LINK_STATE_BATTLING comparison, and AND-A return flags are modeled exactly; traded-mon badge and random disobedience paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GetDamageVarsForPlayerAttack"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_get_damage_vars_for_player_attack"
+c_source = "verification/ports/get_damage_vars_for_player_attack.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wPlayerMovePower inputs through the zero-power return"
+decoder = "damage zeroing, move-power load, AND-A flags, and D/HL setup are modeled exactly; physical/special defense, Reflect, critical-hit, and damage-calculation paths remain beyond the explicit boundary"
