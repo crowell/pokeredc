@@ -21573,3 +21573,15 @@ observables = [
 ]
 proof_domain = "all register/flag and current-item inputs through GetItemName"
 decoder = "current-item load/store and GetItemName continuation are modeled exactly; item use, menu refresh, and capture branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PartyMenuOrRockOrRun"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_party_menu_or_rock_or_run"
+c_source = "verification/ports/party_menu_or_rock_or_run.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the run-selection branch after DEC A"
+decoder = "SM83 DEC-A flags are modeled exactly; party-menu, Safari-rock, and run branches remain beyond the explicit boundary"
