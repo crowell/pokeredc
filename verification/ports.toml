@@ -21634,3 +21634,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wMoveMenuType inputs through the battle/mimic branch"
 decoder = "wMoveMenuType load and AND-A flags are modeled exactly; menu rendering and input-selection paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SelectMenuItem_CursorUp"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_select_menu_item_cursor_up"
+c_source = "verification/ports/select_menu_item_cursor_up.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wCurrentMenuItem inputs through the top-of-menu branch"
+decoder = "wCurrentMenuItem load and AND-A flags are modeled exactly; cursor erase and wraparound paths remain beyond the explicit boundary"
