@@ -22275,3 +22275,15 @@ observables = [
 ]
 proof_domain = "all register/flag and LCD-control inputs through LCD enabled/disabled selection"
 decoder = "LoadHpBarAndStatusTilePatterns call boundary, LCDC ADD-A flags, and branch selection are modeled exactly; HUD tile copy, video-transfer, hardware, and return paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadHudTilePatterns"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_load_hud_tile_patterns"
+c_source = "verification/ports/load_hud_tile_patterns.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and LCD-control inputs through LCD enabled/disabled selection"
+decoder = "LCDC load and ADD-A flags plus LCD branch selection are modeled exactly; HUD tile source/destination setup, copy/video transfer, hardware, and return paths remain beyond the explicit boundary"
