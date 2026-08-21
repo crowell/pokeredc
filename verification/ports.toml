@@ -22611,3 +22611,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the PrintText call"
 decoder = "ParalyzedMayNotAttackText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "PlayBattleAnimation2"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_play_battle_animation2"
+c_source = "verification/ports/play_battle_animation2.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, animation-ID, and hWhoseTurn inputs through PlayBattleAnimationGotID"
+decoder = "wAnimationID store, turn-specific animation-type selection, and flags are modeled exactly; PlayBattleAnimationGotID animation dispatch remains beyond the explicit boundary"
