@@ -23933,3 +23933,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through SGB tile-source setup"
 decoder = "DisableLCD continuation boundary, palette register setup, and vChars1 tile destination setup are modeled exactly; border/tile copying, tilemap generation, SGB packet sending, LCD restore, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ChangeBGPalColor0_4Frames"
+assembly_source = "engine/gfx/screen_effects.asm"
+c_symbol = "port_change_bg_pal_color0_4frames_private"
+c_source = "verification/ports/change_bg_pal_color0_4frames_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through GetPredefRegisters continuation boundary"
+decoder = "GetPredefRegisters call boundary is modeled exactly; background palette mutation, four-frame delay, and palette restoration remain beyond the explicit boundary"
