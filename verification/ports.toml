@@ -23958,3 +23958,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through vertical-shake animation setup"
 decoder = "GetPredefRegisters continuation boundary, disable-WY-update enable, and vertical shake loop-entry state are modeled exactly; WY mutation, repeated delays, screen movement, cleanup, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PredefShakeScreenHorizontally"
+assembly_source = "engine/gfx/screen_effects.asm"
+c_symbol = "port_predef_shake_screen_horizontally_private"
+c_source = "verification/ports/predef_shake_screen_horizontally_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through horizontal-shake loop setup"
+decoder = "GetPredefRegisters continuation boundary and XOR-A horizontal-shake initialization are modeled exactly; WX mutation, repeated delays, screen movement, and continuation paths remain beyond the explicit boundary"
