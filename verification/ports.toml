@@ -22599,3 +22599,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the PrintText call"
 decoder = "DidntAffectText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
+
+[[function]]
+assembly_symbol = "PrintMayNotAttackText"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_print_may_not_attack_text"
+c_source = "verification/ports/print_may_not_attack_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the PrintText call"
+decoder = "ParalyzedMayNotAttackText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
