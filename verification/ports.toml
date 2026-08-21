@@ -22515,3 +22515,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the frozen-status mask test"
 decoder = "FRZ AND-A mask and branch flags are modeled exactly; turn/move-type/fire checks, status writes, roster updates, text, and defrost continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "StatModifierUpEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_stat_modifier_up_effect"
+c_source = "verification/ports/stat_modifier_up_effect.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and hWhoseTurn inputs through stat-modifier pointer selection"
+decoder = "player/enemy stat-modifier and move-effect pointer selection plus AND-A flags are modeled exactly; effect mapping, stat increment/cap, text, modified-stat recalculation, and continuation paths remain beyond the explicit boundary"
