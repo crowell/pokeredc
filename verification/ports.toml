@@ -22359,3 +22359,15 @@ observables = [
 ]
 proof_domain = "all register/flag, trainer-pointer, and wLinkState inputs through bank selection"
 decoder = "trainer pointer load, link-state AND-A flags, Trainer Pics/RedPicFront bank selection, and decompression call boundary are modeled exactly; sprite decompression, front-pic loading, and tile/data continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AnimateSendingOutMon"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_animate_sending_out_mon"
+c_source = "verification/ports/animate_sending_out_mon.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, predef-HL, start-tile, and battle-state inputs through the in-battle branch"
+decoder = "predef HL load, B=4c setup, battle-state AND-A flags, and branch boundary are modeled exactly; tile writes, Delay3/DelayFrames, downscaled sprite copies, OAM, and CopyUncompressedPicToHL continuation remain beyond the explicit boundary"
