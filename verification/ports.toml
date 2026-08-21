@@ -23921,3 +23921,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through MltReq1Packet pointer setup"
 decoder = "MltReq1Packet pointer setup and SendSGBPacket continuation boundary are modeled exactly; packet transmission timing and Wait7000 continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CopyGfxToSuperNintendoVRAM"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_copy_gfx_to_super_nintendo_vram_private"
+c_source = "verification/ports/copy_gfx_to_super_nintendo_vram_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through SGB tile-source setup"
+decoder = "DisableLCD continuation boundary, palette register setup, and vChars1 tile destination setup are modeled exactly; border/tile copying, tilemap generation, SGB packet sending, LCD restore, and continuation paths remain beyond the explicit boundary"
