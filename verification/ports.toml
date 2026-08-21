@@ -24164,3 +24164,15 @@ observables = [
 ]
 proof_domain = "all register/flag and party-species inputs through GetMonHeader entry"
 decoder = "wCurPartySpecies load, wCurSpecies write, and GetMonHeader dispatch are modeled exactly; learnset lookup, TM scan, FlagActionPredef, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayTownMap"
+assembly_source = "engine/items/town_map.asm"
+c_symbol = "port_display_town_map_private"
+c_source = "verification/ports/display_town_map_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through LoadTownMap entry"
+decoder = "LoadTownMap call dispatch is modeled as an explicit call boundary; map rendering, cursor setup, input handling, and continuation paths remain beyond the explicit boundary"
