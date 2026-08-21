@@ -22623,3 +22623,15 @@ observables = [
 ]
 proof_domain = "all register/flag, animation-ID, and hWhoseTurn inputs through PlayBattleAnimationGotID"
 decoder = "wAnimationID store, turn-specific animation-type selection, and flags are modeled exactly; PlayBattleAnimationGotID animation dispatch remains beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "EndOfBattle"
+assembly_source = "engine/battle/end_of_battle.asm"
+c_symbol = "port_end_of_battle"
+c_source = "verification/ports/end_of_battle.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the link-battle branch"
+decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; party/status synchronization, result text, delay, evolution, reset, audio, and return paths remain beyond the explicit boundary"
