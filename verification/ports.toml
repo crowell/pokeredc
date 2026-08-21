@@ -20630,8 +20630,8 @@ observables = [
     "H",
     "L",
 ]
-proof_domain = "predef-jump wrapper with the horizontal shake predef as an explicit continuation boundary"
-decoder = "The wrapper's single predef jump is an explicit terminal continuation; register identity is proven, while PredefShakeScreenHorizontally remains downstream"
+proof_domain = "all CPU register/flag inputs with positive predef shake count"
+decoder = "PredefShakeScreenHorizontally loop summary is modeled through its final DelayFrames/DEC B iteration and WX restoration; predef register-block memory and per-frame hardware writes remain beyond the explicit boundary"
 
 [[function]]
 assembly_symbol = "_AnimationWaterDroplets"
