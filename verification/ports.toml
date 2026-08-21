@@ -22082,3 +22082,15 @@ observables = [
 ]
 proof_domain = "all register/flag, turn, type, and move-type inputs through the type-effectiveness loop entry"
 decoder = "player/enemy attacker/defender type selection, move-type selection/store, and AND-A flags are modeled exactly; STAB damage scaling, TypeEffects traversal, multiplier updates, and damage arithmetic remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "MoveHitTest"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_move_hit_test"
+c_source = "verification/ports/move_hit_test.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag, turn, and move-effect inputs through the Dream Eater check entry"
+decoder = "player/enemy target-status, move-effect, and target-status pointer selection plus AND-A flags are modeled exactly; Dream Eater, Swift, substitute, invulnerability, mist, accuracy, and hit/miss branches remain beyond the explicit boundary"
