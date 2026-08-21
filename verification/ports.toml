@@ -23834,3 +23834,16 @@ observables = [
 ]
 proof_domain = "all register/flag and palette-command inputs through command load"
 decoder = "GetPredefRegisters continuation boundary and B-to-A palette command load are modeled exactly; default-command lookup, party-menu special case, palette table dispatch, SGB packet generation, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DeterminePaletteIDOutOfBattle"
+assembly_source = "engine/gfx/palettes.asm"
+c_symbol = "port_determine_palette_id_out_of_battle_private"
+c_source = "verification/ports/determine_palette_id_out_of_battle_private.c"
+status = "partial"
+observables = [
+    "A",
+    "wPokedexNum",
+]
+proof_domain = "all register/flag and species inputs through dex-conversion guard"
+decoder = "wPokedexNum store, zero-species guard, and IndexToPokedex continuation boundary are modeled exactly; palette table lookup, pointer arithmetic, and final palette-ID result remain beyond the explicit boundary"
