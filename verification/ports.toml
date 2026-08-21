@@ -23155,3 +23155,15 @@ observables = [
 ]
 proof_domain = "all register/flag and test-battle state inputs through badge/status setup"
 decoder = "GBPalNormal continuation boundary, Earth Badge setup, test-battle status flag set, and destination pointer state are modeled exactly; party reset, debug party creation, opponent initialization, repeated battle loop, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrepareNewGameDebug"
+assembly_source = "engine/debug/debug_party.asm"
+c_symbol = "port_prepare_new_game_debug_private"
+c_source = "verification/ports/prepare_new_game_debug_private.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through production PrepareNewGameDebug RET"
+decoder = "production ROM encodes PrepareNewGameDebug as a one-byte RET; native implementation preserves the complete register state"
