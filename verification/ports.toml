@@ -24226,3 +24226,16 @@ observables = [
 ]
 proof_domain = "all register/flag and OAM-base inputs through LoadTownMapEntry entry"
 decoder = "A/B preservation, wOAMBaseTile write from B, wTownMapCoords DE setup, and LoadTownMapEntry dispatch are modeled exactly; coordinate conversion, OAM writes, name copy, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TownMapSpriteBlinkingAnimation"
+assembly_source = "engine/items/town_map.asm"
+c_symbol = "port_town_map_sprite_blinking_animation_private"
+c_source = "verification/ports/town_map_sprite_blinking_animation_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wAnimCounter",
+]
+proof_domain = "all register/flag and animation-counter inputs through counter load"
+decoder = "wAnimCounter load and initial animation-counter path entry are modeled exactly; increment/threshold branches, OAM show/hide writes, counter update, delay, and continuation paths remain beyond the explicit boundary"
