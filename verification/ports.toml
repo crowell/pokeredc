@@ -22202,3 +22202,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wLinkState inputs through the link-battle branch"
 decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; party/wild data loading, species/header, DV/stat, HP/status, type, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DoBattleTransitionAndInitBattleVariables"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_do_battle_transition_and_init_battle_variables"
+c_source = "verification/ports/do_battle_transition_and_init_battle_variables.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wLinkState inputs through the link-battle branch"
+decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; link-vs-normal initialization, transition, tile/palette loads, screen/sprite clearing, hardware writes, and variable resets remain beyond the explicit boundary"
