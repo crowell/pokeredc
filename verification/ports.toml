@@ -22046,3 +22046,15 @@ observables = [
 ]
 proof_domain = "all register/flag and hWhoseTurn inputs through the USING_RAGE bit check"
 decoder = "player/enemy status, stat-modifier, and move-number pointer selection plus AND-A flags are modeled exactly; Rage bit/max-modifier checks, move/effect mutation, text/stat-modifier calls, turn flipping, and restoration remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "MirrorMoveCopyMove"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_mirror_move_copy_move"
+c_source = "verification/ports/mirror_move_copy_move.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and used-move inputs through the selected-move store"
+decoder = "player/enemy used-move selection, selected-move and move-number pointer setup, and AND-A flags are modeled exactly; Mirror Move failure/reload branches and text/data calls remain beyond the explicit boundary"
