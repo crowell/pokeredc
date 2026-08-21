@@ -21658,3 +21658,16 @@ observables = [
 ]
 proof_domain = "all register/flag, wCurrentMenuItem, and wNumMovesMinusOne inputs through the menu-limit comparison"
 decoder = "current-item/limit loads, double INC-A, CP B flags, and branch boundary are modeled exactly; cursor wraparound paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "AnyMoveToSelect"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_any_move_to_select"
+c_source = "verification/ports/any_move_to_select.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wPlayerSelectedMove",
+]
+proof_domain = "all register/flag and disabled-move inputs through the disabled-move branch"
+decoder = "STRUGGLE selection, disabled-move load/AND-A flags, and BattleMon PP pointer setup are modeled exactly; PP scan and no-moves paths remain beyond the explicit boundary"
