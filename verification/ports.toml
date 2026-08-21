@@ -21974,3 +21974,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wDamage inputs through the zero-damage branch"
 decoder = "wDamage high/low load, HL setup, B copy, and OR-A zero flags are modeled exactly; substitute handling, HP subtraction, overflow capping, HP-bar animation, and HUD continuation remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ApplyAttackToEnemyPokemonDone"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_apply_attack_to_enemy_pokemon_done"
+c_source = "verification/ports/apply_attack_to_enemy_pokemon_done.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register and flag inputs through the DrawHUDsAndHPBars continuation"
+decoder = "the JP DrawHUDsAndHPBars continuation is an explicit boundary; the completion wrapper preserves all observable CPU registers and flags"
