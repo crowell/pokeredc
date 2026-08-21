@@ -22395,3 +22395,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wIsInBattle inputs through the wild-battle return check"
 decoder = "LoadPartyPokeballGfx/SetupOwnPartyPokeballs call boundaries, wIsInBattle DEC flags, and wild-vs-trainer branch are modeled exactly; pokeball data setup, OAM drawing, enemy-party path, and rendering remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadPartyPokeballGfx"
+assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
+c_symbol = "port_load_party_pokeball_gfx"
+c_source = "verification/ports/load_party_pokeball_gfx.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through CopyVideoData"
+decoder = "Pokeball tile source/destination and BC bank/count setup are modeled exactly; CopyVideoData transfer and graphics memory effects remain beyond the explicit boundary"
