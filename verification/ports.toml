@@ -21400,3 +21400,15 @@ observables = [
 ]
 proof_domain = "all register/flag and initial enemy-status inputs through the first enemy-disabled-move store"
 decoder = "XOR-A, enemy-status clearing writes, and status-pointer advancement are modeled exactly; AI/status/send-out branches remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HasMonFainted"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_has_mon_fainted"
+c_source = "verification/ports/has_mon_fainted.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wWhichPokemon inputs through the AddNTimes call"
+decoder = "wWhichPokemon load and HL/BC party-structure setup are modeled exactly; HP comparison and no-will text paths remain beyond the explicit boundary"
