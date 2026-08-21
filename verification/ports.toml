@@ -24213,3 +24213,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through GBPalWhiteOut entry"
 decoder = "town-map blinking flag clear, zero-result flags, and GBPalWhiteOut dispatch are modeled exactly; screen/sprite/font/player reload, sprite updates, palette restoration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DrawPlayerOrBirdSprite"
+assembly_source = "engine/items/town_map.asm"
+c_symbol = "port_draw_player_or_bird_sprite_private"
+c_source = "verification/ports/draw_player_or_bird_sprite_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wOAMBaseTile",
+]
+proof_domain = "all register/flag and OAM-base inputs through LoadTownMapEntry entry"
+decoder = "A/B preservation, wOAMBaseTile write from B, wTownMapCoords DE setup, and LoadTownMapEntry dispatch are modeled exactly; coordinate conversion, OAM writes, name copy, and continuation paths remain beyond the explicit boundary"
