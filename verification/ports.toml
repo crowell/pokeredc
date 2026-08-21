@@ -23271,3 +23271,20 @@ observables = [
 ]
 proof_domain = "all register/flag and status inputs through ShowPokedexData setup"
 decoder = "NO_TEXT_DELAY status flag set, status-pointer setup, and ShowPokedexData continuation boundary are modeled exactly; map reload, delay, pokedex indexing, seen-flag update, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayElevatorFloorMenu"
+assembly_source = "engine/events/elevator.asm"
+c_symbol = "port_display_elevator_floor_menu_private"
+c_source = "verification/ports/display_elevator_floor_menu_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wListPointer",
+    "wCurrentMenuItem",
+    "wListScrollOffset",
+    "wPrintItemPrices",
+    "wListMenuID",
+]
+proof_domain = "all register/flag and elevator-list state inputs through DisplayListMenuID setup"
+decoder = "WhichFloorText continuation boundary, item-list pointer copy, menu reset, scroll/prices clearing, and SPECIALLISTMENU selection are modeled exactly; list rendering, input handling, warp selection, map flags, and continuation paths remain beyond the explicit boundary"
