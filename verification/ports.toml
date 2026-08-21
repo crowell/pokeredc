@@ -23945,3 +23945,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through GetPredefRegisters continuation boundary"
 decoder = "GetPredefRegisters call boundary is modeled exactly; background palette mutation, four-frame delay, and palette restoration remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PredefShakeScreenVertically"
+assembly_source = "engine/gfx/screen_effects.asm"
+c_symbol = "port_predef_shake_screen_vertically_private"
+c_source = "verification/ports/predef_shake_screen_vertically_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wDisableVBlankWYUpdate",
+]
+proof_domain = "all register/flag inputs through vertical-shake animation setup"
+decoder = "GetPredefRegisters continuation boundary, disable-WY-update enable, and vertical shake loop-entry state are modeled exactly; WY mutation, repeated delays, screen movement, cleanup, and continuation paths remain beyond the explicit boundary"
