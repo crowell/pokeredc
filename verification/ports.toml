@@ -24252,3 +24252,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through JOYP deselection write"
 decoder = "DelayFrame dispatch, JOYP deselection A load, and rJOYP write are modeled exactly; soft-reset counter decrement, SoftReset/ Joypad branches, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CableClub_DoBattleOrTrade"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_cable_club_do_battle_or_trade_private"
+c_source = "verification/ports/cable_club_do_battle_or_trade_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through DelayFrames entry"
+decoder = "80-frame delay counter initialization and DelayFrames dispatch are modeled exactly; screen/UI setup, textbox drawing, serial synchronization, battle/trade dispatch, and continuation paths remain beyond the explicit boundary"
