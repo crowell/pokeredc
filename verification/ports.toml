@@ -23382,3 +23382,15 @@ observables = [
 ]
 proof_domain = "all register/flag and display-state inputs through popup textbox setup"
 decoder = "auto-BG-transfer enable, WY clear, and MON_SPRITE_POPUP textbox selection are modeled exactly; graphics save/load, sprite rendering, text wait, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "SafariZoneCheckSteps"
+assembly_source = "engine/events/hidden_events/safari_game.asm"
+c_symbol = "port_safari_zone_check_steps_private"
+c_source = "verification/ports/safari_zone_check_steps_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and Safari-step inputs through zero-step check setup"
+decoder = "Safari-step high/low loads, BC assembly, OR zero-check setup, and loop-entry state are modeled exactly; debug input handling, decrement/store, game-over transition, and continuation paths remain beyond the explicit boundary"
