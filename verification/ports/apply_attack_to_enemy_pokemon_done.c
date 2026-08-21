@@ -1,8 +1,10 @@
 #include "port_state.h"
 
-/* Port of ApplyAttackToEnemyPokemonDone through DrawHUDsAndHPBars. */
+void port_draw_huds_and_hp_bars(struct cpu_register_state *registers);
+
+/* Port of ApplyAttackToEnemyPokemonDone: JP DrawHUDsAndHPBars. */
 __attribute__((noinline, used)) void
 port_apply_attack_to_enemy_pokemon_done(struct cpu_register_state *registers)
 {
-	(void)registers;
+	port_draw_huds_and_hp_bars(registers);
 }

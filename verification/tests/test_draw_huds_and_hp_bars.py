@@ -40,18 +40,26 @@ class Endpoint:
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class SkipPlayerHUD(angr.SimProcedure):
+class PlayerHUD(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x40, 8)
+        self.state.regs.h = claripy.BVV(0xC4, 8)
+        self.state.regs.l = claripy.BVV(0x35, 8)
+        self.state.regs.b = claripy.BVV(5, 8)
+        self.state.regs.c = claripy.BVV(11, 8)
         self.jump(self.state.addr + 3)
 
 
-class Boundary(angr.SimProcedure):
+class EnemyHUD(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
-        self.inhibit_autoret = True
-        self.successors.add_successor(
-            self.state.copy(), DONE, claripy.BoolV(True), "Ijk_Boring"
-        )
-
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x40, 8)
+        self.state.regs.h = claripy.BVV(0xC3, 8)
+        self.state.regs.l = claripy.BVV(0xA0, 8)
+        self.state.regs.b = claripy.BVV(4, 8)
+        self.state.regs.c = claripy.BVV(12, 8)
+        self.jump(DONE)
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "DrawHUDsAndHPBars")
@@ -67,8 +75,8 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
             "entry_point": base,
         },
     )
-    project.hook(base, SkipPlayerHUD(), length=3)
-    project.hook(base + 3, Boundary(), length=3)
+    project.hook(base, PlayerHUD(), length=3)
+    project.hook(base + 3, EnemyHUD(), length=3)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
     manager = project.factory.simulation_manager(state)

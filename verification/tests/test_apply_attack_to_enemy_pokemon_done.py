@@ -42,11 +42,16 @@ class Endpoint:
 
 class Boundary(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x40, 8)
+        self.state.regs.h = claripy.BVV(0xC3, 8)
+        self.state.regs.l = claripy.BVV(0xA0, 8)
+        self.state.regs.b = claripy.BVV(4, 8)
+        self.state.regs.c = claripy.BVV(12, 8)
         self.inhibit_autoret = True
         self.successors.add_successor(
             self.state.copy(), DONE, claripy.BoolV(True), "Ijk_Boring"
         )
-
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "ApplyAttackToEnemyPokemonDone")
