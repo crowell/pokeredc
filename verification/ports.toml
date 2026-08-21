@@ -22951,3 +22951,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through the first sprite-column scaling call"
 decoder = "input/output sprite-buffer pointer setup for the first scaling call is modeled exactly; pixel expansion, buffer writes, second chunk processing, and continuation calls remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "ScaleFirstThreeSpriteColumnsByTwo"
+assembly_source = "engine/battle/scale_sprites.asm"
+c_symbol = "port_scale_first_three_sprite_columns_by_two_private"
+c_source = "verification/ports/scale_first_three_sprite_columns_by_two_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the first column-loop setup"
+decoder = "three-column loop counter and inner-loop counter initialization are modeled exactly; pixel expansion, buffer writes, pointer movement, and continuation calls remain beyond the explicit boundary"
