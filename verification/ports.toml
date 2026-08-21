@@ -23188,3 +23188,15 @@ observables = [
 ]
 proof_domain = "all register/flag and reset-state inputs through HasEnoughMoney call boundary"
 decoder = "XOR-A reset and all blackout status/money-clearing stores are modeled exactly; HasEnoughMoney, money halving, status-warp flags, joy-ignore setup, HealParty, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintCardKeyText"
+assembly_source = "engine/events/card_key.asm"
+c_symbol = "port_print_card_key_text_private"
+c_source = "verification/ports/print_card_key_text_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and current-map inputs through Silph map-list setup"
+decoder = "SilphCoMapList pointer setup, current-map load/copy, and PrintCardKeyText loop-entry state are modeled exactly; door/tile checks, bag lookup, text, map mutation, sound, and continuation paths remain beyond the explicit boundary"
