@@ -23288,3 +23288,18 @@ observables = [
 ]
 proof_domain = "all register/flag and elevator-list state inputs through DisplayListMenuID setup"
 decoder = "WhichFloorText continuation boundary, item-list pointer copy, menu reset, scroll/prices clearing, and SPECIALLISTMENU selection are modeled exactly; list rendering, input handling, warp selection, map flags, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "InGameTrade_CheckForTradeEvo"
+assembly_source = "engine/events/evolve_trade.asm"
+c_symbol = "port_ingame_trade_check_for_trade_evo_private"
+c_source = "verification/ports/ingame_trade_check_for_trade_evo_private.c"
+status = "partial"
+observables = [
+    "A",
+    "wWhichPokemon",
+    "wForceEvolution",
+    "wLinkState",
+]
+proof_domain = "all name, party-count, and trade-state inputs through TryEvolvingMon setup"
+decoder = "GRAVELER/SPECTRE name matching, party-index selection, force-evolution flag, and LINK_STATE_TRADING setup are modeled exactly; TryEvolvingMon, link-state cleanup, music restoration, and nonmatching return flags remain beyond the explicit boundary"
