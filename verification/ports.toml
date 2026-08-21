@@ -23316,3 +23316,15 @@ observables = [
 ]
 proof_domain = "all register/flag and current-species inputs through IndexToPokedex setup"
 decoder = "current-party-species load, wPokedexNum store, and IndexToPokedex continuation boundary are modeled exactly; owned-flag mutation, name loading, text rendering, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "HealParty"
+assembly_source = "engine/events/heal_party.asm"
+c_symbol = "port_heal_party_private"
+c_source = "verification/ports/heal_party_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and party-species inputs through first heal-loop load"
+decoder = "party-species pointer and first party-HP pointer setup plus species load are modeled exactly; status/PP restoration, move-data lookup, party iteration, and continuation paths remain beyond the explicit boundary"
