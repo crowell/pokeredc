@@ -24326,3 +24326,15 @@ observables = [
 ]
 proof_domain = "all register/flag and menu-index inputs through StatusScreen entry"
 decoder = "wCurrentMenuItem load, wWhichPokemon write, and StatusScreen dispatch are modeled exactly; status rendering, palette/font restoration, party-list drawing, cancel-box construction, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TradeCenter_DrawPartyLists"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_trade_center_draw_party_lists_private"
+c_source = "verification/ports/trade_center_draw_party_lists_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through first CableClub_TextBoxBorder entry"
+decoder = "first party-list textbox coordinate HL setup, six-row B setup, 18-column C setup, and CableClub_TextBoxBorder dispatch are modeled exactly; second box, trainer names, species lists, and continuation paths remain beyond the explicit boundary"
