@@ -23613,3 +23613,15 @@ observables = [
 ]
 proof_domain = "all register/flag and current-menu-item inputs through selected-prize setup"
 decoder = "current-menu selection load/store and prize-choice continuation state are modeled exactly; prize lookup, name rendering, yes/no handling, coin subtraction, item/Pokemon grant, bag-full, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "RemoveGuardDrink"
+assembly_source = "engine/events/saffron_guards.asm"
+c_symbol = "port_remove_guard_drink_private"
+c_source = "verification/ports/remove_guard_drink_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through GuardDrinksList setup"
+decoder = "GuardDrinksList pointer setup and first removal-loop continuation boundary are modeled exactly; item iteration, bag checks, removal, and continuation paths remain beyond the explicit boundary"
