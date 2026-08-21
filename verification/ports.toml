@@ -21536,3 +21536,15 @@ observables = [
 ]
 proof_domain = "all register/flag and color-memory inputs through the GetHealthBarColor call"
 decoder = "HL-indirect color load and GetHealthBarColor continuation are modeled exactly; palette-update branch remains beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayBattleMenu"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_display_battle_menu"
+c_source = "verification/ports/display_battle_menu.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and battle-type inputs through the standard/nonstandard battle branch"
+decoder = "LoadScreenTilesFromBuffer1 is an explicit boundary; battle-type high-memory load and AND-A flags are modeled exactly"
