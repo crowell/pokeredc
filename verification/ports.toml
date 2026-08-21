@@ -22563,3 +22563,15 @@ observables = [
 ]
 proof_domain = "all register/flag and pointed move-effect inputs through the stat-lowering comparison"
 decoder = "move-effect load and ATTACK_DOWN_SIDE_EFFECT CP flags are modeled exactly; ConditionalPrintButItFailed continuation remains beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintStatText"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_print_stat_text"
+c_source = "verification/ports/print_stat_text.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through the stat-name search loop"
+decoder = "StatModTextStrings HL and '@' delimiter C setup are modeled exactly; stat-name scanning, wStringBuffer copy, and continuation remain beyond the explicit boundary"
