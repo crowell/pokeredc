@@ -21560,3 +21560,16 @@ observables = [
 ]
 proof_domain = "all register/flag and battle-type inputs through the normal/nonstandard battle branch"
 decoder = "LoadScreenTilesFromBuffer1 is an explicit boundary; battle-type load and AND-A flags are modeled exactly"
+
+[[function]]
+assembly_symbol = "UseBagItem"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_use_bag_item"
+c_source = "verification/ports/use_bag_item.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wNamedObjectIndex",
+]
+proof_domain = "all register/flag and current-item inputs through GetItemName"
+decoder = "current-item load/store and GetItemName continuation are modeled exactly; item use, menu refresh, and capture branches remain beyond the explicit boundary"
