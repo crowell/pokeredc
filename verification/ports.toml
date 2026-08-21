@@ -23997,3 +23997,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through initial battle guard"
 decoder = "battle-state load, AND-derived zero flag, battle-path carry set, and nonbattle branch entry are modeled exactly; shore/water detection, surfing guard, overworld reload, text, sound, delay, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintItemUseTextAndRemoveItem"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_print_item_use_text_and_remove_item_private"
+c_source = "verification/ports/print_item_use_text_and_remove_item_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through wait-for-text continuation boundary"
+decoder = "ItemUseText00 HL load, PrintText continuation, heal-ailment sound load, and WaitForTextScrollButtonPress entry are modeled exactly; text rendering, sound playback, button wait, item removal, and continuation paths remain beyond the explicit boundary"
