@@ -23760,3 +23760,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through party-sprite animation-gfx setup"
 decoder = "MonPartySpritePointers source pointer, animation-structure count, and BC zero-offset setup are modeled exactly; sprite table iteration, tile transfers, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LoadMonPartySpriteGfxWithLCDDisabled"
+assembly_source = "engine/gfx/mon_icons.asm"
+c_symbol = "port_load_mon_party_sprite_gfx_lcd_disabled_private"
+c_source = "verification/ports/load_mon_party_sprite_gfx_lcd_disabled_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through LCD-disabled party-sprite loop setup"
+decoder = "DisableLCD continuation boundary, MonPartySpritePointers source pointer, animation-structure count, and BC zero-offset setup are modeled exactly; immediate VRAM transfer loop, EnableLCD cleanup, and continuation paths remain beyond the explicit boundary"
