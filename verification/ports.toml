@@ -22383,3 +22383,15 @@ observables = [
 ]
 proof_domain = "all register/flag, species, and initial coordinate inputs through ClearScreenArea"
 decoder = "wBattleMonSpecies2 load, HUD coordinate/BC setup, and ClearScreenArea call boundary are modeled exactly; sprite decompression, scaling, interlacing, VRAM transfer, and rendering remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DrawAllPokeballs"
+assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
+c_symbol = "port_draw_all_pokeballs"
+c_source = "verification/ports/draw_all_pokeballs.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wIsInBattle inputs through the wild-battle return check"
+decoder = "LoadPartyPokeballGfx/SetupOwnPartyPokeballs call boundaries, wIsInBattle DEC flags, and wild-vs-trainer branch are modeled exactly; pokeball data setup, OAM drawing, enemy-party path, and rendering remain beyond the explicit boundary"
