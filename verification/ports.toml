@@ -23167,3 +23167,24 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through production PrepareNewGameDebug RET"
 decoder = "production ROM encodes PrepareNewGameDebug as a one-byte RET; native implementation preserves the complete register state"
+
+[[function]]
+assembly_symbol = "ResetStatusAndHalveMoneyOnBlackout"
+assembly_source = "engine/events/black_out.asm"
+c_symbol = "port_reset_status_and_halve_money_private"
+c_source = "verification/ports/reset_status_and_halve_money_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wBattleResult",
+    "wWalkBikeSurfState",
+    "wIsInBattle",
+    "wMapPalOffset",
+    "wNPCMovementScriptFunctionNum",
+    "hJoyHeld",
+    "wNPCMovementScriptPointerTableNum",
+    "wMiscFlags",
+    "hMoney",
+]
+proof_domain = "all register/flag and reset-state inputs through HasEnoughMoney call boundary"
+decoder = "XOR-A reset and all blackout status/money-clearing stores are modeled exactly; HasEnoughMoney, money halving, status-warp flags, joy-ignore setup, HealParty, and continuation paths remain beyond the explicit boundary"
