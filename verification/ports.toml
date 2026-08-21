@@ -21375,3 +21375,15 @@ observables = [
 ]
 proof_domain = "all register/flag and slide-amount inputs through the first row loop"
 decoder = "high-memory slide amount store, C transfer, push setup, and PIC_HEIGHT loop count are modeled exactly; per-column movement and DelayFrames remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "EnemySendOut"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_enemy_send_out"
+c_source = "verification/ports/enemy_send_out.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and player-mon-number inputs through the first FlagActionPredef call"
+decoder = "HL/A/C/B setup and XOR-A flags are modeled exactly; party-flag and send-out branches remain beyond the explicit boundary"
