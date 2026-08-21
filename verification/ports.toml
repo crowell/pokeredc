@@ -22647,3 +22647,15 @@ observables = [
 ]
 proof_domain = "all register/flag and wLinkState inputs through the link-battle early return"
 decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; experience division, party/stat EXP loops, level-ups, evolution, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DivideExpDataByNumMonsGainingExp"
+assembly_source = "engine/battle/experience.asm"
+c_symbol = "port_divide_exp_data_by_num_mons_gaining_exp"
+c_source = "verification/ports/divide_exp_data_by_num_mons_gaining_exp.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and wPartyGainExpFlags inputs through bit-count loop setup"
+decoder = "party EXP flags load, B copy, XOR-A, C=8, D=0 setup, and loop boundary are modeled exactly; bit counting, divisor early return, stat/EXP division, and memory writes remain beyond the explicit boundary"
