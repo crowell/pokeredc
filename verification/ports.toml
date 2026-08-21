@@ -23625,3 +23625,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through GuardDrinksList setup"
 decoder = "GuardDrinksList pointer setup and first removal-loop continuation boundary are modeled exactly; item iteration, bag checks, removal, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "StarterDex"
+assembly_source = "engine/events/starter_dex.asm"
+c_symbol = "port_starter_dex_private"
+c_source = "verification/ports/starter_dex_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wPokedexOwned",
+]
+proof_domain = "all register/flag and Pokedex-ownership inputs through ShowPokedexData setup"
+decoder = "temporary starter-owned bitmask load/store and ShowPokedexData continuation boundary are modeled exactly; ownership reset and continuation paths remain beyond the explicit boundary"
