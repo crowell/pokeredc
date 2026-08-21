@@ -24137,3 +24137,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through hidden-item table loop setup"
 decoder = "HiddenItemCoords HL setup, hidden-item loop counter B initialization, and first loop-entry state are modeled exactly; map lookup, obtained-flag checks, coordinate checks, carry result, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CheckIfMoveIsKnown"
+assembly_source = "engine/items/tmhm.asm"
+c_symbol = "port_check_if_move_is_known_private"
+c_source = "verification/ports/check_if_move_is_known_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wWhichPokemon",
+]
+proof_domain = "all register/flag and party-index inputs through AddNTimes entry"
+decoder = "wWhichPokemon load, party-moves HL base, PARTYMON_STRUCT_LENGTH BC setup, and AddNTimes dispatch are modeled exactly; move-number scan, AlreadyKnowsText path, PrintText, carry result, and continuation paths remain beyond the explicit boundary"
