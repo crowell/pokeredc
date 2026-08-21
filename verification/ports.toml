@@ -21708,3 +21708,16 @@ observables = [
 ]
 proof_domain = "all register/flag and wLinkState inputs through the link-battle branch"
 decoder = "wLinkState load and SM83 SUB 4 flags are modeled exactly; link exchange and enemy-status selection paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LinkBattleExchangeData"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_link_battle_exchange_data"
+c_source = "verification/ports/link_battle_exchange_data.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wSerialExchangeNybbleReceiveData",
+]
+proof_domain = "all register/flag and player-move-list inputs through the run-command branch"
+decoder = "stop-value store, player move-list load, and LINKBATTLE_RUN comparison are modeled exactly; exchange synchronization and move-selection paths remain beyond the explicit boundary"
