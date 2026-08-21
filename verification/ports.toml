@@ -23508,3 +23508,15 @@ observables = [
 ]
 proof_domain = "all register/flag and current-menu-item inputs through YesNoChoice result load"
 decoder = "OaksAide greeting/YesNoChoice continuation boundaries and current-menu-item result load are modeled exactly; pokedex bit counting, reward checks, item grant, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PickUpItem"
+assembly_source = "engine/events/pick_up_item.asm"
+c_symbol = "port_pick_up_item_private"
+c_source = "verification/ports/pick_up_item_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag and sprite-index inputs through toggleable-object scan setup"
+decoder = "EnableAutoTextBoxDrawing continuation boundary, hSpriteIndex load/copy, and toggleable-object list loop setup are modeled exactly; object scan, item lookup, GiveItem, hide-object, text, and bag-full paths remain beyond the explicit boundary"
