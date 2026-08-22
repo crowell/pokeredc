@@ -24375,3 +24375,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through GetPredefRegisters entry"
 decoder = "GetPredefRegisters dispatch is modeled as an explicit boundary; border geometry, tile writes, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DivideBCD_getNextDigit"
+assembly_source = "engine/math/bcd.asm"
+c_symbol = "port_divide_bcd_get_next_digit_private"
+c_source = "verification/ports/divide_bcd_get_next_digit_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through first StringCmp entry"
+decoder = "BC=3 loop-counter initialization and first StringCmp dispatch are modeled exactly; BCD comparison/subtraction, digit iteration, and continuation paths remain beyond the explicit boundary"
