@@ -1500,6 +1500,19 @@ struct divide_state {
 	port_u8 buffer[5];
 };
 
+/*
+ * Complete observable state for the banked Divide wrapper. hQuotient aliases
+ * dividend[0..3], hRemainder aliases divisor, exactly as FF95-FF99 alias on
+ * hardware.
+ */
+struct math_divide_state {
+	struct cpu_register_state registers;
+	port_u8 dividend[4];
+	port_u8 divisor;
+	port_u8 buffer[5];
+	port_u8 loaded_rom_bank;
+};
+
 struct differential_decode_state {
 	struct cpu_register_state registers;
 	port_u8 flipped;

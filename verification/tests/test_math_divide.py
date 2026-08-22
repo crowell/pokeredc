@@ -35,23 +35,41 @@ GB_STACK = 0xD000
 GB_RETURN = 0xFFFF
 NATIVE_STATE = 0x100000
 
-# The wrapper lives in home ($38ac, always mapped); callfar reaches _Multiply
-# in switchable bank $0d, so the emulated window exposes fixed bank 0 plus
-# bank $0d at $4000-$7fff.
+# The wrapper lives in home ($38b9); homecall reaches _Divide in switchable
+# bank $0d, so the emulated window exposes fixed bank 0 plus bank $0d at
+# $4000-$7fff.
 WINDOW_BANK = 0x0D
 
-HRAM_PRODUCT = 0xFF95  # four bytes; hMultiplicand aliases +1 through +3
-HRAM_MULTIPLIER = 0xFF99
-HRAM_BUFFER = 0xFF9B  # four bytes
+HRAM_DIVIDEND = 0xFF95  # four bytes; hQuotient aliases the same window
+HRAM_DIVISOR = 0xFF99  # hRemainder aliases this byte
+HRAM_BUFFER = 0xFF9A  # five hDivideBuffer bytes (no padding byte here)
 HRAM_LOADED_ROM_BANK = 0xFFB8
 
-# Offsets inside struct math_multiply_state.
-OFF_PRODUCT = 8
-OFF_MULTIPLIER = 12
+# Offsets inside struct math_divide_state.
+OFF_DIVIDEND = 8
+OFF_DIVISOR = 12
 OFF_BUFFER = 13
-OFF_LOADED_ROM_BANK = 17
+OFF_LOADED_ROM_BANK = 18
 
-OBSERVABLES = REGISTERS + ("product", "multiplier", "buffer", "loaded_rom_bank")
+OBSERVABLES = REGISTERS + ("dividend", "divisor", "buffer", "loaded_rom_bank")
+
+# Structural execution vectors: every real caller width b in {1,2,3,4} with
+# divisor and dividend values chosen so each distinct loop shape of _Divide
+# runs end to end: multi-pass subtraction, divisor one, boundary equality,
+# zero dividend, the b==1 short circuit, and multi-window quotient carry-out.
+# Registers except B stay fully symbolic in every vector.
+VECTORS = (
+    (2, 10, 0x00000063),
+    (2, 1, 0x00000005),
+    (2, 255, 0x000001FF),
+    (2, 200, 0x000000C8),
+    (2, 207, 0x00000000),
+    (1, 60, 0x0000007B),
+    (3, 7, 0x00123456),
+    (3, 89, 0x00010000),
+    (4, 100, 0x00123456),
+    (4, 17, 0x00ABCDEF),
+)
 
 
 @dataclass(frozen=True)
@@ -64,8 +82,8 @@ class Endpoint:
     e: claripy.ast.BV
     h: claripy.ast.BV
     l: claripy.ast.BV
-    product: claripy.ast.BV
-    multiplier: claripy.ast.BV
+    dividend: claripy.ast.BV
+    divisor: claripy.ast.BV
     buffer: claripy.ast.BV
     loaded_rom_bank: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
@@ -73,7 +91,7 @@ class Endpoint:
 
 @lru_cache(maxsize=None)
 def _asm_project() -> angr.Project:
-    multiply_location = symbol_location(SYMBOLS, "Multiply")
+    divide_location = symbol_location(SYMBOLS, "Divide")
     window_stream = rom_window(ROM, WINDOW_BANK)
     window = window_stream.getvalue()
     project = angr.Project(
@@ -84,59 +102,61 @@ def _asm_project() -> angr.Project:
             "backend": "blob",
             "arch": ArchPcode("z80:LE:16:default"),
             "base_addr": 0,
-            "entry_point": multiply_location.address,
+            "entry_point": divide_location.address,
         },
     )
-    # Wrapper (all generic Z80 encodings): no hooks expected.
     wrapper_counts = install_sm83_hooks(
-        project, window, multiply_location.address, multiply_location.address + 13
+        project, window, divide_location.address, divide_location.address + 26
     )
-    assert not wrapper_counts, wrapper_counts
-    bankswitch_location = symbol_location(SYMBOLS, "Bankswitch")
-    bank_counts = install_sm83_hooks(
-        project, window, bankswitch_location.address, bankswitch_location.address + 22
-    )
-    # ldh a,[hLoadedROMBank]; two ldh [hLoadedROMBank],a; two rROMB writes.
-    assert bank_counts == {"0xf0": 1, "0xe0": 2, "0xea": 2}, bank_counts
-    multiply_body_location = symbol_location(SYMBOLS, "_Multiply")
+    # ldh a,[hLoadedROMBank]; ld a,$0d; two ldh [..],a; two rROMB writes.
+    assert wrapper_counts == {
+        "0xf0": 1,
+        "0x3e": 1,
+        "0xe0": 2,
+        "0xea": 2,
+    }, wrapper_counts
+    divide_body_location = symbol_location(SYMBOLS, "_Divide")
     body_counts = install_sm83_hooks(
         project,
         window,
-        multiply_body_location.address,
-        multiply_body_location.address + 100,
+        divide_body_location.address,
+        divide_body_location.address + 136,
     )
     assert body_counts == {
-        "0x3e": 1,
-        "0xaf": 1,
-        "0xcb": 5,
-        "0xe0": 18,
-        "0xf0": 17,
-        "0x81": 1,
-        "0x89": 3,
+        "0xaf": 2,
+        "0x3e": 2,
+        "0xfe": 2,
+        "0xf0": 20,
+        "0xe0": 24,
+        "0xcb": 6,
+        "0x91": 1,
+        "0x99": 1,
         "0x5": 1,
+        "0x1d": 1,
+        "0x3c": 1,
     }, body_counts
     return project
 
 
-def _inputs(tag: str, multiplier: int) -> dict[str, claripy.ast.BV]:
+def _inputs(tag: str, width: int) -> dict[str, claripy.ast.BV]:
     values = symbolic_registers(tag)
-    values["product"] = claripy.BVS(f"{tag}_product", 32)
-    values["buffer"] = claripy.BVS(f"{tag}_buffer", 32)
+    values["b"] = claripy.BVV(width, 8)
+    values["dividend"] = claripy.BVS(f"{tag}_dividend", 32)
+    values["buffer"] = claripy.BVS(f"{tag}_buffer", 40)
     values["bank"] = claripy.BVS(f"{tag}_bank", 8)
-    values["multiplier"] = claripy.BVV(multiplier, 8)
     return values
 
 
 def _store_assembly_memory(state: angr.SimState, values: dict[str, claripy.ast.BV]) -> None:
-    state.memory.store(HRAM_PRODUCT, values["product"], endness="big")
-    state.memory.store(HRAM_MULTIPLIER, values["multiplier"])
+    state.memory.store(HRAM_DIVIDEND, values["dividend"], endness="big")
+    state.memory.store(HRAM_DIVISOR, values["divisor"])
     state.memory.store(HRAM_BUFFER, values["buffer"], endness="big")
     state.memory.store(HRAM_LOADED_ROM_BANK, values["bank"])
 
 
 def _assembly_endpoint(values: dict[str, claripy.ast.BV]) -> Endpoint:
     project = _asm_project()
-    location = symbol_location(SYMBOLS, "Multiply")
+    location = symbol_location(SYMBOLS, "Divide")
     state = project.factory.blank_state(addr=location.address)
     set_assembly_registers(state, values)
     _store_assembly_memory(state, values)
@@ -147,9 +167,9 @@ def _assembly_endpoint(values: dict[str, claripy.ast.BV]) -> Endpoint:
     end = returned[0]
     return Endpoint(
         **assembly_registers(end),
-        product=end.memory.load(HRAM_PRODUCT, 4, endness="big"),
-        multiplier=end.memory.load(HRAM_MULTIPLIER, 1),
-        buffer=end.memory.load(HRAM_BUFFER, 4, endness="big"),
+        dividend=end.memory.load(HRAM_DIVIDEND, 4, endness="big"),
+        divisor=end.memory.load(HRAM_DIVISOR, 1),
+        buffer=end.memory.load(HRAM_BUFFER, 5, endness="big"),
         loaded_rom_bank=end.memory.load(HRAM_LOADED_ROM_BANK, 1),
         constraints=tuple(end.solver.constraints),
     )
@@ -161,12 +181,12 @@ def _native_project() -> angr.Project:
 
 
 def _native_endpoint(project: angr.Project, values: dict[str, claripy.ast.BV]) -> Endpoint:
-    function = project.loader.find_symbol("port_math_multiply")
+    function = project.loader.find_symbol("port_math_divide")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE)
     store_native_registers(state, NATIVE_STATE, values)
-    state.memory.store(NATIVE_STATE + OFF_PRODUCT, values["product"], endness="big")
-    state.memory.store(NATIVE_STATE + OFF_MULTIPLIER, values["multiplier"])
+    state.memory.store(NATIVE_STATE + OFF_DIVIDEND, values["dividend"], endness="big")
+    state.memory.store(NATIVE_STATE + OFF_DIVISOR, values["divisor"])
     state.memory.store(NATIVE_STATE + OFF_BUFFER, values["buffer"], endness="big")
     state.memory.store(NATIVE_STATE + OFF_LOADED_ROM_BANK, values["bank"])
     manager = project.factory.simulation_manager(state)
@@ -176,9 +196,9 @@ def _native_endpoint(project: angr.Project, values: dict[str, claripy.ast.BV]) -
     end = manager.deadended[0]
     return Endpoint(
         **native_registers(end, NATIVE_STATE),
-        product=end.memory.load(NATIVE_STATE + OFF_PRODUCT, 4, endness="big"),
-        multiplier=end.memory.load(NATIVE_STATE + OFF_MULTIPLIER, 1),
-        buffer=end.memory.load(NATIVE_STATE + OFF_BUFFER, 4, endness="big"),
+        dividend=end.memory.load(NATIVE_STATE + OFF_DIVIDEND, 4, endness="big"),
+        divisor=end.memory.load(NATIVE_STATE + OFF_DIVISOR, 1),
+        buffer=end.memory.load(NATIVE_STATE + OFF_BUFFER, 5, endness="big"),
         loaded_rom_bank=end.memory.load(NATIVE_STATE + OFF_LOADED_ROM_BANK, 1),
         constraints=tuple(end.solver.constraints),
     )
@@ -186,30 +206,31 @@ def _native_endpoint(project: angr.Project, values: dict[str, claripy.ast.BV]) -
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-@pytest.mark.parametrize("multiplier", range(256))
-def test_math_multiply_full_pathwise_equivalence(multiplier: int) -> None:
-    tag = f"math_mul_{multiplier}"
-    values = _inputs(tag, multiplier)
+@pytest.mark.parametrize("vector", VECTORS)
+def test_math_divide_full_pathwise_equivalence(vector: tuple[int, int, int]) -> None:
+    width, divisor, dividend = vector
+    tag = f"math_div_{width}_{divisor}_{dividend}"
+    values = _inputs(tag, width)
+    values["divisor"] = claripy.BVV(divisor, 8)
+    values["dividend"] = claripy.BVV(dividend, 32)
     assembly = [_assembly_endpoint(values)]
     native = [_native_endpoint(_native_project(), values)]
     assert_pathwise_equivalent(assembly, native, OBSERVABLES)
 
 
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_math_multiply_exact_linked_bodies() -> None:
-    multiply_location = symbol_location(SYMBOLS, "Multiply")
-    expected_wrapper = bytes.fromhex("e5c521417d060dcdd635c1e1c9")
-    assert linked_bytes(ROM, multiply_location, len(expected_wrapper)) == expected_wrapper
-    bankswitch_location = symbol_location(SYMBOLS, "Bankswitch")
-    expected_bankswitch = bytes.fromhex("f0b8f578e0b8ea002001e435c5e9c178e0b8ea0020c9")
-    assert linked_bytes(ROM, bankswitch_location, len(expected_bankswitch)) == expected_bankswitch
-    multiply_body_location = symbol_location(SYMBOLS, "_Multiply")
+def test_math_divide_exact_linked_bodies() -> None:
+    divide_location = symbol_location(SYMBOLS, "Divide")
+    expected_wrapper = bytes.fromhex(
+        "e5d5c5f0b8f53e0de0b8ea0020cda57df1e0b8ea0020c1d1e1c9"
+    )
+    assert linked_bytes(ROM, divide_location, len(expected_wrapper)) == expected_wrapper
+    divide_body_location = symbol_location(SYMBOLS, "_Divide")
     expected_body = bytes.fromhex(
-        "3e0847afe095e09be09ce09de09ef099cb3fe0993020f09e4ff09881e09"
-        "ef09d4ff09789e09df09c4ff09689e09cf09b4ff09589e09b05281af098"
-        "cb27e098f097cb17e097f096cb17e096f095cb17e09518bbf09ee098f09"
-        "de097f09ce096f09be095c9"
+        "afe09ae09be09ce09de09e3e095ff09a4ff0969157f0994ff09599380c"
+        "e0957ae096f09e3ce09e18e578fe012845f09ecb27e09ef09dcb17e09d"
+        "f09ccb17e09cf09bcb17e09b1d20163e085ff09ae099afe09af096e095f"
+        "097e096f098e0977bfe01200105f099cb3fe099f09acb1fe09a189bf096"
+        "e099f09ee098f09de097f09ce096f09be095c9"
     )
-    assert (
-        linked_bytes(ROM, multiply_body_location, len(expected_body)) == expected_body
-    )
+    assert linked_bytes(ROM, divide_body_location, len(expected_body)) == expected_body

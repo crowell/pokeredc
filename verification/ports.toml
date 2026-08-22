@@ -24504,3 +24504,26 @@ observables = [
 ]
 proof_domain = "all register/flag/high-memory/loaded-bank inputs with every one of the 256 multiplier values executed as a concrete equivalence run; the full callfar Bankswitch dispatch into _Multiply and the bank-restore return are executed natively on both sides"
 decoder = "exact linked bodies of the wrapper, Bankswitch, and _Multiply checked; all LDH aliases, XOR A, ADD/ADC C, SRL/SLA/RL A, DEC B, and immediate-load semantics shimmed to SM83 behavior, rROMB mapper stores modeled as hardware no-ops whose net effect is the modeled bank save/restore"
+
+[[function]]
+assembly_symbol = "Divide"
+assembly_source = "home/math.asm"
+c_symbol = "port_math_divide"
+c_source = "verification/ports/math_divide.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "hDividend/hQuotient",
+    "hDivisor/hRemainder",
+    "all five hDivideBuffer bytes",
+    "hLoadedROMBank",
+]
+proof_domain = "all register/flag/high-memory/loaded-bank inputs for every caller-valid byte width; the full homecall dispatch into _Divide and the AF and bank restore are executed natively on both sides, composed with the proven _Divide body over its complete terminating domain and directly checked end to end on a structural vector set covering multi-pass subtraction, divisor one, boundary equality, zero dividend, the b==1 short circuit, and multi-window quotient carry-out"
+decoder = "exact linked bodies of the wrapper and _Divide checked; all LDH aliases, both XOR A sites, immediate loads, CP $1, SUB/SBC C, SLA/RL/SRL/RR, INC A, DEC B/E semantics shimmed to SM83 behavior, rROMB mapper stores modeled as hardware no-ops whose net effect is the modeled bank save/restore; pop af restores A as the pre-call loaded bank rather than the caller's A"
