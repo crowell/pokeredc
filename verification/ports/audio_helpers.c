@@ -969,9 +969,7 @@ audio_octave(struct audio_octave_state *state)
 
 	state->registers.b = 0;
 	state->registers.a = state->registers.d & 0x0f;
-	state->registers.f = PORT_FLAG_H;
-	if (state->registers.a == 0)
-		state->registers.f |= PORT_FLAG_Z;
+	state->registers.f = state->registers.a == 0 ? PORT_FLAG_Z : 0;
 	state->octaves[state->registers.c] = state->registers.a;
 	state->registers.h = 0xc0;
 	state->registers.l = 0xd6 + state->registers.c;
@@ -2482,9 +2480,7 @@ audio_apply_music_affects(struct audio_apply_music_affects_state *state)
 
 	audio_apply_music_affects_set_hl(&state->registers, 0xc04e);
 	state->registers.a = state->vibrato_delay_counters[channel];
-	state->registers.f = PORT_FLAG_H;
-	if (state->registers.a == 0)
-		state->registers.f |= PORT_FLAG_Z;
+	state->registers.f = state->registers.a == 0 ? PORT_FLAG_Z : 0;
 	else {
 		value = state->vibrato_delay_counters[channel];
 		state->vibrato_delay_counters[channel] = value - 1;
@@ -2505,9 +2501,7 @@ audio_apply_music_affects(struct audio_apply_music_affects_state *state)
 	audio_apply_music_affects_set_hl(&state->registers, 0xc05e);
 	value = state->vibrato_rates[channel];
 	state->registers.a = value & 0x0f;
-	state->registers.f = PORT_FLAG_H;
-	if (state->registers.a == 0)
-		state->registers.f |= PORT_FLAG_Z;
+	state->registers.f = state->registers.a == 0 ? PORT_FLAG_Z : 0;
 	/* The following AND A has the same result and flags. */
 	if (state->registers.a != 0) {
 		state->vibrato_rates[channel] = value - 1;
@@ -2786,14 +2780,10 @@ audio_play_sound_common(
 	state->registers.a = audio_rotate_left_circular(
 		&state->registers, state->registers.a);
 	state->registers.a &= 3;
-	state->registers.f = PORT_FLAG_H;
-	if (state->registers.a == 0)
-		state->registers.f |= PORT_FLAG_Z;
+	state->registers.f = state->registers.a == 0 ? PORT_FLAG_Z : 0;
 	state->registers.c = state->registers.a;
 	state->registers.a = state->registers.b & 0x0f;
-	state->registers.f = PORT_FLAG_H;
-	if (state->registers.a == 0)
-		state->registers.f |= PORT_FLAG_Z;
+	state->registers.f = state->registers.a == 0 ? PORT_FLAG_Z : 0;
 	state->registers.b = state->registers.c + 1;
 	state->registers.f = audio_inc_flags(
 		state->registers.f, state->registers.c);
@@ -3055,9 +3045,7 @@ audio_play_sound_sfx(
 	state->audio_ram[AUDIO_RAM_SFX_HEADER + 1] = state->registers.l;
 	header = audio_play_sound_header(state, header_pointer);
 	state->registers.a = header & 0xc0;
-	state->registers.f = PORT_FLAG_H;
-	if (state->registers.a == 0)
-		state->registers.f |= PORT_FLAG_Z;
+	state->registers.f = state->registers.a == 0 ? PORT_FLAG_Z : 0;
 	state->registers.a = audio_rotate_left_circular(
 		&state->registers, state->registers.a);
 	state->registers.a = audio_rotate_left_circular(
@@ -3332,9 +3320,7 @@ audio_note(struct audio_note_state *state, port_u8 variant)
 		return;
 	}
 	state->registers.a = state->registers.d & 0xf0;
-	state->registers.f = PORT_FLAG_H;
-	if (state->registers.a == 0)
-		state->registers.f |= PORT_FLAG_Z;
+	state->registers.f = state->registers.a == 0 ? PORT_FLAG_Z : 0;
 	state->registers.f = audio_cp_flags(state->registers.a, 0xb0);
 	if (state->registers.a > 0xb0) {
 		state->continuation = AUDIO_CONTINUE_NOTE_LENGTH;

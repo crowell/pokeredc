@@ -30,7 +30,10 @@ def assembly(i):
  for k in KEYS:s.globals[k]=i[k]
  s.globals['name']=[i['name'][87-j*8:80-j*8] for j in range(11)];s.globals['index']=0;s.regs.sp=STACK;s.memory.store(STACK,claripy.BVV(RETURN,16),endness='Iend_LE');return [E(**assembly_registers(x),memory=claripy.Concat(*(x.globals[k] for k in KEYS),*x.globals['name']),constraints=tuple(x.solver.constraints)) for x in collect_returns(p,s,RETURN)]
 def native(i):
- p=angr.Project(NATIVE_ELF,auto_load_libs=False);fn=p.loader.find_symbol('port_check_for_player_name_in_sram');assert fn;s=p.factory.call_state(fn.rebased_addr,NATIVE_STATE);store_native_registers(s,NATIVE_STATE,i);s.memory.store(NATIVE_STATE+8,claripy.Concat(*(i[k] for k in KEYS),i['name']));m=p.factory.simulation_manager(s);m.run();assert not m.errored;return [E(**native_registers(x,NATIVE_STATE),memory=x.memory.load(NATIVE_STATE+8,14),constraints=tuple(x.solver.constraints)) for x in m.deadended]
+ p=angr.Project(NATIVE_ELF,auto_load_libs=False);fn=p.loader.find_symbol('port_check_for_player_name_in_sram');assert fn;s=p.factory.call_state(fn.rebased_addr,NATIVE_STATE);store_native_registers(s,NATIVE_STATE,i)
+ for k in KEYS:s.memory.store(NATIVE_STATE+8+KEYS.index(k),i[k])
+ for j in range(11):s.memory.store(NATIVE_STATE+11+j,i['name'][87-j*8:80-j*8])
+ m=p.factory.simulation_manager(s);m.run();assert not m.errored;return [E(**native_registers(x,NATIVE_STATE),memory=claripy.Concat(*(x.memory.load(NATIVE_STATE+8+n,1) for n in range(14))),constraints=tuple(x.solver.constraints)) for x in m.deadended]
 @pytest.mark.skipif(not NATIVE_ELF.exists(),reason='native')
 def test_equivalence():
  i=inputs('player_name_sram');assert_pathwise_equivalent(assembly(i),native(i),(*REGISTERS,'memory'))

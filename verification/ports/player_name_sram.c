@@ -26,12 +26,11 @@ port_check_for_player_name_in_sram(struct player_name_sram_state *state)
 		state->registers.b--;
 	}
 	state->registers.a = 0;
-	state->registers.f = PORT_FLAG_Z;
+	/* xor a; ld [rRAMG],a; ld [rBMODE],a on both exits. */
 	state->ram_enable = 0;
 	state->bank_mode = 0;
-	state->registers.f = PORT_FLAG_Z | PORT_FLAG_H;
-	if (found)
-		state->registers.f = PORT_FLAG_Z | PORT_FLAG_C;
+	state->registers.f = found ? (port_u8)(PORT_FLAG_Z | PORT_FLAG_C)
+	                           : PORT_FLAG_Z;
 	state->registers.h = (port_u8)(hl >> 8);
 	state->registers.l = (port_u8)hl;
 }

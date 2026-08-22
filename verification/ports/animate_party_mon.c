@@ -27,7 +27,7 @@ party_set_bc(struct cpu_register_state *r, port_u16 value)
 static void
 party_and_a(struct cpu_register_state *r)
 {
-	r->f = PORT_FLAG_H | (r->a == 0 ? PORT_FLAG_Z : 0);
+	r->f = r->a == 0 ? PORT_FLAG_Z : 0;
 }
 
 static void
