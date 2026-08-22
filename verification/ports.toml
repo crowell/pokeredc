@@ -24467,3 +24467,17 @@ observables = [
 ]
 proof_domain = "all register/flag and hall-of-fame inputs through CopyData dispatch"
 decoder = "species/level loads from wHallOfFame, five species-slot writes, level write, wNameBuffer DE setup, NAME_LENGTH BC setup, and CopyData dispatch are modeled exactly; name copy, palette, sprite, text, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "MainMenu"
+assembly_source = "engine/menus/main_menu.asm"
+c_symbol = "port_main_menu_private"
+c_source = "verification/ports/main_menu_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wOptionsInitialized",
+    "wSaveFileStatus",
+]
+proof_domain = "all register/flag inputs through CheckForPlayerNameInSRAM dispatch"
+decoder = "InitOptions dispatch, wOptionsInitialized clear, wSaveFileStatus one-write, and CheckForPlayerNameInSRAM dispatch are modeled exactly; save-file loading, menu loop, screen setup, and continuation paths remain beyond the explicit boundary"
