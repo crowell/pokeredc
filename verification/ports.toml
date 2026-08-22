@@ -24400,3 +24400,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through text-box initialization dispatch"
 decoder = "wListMenuID clear, XOR-A zero flags, and auto-text-box branch entry are modeled exactly; border selection, font/sprite updates, facing-direction restoration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DrawBadges"
+assembly_source = "engine/menus/draw_badges.asm"
+c_symbol = "port_draw_badges_private"
+c_source = "verification/ports/draw_badges_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wBadgeOrFaceTiles",
+]
+proof_domain = "all register/flag inputs through CopyData entry"
+decoder = "wBadgeOrFaceTiles DE setup, FaceBadgeTiles HL setup, NUM_BADGES BC setup, and CopyData dispatch are modeled exactly; badge booleans, owned-badge adjustment, OAM drawing, and continuation paths remain beyond the explicit boundary"
