@@ -1469,6 +1469,18 @@ struct multiply_state {
 	port_u8 buffer[4];
 };
 
+/*
+ * Complete observable state for the banked Multiply wrapper. hMultiplicand
+ * aliases product[1..3], exactly as FF96-FF98 alias hProduct on hardware.
+ */
+struct math_multiply_state {
+	struct cpu_register_state registers;
+	port_u8 product[4];
+	port_u8 multiplier;
+	port_u8 buffer[4];
+	port_u8 loaded_rom_bank;
+};
+
 struct divide_bcd_by10_state {
 	struct cpu_register_state registers;
 	port_u8 divisor[3];

@@ -24481,3 +24481,26 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through CheckForPlayerNameInSRAM dispatch"
 decoder = "InitOptions dispatch, wOptionsInitialized clear, wSaveFileStatus one-write, and CheckForPlayerNameInSRAM dispatch are modeled exactly; save-file loading, menu loop, screen setup, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "Multiply"
+assembly_source = "home/math.asm"
+c_symbol = "port_math_multiply"
+c_source = "verification/ports/math_multiply.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "hProduct/hMultiplicand",
+    "hMultiplier",
+    "all four hMultiplyBuffer bytes",
+    "hLoadedROMBank",
+]
+proof_domain = "all register/flag/high-memory/loaded-bank inputs with every one of the 256 multiplier values executed as a concrete equivalence run; the full callfar Bankswitch dispatch into _Multiply and the bank-restore return are executed natively on both sides"
+decoder = "exact linked bodies of the wrapper, Bankswitch, and _Multiply checked; all LDH aliases, XOR A, ADD/ADC C, SRL/SLA/RL A, DEC B, and immediate-load semantics shimmed to SM83 behavior, rROMB mapper stores modeled as hardware no-ops whose net effect is the modeled bank save/restore"
