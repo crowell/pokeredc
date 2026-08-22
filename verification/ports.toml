@@ -24437,3 +24437,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through PrintText entry"
 decoder = "AccessedHoFPCText HL load and PrintText dispatch are modeled exactly; status-flag setup, hall-of-fame team iteration, palette/screen restoration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LeaguePCShowTeam"
+assembly_source = "engine/menus/league_pc.asm"
+c_symbol = "port_league_pc_show_team_private"
+c_source = "verification/ports/league_pc_show_team_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through first LeaguePCShowMon entry"
+decoder = "PARTY_LENGTH counter C initialization and first team-member loop entry are modeled exactly; member display, input handling, hall-of-fame shifting, termination, and continuation paths remain beyond the explicit boundary"
