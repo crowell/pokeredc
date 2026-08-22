@@ -24350,3 +24350,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through first species load"
 decoder = "party-name list counter C initialization and first species-load loop entry are modeled exactly; species termination, name lookup, text placement, row stepping, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "CableClub_Run"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_cable_club_run_private"
+c_source = "verification/ports/cable_club_run_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wLinkState",
+]
+proof_domain = "all register/flag and link-state inputs through link-state dispatch"
+decoder = "wLinkState load and initial dispatch entry are modeled exactly; start-trade/start-battle/reset branches, cable-club setup, sound, and continuation paths remain beyond the explicit boundary"
