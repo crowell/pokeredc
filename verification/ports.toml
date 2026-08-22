@@ -24338,3 +24338,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through first CableClub_TextBoxBorder entry"
 decoder = "first party-list textbox coordinate HL setup, six-row B setup, 18-column C setup, and CableClub_TextBoxBorder dispatch are modeled exactly; second box, trainer names, species lists, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "TradeCenter_PrintPartyListNames"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_trade_center_print_party_list_names_private"
+c_source = "verification/ports/trade_center_print_party_list_names_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through first species load"
+decoder = "party-name list counter C initialization and first species-load loop entry are modeled exactly; species termination, name lookup, text placement, row stepping, and continuation paths remain beyond the explicit boundary"
