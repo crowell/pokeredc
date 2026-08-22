@@ -2480,9 +2480,9 @@ audio_apply_music_affects(struct audio_apply_music_affects_state *state)
 
 	audio_apply_music_affects_set_hl(&state->registers, 0xc04e);
 	state->registers.a = state->vibrato_delay_counters[channel];
-	state->registers.f = state->registers.a == 0 ? PORT_FLAG_Z : 0;
-	else {
-		value = state->vibrato_delay_counters[channel];
+	if (state->registers.a != 0) {
+		/* dec [hl] and return when the delay is still running. */
+		value = state->registers.a;
 		state->vibrato_delay_counters[channel] = value - 1;
 		state->registers.f = audio_dec_flags(state->registers.f, value);
 		audio_apply_music_affects_return(state);
