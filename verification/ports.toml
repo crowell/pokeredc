@@ -24413,3 +24413,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through CopyData entry"
 decoder = "wBadgeOrFaceTiles DE setup, FaceBadgeTiles HL setup, NUM_BADGES BC setup, and CopyData dispatch are modeled exactly; badge booleans, owned-badge adjustment, OAM drawing, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PrintStartMenuItem"
+assembly_source = "engine/menus/draw_start_menu.asm"
+c_symbol = "port_print_start_menu_item_private"
+c_source = "verification/ports/print_start_menu_item_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through PlaceString entry"
+decoder = "HL preservation and PlaceString dispatch are modeled exactly; string rendering, two-row cursor advance, and continuation paths remain beyond the explicit boundary"
