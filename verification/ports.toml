@@ -24449,3 +24449,21 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through first LeaguePCShowMon entry"
 decoder = "PARTY_LENGTH counter C initialization and first team-member loop entry are modeled exactly; member display, input handling, hall-of-fame shifting, termination, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "LeaguePCShowMon"
+assembly_source = "engine/menus/league_pc.asm"
+c_symbol = "port_league_pc_show_mon_private"
+c_source = "verification/ports/league_pc_show_mon_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wHoFMonSpecies",
+    "wCurPartySpecies",
+    "wCurSpecies",
+    "wBattleMonSpecies2",
+    "wWholeScreenPaletteMonSpecies",
+    "wHoFMonLevel",
+]
+proof_domain = "all register/flag and hall-of-fame inputs through CopyData dispatch"
+decoder = "species/level loads from wHallOfFame, five species-slot writes, level write, wNameBuffer DE setup, NAME_LENGTH BC setup, and CopyData dispatch are modeled exactly; name copy, palette, sprite, text, and continuation paths remain beyond the explicit boundary"
