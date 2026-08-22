@@ -24425,3 +24425,15 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through PlaceString entry"
 decoder = "HL preservation and PlaceString dispatch are modeled exactly; string rendering, two-row cursor advance, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "PKMNLeaguePC"
+assembly_source = "engine/menus/league_pc.asm"
+c_symbol = "port_pkmn_league_pc_private"
+c_source = "verification/ports/pkmn_league_pc_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register/flag inputs through PrintText entry"
+decoder = "AccessedHoFPCText HL load and PrintText dispatch are modeled exactly; status-flag setup, hall-of-fame team iteration, palette/screen restoration, and continuation paths remain beyond the explicit boundary"
