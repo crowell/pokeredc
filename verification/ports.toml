@@ -24387,3 +24387,16 @@ observables = [
 ]
 proof_domain = "all register/flag inputs through first StringCmp entry"
 decoder = "BC=3 loop-counter initialization and first StringCmp dispatch are modeled exactly; BCD comparison/subtraction, digit iteration, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "DisplayTextIDInit"
+assembly_source = "engine/menus/display_text_id_init.asm"
+c_symbol = "port_display_text_id_init_private"
+c_source = "verification/ports/display_text_id_init_private.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wListMenuID",
+]
+proof_domain = "all register/flag inputs through text-box initialization dispatch"
+decoder = "wListMenuID clear, XOR-A zero flags, and auto-text-box branch entry are modeled exactly; border selection, font/sprite updates, facing-direction restoration, and continuation paths remain beyond the explicit boundary"
