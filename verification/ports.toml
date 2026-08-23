@@ -7317,6 +7317,19 @@ observables = [
 proof_domain = "all register/flag inputs, all 256 sprite indices, and arbitrary initial bytes across both complete possible destination regions"
 decoder = "the exact 14-byte wrapper and both real linked pointer callees execute under angr, including nested PUSH/POP and both symbolic indexed writes; native C calls both proven pointer ports and restores the wrapper-saved HL"
 
+[[function]]
+assembly_symbol = "SetSpriteMovementBytesToFE"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_set_sprite_movement_bytes_to_fe"
+c_source = "verification/ports/set_sprite_movement_bytes_to_fe.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hSpriteIndex, hSpriteMovementByte2, and every possible byte addressed in wSpriteStateData2 and wMapSpriteData",
+]
+proof_domain = "all register/flag inputs, all 256 sprite indices and movement-byte values, and arbitrary initial bytes across both complete possible destination regions"
+decoder = "the exact 14-byte wrapper and both real linked pointer callees execute under angr, including nested PUSH/POP, the HRAM command load, and both symbolic indexed writes; native C calls both proven pointer ports and restores the wrapper-saved HL"
+
 
 
 
