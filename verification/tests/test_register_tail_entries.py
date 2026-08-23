@@ -65,7 +65,6 @@ PORTS = (
         "port_change_facing_direction",
         bytes.fromhex("110000"),
     ),
-    ("ClearBgMap", "FillBgMapCommon", "port_clear_bg_map", bytes.fromhex("3e7f1801")),
     (
         "IntroCopyTiles",
         "CopyTileIDsFromList_ZeroBaseTileID",

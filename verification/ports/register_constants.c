@@ -287,9 +287,45 @@ port_change_facing_direction(struct cpu_register_state *state)
 }
 
 __attribute__((noinline, used)) void
-port_clear_bg_map(struct cpu_register_state *state)
+port_clear_bg_map(struct cpu_register_state *state, port_u8 *memory)
 {
+	port_u16 hl;
+	port_u8 before;
+	port_u8 result;
+	port_u8 flags;
+
 	state->a = 0x7f;
+	state->d = 4;
+	state->e = 0;
+	state->l = state->e;
+	do {
+		do {
+			hl = (port_u16)(((port_u16)state->h << 8) | state->l);
+			memory[hl++] = state->a;
+			state->h = (port_u8)(hl >> 8);
+			state->l = (port_u8)hl;
+
+			before = state->e;
+			result = (port_u8)(before - 1);
+			flags = (port_u8)((state->f & PORT_FLAG_C) | PORT_FLAG_N);
+			if (result == 0)
+				flags |= PORT_FLAG_Z;
+			if ((before & 0x0f) == 0)
+				flags |= PORT_FLAG_H;
+			state->e = result;
+			state->f = flags;
+		} while (state->e != 0);
+
+		before = state->d;
+		result = (port_u8)(before - 1);
+		flags = (port_u8)((state->f & PORT_FLAG_C) | PORT_FLAG_N);
+		if (result == 0)
+			flags |= PORT_FLAG_Z;
+		if ((before & 0x0f) == 0)
+			flags |= PORT_FLAG_H;
+		state->d = result;
+		state->f = flags;
+	} while (state->d != 0);
 }
 
 static __attribute__((noinline)) void

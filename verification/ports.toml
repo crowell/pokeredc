@@ -7388,17 +7388,11 @@ c_symbol = "port_clear_bg_map"
 c_source = "verification/ports/register_constants.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "FillBgMapCommon continuation",
+    "all registers and flags",
+    "selected 1,024-byte VRAM background map",
 ]
-proof_domain = "all general-register and canonical-flag inputs"
-decoder = "exact 4-byte linked entry body checked; the shared FillBgMapCommon implementation is an explicit boundary"
+proof_domain = "all general-register and canonical-flag inputs with caller-valid H in {0x98, 0x9c}, through all four outer and 1,024 inner writes"
+decoder = "the native port retains the complete nested D/E loops, every HLI write, 16-bit pointer carries, and exact SM83 DEC flags; angr executes the complete linked function for both valid background maps and compares all registers plus the full selected VRAM map"
 
 
 
