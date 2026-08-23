@@ -1589,6 +1589,14 @@ struct sub_bcd_state {
 	port_u8 written;
 };
 
+struct sub_bcd_predef_state {
+	struct cpu_register_state registers;
+	port_u8 predef[6];
+	port_u8 fetched_left;
+	port_u8 fetched_right;
+	port_u8 written;
+};
+
 struct divide_state {
 	struct cpu_register_state registers;
 	port_u8 dividend[4];
@@ -3004,6 +3012,7 @@ _Static_assert(sizeof(struct multiply_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct multiply_wrapper_state) == 19, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_bcd_by10_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct sub_bcd_state) == 11, "unexpected ABI padding");
+_Static_assert(sizeof(struct sub_bcd_predef_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_state) == 18, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_wrapper_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct is_key_item_wrapper_state) == 10, "unexpected ABI padding");
