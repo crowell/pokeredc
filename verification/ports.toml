@@ -23850,13 +23850,15 @@ assembly_symbol = "PrintSafariGameOverText"
 assembly_source = "engine/events/hidden_events/safari_game.asm"
 c_symbol = "port_print_safari_game_over_text_private"
 c_source = "verification/ports/print_safari_game_over_text_private.c"
-status = "partial"
+status = "complete"
 observables = [
     "all registers and flags",
-    "hJoyIgnore",
+    "wJoyIgnore",
+    "PrintText call input",
+    "caller memory marker",
 ]
-proof_domain = "all register/flag and joy-ignore inputs through SafariGameOverText setup"
-decoder = "joy-ignore clear, SafariGameOverText pointer load, and PrintText continuation boundary are modeled exactly; Safari-ball branch, TimesUp/GameOver text rendering, and script continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, wJoyIgnore, and marker-memory inputs with an arbitrary matching transition from the composed PrintText callee"
+decoder = "complete tail-call wrapper: XOR-A flags, real wJoyIgnore clear, SafariGameOverText pointer setup, and the real port_print_text call with caller memory are modeled exactly"
 
 [[function]]
 assembly_symbol = "TurnPageSchoolNotebook"

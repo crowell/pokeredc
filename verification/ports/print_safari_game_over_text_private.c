@@ -1,18 +1,18 @@
 #include "port_state.h"
 
-struct print_safari_game_over_private_state {
-	struct cpu_register_state registers;
-	port_u8 joy_ignore;
-};
+#define W_JOY_IGNORE 0xCD6Bu
 
-/* Port of PrintSafariGameOverText through text-pointer setup. */
+void port_print_text(struct cpu_register_state *, port_u8 *);
+
+/* Port of PrintSafariGameOverText in engine/events/hidden_events/safari_game.asm. */
 __attribute__((noinline, used)) void
 port_print_safari_game_over_text_private(
-	struct print_safari_game_over_private_state *state)
+	struct cpu_register_state *state, port_u8 *memory)
 {
-	state->registers.a = 0;
-	state->registers.f = 0;
-	state->registers.h = 0x69;
-	state->registers.l = 0xf7;
-	state->joy_ignore = 0;
+	state->a = 0;
+	state->f = PORT_FLAG_Z;
+	memory[W_JOY_IGNORE] = state->a;
+	state->h = 0x69;
+	state->l = 0xf7;
+	port_print_text(state, memory);
 }
