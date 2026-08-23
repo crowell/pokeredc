@@ -7265,6 +7265,19 @@ observables = [
 proof_domain = "all general-register and canonical-flag inputs and all values of hSpriteDataOffset and hSpriteIndex"
 decoder = "the native port executes both HRAM reads, the full nibble swap, ADD A,B flag calculation, and final pointer construction; angr executes the complete linked entry with audited LDH, SWAP, and ADD semantics"
 
+[[function]]
+assembly_symbol = "SetSpriteFacingDirection"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_set_sprite_facing_direction"
+c_source = "verification/ports/set_sprite_facing_direction.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hSpriteDataOffset, hSpriteIndex, hSpriteFacingDirection, and the complete wSpriteStateData1 page",
+]
+proof_domain = "all register/flag inputs, all 256 sprite indices and facing values, and arbitrary initial bytes across the complete 256-byte sprite-state page"
+decoder = "the exact 11-byte linked body and real GetPointerWithinSpriteStateData1 call/return execute under angr; LDH accesses plus the callee SWAP/ADD are shimmed instruction-by-instruction, and native C calls the real proven pointer port before its symbolic indexed write"
+
 
 
 
