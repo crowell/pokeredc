@@ -7282,17 +7282,10 @@ c_symbol = "port_get_pointer_within_sprite_state_data2"
 c_source = "verification/ports/register_constants.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "_GetPointerWithinSpriteStateData continuation",
+    "all registers and flags",
 ]
-proof_domain = "all general-register and canonical-flag inputs"
-decoder = "exact 2-byte linked entry body checked; the shared _GetPointerWithinSpriteStateData implementation is an explicit boundary"
+proof_domain = "all general-register and canonical-flag inputs and all values of hSpriteDataOffset and hSpriteIndex"
+decoder = "the native port executes both HRAM reads, the full nibble swap, ADD A,B flag calculation, and final StateData2 pointer construction; angr executes the complete linked entry with audited LDH, SWAP, and ADD semantics"
 
 
 

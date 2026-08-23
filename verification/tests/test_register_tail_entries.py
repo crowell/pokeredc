@@ -35,12 +35,6 @@ PORTS = (
         bytes.fromhex("06ff"),
     ),
     (
-        "GetPointerWithinSpriteStateData2",
-        "_GetPointerWithinSpriteStateData",
-        "port_get_pointer_within_sprite_state_data2",
-        bytes.fromhex("26c2"),
-    ),
-    (
         "IsSpriteInFrontOfPlayer",
         "IsSpriteInFrontOfPlayer2",
         "port_is_sprite_in_front_of_player",

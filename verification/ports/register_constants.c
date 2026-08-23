@@ -306,9 +306,11 @@ port_get_pointer_within_sprite_state_data1(struct cpu_register_state *state,
 }
 
 __attribute__((noinline, used)) void
-port_get_pointer_within_sprite_state_data2(struct cpu_register_state *state)
+port_get_pointer_within_sprite_state_data2(struct cpu_register_state *state,
+	const port_u8 *memory)
 {
 	state->h = 0xc2;
+	get_pointer_within_sprite_state_data(state, memory);
 }
 
 __attribute__((noinline, used)) void
