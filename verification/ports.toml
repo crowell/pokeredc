@@ -7278,6 +7278,19 @@ observables = [
 proof_domain = "all register/flag inputs, all 256 sprite indices and facing values, and arbitrary initial bytes across the complete 256-byte sprite-state page"
 decoder = "the exact 11-byte linked body and real GetPointerWithinSpriteStateData1 call/return execute under angr; LDH accesses plus the callee SWAP/ADD are shimmed instruction-by-instruction, and native C calls the real proven pointer port before its symbolic indexed write"
 
+[[function]]
+assembly_symbol = "SetSpriteFacingDirectionAndDelay"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_set_sprite_facing_direction_and_delay"
+c_source = "verification/ports/set_sprite_facing_direction_and_delay.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hSpriteDataOffset, hSpriteIndex, hSpriteFacingDirection, the complete wSpriteStateData1 page, and six-frame wait count",
+]
+proof_domain = "all register/flag inputs, all 256 sprite indices and facing values, and arbitrary initial bytes across the complete 256-byte sprite-state page through the fixed six-frame loop"
+decoder = "the exact 8-byte wrapper, real SetSpriteFacingDirection body, and nested pointer call/return execute under angr; the tail uses the proven DelayFrames terminal transition with an explicit count of six, while native C calls both real ports and executes the full delay loop"
+
 
 
 
