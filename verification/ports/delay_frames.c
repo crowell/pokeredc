@@ -1,26 +1,39 @@
 #include "port_state.h"
 
-/* Port of DelayFrames in home/delay.asm.
- *
- * Waits C frames by calling DelayFrame repeatedly.
- * Input: C = number of frames to wait.
- * Modifies: A, F, C. */
+/* Port of DelayFrames in home/delay.asm. */
+void port_delay_frame(struct delay_frame_state *state,
+	const port_u8 *observations);
 
-#define DELAYFRAME_ADDR 0x20AFu
-
-/* Forward declaration of the DelayFrame port. */
-__attribute__((noinline, used)) void
-port_delay_frame(struct cpu_register_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_delay_frames(struct cpu_register_state *state, port_u8 *memory)
+/*
+ * One complete loop transition.  DelayFrame is an independently proved
+ * callee; DEC C then supplies the SM83 Z/N/H flags while preserving carry.
+ * Returning nonzero is the assembly's `jr nz, .loop` continuation.
+ */
+__attribute__((noinline, used)) port_u8
+port_delay_frames_step(struct delay_frame_state *state,
+	const port_u8 *observations)
 {
-	(void)state;
-	(void)memory;
+	port_u8 before;
+	port_u8 result;
+	port_u8 flags;
 
-	/* Loop: call DelayFrame until C becomes 0 (do-while matching asm) */
+	port_delay_frame(state, observations);
+	before = state->registers.c;
+	result = (port_u8)(before - 1);
+	flags = (port_u8)((state->registers.f & PORT_FLAG_C) | PORT_FLAG_N);
+	if (result == 0)
+		flags |= PORT_FLAG_Z;
+	if ((before & 0x0f) == 0)
+		flags |= PORT_FLAG_H;
+	state->registers.c = result;
+	state->registers.f = flags;
+	return result != 0;
+}
+
+__attribute__((noinline, used)) void
+port_delay_frames(struct delay_frame_state *state,
+	const port_u8 *observations)
+{
 	do {
-		port_delay_frame(state, memory);
-		state->c = (port_u8)(state->c - 1);
-	} while (state->c != 0);
+	} while (port_delay_frames_step(state, observations));
 }
