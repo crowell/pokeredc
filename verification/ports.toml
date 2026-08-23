@@ -18101,8 +18101,8 @@ observables = [
     "all registers and flags",
     "hAutoBGTransferDest + 1",
 ]
-proof_domain = "all register/flag inputs; the single stored HRAM byte equals the incoming A, and A/F are preserved (ldh [a8], a does not modify them)"
-decoder = "exact 5-byte body checked (e0bd c3d73d); the ldh [a8], a store is shimmed for SM83 and the jp Delay3 tail is an explicit boundary. Pathwise equivalence proven against port_title_screen_copy_tilemap_to_vram."
+proof_domain = "all register/flag and destination-byte inputs through the HRAM write and complete three-frame Delay3 tail"
+decoder = "the SM83 LDH store is shimmed, then the real JP Delay3 executes the proved DelayFrames recurrence; native C explicitly calls port_delay3 and is checked solely by path equivalence"
 
 [[function]]
 assembly_symbol = "BattleAnimCopyTileMapToVRAM"
