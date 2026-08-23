@@ -1976,6 +1976,15 @@ struct redraw_row_column_state {
 	port_u8 saved_e;
 };
 
+struct schedule_north_row_redraw_state {
+	struct cpu_register_state registers;
+	port_u8 map_view_vram_low;
+	port_u8 map_view_vram_high;
+	port_u8 redraw_dest_low;
+	port_u8 redraw_dest_high;
+	port_u8 redraw_mode;
+};
+
 struct interrupt_return_state {
 	struct cpu_register_state registers;
 	port_u8 sp_high;
@@ -2940,6 +2949,7 @@ _Static_assert(sizeof(struct vblank_copy_double_state) == 73, "unexpected ABI pa
 _Static_assert(sizeof(struct vblank_copy_state) == 81, "unexpected ABI padding");
 _Static_assert(sizeof(struct auto_bg_transfer_state) == 96, "unexpected ABI padding");
 _Static_assert(sizeof(struct redraw_row_column_state) == 21, "unexpected ABI padding");
+_Static_assert(sizeof(struct schedule_north_row_redraw_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct interrupt_return_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct draw_tile_block_state) == 28, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_current_map_view_state) == 29, "unexpected ABI padding");

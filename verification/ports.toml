@@ -14426,6 +14426,20 @@ observables = [
 proof_domain = "all register/flag and ordered source/write byte inputs for every 16-bit source pointer; source reads are abstracted independently of destination aliasing"
 decoder = "exact 22-byte body checked; fixed 18-row loop, HLI, both writes, DE increments, low-byte ADD carry correction, DEC flags, and final pointers modeled explicitly"
 
+[[function]]
+assembly_symbol = "ScheduleNorthRowRedraw"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_schedule_north_row_redraw"
+c_source = "verification/ports/schedule_north_row_redraw.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "map-view VRAM pointer, redraw destination, and redraw mode",
+    "exact CopyToRedrawRowOrColumnSrcTiles call registers and arbitrary proven memory transition",
+]
+proof_domain = "all register/flag/map-view/redraw inputs and an arbitrary proven CopyToRedrawRowOrColumnSrcTiles transition; native production C invokes the real complete 40-byte copy"
+decoder = "the exact 21-byte wrapper executes under angr; tilemap HL=$c3a0 setup, real copy call composition, both VRAM destination bytes, REDRAW_ROW mode, final registers, and flags are modeled exactly"
+
 
 
 
