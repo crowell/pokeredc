@@ -16984,6 +16984,21 @@ observables = [
 proof_domain = "all register/flag inputs, all 256 [wCurItem] values, arbitrary KeyItemFlags and adjacent wBuffer data, including the item-zero underflow and gap before HM01; native production C invokes the real three callees"
 decoder = "exact 53-byte body executes under angr; CopyData's 15-byte loop, saved AF, DEC/AND/CP/XOR flags, computed FlagAction bit read, IsItemHM branch, every return route, and complete register/memory post-state are modeled"
 
+[[function]]
+assembly_symbol = "IsKeyItem"
+assembly_source = "home/item.asm"
+c_symbol = "port_is_key_item_wrapper"
+c_source = "verification/ports/is_key_item_wrapper.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "loaded and mapper ROM banks",
+    "exact IsKeyItem_ callback-entry registers",
+    "arbitrary proven IsKeyItem_ memory post-state",
+]
+proof_domain = "all register/flag and bank inputs plus arbitrary proven IsKeyItem_ register and memory transitions; native production C invokes real port_is_key_item_"
+decoder = "the exact 15-byte wrapper executes under angr; PUSH/POP preservation of HL/DE/BC, farcall target HL=$6764 and bank B=$03, Bankswitch callback BC=$35e4, callback F/memory effects, final A, and restoration of both banks are modeled compositionally"
+
 
 
 
