@@ -23441,6 +23441,20 @@ proof_domain = "all register/flag and status inputs through ShowPokedexData setu
 decoder = "NO_TEXT_DELAY status flag set, status-pointer setup, and ShowPokedexData continuation boundary are modeled exactly; map reload, delay, pokedex indexing, seen-flag update, and continuation paths remain beyond the explicit boundary"
 
 [[function]]
+assembly_symbol = "DisplayPokedex"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_display_pokedex"
+c_source = "verification/ports/display_pokedex.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wPokedexNum, wStatusFlags5, loaded bank, and mapper bank",
+    "exact _DisplayPokedex callback-entry registers and arbitrary proven post-state",
+]
+proof_domain = "all register/flag, display-state, Pokédex-number, and bank inputs plus an arbitrary proven _DisplayPokedex transition; native production C invokes real port_display_pokedex_private"
+decoder = "the exact 11-byte wrapper executes under angr; Pokédex-number store, farjp target HL=$7c18 and bank B=$01, Bankswitch callback BC=$35e4, callback effects, and final A/B/C/bank restoration are modeled compositionally"
+
+[[function]]
 assembly_symbol = "DisplayElevatorFloorMenu"
 assembly_source = "engine/events/elevator.asm"
 c_symbol = "port_display_elevator_floor_menu_private"
