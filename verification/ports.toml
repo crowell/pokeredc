@@ -14588,6 +14588,21 @@ observables = [
 proof_domain = "all register/flag/high-memory inputs; exact initialization, exhaustive subtraction/shift transitions, and finalization compose inductively for every terminating execution"
 decoder = "exact 136-byte body checked; all LDH aliases, 16-bit SUB/SBC recurrence, quotient increment, multi-byte SLA/RL shifts, E/B control, dividend window advance, divisor SRL/RR, and final quotient/remainder copy modeled explicitly"
 
+[[function]]
+assembly_symbol = "Divide"
+assembly_source = "home/math.asm"
+c_symbol = "port_divide_wrapper"
+c_source = "verification/ports/divide_wrapper.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "all _Divide dividend, divisor, and scratch bytes",
+    "loaded and mapper ROM banks",
+    "exact _Divide callback-entry registers",
+]
+proof_domain = "all register/flag, divide-memory, and bank inputs plus an arbitrary proven _Divide post-state; native production C invokes real port_divide"
+decoder = "the exact 26-byte wrapper executes under angr; PUSH/POP preservation of HL/DE/BC, homecall bank $0d setup, exact _Divide entry, callback effects, saved loaded-bank AF restoration, and both final bank writes are modeled compositionally"
+
 
 
 
