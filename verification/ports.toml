@@ -26875,3 +26875,23 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the proven ItemUseNotYoursToUse contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact linked body checked; the tail composes the real ItemUseNotYoursToUse port in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "UnusableItem"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_unusable_item"
+c_source = "verification/ports/unusable_item.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "ItemUseNotTime tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs with the proven ItemUseNotTime contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact linked body checked; the tail composes the real ItemUseNotTime port in one angr path-equivalence test"
