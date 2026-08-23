@@ -26914,3 +26914,24 @@ observables = [
 ]
 proof_domain = "all register/flag inputs; the Bankswitch dispatcher is the path boundary and the far-target hand-off (B = $0c, HL = OneHitKOEffect_) is the observable, matching the RemoveItemByIDBank12 thunk convention"
 decoder = "exact 8-byte linked body checked (ld hl,OneHitKOEffect_; ld b,$0c; jp Bankswitch); LD HL/nn, LD r,imm and JP nn are flag-neutral and execute natively in one angr path-equivalence test against the C hand-off"
+
+[[function]]
+assembly_symbol = "TrainerInfo_FarCopyData"
+assembly_source = "engine/menus/start_sub_menus.asm"
+c_symbol = "port_trainer_info_far_copy_data"
+c_source = "verification/ports/trainer_info_far_copy_data.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "hLoadedROMBank and rROMB bank bytes",
+    "FarCopyData2 tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs and arbitrary initial hLoadedROMBank / rROMB bytes, with the proven FarCopyData2 contract (bank save, A-driven switch, CopyData transfer, bank+AF restoration) applied as an arbitrary matching transition at the tail boundary; the copied RAM region belongs to FarCopyData2's own proof"
+decoder = "exact 5-byte linked body checked (ld a,BANK(TrainerInfoTextBoxTileGraphics)=$0b; jp FarCopyData2); LD A,n is flag-neutral natively and the tail composes the real port_far_copy_data2 through an explicit state-struct bridge in one angr path-equivalence test"
