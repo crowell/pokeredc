@@ -27368,3 +27368,25 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial hVBlankOccurred byte, with both proven callee contracts applied as arbitrary matching transitions at their call-site boundaries; DelayFrames' 120-iteration count is explicit in the C (c = $78)"
 decoder = "exact 9-byte linked body checked (call PrintText; ld c,$78; jp DelayFrames); both callees compose through explicit state-struct bridges in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "EngageMapTrainer"
+assembly_source = "home/trainers.asm"
+c_symbol = "port_engage_map_trainer"
+c_source = "verification/ports/engage_map_trainer.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wEngagedTrainerClass",
+    "wEngagedTrainerSet",
+    "PlayTrainerMusic tail-call input snapshot",
+]
+proof_domain = "symbolic wSpriteIndex over three representative concrete values {1, 2, 3} covering distinct table offsets; symbolic entry registers; the proven PlayTrainerMusic contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 23-byte linked body checked; DEC A and LDI run via audited instruction shims while LD D/$00, ADD A, ADD HL/DE and EA absolute stores execute natively; the tail composes the real port_play_trainer_music in one angr path-equivalence test"
