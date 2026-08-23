@@ -1867,6 +1867,12 @@ struct predef_shake_horizontal_state {
 	port_u8 wx;
 };
 
+struct calculate_modified_stats_state {
+	struct cpu_register_state registers;
+	port_u8 whose_stats;
+	port_u8 stat_index;
+};
+
 struct flash_screen_long_delay_state {
 	struct cpu_register_state registers;
 	port_u8 counter;
@@ -3110,6 +3116,7 @@ _Static_assert(sizeof(struct add_inventory_state) == 28, "unexpected ABI padding
 _Static_assert(sizeof(struct delay_frame_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct predef_shake_vertical_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct predef_shake_horizontal_state) == 16, "unexpected ABI padding");
+_Static_assert(sizeof(struct calculate_modified_stats_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct flash_screen_long_delay_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct trade_delay_state) == 9, "unexpected ABI padding");
 _Static_assert(sizeof(struct sprite_facing_direction_delay_state) == 9, "unexpected ABI padding");

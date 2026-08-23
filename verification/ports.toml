@@ -22660,12 +22660,14 @@ assembly_symbol = "CalculateModifiedStats"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_calculate_modified_stats"
 c_source = "verification/ports/calculate_modified_stats.c"
-status = "partial"
+status = "complete"
 observables = [
     "all registers and flags",
+    "CalculateModifiedStat call inputs",
+    "stat selector state",
 ]
-proof_domain = "all register and flag inputs through the initial stat-loop counter setup"
-decoder = "C=0 loop initialization is modeled exactly; CalculateModifiedStat calls, stat iteration, and completion return remain beyond the explicit boundary"
+proof_domain = "all register, flag, whose-stat, and stat-index inputs with arbitrary matching non-BC outputs from each of the four CalculateModifiedStat calls"
+decoder = "complete four-iteration wrapper: real CalculateModifiedStat calls, BC preservation, INC C and CP 4 flags, call ordering, and termination are modeled exactly"
 
 [[function]]
 assembly_symbol = "CalculateModifiedStat"
