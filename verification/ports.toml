@@ -24383,13 +24383,17 @@ assembly_symbol = "PredefShakeScreenVertically"
 assembly_source = "engine/gfx/screen_effects.asm"
 c_symbol = "port_predef_shake_screen_vertically_private"
 c_source = "verification/ports/predef_shake_screen_vertically_private.c"
-status = "partial"
+status = "complete"
 observables = [
     "all registers and flags",
+    "wPredefHL through wPredefBC+1",
     "wDisableVBlankWYUpdate",
+    "hMutateWY",
+    "rWY",
+    "GetPredefRegisters, DelayFrames, and vertical-loop call inputs",
 ]
-proof_domain = "all register/flag inputs through vertical-shake animation setup"
-decoder = "GetPredefRegisters continuation boundary, disable-WY-update enable, and vertical shake loop-entry state are modeled exactly; WY mutation, repeated delays, screen movement, cleanup, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, predef-register, disable-update, hMutateWY, and rWY inputs; the counted loop is proved inductively for every B value through its arbitrary-state recurrence"
+decoder = "complete function: real GetPredefRegisters and DelayFrames calls, both MutateWY calls per loop iteration, SM83 decrement recurrence, WY writes, and final disable-update cleanup are modeled exactly"
 
 [[function]]
 assembly_symbol = "PredefShakeScreenHorizontally"
