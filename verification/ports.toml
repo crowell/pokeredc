@@ -7279,6 +7279,19 @@ proof_domain = "all register/flag inputs and all 256 values of both HRAM inputs"
 decoder = "the exact ten-byte shared body executes under angr with SM83 LDH, SWAP, and ADD instruction semantics; native C performs both HRAM reads, nibble rotation, flag calculation, and low-pointer construction"
 
 [[function]]
+assembly_symbol = "DecodeRLEList"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_decode_rle_list"
+c_source = "verification/ports/decode_rle_list.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wRLEByteCount, hRLEByteValue, input-pair values, exact FillMemory call registers, an arbitrary proven fill-memory post-state, and final sentinel write",
+]
+proof_domain = "all register/flag/count/value inputs, every data/repetition byte including $00's 65,536-byte fill, all 16-bit DE/HL pointers with wrap, both terminator/continue paths, and an arbitrary proven FillMemory transition; initialization, exhaustive recurrence, and finish compose for every $ff-terminated list"
+decoder = "the exact 39-byte body is checked inside one angr path-equivalence test; XOR/count initialization, CP branch, pair parsing, wrapped byte-count ADD flags, exact FillMemory call contract, DE progression, recurrence, sentinel write, and final INC flags are all proven, while production C runs the complete outer loop and calls real port_fill_memory for every pair"
+
+[[function]]
 assembly_symbol = "SetSpriteFacingDirection"
 assembly_source = "home/map_objects.asm"
 c_symbol = "port_set_sprite_facing_direction"
