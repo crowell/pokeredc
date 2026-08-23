@@ -17,16 +17,27 @@
 #define H_VBLANK_COPY_DOUBLE_DEST 0xFFCEu
 #define H_VBLANK_COPY_DOUBLE_SIZE 0xFFCBu
 
-#define DELAYFRAME_ADDR 0x3739u
+void port_delay_frame(struct delay_frame_state *state,
+	const port_u8 *observations);
 
-/* Forward declaration of the DelayFrame port. */
-__attribute__((noinline, used)) void
-port_delay_frame(struct cpu_register_state *state, port_u8 *memory);
+static void
+copy_video_data_double_delay_frame(struct cpu_register_state *state)
+{
+	static const port_u8 acknowledged_vblank[] = { 0 };
+	struct delay_frame_state delay;
+
+	delay.registers = *state;
+	delay.vblank_occurred = 0;
+	delay.observed_vblank = 0;
+	port_delay_frame(&delay, acknowledged_vblank);
+	*state = delay.registers;
+}
 
 __attribute__((noinline, used)) void
 port_copy_video_data_double(struct cpu_register_state *state, port_u8 *memory)
 {
-	(void)state;
+	port_u8 saved_a = state->a;
+	port_u8 saved_f = state->f;
 	port_u8 saved_auto = memory[H_AUTO_BG_TRANSFER_ENABLED];
 	port_u8 saved_bank = memory[H_LOADED_ROM_BANK];
 	memory[H_AUTO_BG_TRANSFER_ENABLED] = 0;
@@ -47,8 +58,7 @@ port_copy_video_data_double(struct cpu_register_state *state, port_u8 *memory)
 		/* Copy 8 tiles */
 		memory[0xFFCB] = 8;  /* hVBlankCopyDoubleSize = 8 */
 
-		/* Wait for next VBlank */
-		/* DelayFrame is the explicit no-op timing boundary. */
+		copy_video_data_double_delay_frame(state);
 
 		/* Decrement remaining tile count */
 		state->c -= 8;
@@ -56,7 +66,10 @@ port_copy_video_data_double(struct cpu_register_state *state, port_u8 *memory)
 
 	/* Copy remaining tiles (less than 8), including zero. */
 	memory[H_VBLANK_COPY_DOUBLE_SIZE] = state->c;
+	copy_video_data_double_delay_frame(state);
 	memory[H_LOADED_ROM_BANK] = saved_bank;
 	memory[R_ROMB] = saved_bank;
 	memory[H_AUTO_BG_TRANSFER_ENABLED] = saved_auto;
+	state->a = saved_a;
+	state->f = saved_f;
 }

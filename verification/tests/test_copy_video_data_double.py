@@ -9,7 +9,14 @@ import pytest
 from archinfo import ArchPcode
 
 from verification.harness.equivalence import assert_pathwise_equivalent
-from verification.harness.registers import set_assembly_registers, store_native_registers, symbolic_registers
+from verification.harness.registers import (
+    REGISTERS,
+    assembly_registers,
+    native_registers,
+    set_assembly_registers,
+    store_native_registers,
+    symbolic_registers,
+)
 from verification.harness.rom import rom_window, symbol_location
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +39,14 @@ FIELDS = ("auto", "loaded_bank", "bank_temp", "romb", "copy_source", "copy_sourc
 
 @dataclass(frozen=True)
 class Endpoint:
+    a: claripy.ast.BV
+    f: claripy.ast.BV
+    b: claripy.ast.BV
+    c: claripy.ast.BV
+    d: claripy.ast.BV
+    e: claripy.ast.BV
+    h: claripy.ast.BV
+    l: claripy.ast.BV
     memory: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
@@ -48,7 +63,8 @@ class CopyVideoDoubleSummary(angr.SimProcedure):
         self.state.globals["copy_source_high"] = self.state.regs.d
         self.state.globals["copy_dest"] = self.state.regs.l
         self.state.globals["copy_dest_high"] = self.state.regs.h
-        self.state.globals["copy_size"] = claripy.BVV(0, 8)
+        self.state.regs.c &= 7
+        self.state.globals["copy_size"] = self.state.regs.c
         self.jump(DONE)
 
 
@@ -56,7 +72,7 @@ def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
     values = symbolic_registers(prefix)
     for field in FIELDS:
         values[field] = claripy.BVS(f"{prefix}_{field}", 8)
-    values["c"] = claripy.BVV(0, 8)
+    values["c"] = claripy.BVS(f"{prefix}_tile_count", 8)
     return values
 
 
@@ -84,6 +100,7 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     assert not manager.errored
     return [
         Endpoint(
+            **assembly_registers(end),
             memory=claripy.Concat(*(end.globals[field] for field in FIELDS)),
             constraints=tuple(end.solver.constraints),
         )
@@ -104,6 +121,7 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     assert not manager.errored
     return [
         Endpoint(
+            **native_registers(end, NATIVE_STATE),
             memory=claripy.Concat(*(end.memory.load(NATIVE_MEMORY + address, 1) for address in ADDRESSES)),
             constraints=tuple(end.solver.constraints),
         )
@@ -113,6 +131,8 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_copy_video_data_double_zero_count_pathwise_equivalence() -> None:
-    values = _inputs("copy_video_double_zero")
-    assert_pathwise_equivalent(_assembly(values), _native(values), ("memory",))
+def test_copy_video_data_double_all_counts_pathwise_equivalence() -> None:
+    values = _inputs("copy_video_double_all_counts")
+    assert_pathwise_equivalent(
+        _assembly(values), _native(values), (*REGISTERS, "memory")
+    )
