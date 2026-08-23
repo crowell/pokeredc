@@ -1,38 +1,28 @@
 #include "port_state.h"
 
-/* Port of PlaySoundWaitForCurrent in home/delay.asm.
- *
- * Waits for any currently playing sound to finish, then plays the sound
- * whose ID is in A. The A register and flags are preserved across the wait.
- *
- * Input: A = sound ID to play after waiting
- * Output: A, F from PlaySound */
+void port_wait_for_sound_to_finish(struct wait_for_sound_state *state);
+void port_play_sound(struct play_sound_state *state);
 
-#define PLAY_SOUND_ADDR 0x23B1u
-
-/* Forward declarations. */
+/* Port of PlaySoundWaitForCurrent in home/delay.asm. */
 __attribute__((noinline, used)) void
-port_wait_for_sound_to_finish(struct cpu_register_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_play_music(struct cpu_register_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_play_sound_wait_for_current(struct cpu_register_state *state, port_u8 *memory)
+port_play_sound_wait_for_current(struct play_sound_state *state)
 {
-	(void)memory;
+	struct wait_for_sound_state wait;
+	port_u8 saved_a = state->registers.a;
+	port_u8 saved_f = state->registers.f;
 
-	/* Save A and F (push af) */
-	port_u8 saved_a = state->a;
-	port_u8 saved_f = state->f;
+	wait.registers = state->registers;
+	wait.low_health_alarm = state->low_health_alarm;
+	wait.channel_sound_ids[0] = state->channel_sound_ids[0];
+	wait.channel_sound_ids[1] = state->channel_sound_ids[1];
+	wait.channel_sound_ids[2] = state->channel_sound_ids[3];
+	port_wait_for_sound_to_finish(&wait);
+	state->registers = wait.registers;
+	state->channel_sound_ids[0] = wait.channel_sound_ids[0];
+	state->channel_sound_ids[1] = wait.channel_sound_ids[1];
+	state->channel_sound_ids[3] = wait.channel_sound_ids[2];
 
-	/* Call WaitForSoundToFinish */
-	port_wait_for_sound_to_finish(state, memory);
-
-	/* Restore A and F (pop af) */
-	state->a = saved_a;
-	state->f = saved_f;
-
-	/* Tail-call PlaySound */
-	port_play_music(state, memory);
+	state->registers.a = saved_a;
+	state->registers.f = saved_f;
+	port_play_sound(state);
 }

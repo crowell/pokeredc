@@ -16651,10 +16651,12 @@ c_symbol = "port_play_sound_wait_for_current"
 c_source = "verification/ports/play_sound_wait_for_current.c"
 status = "proven"
 observables = [
-    "A, F (preserved across WaitForSoundToFinish, then from PlaySound)",
+    "all registers and flags",
+    "low-health alarm and channel sound IDs",
+    "all PlaySound audio, fade, bank, and dispatch state",
 ]
-proof_domain = "all general-register and canonical-flag inputs; WaitForSoundToFinish and PlaySound inlined as no-op returns"
-decoder = "exact 6-byte linked body checked; `call WaitForSoundToFinish` and `jp PlaySound` modeled as no-op returns; `push af`/`pop af` run natively"
+proof_domain = "all register/flag/audio inputs across both WaitForSoundToFinish paths and all four separately proven PlaySound paths"
+decoder = "linked PUSH AF / CALL / POP AF / JP body executes under angr; both callees use their separately proven transitions, producing all eight composed paths"
 
 
 

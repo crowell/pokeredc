@@ -1354,6 +1354,22 @@ struct wait_for_sound_state {
 	port_u8 channel_sound_ids[3];
 };
 
+struct play_sound_state {
+	struct cpu_register_state registers;
+	port_u8 new_sound_id;
+	port_u8 audio_rom_bank;
+	port_u8 fade_control;
+	port_u8 fade_reload;
+	port_u8 fade_counter;
+	port_u8 last_music_sound_id;
+	port_u8 channel_sound_ids[4];
+	port_u8 saved_rom_bank;
+	port_u8 loaded_rom_bank;
+	port_u8 rom_bank;
+	port_u8 dispatch_called;
+	port_u8 low_health_alarm;
+};
+
 struct align_sprite_data_state {
 	struct cpu_register_state registers;
 	port_u8 sprite_offset;
@@ -2619,6 +2635,7 @@ _Static_assert(sizeof(struct determine_palette_id_state) == 12, "unexpected ABI 
 _Static_assert(sizeof(struct player_name_sram_state) == 22, "unexpected ABI padding");
 _Static_assert(sizeof(struct serial_exchange_nybble_state) == 15, "unexpected ABI padding");
 _Static_assert(sizeof(struct wait_for_sound_state) == 12, "unexpected ABI padding");
+_Static_assert(sizeof(struct play_sound_state) == 23, "unexpected ABI padding");
 _Static_assert(sizeof(struct align_sprite_data_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct write_oam_block_state) == 32, "unexpected ABI padding");
 _Static_assert(sizeof(struct sprite_movement_delay_state) == 14, "unexpected ABI padding");
