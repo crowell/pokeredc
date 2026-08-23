@@ -27452,3 +27452,25 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the proven CallWithTurnFlipped contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact 6-byte linked body checked (ld hl,539e; jp CallWithTurnFlipped); the tail composes the real port_call_with_turn_flipped in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "CeladonChiefHouse_Script"
+assembly_source = "scripts/CeladonChiefHouse.asm"
+c_symbol = "port_celadon_chief_house_script"
+c_source = "verification/ports/celadon_chief_house_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wAutoTextBoxDrawingControl",
+    "wDoNotWaitForButtonPressAfterDisplayingText",
+    "EnableAutoTextBoxDrawing tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs and arbitrary initial wAutoTextBoxDrawingControl / wDoNotWaitForButtonPressAfterDisplayingText bytes, with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail-call boundary"
+decoder = "exact 4-byte linked body checked (call EnableAutoTextBoxDrawing; ret); the call composes the real port_enable_auto_text_box_drawing through an explicit state-struct bridge in one angr path-equivalence test"
