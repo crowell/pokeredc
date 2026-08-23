@@ -20413,7 +20413,7 @@ assembly_symbol = "AnimationFlashScreen"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_flash_screen"
 c_source = "verification/ports/animation_flash_screen.c"
-status = "partial"
+status = "proven"
 observables = [
     "A",
     "F",
@@ -20425,8 +20425,8 @@ observables = [
     "L",
     "rBGP",
 ]
-proof_domain = "full flash-screen palette cycle with original rBGP restored and final DelayFrames count C=2; timing calls are explicit boundaries"
-decoder = "palette writes and saved AF restoration represented by a terminal summary; both DelayFrames calls are timing-only in the native contract"
+proof_domain = "all register/flag inputs and every initial rBGP value; both fixed two-frame waits use the terminal transition of the separately proven DelayFrames callee"
+decoder = "the complete linked push/write/wait/write/wait/pop/restore body executes under angr with SM83-only ldh accesses shimmed; the native port calls DelayFrames twice"
 
 [[function]]
 assembly_symbol = "AnimationDarkScreenPalette"
