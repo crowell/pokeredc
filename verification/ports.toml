@@ -24795,12 +24795,15 @@ assembly_symbol = "Diploma_TextBoxBorder"
 assembly_source = "engine/link/cable_club.asm"
 c_symbol = "port_diploma_text_box_border_private"
 c_source = "verification/ports/diploma_text_box_border_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "six saved predef-register bytes",
+    "every border write and memory transition",
+    "GetPredefRegisters and CableClub_TextBoxBorder call states",
 ]
-proof_domain = "all register/flag inputs through GetPredefRegisters entry"
-decoder = "GetPredefRegisters dispatch is modeled as an explicit boundary; border geometry, tile writes, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag/predef/border/memory inputs and arbitrary proven complete GetPredefRegisters and CableClub_TextBoxBorder transitions"
+decoder = "the exact 48-byte linked fallthrough body is checked inside the angr path-equivalence proof; native production C invokes both real callees in order, forwards the six predef bytes, and carries every register, border-write, and memory effect through the composition"
 
 [[function]]
 assembly_symbol = "DivideBCD_getNextDigit"
