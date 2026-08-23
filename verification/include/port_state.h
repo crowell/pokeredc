@@ -1962,6 +1962,31 @@ struct draw_tile_block_state {
 	port_u8 saved_l;
 };
 
+struct load_current_map_view_state {
+	struct cpu_register_state registers;
+	port_u8 tileset_bank;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	port_u8 map_view_pointer_low;
+	port_u8 map_view_pointer_high;
+	port_u8 map_width;
+	port_u8 y_block_coord;
+	port_u8 x_block_coord;
+	port_u8 tileset_blocks_low;
+	port_u8 tileset_blocks_high;
+	port_u8 saved_a;
+	port_u8 saved_f;
+	port_u8 row_d;
+	port_u8 row_e;
+	port_u8 row_h;
+	port_u8 row_l;
+	port_u8 fetched_block;
+	port_u8 fetched_copy;
+	port_u8 written_copy;
+	port_u8 write_h;
+	port_u8 write_l;
+};
+
 struct replace_tree_block_state {
 	struct cpu_register_state registers;
 	port_u8 map_width;
@@ -2881,6 +2906,7 @@ _Static_assert(sizeof(struct auto_bg_transfer_state) == 96, "unexpected ABI padd
 _Static_assert(sizeof(struct redraw_row_column_state) == 21, "unexpected ABI padding");
 _Static_assert(sizeof(struct interrupt_return_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct draw_tile_block_state) == 28, "unexpected ABI padding");
+_Static_assert(sizeof(struct load_current_map_view_state) == 29, "unexpected ABI padding");
 _Static_assert(sizeof(struct replace_tree_block_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct transition_copy_tiles2_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct badge_stat_boost_state) == 12, "unexpected ABI padding");

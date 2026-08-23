@@ -15180,6 +15180,21 @@ observables = [
 proof_domain = "all register/flag/block-ID/pointer/source/write inputs; block-pointer setup and exhaustive four-byte row transition compose for the fixed four rows, including arbitrary transition counts"
 decoder = "exact 48-byte body checked; saved destination HL, nibble-swapped 16-byte block offset, 16-bit add flags, DE source, three HLI plus one stationary write, 24-tile destination stride, BC stack restoration, and C recurrence modeled explicitly"
 
+[[function]]
+assembly_symbol = "LoadCurrentMapView"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_load_current_map_view"
+c_source = "verification/ports/load_current_map_view.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "loaded and mapper ROM banks",
+    "all 30 tile-block reads and DrawTileBlock calls",
+    "all 360 surrounding-to-visible tile reads and writes",
+]
+proof_domain = "all register/flag/bank/map-coordinate/pointer/map-width/tile inputs, composed from exact entry/exit and inductive block, render-row, copy-tile, and copy-row transitions"
+decoder = "the exact 125-byte body is checked inside the path-equivalence proof; native production C executes the fixed 5-by-6 render loop with real port_draw_tile_block calls and the fixed 18-by-20 visible-copy loop, while exact recurrence proofs cover pointer wrapping, conditional offsets, flags, and termination"
+
 
 
 
