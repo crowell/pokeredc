@@ -1172,6 +1172,11 @@ struct far_copy_double_state {
 	port_u8 memory[3];
 };
 
+struct load_font_tile_patterns_state {
+	struct far_copy_double_state transfer;
+	port_u8 lcd_control;
+};
+
 struct load_gb_pal_state {
 	struct cpu_register_state registers;
 	port_u8 map_pal_offset;
@@ -2696,6 +2701,7 @@ _Static_assert(sizeof(struct default_music_fade_state) == 15, "unexpected ABI pa
 _Static_assert(sizeof(struct play_music_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct bankswitch_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_double_state) == 16, "unexpected ABI padding");
+_Static_assert(sizeof(struct load_font_tile_patterns_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_gb_pal_state) == 15, "unexpected ABI padding");
 _Static_assert(sizeof(struct down_arrow_blink_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct dma_code_copy_state) == 18, "unexpected ABI padding");
