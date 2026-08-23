@@ -23018,12 +23018,14 @@ assembly_symbol = "PrintDidntAffectText"
 assembly_source = "engine/battle/effects.asm"
 c_symbol = "port_print_didnt_affect_text"
 c_source = "verification/ports/print_didnt_affect_text.c"
-status = "partial"
+status = "complete"
 observables = [
     "all registers and flags",
+    "PrintText call input",
+    "caller memory marker",
 ]
-proof_domain = "all register/flag inputs through the PrintText call"
-decoder = "DidntAffectText HL setup and PrintText C call are modeled exactly; text rendering remains beyond the explicit continuation boundary"
+proof_domain = "all register/flag and marker-memory inputs with an arbitrary matching transition from the composed PrintText callee"
+decoder = "complete tail-call wrapper: DidntAffectText pointer setup and the real port_print_text call, including its memory argument, are modeled exactly"
 
 [[function]]
 assembly_symbol = "PrintMayNotAttackText"
