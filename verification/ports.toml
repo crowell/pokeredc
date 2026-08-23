@@ -26675,3 +26675,23 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the proven TextScriptEnd contract applied as an arbitrary matching transition at the tail-call boundary"
 decoder = "exact 3-byte linked body checked (jp TextScriptEnd); the tail composes the real port_text_script_end in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "BlackbeltAI"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_blackbelt_ai"
+c_source = "verification/ports/blackbelt_ai.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "AIUseXAttack tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs (symbolic A covers every threshold outcome); the proven AIUseXAttack contract is applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 6-byte linked body checked (cp $20; ret nc; jp AIUseXAttack) where $20 = 13 percent - 1; CP immediate runs via an audited instruction shim and both terminal paths (ret-nc versus composed tail call) are proved in one angr path-equivalence test"
