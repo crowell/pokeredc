@@ -7291,6 +7291,19 @@ observables = [
 proof_domain = "all register/flag inputs, all 256 sprite indices and facing values, and arbitrary initial bytes across the complete 256-byte sprite-state page through the fixed six-frame loop"
 decoder = "the exact 8-byte wrapper, real SetSpriteFacingDirection body, and nested pointer call/return execute under angr; the tail uses the proven DelayFrames terminal transition with an explicit count of six, while native C calls both real ports and executes the full delay loop"
 
+[[function]]
+assembly_symbol = "IsItemInBag"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_is_item_in_bag"
+c_source = "verification/ports/is_item_in_bag.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "the complete bounded wNumBagItems table",
+]
+proof_domain = "all register/flag inputs and every match/not-found position in an eight-slot symbolic bag terminated by $ff"
+decoder = "the exact 8-byte wrapper executes under angr and directly composes the real linked GetQuantityOfItemInBag scan; the scan recurrence and final LD A,B/AND A execute pathwise, while native C calls the real proven inventory function"
+
 
 
 
