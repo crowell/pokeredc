@@ -16914,10 +16914,13 @@ c_symbol = "port_trade_center_place_selected_enemy_mon_menu_cursor"
 c_source = "verification/ports/trade_center_place_selected_enemy_mon_menu_cursor.c"
 status = "proven"
 observables = [
-    "m_cursor (the '▷' = $ec glyph written at wTileMap + 1 + 9*SCREEN_WIDTH + row*SCREEN_WIDTH)",
+    "all registers and flags",
+    "selected serial row read",
+    "AddNTimes call and arbitrary proven transition",
+    "cursor write address/value and observed memory alias effects",
 ]
-proof_domain = "all general-register and canonical-flag inputs; the selected row read from [wSerialSyncAndExchangeNybbleReceiveData] is fixed concrete (rows 0..5 covered) so the tilemap store address is concrete, while the other general registers stay symbolic"
-decoder = "exact 15-byte linked body checked; `ld a,[a16]` (0xFA, reading the row) is shimmed, `call AddNTimes` is modeled as `hl = hl + bc*a` (bc = SCREEN_WIDTH), and `ld hl,nn`/`ld bc,nn`/`ld [hl],imm` (0x36, writing $ec)/`ret` run natively"
+proof_domain = "all register/flag/serial/memory inputs, all 256 selected rows, and an arbitrary proven complete AddNTimes transition including symbolic returned HL"
+decoder = "the exact 15-byte linked body is checked inside the angr path-equivalence proof; native production C loads A from serial state, sets HL=$c455 and BC=$0014, invokes real port_add_n_times, and writes $ec to the returned symbolic HL while retaining the callee's complete register/flag state"
 
 
 
