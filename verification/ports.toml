@@ -20903,20 +20903,14 @@ assembly_symbol = "AnimationDarkenMonPalette"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_darken_mon_palette_player"
 c_source = "verification/ports/animation_darken_mon_palette.c"
-status = "partial"
+status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
+    "wOnSGB",
     "rBGP",
 ]
-proof_domain = "non-SGB palette branch selecting B=$f9 and C=$f4"
-decoder = "SetAnimationBGPalette non-SGB branch modeled with terminal palette write; SGB selection path remains unmodeled"
+proof_domain = "all register/flag/wOnSGB/rBGP inputs across both SGB and non-SGB palette-selection paths"
+decoder = "the exact 5-byte function entry and exact 11-byte shared SetAnimationBGPalette tail are checked inside the angr path-equivalence proof; native C selects B=$f9 when wOnSGB is zero and C=$f4 otherwise, with exact SM83 AND flags and palette write"
 
 [[function]]
 assembly_symbol = "AnimationUnusedPalette1"
