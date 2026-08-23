@@ -27804,3 +27804,25 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial wAutoTextBoxDrawingControl / wDoNotWaitForButtonPressAfterDisplayingText bytes, with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail-call boundary"
 decoder = "exact 4-byte linked body checked (call EnableAutoTextBoxDrawing; ret); the call composes the real port_enable_auto_text_box_drawing through an explicit state-struct bridge in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "DiglettsCaveRoute2_Script"
+assembly_source = "scripts/DiglettsCaveRoute2.asm"
+c_symbol = "port_digletts_cave_route2_script"
+c_source = "verification/ports/digletts_cave_route2_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wLastMap",
+    "wAutoTextBoxDrawingControl",
+    "wDoNotWaitForButtonPressAfterDisplayingText",
+]
+proof_domain = "all register/flag inputs and arbitrary initial wLastMap / control / wait bytes, with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 8 -byte linked body checked (ld a,<route>; ld [wLastMap],a; jp EnableAutoTextBoxDrawing); EA absolute stores run via audited instruction shims and the tail composes the real port_enable_auto_text_box_drawing in one angr path-equivalence test"
