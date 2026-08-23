@@ -16763,10 +16763,11 @@ c_symbol = "port_copy_screen_tile_buffer_to_vram"
 c_source = "verification/ports/copy_screen_tile_buffer_to_vram.c"
 status = "proven"
 observables = [
-    "C (number of rows per third), B (high byte of BG map VRAM address)",
+    "all general registers and flags",
+    "hVBlankCopyBGSource, hVBlankCopyBGDest, hVBlankCopyBGNumRows",
 ]
-proof_domain = "all general-register and canonical-flag inputs; DelayFrame/Delay3 inlined as no-op return"
-decoder = "exact 48-byte linked body checked; `call GetRowColAddressBgMap` inlined as `hl = b | (row >> 3) | ((row & 7) << 5) | l`; `call DelayFrame`/`jp Delay3` modeled as no-op returns; `ld c,imm`/`ld hl,nn`/`call`/`jp` run natively"
+proof_domain = "all general-register, canonical-flag, and relevant HRAM inputs; all three DelayFrame calls use the terminal transition of the separately proven callee"
+decoder = "linked function body and internal .setup execute under angr; GetRowColAddressBgMap and DelayFrame calls use their separately proven transitions; SM83-only ldh stores are shimmed"
 
 
 

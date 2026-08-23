@@ -1,43 +1,71 @@
 #include "port_state.h"
 
-/* Port of CopyScreenTileBufferToVRAM in home/copy2.asm.
- *
- * Copies wTileMap to the BG Map in VRAM in three thirds (6 rows each),
- * waiting one frame between each third via DelayFrame/Delay3.
- *
- * Input: B = high byte of BG Map VRAM address (0x98 or 0x9C for vBGMap0/1)
- * Modifies: A, B, C, D, E, H, L, F
- * Calls: DelayFrame, Delay3 */
+/* Port of CopyScreenTileBufferToVRAM in home/copy2.asm. */
 
 #define SCREEN_HEIGHT 18
-#define SCREEN_WIDTH 20
 
-/* Forward declarations. */
-__attribute__((noinline, used)) void
-port_delay_frame(struct cpu_register_state *state, port_u8 *memory);
+#define H_VBLANK_COPY_BG_SOURCE 0xFFC1u
+#define H_VBLANK_COPY_BG_DEST 0xFFC3u
+#define H_VBLANK_COPY_BG_NUM_ROWS 0xFFC5u
 
-__attribute__((noinline, used)) void
-port_delay3(struct cpu_register_state *state, port_u8 *memory);
+void port_delay_frame(struct delay_frame_state *state,
+	const port_u8 *observations);
 
-__attribute__((noinline, used)) void
-port_get_row_col_address_bg_map(struct cpu_register_state *state);
+void port_get_row_col_address_bg_map(struct cpu_register_state *state);
 
-__attribute__((noinline, used)) void
-port_delay_frame(struct cpu_register_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_delay3(struct cpu_register_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_copy_screen_tile_buffer_to_vram(struct cpu_register_state *state, port_u8 *memory)
+static void
+copy_screen_delay_frame(struct cpu_register_state *state)
 {
-	(void)state;
-	(void)memory;
+	static const port_u8 acknowledged_vblank[] = { 0 };
+	struct delay_frame_state delay;
 
-	/* The three frame-transfer calls are explicit no-op boundaries. */
-	state->c = 6;
-	state->l = 0x80; /* row 12 contributes (12 & 7) << 5 */
-	state->h = (port_u8)(state->b | 1);
+	delay.registers = *state;
+	delay.vblank_occurred = 0;
+	delay.observed_vblank = 0;
+	port_delay_frame(&delay, acknowledged_vblank);
+	*state = delay.registers;
+}
+
+static void
+copy_screen_setup(struct cpu_register_state *state, port_u8 *memory)
+{
+	state->a = state->d;
+	memory[H_VBLANK_COPY_BG_SOURCE + 1] = state->a;
+	port_get_row_col_address_bg_map(state);
+	state->a = state->l;
+	memory[H_VBLANK_COPY_BG_DEST] = state->a;
 	state->a = state->h;
-	state->f = state->a == 0 ? PORT_FLAG_Z : 0;
+	memory[H_VBLANK_COPY_BG_DEST + 1] = state->a;
+	state->a = state->c;
+	memory[H_VBLANK_COPY_BG_NUM_ROWS] = state->a;
+	state->a = state->e;
+	memory[H_VBLANK_COPY_BG_SOURCE] = state->a;
+}
+
+__attribute__((noinline, used)) void
+port_copy_screen_tile_buffer_to_vram(struct cpu_register_state *state,
+	port_u8 *memory)
+{
+	state->c = SCREEN_HEIGHT / 3;
+
+	state->h = 0;
+	state->l = 0;
+	state->d = 0xC3;
+	state->e = 0xA0;
+	copy_screen_setup(state, memory);
+	copy_screen_delay_frame(state);
+
+	state->h = SCREEN_HEIGHT / 3;
+	state->l = 0;
+	state->d = 0xC4;
+	state->e = 0x18;
+	copy_screen_setup(state, memory);
+	copy_screen_delay_frame(state);
+
+	state->h = 2 * SCREEN_HEIGHT / 3;
+	state->l = 0;
+	state->d = 0xC4;
+	state->e = 0x90;
+	copy_screen_setup(state, memory);
+	copy_screen_delay_frame(state);
 }
