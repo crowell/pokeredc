@@ -27390,3 +27390,25 @@ observables = [
 ]
 proof_domain = "symbolic wSpriteIndex over three representative concrete values {1, 2, 3} covering distinct table offsets; symbolic entry registers; the proven PlayTrainerMusic contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact 23-byte linked body checked; DEC A and LDI run via audited instruction shims while LD D/$00, ADD A, ADD HL/DE and EA absolute stores execute natively; the tail composes the real port_play_trainer_music in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "ResetCryModifiers"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_reset_cry_modifiers"
+c_source = "verification/ports/reset_cry_modifiers.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wFrequencyModifier",
+    "wTempoModifier",
+    "PlaySound tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs and arbitrary initial wFrequencyModifier / wTempoModifier bytes, with the proven PlaySound contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 11-byte linked body checked (xor a; ld [wFrequencyModifier],a; ld [wTempoModifier],a; jp PlaySound); EA absolute stores run via audited instruction shims and the tail composes the real port_play_sound in one angr path-equivalence test"
