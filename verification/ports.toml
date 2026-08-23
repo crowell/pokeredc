@@ -20929,20 +20929,14 @@ assembly_symbol = "AnimationUnusedPalette1"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_unused_palette1_player"
 c_source = "verification/ports/animation_unused_palette1.c"
-status = "partial"
+status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
+    "wOnSGB",
     "rBGP",
 ]
-proof_domain = "non-SGB palette branch selecting B=$fe and C=$f8"
-decoder = "SetAnimationBGPalette non-SGB branch modeled with terminal palette write; SGB selection path remains unmodeled"
+proof_domain = "all register/flag/wOnSGB/rBGP inputs across both SGB and non-SGB palette-selection paths"
+decoder = "the exact 5-byte function entry and exact 11-byte shared SetAnimationBGPalette tail are checked inside the angr path-equivalence proof; native C selects B=$fe when wOnSGB is zero and C=$f8 otherwise, with exact SM83 AND flags and palette write"
 
 [[function]]
 assembly_symbol = "AnimationUnusedPalette2"
