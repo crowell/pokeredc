@@ -19599,17 +19599,11 @@ c_symbol = "port_load_font_tile_patterns_on"
 c_source = "verification/ports/load_font_tile_patterns_on.c"
 status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
+    "exact CopyVideoDataDouble call registers and an arbitrary proven transfer-memory post-state",
 ]
-proof_domain = "full 8-register equivalence incl. F (LD DE,nn / LD HL,nn / LD BC,nn / JP nn are flag-neutral); the local transfer jp is an explicit boundary."
-decoder = "12-byte body checked (11805a210088018004c38618: ld de,$5a80; ld hl,$8800; ld bc,$0480; jp $1886); no CALL/PUSH/POP; F-preserving ops only."
+proof_domain = "all register/flag inputs and an arbitrary proven CopyVideoDataDouble register and memory transition; native production C executes the real complete transfer"
+decoder = "the exact 12-byte tail wrapper executes under angr and proves DE=$5a80, HL=$8800, BC=$0480 at the callee boundary; native C calls real port_copy_video_data_double and the proof composes its arbitrary proven post-state"
 
 [[function]]
 assembly_symbol = "LoadHpBarAndStatusTilePatterns.on"
