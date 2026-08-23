@@ -25009,3 +25009,18 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial 2,048-byte BG-map contents, composed with the independently proved FillMemory recurrence"
 decoder = "LD HL/BC/A setup and JP FillMemory execute natively to a compositional call boundary; native C calls port_fill_memory, retaining its real 2,048-iteration loop"
+
+[[function]]
+assembly_symbol = "RemoveItemByID"
+assembly_source = "engine/menus/pc.asm"
+c_symbol = "port_remove_item_by_id"
+c_source = "verification/ports/remove_item_by_id.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hItemToRemoveID / hItemToRemoveIndex",
+    "wItemQuantity = 1 and wWhichPokemon = removed-entry index",
+    "RemoveItemFromInventory call input (HL = wNumBagItems plus full register/memory snapshot)",
+]
+proof_domain = "all register/flag inputs, arbitrary target item ID and initial hItemToRemoveIndex, and every match/not-found position in an eight-slot $ff-terminated symbolic wBagItems table (at most seven scan iterations); the composed RemoveItemFromInventory boundary contributes its proven carry/inventory contract with an arbitrary matching post-state"
+decoder = "exact 39-byte linked body checked including the jp RemoveItemFromInventory tail; LDH loads/stores (F0/E0), LDI load (2A), EA absolute stores, CP immediate/register, and INC A run via audited instruction shims; the scan loop executes pathwise and the tail composes the real port_remove_item_from_inventory_wrapper under one angr path-equivalence test"
