@@ -16358,6 +16358,20 @@ observables = [
 proof_domain = "all register/flag and sprite-memory inputs plus two arbitrary sequential proven ResetPlayerSpriteData_ClearSpriteData transitions; native production C invokes the real helper twice"
 decoder = "the exact 30-byte body executes under angr; fixed data1/data2 helper inputs, propagation of the first return into the second call, picture/image-base stores, Y=$3c and X=$40 stores, pointer increments, and final registers are modeled compositionally"
 
+[[function]]
+assembly_symbol = "SwitchToMapRomBank"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_switch_to_map_rom_bank"
+c_source = "verification/ports/switch_to_map_rom_bank.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hMapROMBank, hLoadedROMBank, mapper bank, and BankswitchHome scratch",
+    "exact BankswitchHome/BankswitchBack call states and all 248 linked MapHeaderBanks entries",
+]
+proof_domain = "all register/flag/bank/scratch inputs and every caller-valid map id 0..247; native production C calls the real bank helpers and indexes an exact C copy of the linked table"
+decoder = "the exact 30-byte body and 248-byte MapHeaderBanks table execute under angr; saved HL/BC, home-bank switch, 16-bit ADD flags, indexed bank fetch, switch back, final bank writes, and restoration are modeled"
+
 
 
 
