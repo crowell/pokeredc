@@ -25024,3 +25024,18 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, arbitrary target item ID and initial hItemToRemoveIndex, and every match/not-found position in an eight-slot $ff-terminated symbolic wBagItems table (at most seven scan iterations); the composed RemoveItemFromInventory boundary contributes its proven carry/inventory contract with an arbitrary matching post-state"
 decoder = "exact 39-byte linked body checked including the jp RemoveItemFromInventory tail; LDH loads/stores (F0/E0), LDI load (2A), EA absolute stores, CP immediate/register, and INC A run via audited instruction shims; the scan loop executes pathwise and the tail composes the real port_remove_item_from_inventory_wrapper under one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "RemoveGuardDrink"
+assembly_source = "engine/events/saffron_guards.asm"
+c_symbol = "port_remove_guard_drink"
+c_source = "verification/ports/remove_guard_drink.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hItemToRemoveID per iteration",
+    "IsItemInBag call inputs (B = drink ID, HL = list cursor) at each of the three call sites",
+    "farjp RemoveItemByID hand-off state (B = $05, HL = $7f37, registers/F preserved)",
+]
+proof_domain = "all register/flag inputs with the concrete bank-$16 GuardDrinksList (byte-verified $3c/$3d/$3e/00); every not-in-bag prefix and found-drink position through the real three-iteration scan; IsItemInBag composes its proven transition at each call site and the Bankswitch dispatcher remains the tail boundary"
+decoder = "exact 24-byte linked body checked including the jp Bankswitch tail; LDI load (2A), LDH store (E0), and AND A run via audited instruction shims; the scan loop executes pathwise while native C calls the real port_is_item_in_bag and port_remove_item_by_id_bank12"
