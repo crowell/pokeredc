@@ -15,11 +15,9 @@ struct print_ghost_text_state {
 extern void port_is_ghost_battle(struct is_ghost_battle_state *state);
 extern void port_print_text(struct cpu_register_state *state, port_u8 *memory);
 
-static port_u8 print_ghost_memory[0x10000];
-
 /* PrintGhostText, including IsGhostBattle and the text-dispatch calls. */
 __attribute__((noinline, used)) void
-port_print_ghost_text(struct print_ghost_text_state *state)
+port_print_ghost_text(struct print_ghost_text_state *state, port_u8 *memory)
 {
 	struct is_ghost_battle_state ghost = {
 		state->registers,
@@ -28,20 +26,29 @@ port_print_ghost_text(struct print_ghost_text_state *state)
 	port_is_ghost_battle(&ghost);
 	state->registers = ghost.registers;
 	if ((state->registers.f & PORT_FLAG_Z) != 0) {
-		port_u8 frozen_or_sleeping = (port_u8)(state->battle_mon_status & 0x47);
-		if (state->whose_turn != 0) {
+		state->registers.a = state->whose_turn;
+		state->registers.f = PORT_FLAG_H;
+		if (state->registers.a == 0)
+			state->registers.f |= PORT_FLAG_Z;
+		if (state->registers.a != 0) {
 			state->registers.h = 0x58;
 			state->registers.l = 0x35;
-			port_print_text(&state->registers, print_ghost_memory);
+			port_print_text(&state->registers, memory);
 			state->registers.a = 0;
 			state->registers.f = PORT_FLAG_Z;
-		} else if (frozen_or_sleeping != 0) {
+		} else {
+			port_u8 frozen_or_sleeping =
+				(port_u8)(state->battle_mon_status & 0x47);
+
 			state->registers.a = frozen_or_sleeping;
 			state->registers.f = PORT_FLAG_H;
-		} else {
+			if (frozen_or_sleeping == 0)
+				state->registers.f |= PORT_FLAG_Z;
+			if (frozen_or_sleeping != 0)
+				return;
 			state->registers.h = 0x58;
 			state->registers.l = 0x30;
-			port_print_text(&state->registers, print_ghost_memory);
+			port_print_text(&state->registers, memory);
 			state->registers.a = 0;
 			state->registers.f = PORT_FLAG_Z;
 		}

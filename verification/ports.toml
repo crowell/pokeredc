@@ -22179,12 +22179,15 @@ assembly_symbol = "PrintGhostText"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_print_ghost_text"
 c_source = "verification/ports/print_ghost_text.c"
-status = "partial"
+status = "complete"
 observables = [
     "all registers and flags",
+    "ghost-state bytes",
+    "IsGhostBattle and PrintText call inputs",
+    "caller memory marker",
 ]
-proof_domain = "all register/flag and ghost-state inputs through PrintText dispatch"
-decoder = "IsGhostBattle call, ghost/player turn dispatch, freeze/sleep mask, text-pointer setup, PrintText calls, and XOR-A returns are modeled exactly; text rendering remains beyond the explicit PrintText continuation"
+proof_domain = "all register/flag, ghost-state, and marker-memory inputs with arbitrary matching transitions from the composed IsGhostBattle and PrintText callees"
+decoder = "complete function: IsGhostBattle dispatch, turn/status flag effects, both text pointers, real PrintText calls with caller memory, early returns, and XOR-A returns are modeled exactly"
 
 [[function]]
 assembly_symbol = "IsGhostBattle"
