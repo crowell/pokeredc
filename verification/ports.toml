@@ -26895,3 +26895,22 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the proven ItemUseNotTime contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact linked body checked; the tail composes the real ItemUseNotTime port in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "OneHitKOEffect"
+assembly_source = "engine/battle/effects.asm"
+c_symbol = "port_one_hit_ko_effect_far"
+c_source = "verification/ports/one_hit_ko_effect_far.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "all register/flag inputs; the Bankswitch dispatcher is the path boundary and the far-target hand-off (B = $0c, HL = OneHitKOEffect_) is the observable, matching the RemoveItemByIDBank12 thunk convention"
+decoder = "exact 8-byte linked body checked (ld hl,OneHitKOEffect_; ld b,$0c; jp Bankswitch); LD HL/nn, LD r,imm and JP nn are flag-neutral and execute natively in one angr path-equivalence test against the C hand-off"
