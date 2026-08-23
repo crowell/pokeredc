@@ -6816,17 +6816,13 @@ c_symbol = "port_gb_fade_out_to_black"
 c_source = "verification/ports/register_constants.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "GBFadeDecCommon continuation",
+    "all registers and flags",
+    "rBGP",
+    "rOBP0",
+    "rOBP1",
 ]
-proof_domain = "all general-register and canonical-flag inputs"
-decoder = "exact 7-byte linked entry body and linked FadePal4 + 2 address checked; the shared fade loop is an explicit boundary"
+proof_domain = "all general-register and canonical-flag inputs through all four reverse palette iterations and all 32 acknowledged frame delays"
+decoder = "the complete native loop performs all twelve reverse ROM palette reads, twelve hardware palette writes, four SM83 DEC B transitions, and four real port_delay_frames calls; the angr assembly side executes the linked body with audited HLD, LDH, DEC, and independently proven DelayFrames summaries"
 
 
 

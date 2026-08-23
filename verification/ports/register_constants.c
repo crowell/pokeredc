@@ -134,14 +134,28 @@ port_gb_fade_out_to_white(struct cpu_register_state *state, port_u8 *memory)
 	} while (fade_dec_b(state));
 }
 
-/* Remaining decrementing fade entries stop at their shared-loop boundary. */
+/* Complete port of GBFadeOutToBlack in home/fade.asm. */
 __attribute__((noinline, used)) void
-port_gb_fade_out_to_black(struct cpu_register_state *state)
+port_gb_fade_out_to_black(struct cpu_register_state *state, port_u8 *memory)
 {
 	set_hl(state, 0x2118);
 	state->b = 4;
+	do {
+		port_u16 hl = ((port_u16)state->h << 8) | state->l;
+
+		state->a = memory[hl--];
+		memory[0xff49] = state->a;
+		state->a = memory[hl--];
+		memory[0xff48] = state->a;
+		state->a = memory[hl--];
+		memory[0xff47] = state->a;
+		state->h = (port_u8)(hl >> 8);
+		state->l = (port_u8)hl;
+		fade_delay_frames(state, 8);
+	} while (fade_dec_b(state));
 }
 
+/* GBFadeInFromWhite still stops at the shared decrementing-loop boundary. */
 __attribute__((noinline, used)) void
 port_gb_fade_in_from_white(struct cpu_register_state *state)
 {

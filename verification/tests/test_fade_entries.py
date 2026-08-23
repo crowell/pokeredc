@@ -28,7 +28,6 @@ SYMBOLS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
 
 PORTS = (
-    ("GBFadeOutToBlack", "FadePal4", 2, 4, "GBFadeDecCommon", "port_gb_fade_out_to_black", True),
     ("GBFadeInFromWhite", "FadePal7", 2, 3, "GBFadeDecCommon", "port_gb_fade_in_from_white", False),
 )
 
