@@ -1663,6 +1663,17 @@ struct reload_tileset_tile_patterns_state {
 	port_u8 tileset_bank;
 };
 
+struct load_town_map_fly_private_state {
+	struct cpu_register_state registers;
+};
+
+struct choose_fly_destination_state {
+	struct load_town_map_fly_private_state town_map;
+	port_u8 status_flags4;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
 struct differential_decode_state {
 	struct cpu_register_state registers;
 	port_u8 flipped;
@@ -2844,6 +2855,8 @@ _Static_assert(sizeof(struct display_pokedex_private_state) == 9, "unexpected AB
 _Static_assert(sizeof(struct display_pokedex_wrapper_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct switch_to_map_rom_bank_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct reload_tileset_tile_patterns_state) == 21, "unexpected ABI padding");
+_Static_assert(sizeof(struct load_town_map_fly_private_state) == 8, "unexpected ABI padding");
+_Static_assert(sizeof(struct choose_fly_destination_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct differential_decode_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct write_sprite_bits_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct remove_inventory_state) == 23, "unexpected ABI padding");

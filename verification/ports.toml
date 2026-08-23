@@ -16387,6 +16387,20 @@ observables = [
 proof_domain = "all register/flag/map/bank/LCD/interrupt/tileset inputs and arbitrary proven sequential SwitchToMapRomBank, DisableLCD, LoadTilesetTilePatternData, and EnableLCD transitions; native production C invokes all four real functions"
 decoder = "the exact 25-byte wrapper executes under angr; saved loaded-bank AF, current-map load, four ordered call transitions, restored AF, and final loaded/mapper bank writes are modeled compositionally"
 
+[[function]]
+assembly_symbol = "ChooseFlyDestination"
+assembly_source = "home/reload_tiles.asm"
+c_symbol = "port_choose_fly_destination"
+c_source = "verification/ports/choose_fly_destination.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wStatusFlags4, loaded bank, and mapper bank",
+    "exact LoadTownMap_Fly callback-entry registers and arbitrary proven post-state",
+]
+proof_domain = "all register/flag/status/bank inputs plus an arbitrary proven LoadTownMap_Fly transition; native production C invokes real port_load_town_map_fly_private"
+decoder = "the exact 13-byte wrapper executes under angr; RES BIT_NO_BATTLES without flag changes, farjp target HL=$4f90 and bank B=$1c, Bankswitch callback BC=$35e4, callback effects, and final A/B/C/bank restoration are modeled compositionally"
+
 
 
 
