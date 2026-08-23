@@ -19016,8 +19016,8 @@ observables = [
     "H",
     "L",
 ]
-proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn are flag-neutral); tail `jp` is an explicit boundary."
-decoder = "5-byte body checked (0e64c33937: ld c,$64; jp $3739); no CALL/PUSH/POP; F-preserving ops only."
+proof_domain = "all register/flag inputs through the complete fixed 100-frame DelayFrames loop"
+decoder = "the linked LD C,$64 / JP DelayFrames wrapper executes under angr; selected frame count is explicit proof state and the native port executes all 100 iterations of the separately proven delay loop"
 
 [[function]]
 assembly_symbol = "Trade_Delay80"

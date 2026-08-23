@@ -1,14 +1,20 @@
 #include "port_state.h"
 
-/* Port of Trade_Delay100 in engine/trade.asm.
- *
- * ld c, $64; jp $3739. LD C and JP preserve F; the tail jp is the boundary. */
+void port_delay_frames(struct delay_frame_state *state,
+	const port_u8 *observations);
 
-#define TRADE_DELAY100_C 0x64u
-
+/* Port of Trade_Delay100 in engine/link/trade.asm. */
 __attribute__((noinline, used)) void
-port_trade_delay100(struct cpu_register_state *state, port_u8 *memory)
+port_trade_delay100(struct trade_delay_state *state)
 {
-    (void)memory;
-    state->c = TRADE_DELAY100_C;
+	static const port_u8 acknowledged_vblank[] = { 0 };
+	struct delay_frame_state delay;
+
+	state->registers.c = 0x64;
+	state->frames_waited = state->registers.c;
+	delay.registers = state->registers;
+	delay.vblank_occurred = 0;
+	delay.observed_vblank = 0;
+	port_delay_frames(&delay, acknowledged_vblank);
+	state->registers = delay.registers;
 }
