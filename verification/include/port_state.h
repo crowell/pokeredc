@@ -1433,6 +1433,11 @@ struct load_tileset_tile_pattern_data_state {
 	port_u8 tileset_bank;
 };
 
+struct load_text_box_tile_patterns_state {
+	struct far_copy_data2_state transfer;
+	port_u8 lcd_control;
+};
+
 struct align_sprite_data_state {
 	struct cpu_register_state registers;
 	port_u8 sprite_offset;
@@ -2722,6 +2727,7 @@ _Static_assert(sizeof(struct far_copy_data_state) == 11, "unexpected ABI padding
 _Static_assert(sizeof(struct far_copy_data2_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data3_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_tileset_tile_pattern_data_state) == 14, "unexpected ABI padding");
+_Static_assert(sizeof(struct load_text_box_tile_patterns_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct align_sprite_data_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct write_oam_block_state) == 32, "unexpected ABI padding");
 _Static_assert(sizeof(struct sprite_movement_delay_state) == 14, "unexpected ABI padding");
