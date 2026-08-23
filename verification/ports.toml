@@ -7266,6 +7266,19 @@ proof_domain = "all general-register and canonical-flag inputs and all values of
 decoder = "the native port executes both HRAM reads, the full nibble swap, ADD A,B flag calculation, and final pointer construction; angr executes the complete linked entry with audited LDH, SWAP, and ADD semantics"
 
 [[function]]
+assembly_symbol = "_GetPointerWithinSpriteStateData"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_get_pointer_within_sprite_state_data"
+c_source = "verification/ports/register_constants.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hSpriteDataOffset and hSpriteIndex",
+]
+proof_domain = "all register/flag inputs and all 256 values of both HRAM inputs"
+decoder = "the exact ten-byte shared body executes under angr with SM83 LDH, SWAP, and ADD instruction semantics; native C performs both HRAM reads, nibble rotation, flag calculation, and low-pointer construction"
+
+[[function]]
 assembly_symbol = "SetSpriteFacingDirection"
 assembly_source = "home/map_objects.asm"
 c_symbol = "port_set_sprite_facing_direction"
