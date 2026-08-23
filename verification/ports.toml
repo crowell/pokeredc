@@ -25056,3 +25056,19 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, arbitrary initial hLoadedROMBank byte, and arbitrary PredefPointers fetch results; the banked GetPredefPointer callee composes its proven transition at the call site and the jp hl predef body is an arbitrary register transition whose memory effects are outside this function's contract"
 decoder = "exact 39-byte linked body checked including push af/ld de,.done/push de/jp hl/pop af stack discipline; EA absolute stores, F0/E0 LDH, and FA load run via audited instruction shims while native C composes the real port_get_predef_pointer and port_predef_target_boundary seam in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "CeladonMartRoofScript_GetDrinksInBag"
+assembly_source = "scripts/CeladonMartRoof.asm"
+c_symbol = "port_celadon_mart_roof_script_get_drinks_in_bag"
+c_source = "verification/ports/celadon_mart_roof_get_drinks_in_bag.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wFilteredBagItemsCount",
+    "wFilteredBagItems region including the $ff terminator",
+    "wTempByteValue per iteration",
+    "Predef call-input snapshots (A = predef id, B = drink ID, DE/HL cursors) at each of the three invocations",
+]
+proof_domain = "all register/flag inputs with the concrete bank-$12 CeladonMartRoofDrinkList (byte-verified $3c/$3d/$3e/00); every in-bag/not-in-bag combination across the three bounded scan iterations; each predef invocation composes the proven GetQuantityOfItemInBag contract as an arbitrary matching transition while the dispatcher's own RAM effects remain covered by the separate Predef proof"
+decoder = "exact 48-byte linked body checked through the .done terminator store and ret; EA absolute stores, FA load, LDI load, LD A,n, and AND A (with SM83 H-set semantics) run via audited instruction shims; the real loop executes pathwise while native C calls the real port_get_quantity_of_item_in_bag in one angr path-equivalence test"
