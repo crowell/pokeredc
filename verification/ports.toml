@@ -6336,6 +6336,20 @@ observables = [
 proof_domain = "all general-register and canonical-flag inputs and all 256 current-menu item values, including every 16-bit HL addition and wraparound"
 decoder = "exact 8-byte linked body checked; SM83 absolute load and ADD HL,BC flags modeled explicitly"
 
+[[function]]
+assembly_symbol = "GetSelectedMoveOffset"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_get_selected_move_offset"
+c_source = "verification/ports/get_selected_move_offset.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wWhichPokemon and wCurrentMenuItem",
+    "ordered AddNTimes and GetSelectedMoveOffset2 entry states",
+]
+proof_domain = "all register/flag/selected-Pokemon/current-menu-item inputs and arbitrary proven sequential AddNTimes and GetSelectedMoveOffset2 transitions; native production C invokes both real functions"
+decoder = "the exact 14-byte body is checked inside the angr path-equivalence proof; the initial selected-Pokemon load, real AddNTimes call, fallthrough into the shared real GetSelectedMoveOffset2 implementation, and final register propagation compose explicitly"
+
 
 
 
