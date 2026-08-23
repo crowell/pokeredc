@@ -25093,3 +25093,25 @@ observables = [
 ]
 proof_domain = "all register/flag and marker-memory inputs with an arbitrary matching transition from the composed PrintText callee"
 decoder = "complete tail-call path: the exact linked body (ld hl,MtMoonB2FReceivedFossilText.Text; jp PrintText) and real port_print_text call with caller memory are proved in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "MtMoonB2FYouHaveNoRoomText"
+assembly_source = "scripts/MtMoonB2F.asm"
+c_symbol = "port_mt_moon_b2f_you_have_no_room_text"
+c_source = "verification/ports/mt_moon_b2f_you_have_no_room_text.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "PrintText call input",
+    "TextScriptEnd hand-off registers",
+    "caller memory marker",
+]
+proof_domain = "all register/flag and marker-memory inputs with arbitrary matching transitions from the composed PrintText and TextScriptEnd callees"
+decoder = "exact linked body (ld hl,.Text; call PrintText; jp TextScriptEnd) checked; the called PrintText boundary snapshots inputs and returns via emulated RET while the TextScriptEnd tail boundary records the hand-off registers, all in one angr path-equivalence test against the real port_print_text and port_text_script_end"
