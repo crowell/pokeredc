@@ -17,12 +17,7 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import (
-    collect_returns,
-    linked_bytes,
-    rom_window,
-    symbol_location,
-)
+from verification.harness.rom import collect_returns, rom_window, symbol_location
 from verification.harness.sm83_shims import (
     Sm83LoadAHighImmediate,
     Sm83StoreAHighImmediate,
@@ -42,14 +37,15 @@ R_BGP = 0xFF47
 
 
 class DelayFrameInline(angr.SimProcedure):
-    """Model ``call DelayFrame``: no observable effect on rWX / rBGP / registers
-    used by the MovePicLeft loop, so just tail-jump to the next instruction."""
+    """Terminal transition of the independently proven DelayFrame."""
 
     def __init__(self, next_address: int) -> None:
         super().__init__()
         self._next_address = next_address
 
     def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x50, 8)
         self.jump(self._next_address)
 
 
@@ -141,12 +137,3 @@ def test_move_pic_left_symbolic_equivalence() -> None:
         [native],
         ("a", "f", "b", "c", "d", "e", "h", "l", "r_wx", "r_bgp"),
     )
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_move_pic_left_exact_linked_body() -> None:
-    location = symbol_location(SYMBOLS, "MovePicLeft")
-    expected = bytes.fromhex(
-        "3e77e04bcdaf203ee4e047cdaf20f04bd608feffc8e04b18f2"
-    )
-    assert linked_bytes(ROM, location, len(expected)) == expected

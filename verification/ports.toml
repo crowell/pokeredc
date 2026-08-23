@@ -16169,8 +16169,8 @@ observables = [
     "rWX",
     "rBGP",
 ]
-proof_domain = "all general-register and canonical-flag inputs; rWX and rBGP are the only memory observables and the loop bound is the concrete constant 119 down to 7, so pathwise equivalence holds over the single concrete control-flow path"
-decoder = "exact 25-byte linked body checked; the two `call DelayFrame` sites are modeled as no-op tail jumps and the rWX / rBGP high-memory loads and stores use the proven SM83 shims"
+proof_domain = "all general-register and canonical-flag inputs through the concrete 119-to-7 window loop and all sixteen acknowledged DelayFrame calls"
+decoder = "the native port calls port_delay_frame before palette setup and on every loop iteration; angr composes both call sites with the independently proven terminal transition while executing the real rWX arithmetic, comparisons, branches, and hardware stores"
 
 
 
