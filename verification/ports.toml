@@ -27141,3 +27141,26 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial rSB / hSerialReceiveData / rSC / control / wait bytes, with both proven callee contracts applied as arbitrary matching transitions at their boundaries"
 decoder = "exact 6-byte linked body checked (call Serial_TryEstablishingExternallyClockedConnection; jp EnableAutoTextBoxDrawing); both callees compose through explicit state-struct bridges in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "FuchsiaPokecenter_Script"
+assembly_source = "scripts/FuchsiaPokecenter.asm"
+c_symbol = "port_fuchsia_pokecenter_script"
+c_source = "verification/ports/fuchsia_pokecenter_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rSB / hSerialReceiveData / rSC hardware bytes",
+    "wAutoTextBoxDrawingControl",
+    "wDoNotWaitForButtonPressAfterDisplayingText",
+    "serial and auto-text-box tail-call input snapshots",
+]
+proof_domain = "all register/flag inputs and arbitrary initial rSB / hSerialReceiveData / rSC / control / wait bytes, with both proven callee contracts applied as arbitrary matching transitions at their boundaries"
+decoder = "exact 6-byte linked body checked (call Serial_TryEstablishingExternallyClockedConnection; jp EnableAutoTextBoxDrawing); both callees compose through explicit state-struct bridges in one angr path-equivalence test"
