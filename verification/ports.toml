@@ -16675,10 +16675,12 @@ c_symbol = "port_stop_all_sounds"
 c_source = "verification/ports/stop_all_sounds.c"
 status = "proven"
 observables = [
-    "A (0xFF), F, audio control globals (wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl, wNewSoundID, wLastMusicSoundID)",
+    "all registers and flags",
+    "all PlaySound audio, fade, channel, bank, and dispatch state",
+    "wAudioSavedROMBank",
 ]
-proof_domain = "all general-register and canonical-flag inputs; PlaySound inlined as no-op return"
-decoder = "exact 16-byte linked body checked; `jp PlaySound` modeled as no-op return; `ld a,imm`/`ld [a16],a`/`xor a`/`dec a` run natively"
+proof_domain = "all register/flag/audio inputs through the concrete no-fade PlaySound path selected by StopAllSounds"
+decoder = "the 22-byte linked wrapper executes under angr with absolute stores shimmed; the tail jump uses the separately proven PlaySound transition"
 
 
 

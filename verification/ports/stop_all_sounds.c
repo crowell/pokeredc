@@ -1,48 +1,22 @@
 #include "port_state.h"
 
-/* Port of StopAllSounds in home/init.asm.
- *
- * Stops all audio by setting up the audio engine bank, clearing audio state,
- * and playing SFX_STOP_ALL_MUSIC (0xFF).
- *
- * Modifies: A, F. */
+void port_play_sound(struct play_sound_state *state);
 
-#define W_AUDIO_ROM_BANK 0xc0efu
-#define W_AUDIO_SAVED_ROM_BANK 0xc0f0u
-#define W_AUDIO_FADE_OUT_CONTROL 0xcfc7u
-#define W_NEW_SOUND_ID 0xc0eeu
-#define W_LAST_MUSIC_SOUND_ID 0xcfca
-
+/* Port of StopAllSounds in home/init.asm. */
 __attribute__((noinline, used)) void
-port_stop_all_sounds(struct cpu_register_state *state, port_u8 *memory)
+port_stop_all_sounds(struct play_sound_state *state)
 {
-	(void)state;
-	(void)memory;
+	state->registers.a = 2;
+	state->audio_rom_bank = state->registers.a;
+	state->audio_saved_rom_bank = state->registers.a;
 
-	/* ld a, BANK("Audio Engine 1") = 2 */
-	state->a = 2;
+	state->registers.a = 0;
+	state->registers.f = PORT_FLAG_Z;
+	state->fade_control = state->registers.a;
+	state->new_sound_id = state->registers.a;
+	state->last_music_sound_id = state->registers.a;
 
-	/* ld [wAudioROMBank], a */
-	memory[W_AUDIO_ROM_BANK] = state->a;
-
-	/* ld [wAudioSavedROMBank], a */
-	memory[W_AUDIO_SAVED_ROM_BANK] = state->a;
-
-	/* xor a */
-	state->a = 0;
-
-	/* ld [wAudioFadeOutControl], a */
-	memory[W_AUDIO_FADE_OUT_CONTROL] = state->a;
-
-	/* ld [wNewSoundID], a */
-	memory[W_NEW_SOUND_ID] = state->a;
-
-	/* ld [wLastMusicSoundID], a */
-	memory[W_LAST_MUSIC_SOUND_ID] = state->a;
-
-	/* dec a -> A = 0xFF */
-	state->a = 0xFFu;
-
-	/* jp PlaySound: the callee is an explicit no-op boundary here. */
-	state->f = PORT_FLAG_N | PORT_FLAG_H | (state->f & PORT_FLAG_C);
+	state->registers.a--;
+	state->registers.f = PORT_FLAG_N | PORT_FLAG_H;
+	port_play_sound(state);
 }
