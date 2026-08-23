@@ -15251,6 +15251,21 @@ observables = [
 proof_domain = "all register/flag/bank/map-coordinate/pointer/map-width/tile inputs, composed from exact entry/exit and inductive block, render-row, copy-tile, and copy-row transitions"
 decoder = "the exact 125-byte body is checked inside the path-equivalence proof; native production C executes the fixed 5-by-6 render loop with real port_draw_tile_block calls and the fixed 18-by-20 visible-copy loop, while exact recurrence proofs cover pointer wrapping, conditional offsets, flags, and termination"
 
+[[function]]
+assembly_symbol = "AdvancePlayerSprite"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_advance_player_sprite"
+c_source = "verification/ports/advance_player_sprite.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "animation, coordinate, map-pointer, VRAM-pointer, scroll, redraw, and map-view state",
+    "exact directional pointer, LoadCurrentMapView, and redraw-scheduler calls",
+    "every sprite Y/X read and write through the complete sprite-count loop",
+]
+proof_domain = "all register/flag/global inputs, all movement directions and animation phases, arbitrary proven callee transitions, and an inductive per-sprite recurrence for every 8-bit sprite count"
+decoder = "the exact 318-byte body is checked inside the path-equivalence proof; native production C executes every control-flow branch, invokes all real directional/map-view/redraw functions, updates scrolling, and runs the full sprite-shift loop with page-local low-byte stride semantics"
+
 
 
 

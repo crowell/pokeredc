@@ -2058,6 +2058,54 @@ struct load_current_map_view_state {
 	port_u8 write_l;
 };
 
+struct advance_player_sprite_state {
+	struct cpu_register_state registers;
+	port_u8 y_step;
+	port_u8 x_step;
+	port_u8 walk_counter;
+	port_u8 y_coord;
+	port_u8 x_coord;
+	port_u8 map_view_vram_low;
+	port_u8 map_view_vram_high;
+	port_u8 x_block_coord;
+	port_u8 y_block_coord;
+	port_u8 x_special_warp_offset;
+	port_u8 y_special_warp_offset;
+	port_u8 map_view_pointer_low;
+	port_u8 map_view_pointer_high;
+	port_u8 map_width;
+	port_u8 scroll_y;
+	port_u8 scroll_x;
+	port_u8 num_sprites;
+	port_u8 redraw_dest_low;
+	port_u8 redraw_dest_high;
+	port_u8 redraw_mode;
+	port_u8 tileset_bank;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	port_u8 tileset_blocks_low;
+	port_u8 tileset_blocks_high;
+	port_u8 view_saved_a;
+	port_u8 view_saved_f;
+	port_u8 view_row_d;
+	port_u8 view_row_e;
+	port_u8 view_row_h;
+	port_u8 view_row_l;
+	port_u8 view_fetched_block;
+	port_u8 view_fetched_copy;
+	port_u8 view_written_copy;
+	port_u8 view_write_h;
+	port_u8 view_write_l;
+	port_u8 sprite_fetched_y;
+	port_u8 sprite_fetched_x;
+	port_u8 sprite_written_y;
+	port_u8 sprite_written_x;
+	port_u8 sprite_write_y_high;
+	port_u8 sprite_write_y_low;
+	port_u8 sprite_write_x_high;
+	port_u8 sprite_write_x_low;
+};
+
 struct replace_tree_block_state {
 	struct cpu_register_state registers;
 	port_u8 map_width;
@@ -2983,6 +3031,7 @@ _Static_assert(sizeof(struct schedule_west_column_redraw_state) == 13, "unexpect
 _Static_assert(sizeof(struct interrupt_return_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct draw_tile_block_state) == 28, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_current_map_view_state) == 29, "unexpected ABI padding");
+_Static_assert(sizeof(struct advance_player_sprite_state) == 52, "unexpected ABI padding");
 _Static_assert(sizeof(struct replace_tree_block_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct transition_copy_tiles2_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct badge_stat_boost_state) == 12, "unexpected ABI padding");
