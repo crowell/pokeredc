@@ -24523,3 +24523,16 @@ observables = [
 ]
 proof_domain = "all register and canonical-flag inputs through the complete three-frame delay and BC restoration"
 decoder = "the real PUSH BC, CALL Delay3, POP BC, and RET execute around the proved three-iteration DelayFrames composition; native C explicitly calls port_delay3 and restores both saved registers"
+
+[[function]]
+assembly_symbol = "ClearBothBGMaps"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_clear_both_bg_maps"
+c_source = "verification/ports/clear_both_bg_maps.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "vBGMap0 through vBGMap1 end",
+]
+proof_domain = "all register/flag inputs and arbitrary initial 2,048-byte BG-map contents, composed with the independently proved FillMemory recurrence"
+decoder = "LD HL/BC/A setup and JP FillMemory execute natively to a compositional call boundary; native C calls port_fill_memory, retaining its real 2,048-iteration loop"
