@@ -26815,3 +26815,23 @@ observables = [
 ]
 proof_domain = "all register/flag inputs (symbolic A covers every threshold outcome); the proven AIUseSuperPotion contract is applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact 6-byte linked body checked (cp $40; ret nc; jp AIUseSuperPotion) where $40 = 25 percent + 1; CP immediate runs via an audited instruction shim and both terminal paths (ret-nc versus composed tail call) are proved in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "BrunoAI"
+assembly_source = "engine/battle/trainer_ai.asm"
+c_symbol = "port_bruno_ai"
+c_source = "verification/ports/bruno_ai.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "AIUseXDefend tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs (symbolic A covers every threshold outcome); the proven AIUseXDefend contract is applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 6-byte linked body checked (cp $40; ret nc; jp AIUseXDefend) where $40 = 25 percent + 1; CP immediate runs via an audited instruction shim and both terminal paths (ret-nc versus composed tail call) are proved in one angr path-equivalence test"
