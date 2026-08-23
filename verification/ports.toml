@@ -16717,10 +16717,12 @@ c_symbol = "port_play_default_music"
 c_source = "verification/ports/default_music_fade.c"
 status = "proven"
 observables = [
-    "C, D, A, F, wLastMusicSoundID (set up for PlayDefaultMusicCommon with c=0, d=0, last_music_sound_id=0)",
+    "all registers and flags after PlayDefaultMusicCommon",
+    "wLowHealthAlarm and the three polled channel sound IDs",
+    "wLastMusicSoundID and PlayDefaultMusicCommon continuation state",
 ]
-proof_domain = "all general-register and canonical-flag inputs; WaitForSoundToFinish inlined as no-op return"
-decoder = "exact 21-byte linked body checked; `call WaitForSoundToFinish` modeled as no-op return; `xor a`/`ld c,a`/`ld d,a`/`ld [wLastMusicSoundID],a`/`jr` run natively"
+proof_domain = "all register/flag/global inputs, both low-health-alarm paths, arbitrary channel IDs, and an arbitrary PlayDefaultMusicCommon post-state"
+decoder = "linked PlayDefaultMusic entry executes under angr; WaitForSoundToFinish uses its separately proven terminal transition and PlayDefaultMusicCommon is an explicit arbitrary continuation boundary"
 
 
 

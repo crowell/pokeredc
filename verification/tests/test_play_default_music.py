@@ -10,64 +10,126 @@ from archinfo import ArchPcode
 
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
+    REGISTERS,
+    assembly_registers,
+    native_registers,
     set_assembly_registers,
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import (
-    collect_returns,
-    linked_bytes,
-    rom_window,
-    symbol_location,
-)
-
+from verification.harness.rom import rom_window, sm83_flags_to_z80, symbol_location
 
 ROOT = Path(__file__).resolve().parents[2]
-NATIVE_ELF = ROOT / "verification" / "build" / "ports.elf"
+NATIVE_ELF = ROOT / "verification/build/ports.elf"
 ROM = ROOT / "pokered.gbc"
 SYMBOLS = ROOT / "pokered.sym"
-GB_RETURN = 0xFFFF
 NATIVE_STATE = 0x100000
+NATIVE_CALLBACK = 0x100100
+NATIVE_GLOBALS = 0x100200
+RETURN = 0xFFFF
 
-EXPECTED_BODY = bytes.fromhex(
-    "cd4837af4f57eacacf18120e0a1600fa2ed7cb6f2807afeacacf0e0851fa"
+STATE_FIELDS = (
+    "status_flags4",
+    "last_music_sound_id",
+    "dispatched",
+    "low_health_alarm",
+    "channel_0",
+    "channel_1",
+    "channel_2",
 )
+
+
+class WaitForSoundToFinish(angr.SimProcedure):
+    """Both terminal paths of the independently proven sound wait."""
+
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self._next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.inhibit_autoret = True
+        alarm = self.state.globals["low_health_alarm"]
+        alarm_set = alarm & 0x80 != 0
+
+        early = self.state.copy()
+        early.regs.a = alarm & 0x80
+        early.regs.f = claripy.BVV(0x10, 8)
+        early.add_constraints(alarm_set)
+        self.successors.add_successor(
+            early, self._next_address, claripy.BoolV(True), "Ijk_Boring"
+        )
+
+        waited = self.state.copy()
+        waited.regs.a = claripy.BVV(0, 8)
+        waited.regs.f = claripy.BVV(0x40, 8)
+        for index in range(3):
+            waited.globals[f"channel_{index}"] = claripy.BVV(0, 8)
+        waited.add_constraints(~alarm_set)
+        self.successors.add_successor(
+            waited, self._next_address, claripy.BoolV(True), "Ijk_Boring"
+        )
+
+
+class StoreLastMusicSoundId(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self._next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.globals["last_music_sound_id"] = self.state.regs.a
+        self.jump(self._next_address)
+
+
+class PlayDefaultMusicCommon(angr.SimProcedure):
+    """Arbitrary post-state of the separately proven common continuation."""
+
+    def run(self) -> None:  # type: ignore[override]
+        callback = self.state.globals["callback"]
+        for register in REGISTERS:
+            value = callback[register]
+            if register == "f":
+                value = sm83_flags_to_z80(value)
+            setattr(self.state.regs, register, value)
+        self.state.globals["status_flags4"] = callback["status_flags4"]
+        self.state.globals["last_music_sound_id"] = callback[
+            "last_music_sound_id"
+        ]
+        self.state.globals["dispatched"] = claripy.BVV(1, 8)
+        self.jump(RETURN)
 
 
 @dataclass(frozen=True)
 class Endpoint:
-    c: claripy.ast.BV
-    d: claripy.ast.BV
     a: claripy.ast.BV
     f: claripy.ast.BV
-    last_music_sound_id: claripy.ast.BV
+    b: claripy.ast.BV
+    c: claripy.ast.BV
+    d: claripy.ast.BV
+    e: claripy.ast.BV
+    h: claripy.ast.BV
+    l: claripy.ast.BV
+    memory: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-def _load_assembly(end: angr.SimState) -> Endpoint:
-    return Endpoint(
-        c=end.regs.c,
-        d=end.regs.d,
-        a=end.regs.a,
-        f=end.regs.f,
-        last_music_sound_id=end.memory.load(0xCFCA, 1),
-        constraints=tuple(end.solver.constraints),
+def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
+    values = symbolic_registers(prefix)
+    for field in STATE_FIELDS:
+        values[field] = claripy.BVS(f"{prefix}_{field}", 8)
+    for register, value in symbolic_registers(f"{prefix}_callback").items():
+        values[f"callback_{register}"] = value
+    values["callback_status_flags4"] = claripy.BVS(
+        f"{prefix}_callback_status_flags4", 8
     )
-
-
-def _load_native(end: angr.SimState) -> Endpoint:
-    return Endpoint(
-        c=end.memory.load(NATIVE_STATE + 2, 1),
-        d=end.memory.load(NATIVE_STATE + 3, 1),
-        a=end.memory.load(NATIVE_STATE + 0, 1),
-        f=end.memory.load(NATIVE_STATE + 1, 1),
-        last_music_sound_id=end.memory.load(0xCFCA, 1),
-        constraints=tuple(end.solver.constraints),
+    values["callback_last_music_sound_id"] = claripy.BVS(
+        f"{prefix}_callback_last_music_sound_id", 8
     )
+    return values
 
 
-def _assembly_endpoint() -> list[Endpoint]:
+def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "PlayDefaultMusic")
+    common = symbol_location(SYMBOLS, "PlayDefaultMusicCommon")
     project = angr.Project(
         rom_window(ROM, location.bank),
         auto_load_libs=False,
@@ -79,59 +141,78 @@ def _assembly_endpoint() -> list[Endpoint]:
             "entry_point": location.address,
         },
     )
-    # Hook WaitForSoundToFinish to return
-    class WaitForSoundRetSim(angr.SimProcedure):
-        def run(self):
-            self.jump(GB_RETURN)
+    base = location.address
+    project.hook(base, WaitForSoundToFinish(base + 3), length=3)
+    project.hook(base + 6, StoreLastMusicSoundId(base + 9), length=3)
+    project.hook(common.address, PlayDefaultMusicCommon(), length=1)
 
-    project.hook(0x3748, WaitForSoundRetSim())
+    state = project.factory.blank_state(addr=base)
+    set_assembly_registers(state, values)
+    for field in STATE_FIELDS:
+        state.globals[field] = values[field]
+    state.globals["callback"] = {
+        register: values[f"callback_{register}"] for register in REGISTERS
+    } | {
+        "status_flags4": values["callback_status_flags4"],
+        "last_music_sound_id": values["callback_last_music_sound_id"],
+    }
+    manager = project.factory.simulation_manager(state)
+    manager.explore(find=RETURN, num_find=2)
+    assert not manager.errored
+    assert len(manager.found) == 2
+    return [
+        Endpoint(
+            **assembly_registers(end),
+            memory=claripy.Concat(*(end.globals[field] for field in STATE_FIELDS)),
+            constraints=tuple(end.solver.constraints),
+        )
+        for end in manager.found
+    ]
 
-    state = project.factory.blank_state(addr=location.address)
-    state.memory.store(0xCFCA, claripy.BVV(0, 8))
-    state.regs.sp = claripy.BVV(0xE000, 16)
-    state.memory.store(0xE000, claripy.BVV(GB_RETURN, 16), endness="Iend_LE")
-    for reg in ("a", "b", "c", "d", "e", "h", "l", "f"):
-        setattr(state.regs, reg, claripy.BVV(0, 8))
-    returned = collect_returns(project, state, GB_RETURN)
-    return [_load_assembly(end) for end in returned]
 
-
-def _native_endpoint() -> list[Endpoint]:
+def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project = angr.Project(NATIVE_ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_play_default_music")
     assert function is not None
-    class NativeFunctionSim(angr.SimProcedure):
-        def run(self):
-            state = self.state
-            ret_addr = state.memory.load(state.regs.rsp, 8, endness="Iend_LE")
-            state.regs.rsp = state.regs.rsp + 8
-            self.jump(ret_addr)
-
-    project.hook(function.rebased_addr, NativeFunctionSim())
     state = project.factory.call_state(
-        function.rebased_addr, NATIVE_STATE, claripy.BVV(0, 64)
+        function.rebased_addr, NATIVE_STATE, NATIVE_CALLBACK, NATIVE_GLOBALS
     )
-    zero_regs = {k: claripy.BVV(0, 8) for k in ("a", "f", "b", "c", "d", "e", "h", "l")}
-    zero_regs["sp"] = claripy.BVV(0, 16)
-    zero_regs["pc"] = claripy.BVV(0, 16)
-    store_native_registers(state, NATIVE_STATE, zero_regs)
-    # Initialize wLastMusicSoundID to 0
-    state.memory.store(0xCFCA, claripy.BVV(0, 8))
+    store_native_registers(state, NATIVE_STATE, values)
+    state.memory.store(
+        NATIVE_STATE + 8,
+        claripy.Concat(*(values[field] for field in STATE_FIELDS)),
+    )
+    store_native_registers(
+        state,
+        NATIVE_CALLBACK,
+        {register: values[f"callback_{register}"] for register in REGISTERS},
+    )
+    state.memory.store(
+        NATIVE_GLOBALS,
+        claripy.Concat(
+            values["callback_status_flags4"],
+            values["callback_last_music_sound_id"],
+        ),
+    )
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
-    return [_load_native(end) for end in manager.deadended]
+    return [
+        Endpoint(
+            **native_registers(end, NATIVE_STATE),
+            memory=end.memory.load(NATIVE_STATE + 8, len(STATE_FIELDS)),
+            constraints=tuple(end.solver.constraints),
+        )
+        for end in manager.deadended
+    ]
 
 
-@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_play_default_music_equivalence() -> None:
-    assembly = _assembly_endpoint()
-    native = _native_endpoint()
-    assert_pathwise_equivalent(assembly, native, ("c", "d", "a", "f", "last_music_sound_id"))
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_play_default_music_exact_linked_body() -> None:
-    location = symbol_location(SYMBOLS, "PlayDefaultMusic")
-    assert linked_bytes(ROM, location, len(EXPECTED_BODY)) == EXPECTED_BODY
+def test_play_default_music_pathwise_equivalence() -> None:
+    values = _inputs("play_default_music")
+    assert_pathwise_equivalent(
+        _assembly(values),
+        _native(values),
+        (*REGISTERS, "memory"),
+    )

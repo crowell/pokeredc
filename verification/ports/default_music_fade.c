@@ -1,5 +1,7 @@
 #include "port_state.h"
 
+void port_wait_for_sound_to_finish(struct wait_for_sound_state *state);
+
 __attribute__((noinline, used)) void
 port_play_default_music_fade_out_current_begin(
 	struct default_music_fade_state *state)
@@ -44,11 +46,21 @@ __attribute__((noinline, used)) void
 port_play_default_music_begin(
 	struct default_music_fade_state *state)
 {
-	/* call WaitForSoundToFinish - modeled as no-op in port */
-	(void)state; /* wait is no-op in port */
+	struct wait_for_sound_state wait;
+	port_u8 index;
+
+	wait.registers = state->registers;
+	wait.low_health_alarm = state->low_health_alarm;
+	for (index = 0; index < 3; index++)
+		wait.channel_sound_ids[index] = state->channel_sound_ids[index];
+	port_wait_for_sound_to_finish(&wait);
+	state->registers = wait.registers;
+	for (index = 0; index < 3; index++)
+		state->channel_sound_ids[index] = wait.channel_sound_ids[index];
 
 	/* xor a; ld c, a; ld d, a */
 	state->registers.a = 0;
+	state->registers.f = PORT_FLAG_Z;
 	state->registers.c = 0;
 	state->registers.d = 0;
 
