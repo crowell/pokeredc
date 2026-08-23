@@ -16344,6 +16344,20 @@ observables = [
 proof_domain = "all general-register and canonical-flag inputs including the symbolic HL pointer; BC, A and the filled 16-byte range are deterministic zeros, so pathwise equivalence holds over the single linear control-flow path"
 decoder = "exact 7-byte linked body checked; the tail `jp FillMemory` applies the proven port_fill_memory transition over the caller-provided HL buffer"
 
+[[function]]
+assembly_symbol = "ResetPlayerSpriteData"
+assembly_source = "home/reset_player_sprite.asm"
+c_symbol = "port_reset_player_sprite_data"
+c_source = "verification/ports/reset_player_sprite_data.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "both complete 16-byte player sprite-state records",
+    "both exact clear-helper call register states and an unrelated memory marker",
+]
+proof_domain = "all register/flag and sprite-memory inputs plus two arbitrary sequential proven ResetPlayerSpriteData_ClearSpriteData transitions; native production C invokes the real helper twice"
+decoder = "the exact 30-byte body executes under angr; fixed data1/data2 helper inputs, propagation of the first return into the second call, picture/image-base stores, Y=$3c and X=$40 stores, pointer increments, and final registers are modeled compositionally"
+
 
 
 
