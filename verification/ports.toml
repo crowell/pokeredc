@@ -27892,3 +27892,23 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial wLastMap / control / wait bytes, with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact 8 -byte linked body checked (ld a,<route>; ld [wLastMap],a; jp EnableAutoTextBoxDrawing); EA absolute stores run via audited instruction shims and the tail composes the real port_enable_auto_text_box_drawing in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "PrintLearnedMove"
+assembly_source = "engine/pokemon/learn_move.asm"
+c_symbol = "port_print_learned_move"
+c_source = "verification/ports/print_learned_move.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "PrintText call-site input snapshot",
+]
+proof_domain = "all register/flag inputs with the proven PrintText contract applied as an arbitrary matching transition at the call-site boundary; B = $01 set after PrintText returns"
+decoder = "exact 14-byte linked body checked (ld hl,LearnedMove1Text; call PrintText; ld b,$01; ret); LD HL/nn and LD B/n are flag-neutral natively, the PrintText call composes the real port_print_text through an explicit boundary in one angr path-equivalence test"
