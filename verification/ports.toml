@@ -20198,9 +20198,11 @@ observables = [
     "E",
     "H",
     "L",
+    "PrintText call input",
+    "caller memory marker",
 ]
-proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText JP is an explicit boundary."
-decoder = "6-byte body checked (212645c3493c: ld hl,$4526; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+proof_domain = "all register/flag and marker-memory inputs with an arbitrary matching transition from the composed PrintText callee"
+decoder = "complete tail-call path: the exact linked body, CeladonMartRoofLittleGirlNoRoomText pointer setup, and real port_print_text call with caller memory are proved in one angr path-equivalence test"
 
 [[function]]
 assembly_symbol = "CeladonMartRoofScript_GiveDrinkToGirl.alreadyGaveDrink"
