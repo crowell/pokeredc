@@ -53,9 +53,20 @@ class LoadShadowOAMPointer(angr.SimProcedure):
         self.jump(self.addr + 3)
 
 
-class CleanOAMAndReturn(angr.SimProcedure):
+class CleanOAMInline(angr.SimProcedure):
+    def __init__(self, continuation: int):
+        super().__init__()
+        self.continuation = continuation
+
     def run(self) -> None:
         self.state.memory.store(W_SHADOW_OAM, claripy.BVV(0, OAM_SIZE * 8), endness="Iend_BE")
+        self.jump(self.continuation)
+
+
+class DelayFrameTerminal(angr.SimProcedure):
+    def run(self) -> None:
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x50, 8)
         self.jump(DONE)
 
 def _constraints(state: angr.SimState, base_y: claripy.ast.BV) -> None:
@@ -71,9 +82,9 @@ def _endpoint(state: angr.SimState, memory_base: int, register_base: int) -> End
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "_AnimationWaterDroplets")
-    clean = symbol_location(SYMBOLS, "AnimationCleanOAM")
     project = angr.Project(rom_window(ROM, location.bank), auto_load_libs=False, rebase_granularity=0x100, main_opts={"backend": "blob", "arch": ArchPcode("z80:LE:16:default"), "base_addr": 0, "entry_point": location.address})
-    project.hook(clean.address, CleanOAMAndReturn(), length=1)
+    project.hook(location.address + 46, CleanOAMInline(location.address + 49), length=3)
+    project.hook(location.address + 49, DelayFrameTerminal(), length=3)
     project.hook(location.address, LoadShadowOAMPointer(), length=3)
     project.hook(location.address + 6, Sm83StoreAAtHlIncrement(location.address + 7), length=1)
     project.hook(location.address + 15, Sm83StoreAAtHlIncrement(location.address + 16), length=1)
@@ -101,7 +112,7 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     state.memory.store(W_SHADOW_OAM, values["oam"], endness="Iend_BE")
     _constraints(state, base_y)
     manager = project.factory.simulation_manager(state)
-    manager.explore(find=DONE)
+    manager.explore(find=DONE, num_find=256)
     assert not manager.errored
     return [_endpoint(end, 0, 0) for end in manager.found]
 
@@ -132,3 +143,8 @@ def test_animation_water_droplets_pathwise_equivalence() -> None:
     values["base_y"] = claripy.BVS("water_base_y", 8)
     values["tile"] = claripy.BVS("water_droplet_tile", 8)
     values["oam"] = claripy.BVS("water_oam", OAM_SIZE * 8)
+    assert_pathwise_equivalent(
+        _assembly(values),
+        _native(values),
+        (*REGISTERS, "base_x", "base_y", "oam"),
+    )

@@ -6,6 +6,23 @@
 #define W_DROPLET_TILE 0xd09f
 #define OAM_SIZE 160
 
+void port_animation_clean_oam(struct clear_sprites_state *state);
+void port_delay_frame(struct delay_frame_state *state,
+	const port_u8 *observations);
+
+static void
+water_droplets_delay(struct cpu_register_state *state)
+{
+	static const port_u8 acknowledged_vblank[] = { 0 };
+	struct delay_frame_state delay;
+
+	delay.registers = *state;
+	delay.vblank_occurred = 0;
+	delay.observed_vblank = 0;
+	port_delay_frame(&delay, acknowledged_vblank);
+	*state = delay.registers;
+}
+
 static port_u8
 water_cp(port_u8 left, port_u8 right)
 {
@@ -21,11 +38,13 @@ water_cp(port_u8 left, port_u8 right)
 	return flags;
 }
 
-/* Port of _AnimationWaterDroplets; DelayFrame/ClearSprites are terminal timing. */
+/* Port of _AnimationWaterDroplets in engine/battle/animations.asm. */
 __attribute__((noinline, used)) void
 port_animation_water_droplets(struct cpu_register_state *state, port_u8 *memory)
 {
+	struct clear_sprites_state clean;
 	port_u16 hl = W_SHADOW_OAM;
+	port_u16 offset;
 	port_u8 x = memory[W_BASE_COORD_X];
 	port_u8 y = memory[W_BASE_COORD_Y];
 	port_u8 tile = memory[W_DROPLET_TILE];
@@ -50,10 +69,17 @@ port_animation_water_droplets(struct cpu_register_state *state, port_u8 *memory)
 		break;
 	}
 
-	for (port_u16 offset = 0; offset < OAM_SIZE; offset++)
-		memory[(port_u16)(W_SHADOW_OAM + offset)] = 0;
 	state->a = y;
 	state->f = flags;
 	state->h = (port_u8)(hl >> 8);
 	state->l = (port_u8)hl;
+
+	clean.registers = *state;
+	for (offset = 0; offset < OAM_SIZE; offset++)
+		clean.oam[offset] = memory[(port_u16)(W_SHADOW_OAM + offset)];
+	port_animation_clean_oam(&clean);
+	for (offset = 0; offset < OAM_SIZE; offset++)
+		memory[(port_u16)(W_SHADOW_OAM + offset)] = clean.oam[offset];
+	*state = clean.registers;
+	water_droplets_delay(state);
 }

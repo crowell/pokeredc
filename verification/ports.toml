@@ -20591,15 +20591,15 @@ assembly_symbol = "_AnimationWaterDroplets"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_water_droplets"
 c_source = "verification/ports/animation_water_droplets.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
     "wBaseCoordX",
     "wBaseCoordY",
     "all 160 wShadowOAM bytes",
 ]
-proof_domain = "all register/flag inputs, arbitrary base-X and droplet-tile bytes, initial OAM bytes, and the sole caller's base-Y values 16 or 24"
-decoder = "full 52-byte helper body checked; HLI OAM stores, SM83 global-load/store and CP shims, row/column loop recurrence, and AnimationCleanOAM terminal clear modeled explicitly"
+proof_domain = "all register/flag inputs, arbitrary base-X and droplet-tile bytes, initial OAM bytes, and the sole caller's base-Y values 16 or 24; both tail callees use separately proven transitions"
+decoder = "the full 52-byte helper drawing loop executes under angr; AnimationCleanOAM returns to the linked tail JP DelayFrame, and the native port calls both implementations"
 
 [[function]]
 assembly_symbol = "AnimationSlideMonDown"
