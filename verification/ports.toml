@@ -19606,6 +19606,19 @@ proof_domain = "all register/flag inputs and an arbitrary proven CopyVideoDataDo
 decoder = "the exact 12-byte tail wrapper executes under angr and proves DE=$5a80, HL=$8800, BC=$0480 at the callee boundary; native C calls real port_copy_video_data_double and the proof composes its arbitrary proven post-state"
 
 [[function]]
+assembly_symbol = "LoadTextBoxTilePatterns.on"
+assembly_source = "home/load_font.asm"
+c_symbol = "port_load_text_box_tile_patterns_on"
+c_source = "verification/ports/load_text_box_tile_patterns_on.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "exact CopyVideoData call registers and an arbitrary proven transfer-memory post-state",
+]
+proof_domain = "all register/flag inputs and an arbitrary proven CopyVideoData register and memory transition; native production C executes the real complete transfer"
+decoder = "the exact 12-byte tail wrapper executes under angr and proves DE=$6288, HL=$9600, BC=$0420 at the callee boundary; native C calls real port_copy_video_data and the proof composes its arbitrary proven post-state"
+
+[[function]]
 assembly_symbol = "LoadHpBarAndStatusTilePatterns.on"
 assembly_source = "home/load_font.asm"
 c_symbol = "port_load_hp_bar_and_status_tile_patterns_on"
