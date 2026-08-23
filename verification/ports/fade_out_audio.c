@@ -1,97 +1,96 @@
 #include "port_state.h"
 
-/* Port of FadeOutAudio in home/fade_audio.asm.
- *
- * Handles audio fade-out by decrementing the master volume (rAUDVOL) once per call
- * until it reaches zero, then plays SFX_STOP_ALL_MUSIC and restores the saved
- * audio ROM bank and sound ID.
- *
- * Input/Output globals:
- * - wAudioFadeOutControl: 0 = not fading, non-zero = fading (controls fade speed)
- * - wAudioFadeOutCounter: frame counter (reloads from wAudioFadeOutCounterReloadValue)
- * - wAudioFadeOutCounterReloadValue: frames between volume decrements
- * - wStatusFlags2: bit BIT_NO_AUDIO_FADE_OUT (1) disables fade-out
- * - rAUDVOL (0xFF26): hardware master volume register
- * - wAudioFadeOutControl: cleared when fade completes
- * - wAudioFadeOutCounter: reloaded from wAudioFadeOutCounterReloadValue
- * - wAudioROMBank: restored from wAudioSavedROMBank after fade
- * - wNewSoundID: set to SFX_STOP_ALL_MUSIC (0xFF) then to saved sound ID
- * - wAudioROMBank: restored from wAudioSavedROMBank after fade */
+void port_play_sound(struct play_sound_state *state);
 
-#define W_AUDIO_FADE_OUT_CONTROL 0xCFC7u
-#define W_AUDIO_FADE_OUT_COUNTER 0xCFC9u
-#define W_AUDIO_FADE_OUT_COUNTER_RELOAD 0xCFC8u
-#define W_STATUS_FLAGS2 0xD72Cu
-#define W_NEW_SOUND_ID 0xC0EEu
-#define W_AUDIO_ROM_BANK 0xC0EFu
-#define W_AUDIO_SAVED_ROM_BANK 0xC0F0u
+static void
+and_a_flags(struct cpu_register_state *registers)
+{
+	registers->f = PORT_FLAG_H;
+	if (registers->a == 0)
+		registers->f |= PORT_FLAG_Z;
+}
 
-#define R_AUDVOL 0xFF26u
+static void
+dec_a(struct cpu_register_state *registers)
+{
+	port_u8 before = registers->a;
+	port_u8 flags = (port_u8)((registers->f & PORT_FLAG_C) | PORT_FLAG_N);
+	registers->a--;
+	if (registers->a == 0)
+		flags |= PORT_FLAG_Z;
+	if ((before & 0x0f) == 0)
+		flags |= PORT_FLAG_H;
+	registers->f = flags;
+}
 
-#define BIT_NO_AUDIO_FADE_OUT 1
-#define SFX_STOP_ALL_MUSIC 0xFFu
+static void
+swap_a(struct cpu_register_state *registers)
+{
+	registers->a = (port_u8)((registers->a << 4) | (registers->a >> 4));
+	registers->f = registers->a == 0 ? PORT_FLAG_Z : 0;
+}
 
 __attribute__((noinline, used)) void
-port_fade_out_audio(struct cpu_register_state *state, port_u8 *memory)
+port_fade_out_audio(struct fade_out_audio_state *state)
 {
-	(void)state;
+	struct play_sound_state *sound = &state->sound;
+	struct cpu_register_state *registers = &sound->registers;
 
-	/* ld a, [wAudioFadeOutControl]; and a; jr nz, .fadingOut */
-	port_u8 fade_control = memory[W_AUDIO_FADE_OUT_CONTROL];
-	if (fade_control == 0) {
-		/* Not currently fading */
-		/* ld a, [wStatusFlags2]; bit BIT_NO_AUDIO_FADE_OUT, a; ret nz */
-		port_u8 status = memory[W_STATUS_FLAGS2];
-		if (status & (1 << 1)) {  /* BIT_NO_AUDIO_FADE_OUT = 1 */
+	registers->a = sound->fade_control;
+	and_a_flags(registers);
+	if (registers->a == 0) {
+		registers->a = state->status_flags2;
+		registers->f = (port_u8)((registers->f & PORT_FLAG_C) | PORT_FLAG_H);
+		if ((registers->a & 2) == 0)
+			registers->f |= PORT_FLAG_Z;
+		if ((registers->f & PORT_FLAG_Z) == 0)
 			return;
-		}
-		/* ld a, $77; ldh [rAUDVOL], a; ret */
-		memory[0xFF26] = 0x77;
+		registers->a = 0x77;
+		state->audio_volume = registers->a;
 		return;
 	}
 
-	/* .fadingOut */
-	/* ld a, [wAudioFadeOutCounter]; and a; jr z, .counterReachedZero */
-	port_u8 counter = memory[0xCFC9];
-	if (counter == 0) {
-		goto counter_reached_zero;
+	registers->a = sound->fade_counter;
+	and_a_flags(registers);
+	if (registers->a != 0) {
+		dec_a(registers);
+		sound->fade_counter = registers->a;
+		return;
 	}
 
-	/* dec a; ld [wAudioFadeOutCounter], a; ret */
-	memory[0xCFC9] = counter - 1;
-	return;
-
-counter_reached_zero:
-	{
-	port_u8 reload = memory[W_AUDIO_FADE_OUT_COUNTER_RELOAD];
-	memory[W_AUDIO_FADE_OUT_COUNTER] = reload;
+	registers->a = sound->fade_reload;
+	sound->fade_counter = registers->a;
+	registers->a = state->audio_volume;
+	and_a_flags(registers);
+	if (registers->a != 0) {
+		registers->b = registers->a;
+		registers->a &= 0x0f;
+		and_a_flags(registers);
+		dec_a(registers);
+		registers->c = registers->a;
+		registers->a = registers->b;
+		registers->a &= 0xf0;
+		and_a_flags(registers);
+		swap_a(registers);
+		dec_a(registers);
+		swap_a(registers);
+		registers->a |= registers->c;
+		registers->f = registers->a == 0 ? PORT_FLAG_Z : 0;
+		state->audio_volume = registers->a;
+		return;
 	}
 
-	/* ldh a, [rAUDVOL]; and a; jr z, .fadeOutComplete */
-	port_u8 volume = memory[0xFF26];
-	if (volume == 0) {
-		goto fade_out_complete;
-	}
-
-	port_u8 a = volume & 0x0F;
-	a = a - 1;
-	port_u8 c = a;
-	a = volume & 0xF0;
-	a = ((a >> 4) | (a << 4)) & 0xFF;  /* swap a */
-	a = a - 1;
-	a = ((a >> 4) | (a << 4)) & 0xFF;  /* swap a back */
-	a = a | c;
-	memory[0xFF26] = a;
-	return;
-fade_out_complete:
-	{
-	port_u8 b_val = memory[W_AUDIO_FADE_OUT_CONTROL];
-	memory[W_AUDIO_FADE_OUT_CONTROL] = 0;
-	memory[0xCFC7] = 0;
-
-	/* PlaySound is an explicit no-op boundary; preserve its final writes. */
-	memory[W_NEW_SOUND_ID] = SFX_STOP_ALL_MUSIC;
-	memory[W_AUDIO_ROM_BANK] = memory[W_AUDIO_SAVED_ROM_BANK];
-	memory[W_NEW_SOUND_ID] = b_val;
-	}
+	registers->a = sound->fade_control;
+	registers->b = registers->a;
+	registers->a = 0;
+	registers->f = PORT_FLAG_Z;
+	sound->fade_control = registers->a;
+	registers->a = 0xff;
+	sound->new_sound_id = registers->a;
+	port_play_sound(sound);
+	registers->a = sound->audio_saved_rom_bank;
+	sound->audio_rom_bank = registers->a;
+	registers->a = registers->b;
+	sound->new_sound_id = registers->a;
+	port_play_sound(sound);
 }

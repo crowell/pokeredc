@@ -8283,10 +8283,11 @@ c_symbol = "port_fade_out_audio"
 c_source = "verification/ports/fade_out_audio.c"
 status = "proven"
 observables = [
-    "rAUDVOL (master volume), wAudioFadeOutControl, wAudioFadeOutCounter, wNewSoundID, wAudioROMBank",
+    "all registers and flags",
+    "rAUDVOL, wStatusFlags2, all fade counters, sound IDs, channels, and audio bank/dispatch state",
 ]
-proof_domain = "all general-register and canonical-flag inputs; all audio control globals and hardware registers as concrete or symbolic inputs"
-decoder = "exact 100-byte linked body checked; `ldh [a8],a` (0xE0, rAUDVOL) and `ldh a,[a8]` (0xF0, rAUDVOL) modeled as direct memory access; `ld a,[a16]` (0xFA) and `ld [a16],a` (0xEA) shimmed; `call PlaySound` inlined as no-op; `bit`/`jr`/`dec`/`jr nz`/`ret` run natively"
+proof_domain = "all register/flag, fade-control/counter/reload/status/volume, channel, sound-ID, and bank-state inputs across all five terminal paths"
+decoder = "the exact 85-byte linked body executes pathwise under angr; unsupported absolute/high-memory accesses and SM83 flag operations are shimmed instruction-by-instruction, while both completion-path PlaySound invocations use the separately proven PlaySound transition and the C port calls the real port_play_sound function"
 
 
 
