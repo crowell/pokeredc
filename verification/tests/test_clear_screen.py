@@ -47,7 +47,7 @@ class ClearScreenSummary(angr.SimProcedure):
     def run(self) -> None:
         for offset in range(SCREEN_BYTES):
             self.state.memory.store(H_COORD + offset, claripy.BVV(0x7F, 8))
-        self.state.regs.a = claripy.BVV(0x7F, 8)
+        self.state.regs.a = claripy.BVV(0, 8)
         self.state.regs.b = claripy.BVV(0, 8)
         self.state.regs.c = claripy.BVV(0, 8)
         self.state.regs.h = claripy.BVV(0xC5, 8)

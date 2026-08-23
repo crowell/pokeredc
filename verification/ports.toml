@@ -10000,9 +10000,10 @@ assembly_source = "home/copy2.asm"
 c_symbol = "port_clear_screen"
 c_source = "verification/ports/clear_screen.c"
 status = "proven"
-proof_domain = "all general-register and canonical-flag inputs; Delay3 inlined as no-op return"
-decoder = "exact 20-byte linked body checked; `jp Delay3` modeled as no-op return; `ld bc,nn`/`inc b`/`hlcoord`/`ld a,imm`/`ld [hli],a`/`dec`/`jr nz`/`jp` run natively"
+proof_domain = "all general-register and canonical-flag inputs through the complete 360-byte tile loop and three-frame Delay3 tail"
+decoder = "the native nested loops retain every tile write and counter transition, then call port_delay3 on the live register state; the angr path summary checks the complete terminal register/memory contract"
 observables = [
+    "all registers and flags",
     "wTileMap[0..SCREEN_AREA+1] (cleared to space 0x7F)",
 ]
 

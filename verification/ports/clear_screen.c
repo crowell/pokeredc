@@ -9,8 +9,6 @@
 
 #define SCREEN_AREA 0x0168u  /* 20 * 18 = 360 bytes */
 #define H_COORD 0xC3A0u  /* hlcoord 0, 0 -> $C3A0 */
-#define DELAY3_ADDR 0x3E37u
-
 /* Forward declaration. */
 __attribute__((noinline, used)) void
 port_delay3(struct cpu_register_state *state, port_u8 *memory);
@@ -46,9 +44,5 @@ port_clear_screen(struct cpu_register_state *state, port_u8 *memory)
 	}
 
 	/* jp Delay3 */
-	{
-		struct cpu_register_state delay_state = *state;
-		delay_state.c = 3;
-		port_delay3(&delay_state, memory);
-	}
+	port_delay3(state, memory);
 }
