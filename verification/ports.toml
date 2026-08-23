@@ -16372,6 +16372,21 @@ observables = [
 proof_domain = "all register/flag/bank/scratch inputs and every caller-valid map id 0..247; native production C calls the real bank helpers and indexes an exact C copy of the linked table"
 decoder = "the exact 30-byte body and 248-byte MapHeaderBanks table execute under angr; saved HL/BC, home-bank switch, 16-bit ADD flags, indexed bank fetch, switch back, final bank writes, and restoration are modeled"
 
+[[function]]
+assembly_symbol = "ReloadTilesetTilePatterns"
+assembly_source = "home/reload_tiles.asm"
+c_symbol = "port_reload_tileset_tile_patterns"
+c_source = "verification/ports/reload_tileset_tile_patterns.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "map/bank, LCD/interrupt, and tileset-transfer state",
+    "exact sequential inputs and arbitrary proven outputs for all four callees",
+    "arbitrary LoadTilesetTilePatternData memory transition",
+]
+proof_domain = "all register/flag/map/bank/LCD/interrupt/tileset inputs and arbitrary proven sequential SwitchToMapRomBank, DisableLCD, LoadTilesetTilePatternData, and EnableLCD transitions; native production C invokes all four real functions"
+decoder = "the exact 25-byte wrapper executes under angr; saved loaded-bank AF, current-map load, four ordered call transitions, restored AF, and final loaded/mapper bank writes are modeled compositionally"
+
 
 
 

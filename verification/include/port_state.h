@@ -1646,6 +1646,23 @@ struct switch_to_map_rom_bank_state {
 	port_u8 home_saved_rom_bank;
 };
 
+struct reload_tileset_tile_patterns_state {
+	struct cpu_register_state registers;
+	port_u8 cur_map;
+	port_u8 map_rom_bank;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	port_u8 home_temp;
+	port_u8 home_saved_rom_bank;
+	port_u8 interrupt_flags;
+	port_u8 interrupt_enable;
+	port_u8 lcd_control;
+	port_u8 requested_bank;
+	port_u8 tileset_gfx_low;
+	port_u8 tileset_gfx_high;
+	port_u8 tileset_bank;
+};
+
 struct differential_decode_state {
 	struct cpu_register_state registers;
 	port_u8 flipped;
@@ -2826,6 +2843,7 @@ _Static_assert(sizeof(struct give_pokemon_wrapper_state) == 25, "unexpected ABI 
 _Static_assert(sizeof(struct display_pokedex_private_state) == 9, "unexpected ABI padding");
 _Static_assert(sizeof(struct display_pokedex_wrapper_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct switch_to_map_rom_bank_state) == 13, "unexpected ABI padding");
+_Static_assert(sizeof(struct reload_tileset_tile_patterns_state) == 21, "unexpected ABI padding");
 _Static_assert(sizeof(struct differential_decode_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct write_sprite_bits_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct remove_inventory_state) == 23, "unexpected ABI padding");
