@@ -14501,6 +14501,21 @@ observables = [
 proof_domain = "all register/flag/high-memory inputs; exact initialization, exhaustive one-bit transition, and finalization compose inductively for all eight multiplier bits"
 decoder = "exact 100-byte body checked; all LDH aliases, SRL/SLA/RL, four-byte ADD/ADC carry chain, DEC termination, shifts, loop recurrence, and final product copy modeled explicitly"
 
+[[function]]
+assembly_symbol = "Multiply"
+assembly_source = "home/math.asm"
+c_symbol = "port_multiply_wrapper"
+c_source = "verification/ports/multiply_wrapper.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "all _Multiply product, multiplier, and scratch bytes",
+    "loaded and mapper ROM banks",
+    "exact _Multiply callback-entry registers",
+]
+proof_domain = "all register/flag, multiply-memory, and bank inputs plus an arbitrary proven _Multiply post-state; native production C invokes real port_multiply"
+decoder = "the exact 13-byte wrapper executes under angr; PUSH/POP preservation of HL/BC, target HL=$7d41, bank B=$0d, Bankswitch callback BC=$35e4, callback effects, A/F behavior, and restoration of both banks are modeled compositionally"
+
 
 
 

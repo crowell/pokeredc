@@ -1565,6 +1565,12 @@ struct multiply_state {
 	port_u8 buffer[4];
 };
 
+struct multiply_wrapper_state {
+	struct multiply_state multiply;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
 struct divide_bcd_by10_state {
 	struct cpu_register_state registers;
 	port_u8 divisor[3];
@@ -2753,6 +2759,7 @@ _Static_assert(sizeof(struct column_redraw_copy_state) == 80, "unexpected ABI pa
 _Static_assert(sizeof(struct load_item_list_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct trainer_header_info_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct multiply_state) == 17, "unexpected ABI padding");
+_Static_assert(sizeof(struct multiply_wrapper_state) == 19, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_bcd_by10_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct sub_bcd_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_state) == 18, "unexpected ABI padding");
