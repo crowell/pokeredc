@@ -14440,6 +14440,20 @@ observables = [
 proof_domain = "all register/flag/map-view/redraw inputs and an arbitrary proven CopyToRedrawRowOrColumnSrcTiles transition; native production C invokes the real complete 40-byte copy"
 decoder = "the exact 21-byte wrapper executes under angr; tilemap HL=$c3a0 setup, real copy call composition, both VRAM destination bytes, REDRAW_ROW mode, final registers, and flags are modeled exactly"
 
+[[function]]
+assembly_symbol = "ScheduleSouthRowRedraw"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_schedule_south_row_redraw"
+c_source = "verification/ports/schedule_south_row_redraw.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "map-view VRAM pointer, redraw destination, and redraw mode",
+    "exact CopyToRedrawRowOrColumnSrcTiles call registers and arbitrary proven memory transition",
+]
+proof_domain = "all register/flag/map-view/redraw inputs and an arbitrary proven CopyToRedrawRowOrColumnSrcTiles transition; native production C invokes the real complete 40-byte copy"
+decoder = "the exact 33-byte wrapper executes under angr; tilemap HL=$c4e0 setup, real copy call, wrapped $0200 VRAM offset with SM83 flags, high-byte mask/remap into $98xx, both destination bytes, and REDRAW_ROW mode are modeled exactly"
+
 
 
 
