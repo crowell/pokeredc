@@ -16403,6 +16403,21 @@ proof_domain = "all register/flag/map/bank/LCD/interrupt/tileset inputs and arbi
 decoder = "the exact 25-byte wrapper executes under angr; saved loaded-bank AF, current-map load, four ordered call transitions, restored AF, and final loaded/mapper bank writes are modeled compositionally"
 
 [[function]]
+assembly_symbol = "ReloadMapData"
+assembly_source = "home/reload_tiles.asm"
+c_symbol = "port_reload_map_data"
+c_source = "verification/ports/reload_map_data.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "map/bank, LCD/interrupt, textbox-transfer, tileset, and map-view state",
+    "exact sequential inputs and arbitrary proven outputs for all six callees",
+    "arbitrary sequential memory transitions from all three memory-writing callees",
+]
+proof_domain = "all register/flag/map/bank/LCD/interrupt/text/tileset/map-view inputs and arbitrary proven sequential callee transitions; native production C invokes all six real functions"
+decoder = "the exact 31-byte wrapper executes under angr; saved loaded-bank AF, current-map load, ordered SwitchToMapRomBank, DisableLCD, LoadTextBoxTilePatterns, LoadCurrentMapView, LoadTilesetTilePatternData, and EnableLCD calls, chained memory effects, restored AF, and final bank writes are modeled compositionally"
+
+[[function]]
 assembly_symbol = "ChooseFlyDestination"
 assembly_source = "home/reload_tiles.asm"
 c_symbol = "port_choose_fly_destination"

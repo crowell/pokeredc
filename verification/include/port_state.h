@@ -1663,6 +1663,41 @@ struct reload_tileset_tile_patterns_state {
 	port_u8 tileset_bank;
 };
 
+struct reload_map_data_state {
+	struct cpu_register_state registers;
+	port_u8 cur_map;
+	port_u8 map_rom_bank;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	port_u8 home_temp;
+	port_u8 home_saved_rom_bank;
+	port_u8 interrupt_flags;
+	port_u8 interrupt_enable;
+	port_u8 lcd_control;
+	port_u8 requested_bank;
+	port_u8 tileset_gfx_low;
+	port_u8 tileset_gfx_high;
+	port_u8 tileset_bank;
+	port_u8 map_view_pointer_low;
+	port_u8 map_view_pointer_high;
+	port_u8 map_width;
+	port_u8 y_block_coord;
+	port_u8 x_block_coord;
+	port_u8 tileset_blocks_low;
+	port_u8 tileset_blocks_high;
+	port_u8 view_saved_a;
+	port_u8 view_saved_f;
+	port_u8 view_row_d;
+	port_u8 view_row_e;
+	port_u8 view_row_h;
+	port_u8 view_row_l;
+	port_u8 view_fetched_block;
+	port_u8 view_fetched_copy;
+	port_u8 view_written_copy;
+	port_u8 view_write_h;
+	port_u8 view_write_l;
+};
+
 struct load_town_map_fly_private_state {
 	struct cpu_register_state registers;
 };
@@ -2880,6 +2915,7 @@ _Static_assert(sizeof(struct display_pokedex_private_state) == 9, "unexpected AB
 _Static_assert(sizeof(struct display_pokedex_wrapper_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct switch_to_map_rom_bank_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct reload_tileset_tile_patterns_state) == 21, "unexpected ABI padding");
+_Static_assert(sizeof(struct reload_map_data_state) == 39, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_town_map_fly_private_state) == 8, "unexpected ABI padding");
 _Static_assert(sizeof(struct choose_fly_destination_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct differential_decode_state) == 14, "unexpected ABI padding");
