@@ -18719,17 +18719,11 @@ c_symbol = "port_load_trainer_info_text_box_tiles"
 c_source = "verification/ports/load_trainer_info_text_box_tiles.c"
 status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
+    "CopyVideoData call registers and memory transition",
 ]
-proof_domain = "full 8-register equivalence incl. F (LD rr,nn and `lb bc`->LD BC,nn and JP nn are flag-neutral); tail `jp` is an explicit boundary."
-decoder = "12-byte body checked (11987b21609701090bc34818: ld de,$7b98; ld hl,$9760; lb bc,$0b,$09 -> LD BC,$0b09; jp CopyVideoData); no CALL/PUSH/POP; F-preserving ops only."
+proof_domain = "all register/flag/memory inputs and an arbitrary proven complete CopyVideoData transition"
+decoder = "the exact 12-byte linked body is checked inside the angr path-equivalence proof; native production C sets DE=$7b98, HL=$9760, BC=$0b09 and invokes real port_copy_video_data, with the callee's complete arbitrary post-state composed through the tail call"
 
 
 [[function]]
