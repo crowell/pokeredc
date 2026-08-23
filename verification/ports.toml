@@ -25039,3 +25039,20 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the concrete bank-$16 GuardDrinksList (byte-verified $3c/$3d/$3e/00); every not-in-bag prefix and found-drink position through the real three-iteration scan; IsItemInBag composes its proven transition at each call site and the Bankswitch dispatcher remains the tail boundary"
 decoder = "exact 24-byte linked body checked including the jp Bankswitch tail; LDI load (2A), LDH store (E0), and AND A run via audited instruction shims; the scan loop executes pathwise while native C calls the real port_is_item_in_bag and port_remove_item_by_id_bank12"
+
+[[function]]
+assembly_symbol = "Predef"
+assembly_source = "home/predef.asm"
+c_symbol = "port_predef"
+c_source = "verification/ports/predef.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wPredefID latch",
+    "wPredefHL/DE/BC saved-register block and wPredefBank",
+    "wPredefParentBank, hLoadedROMBank, and rROMB bank bookkeeping across the dispatch",
+    "GetPredefPointer call input snapshot (registers, latched ID, fetched table bytes)",
+    "jp hl dispatch hand-off registers",
+]
+proof_domain = "all register/flag inputs, arbitrary initial hLoadedROMBank byte, and arbitrary PredefPointers fetch results; the banked GetPredefPointer callee composes its proven transition at the call site and the jp hl predef body is an arbitrary register transition whose memory effects are outside this function's contract"
+decoder = "exact 39-byte linked body checked including push af/ld de,.done/push de/jp hl/pop af stack discipline; EA absolute stores, F0/E0 LDH, and FA load run via audited instruction shims while native C composes the real port_get_predef_pointer and port_predef_target_boundary seam in one angr path-equivalence test"

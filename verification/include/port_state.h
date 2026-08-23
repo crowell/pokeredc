@@ -725,6 +725,13 @@ struct predef_pointer_state {
 	port_u8 fetched_pointer_high;
 };
 
+struct predef_state {
+	struct cpu_register_state registers;
+	port_u8 fetched_bank;
+	port_u8 fetched_pointer_low;
+	port_u8 fetched_pointer_high;
+};
+
 struct init_sprite_screen_state {
 	struct cpu_register_state registers;
 	port_u8 current_offset;
@@ -3019,7 +3026,8 @@ _Static_assert(sizeof(struct scanline_scx_state) == 10, "unexpected ABI padding"
 _Static_assert(sizeof(struct menu_save_tiles_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct option_cursor_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct copy_tile_ids_state) == 26, "unexpected ABI padding");
-_Static_assert(sizeof(struct call_function_table_state) == 16, "unexpected ABI padding");
+_Static_assert(sizeof(struct predef_state) == 11, "unexpected ABI padding");
+_Static_assert(sizeof(struct predef_pointer_state) == 19, "unexpected ABI padding");
 _Static_assert(sizeof(struct update_sprite_image_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct status_ailment_text_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct make_npc_face_state) == 17, "unexpected ABI padding");
