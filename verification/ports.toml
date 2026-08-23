@@ -17044,22 +17044,11 @@ c_symbol = "port_far_copy_data3"
 c_source = "verification/ports/far_copy_data3.c"
 status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "requested_bank",
-    "loaded_bank",
-    "rom_bank",
-    "copy_b",
-    "copy_c",
+    "all registers and flags",
+    "hROMBankTemp, hLoadedROMBank, rROMB, exact CopyData call registers, and an arbitrary proven memory post-state",
 ]
-proof_domain = "full 8-register compositional pathwise equivalence plus explicit bank and CopyData-return B/C state; the bank-save/switch/restore and PUSH/POP register-restoration path is executed."
-decoder = "30-byte body checked (e08bf0b8f5f08be0b8ea0020e5d5d5545de1cdb500d1e1f1e0b8ea0020c9); CopyData is the explicit callee boundary and no raw memory pointer remains."
+proof_domain = "all register/flag/bank inputs and an arbitrary proven CopyData register and memory transition after exact DE-to-HL source/destination rearrangement"
+decoder = "the exact 30-byte body executes under angr with real PUSH/POP restoration and instruction-level bank shims; both sides compose the same proven CopyData transition, while production C directly calls port_copy_data and executes its complete loop"
 
 
 
