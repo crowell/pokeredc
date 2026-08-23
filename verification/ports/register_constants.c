@@ -270,10 +270,39 @@ port_run_default_palette_command(struct cpu_register_state *state)
 	state->b = 0xff;
 }
 
+static void
+get_pointer_within_sprite_state_data(struct cpu_register_state *state,
+	const port_u8 *memory)
+{
+	port_u8 left;
+	port_u8 right;
+	port_u16 wide;
+
+	state->a = memory[0xff8b];
+	state->b = state->a;
+	state->a = memory[0xff8c];
+	state->a = (port_u8)((state->a << 4) | (state->a >> 4));
+	left = state->a;
+	right = state->b;
+	wide = (port_u16)left + right;
+	state->a = (port_u8)wide;
+	state->f = 0;
+	if (state->a == 0)
+		state->f |= PORT_FLAG_Z;
+	if ((left & 0x0f) + (right & 0x0f) > 0x0f)
+		state->f |= PORT_FLAG_H;
+	if (wide > 0xff)
+		state->f |= PORT_FLAG_C;
+	state->l = state->a;
+}
+
+/* Complete port of GetPointerWithinSpriteStateData1. */
 __attribute__((noinline, used)) void
-port_get_pointer_within_sprite_state_data1(struct cpu_register_state *state)
+port_get_pointer_within_sprite_state_data1(struct cpu_register_state *state,
+	const port_u8 *memory)
 {
 	state->h = 0xc1;
+	get_pointer_within_sprite_state_data(state, memory);
 }
 
 __attribute__((noinline, used)) void
