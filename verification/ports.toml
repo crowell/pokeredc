@@ -20354,7 +20354,7 @@ assembly_symbol = "AnimationCleanOAM"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_clean_oam"
 c_source = "verification/ports/animation_clean_oam.c"
-status = "partial"
+status = "proven"
 observables = [
     "A",
     "F",
@@ -20364,10 +20364,10 @@ observables = [
     "E",
     "H",
     "L",
-    "OAM[0xfe00..0xfe9f]",
+    "wShadowOAM[0xc300..0xc39f]",
 ]
-proof_domain = "full OAM clear with saved-register restoration; DelayFrame is timing-only"
-decoder = "push/call/restore wrapper represented by an explicit terminal summary; ClearSprites output is proven as zero across all 160 OAM bytes"
+proof_domain = "all register/flag inputs and all 160 symbolic initial wShadowOAM bytes; DelayFrame and ClearSprites use their separately proven transitions"
+decoder = "the complete linked push/call/call/pop wrapper executes under angr; the native port calls both callees and restores every saved register after clearing wShadowOAM"
 
 [[function]]
 assembly_symbol = "DoSpecialEffectByAnimationId"
