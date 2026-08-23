@@ -17009,28 +17009,11 @@ c_symbol = "port_far_copy_data2"
 c_source = "verification/ports/far_copy_data2.c"
 status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "requested_bank",
-    "loaded_bank",
-    "rom_bank",
-    "copy_a",
-    "copy_f",
-    "copy_b",
-    "copy_c",
-    "copy_d",
-    "copy_e",
-    "copy_h",
-    "copy_l",
+    "all registers and flags",
+    "hROMBankTemp, hLoadedROMBank, rROMB, and an arbitrary proven CopyData memory post-state",
 ]
-proof_domain = "full 8-register compositional pathwise equivalence plus explicit bank and CopyData-return state; the bank-save/switch/restore instructions are executed and CopyData is the explicit callee boundary."
-decoder = "22-byte body checked (e08bf0b8f5f08be0b8ea0020cdb500f1e0b8ea0020c9: save/load banks, call CopyData, restore bank, ret); no raw memory pointer in the PC-portable contract."
+proof_domain = "all register/flag/bank inputs and an arbitrary proven CopyData register and memory transition; native production C executes the real complete CopyData loop"
+decoder = "the exact 22-byte body executes under angr with instruction-level bank-access shims and an arbitrary separately proven CopyData transition; the native proof hooks only that callee transition, while production C directly calls port_copy_data and therefore performs the real transfer loop"
 
 
 
