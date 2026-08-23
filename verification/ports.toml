@@ -27049,3 +27049,26 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial control bytes, with the proven TextScriptEnd contract applied as an arbitrary matching transition at the tail-call boundary"
 decoder = "exact 3-byte linked body checked (jp TextScriptEnd); the tail composes the real port_text_script_end in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "MtMoonPokecenter_Script"
+assembly_source = "scripts/MtMoonPokecenter.asm"
+c_symbol = "port_mt_moon_pokecenter_script"
+c_source = "verification/ports/mt_moon_pokecenter_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rSB / hSerialReceiveData / rSC hardware bytes",
+    "wAutoTextBoxDrawingControl",
+    "wDoNotWaitForButtonPressAfterDisplayingText",
+    "serial and auto-text-box tail-call input snapshots",
+]
+proof_domain = "all register/flag inputs and arbitrary initial rSB / hSerialReceiveData / rSC / control / wait bytes, with both proven callee contracts applied as arbitrary matching transitions at their boundaries"
+decoder = "exact 6-byte linked body checked (call Serial_TryEstablishingExternallyClockedConnection; jp EnableAutoTextBoxDrawing); both callees compose through explicit state-struct bridges in one angr path-equivalence test"
