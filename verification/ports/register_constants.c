@@ -253,13 +253,17 @@ port_is_in_array(struct computed_load_state *state, const port_u8 *memory)
 	return port_is_in_rest_of_array(state, memory);
 }
 
-/* Small register-only entries through their shared implementation tails. */
+void port_copy_string(struct cpu_register_state *state, port_u8 *memory);
+
+/* Complete port of CopyToStringBuffer in home/copy_string.asm. */
 __attribute__((noinline, used)) void
-port_copy_to_string_buffer(struct cpu_register_state *state)
+port_copy_to_string_buffer(struct cpu_register_state *state, port_u8 *memory)
 {
 	set_hl(state, 0xcf4b);
+	port_copy_string(state, memory);
 }
 
+/* Small register-only entries through their shared implementation tails. */
 __attribute__((noinline, used)) void
 port_run_default_palette_command(struct cpu_register_state *state)
 {

@@ -7208,17 +7208,11 @@ c_symbol = "port_copy_to_string_buffer"
 c_source = "verification/ports/register_constants.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "CopyString continuation",
+    "all registers and flags",
+    "wStringBuffer[0..3]",
 ]
-proof_domain = "all general-register and canonical-flag inputs"
-decoder = "exact 3-byte linked entry body checked; the shared CopyString implementation is an explicit boundary"
+proof_domain = "all general-register and canonical-flag inputs with a symbolic three-byte source prefix followed by the required 0x50 terminator; every early and final termination path is covered"
+decoder = "the native wrapper loads wStringBuffer and calls the real port_copy_string loop; angr executes the complete linked wrapper and copy loop with audited HLI-store and CP semantics, composing with CopyString's all-state step proof"
 
 
 

@@ -29,12 +29,6 @@ NATIVE_STATE = 0x100000
 
 PORTS = (
     (
-        "CopyToStringBuffer",
-        "CopyString",
-        "port_copy_to_string_buffer",
-        bytes.fromhex("214bcf"),
-    ),
-    (
         "RunDefaultPaletteCommand",
         "RunPaletteCommand",
         "port_run_default_palette_command",
