@@ -25115,3 +25115,25 @@ observables = [
 ]
 proof_domain = "all register/flag and marker-memory inputs with arbitrary matching transitions from the composed PrintText and TextScriptEnd callees"
 decoder = "exact linked body (ld hl,.Text; call PrintText; jp TextScriptEnd) checked; the called PrintText boundary snapshots inputs and returns via emulated RET while the TextScriptEnd tail boundary records the hand-off registers, all in one angr path-equivalence test against the real port_print_text and port_text_script_end"
+
+[[function]]
+assembly_symbol = "CeladonMartRoof_Script"
+assembly_source = "scripts/CeladonMartRoof.asm"
+c_symbol = "port_celadon_mart_roof_script"
+c_source = "verification/ports/celadon_mart_roof_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wAutoTextBoxDrawingControl",
+    "wDoNotWaitForButtonPressAfterDisplayingText",
+    "EnableAutoTextBoxDrawing tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs and arbitrary initial wAutoTextBoxDrawingControl / wDoNotWaitForButtonPressAfterDisplayingText bytes, with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail-call boundary"
+decoder = "exact 3-byte linked body checked (jp EnableAutoTextBoxDrawing); the tail composes the real port_enable_auto_text_box_drawing through an explicit state-struct bridge in one angr path-equivalence test"
