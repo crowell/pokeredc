@@ -7185,17 +7185,11 @@ c_symbol = "port_is_in_array"
 c_source = "verification/ports/register_constants.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "IsInRestOfArray continuation",
+    "all registers and flags",
+    "found/not-found result",
 ]
-proof_domain = "all general-register and canonical-flag inputs"
-decoder = "exact 2-byte linked entry body checked; the shared IsInRestOfArray implementation is an explicit boundary"
+proof_domain = "all symbolic target and three-entry array values followed by a required 0xff terminator, with caller-valid unit stride; every early terminator, match, and continue path is covered"
+decoder = "the native wrapper sets B to zero and calls the real port_is_in_rest_of_array loop; angr executes the complete linked wrapper and search with audited CP, INC B, ADD HL, AND, and SCF semantics, composing with the callee's all-state step proof"
 
 
 

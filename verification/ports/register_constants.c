@@ -242,13 +242,18 @@ port_redraw_party_menu(struct cpu_register_state *state)
 	set_hl(state, 0x6ce3);
 }
 
-/* Small register-only entries through their shared implementation tails. */
-__attribute__((noinline, used)) void
-port_is_in_array(struct cpu_register_state *state)
+port_u8 port_is_in_rest_of_array(struct computed_load_state *state,
+	const port_u8 *memory);
+
+/* Complete port of IsInArray in home/array2.asm. */
+__attribute__((noinline, used)) port_u8
+port_is_in_array(struct computed_load_state *state, const port_u8 *memory)
 {
-	state->b = 0;
+	state->registers.b = 0;
+	return port_is_in_rest_of_array(state, memory);
 }
 
+/* Small register-only entries through their shared implementation tails. */
 __attribute__((noinline, used)) void
 port_copy_to_string_buffer(struct cpu_register_state *state)
 {

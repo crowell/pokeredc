@@ -28,7 +28,6 @@ SYMBOLS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
 
 PORTS = (
-    ("IsInArray", "IsInRestOfArray", "port_is_in_array", bytes.fromhex("0600")),
     (
         "CopyToStringBuffer",
         "CopyString",
