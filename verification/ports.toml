@@ -17015,6 +17015,19 @@ observables = [
 proof_domain = "all register/flag/bank inputs and an arbitrary proven CopyData register and memory transition; native production C executes the real complete CopyData loop"
 decoder = "the exact 22-byte body executes under angr with instruction-level bank-access shims and an arbitrary separately proven CopyData transition; the native proof hooks only that callee transition, while production C directly calls port_copy_data and therefore performs the real transfer loop"
 
+[[function]]
+assembly_symbol = "LoadTilesetTilePatternData"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_load_tileset_tile_pattern_data"
+c_source = "verification/ports/load_tileset_tile_pattern_data.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wTilesetGfxPtr, wTilesetBank, bank state, exact FarCopyData2 call registers, and an arbitrary proven transfer-memory post-state",
+]
+proof_domain = "all register/flag/tileset-pointer/bank inputs and an arbitrary proven FarCopyData2 post-state after the fixed $600-byte transfer"
+decoder = "the exact 20-byte wrapper executes under angr and proves HL=tileset source, DE=$9000, BC=$0600, and A=tileset bank at the tail boundary; production C calls real FarCopyData2, which calls real CopyData for all 1,536 bytes"
+
 
 
 

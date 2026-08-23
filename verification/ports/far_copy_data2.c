@@ -1,12 +1,5 @@
 #include "port_state.h"
 
-struct far_copy_data2_state {
-    struct cpu_register_state registers;
-    port_u8 requested_bank;
-    port_u8 loaded_bank;
-    port_u8 rom_bank;
-};
-
 void port_copy_data(struct cpu_register_state *state, port_u8 *memory);
 
 /* Port of FarCopyData2 in home/copy2.asm.
