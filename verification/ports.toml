@@ -27347,3 +27347,24 @@ observables = [
 ]
 proof_domain = "all register/flag and marker-memory inputs with an arbitrary matching transition from the composed PrintText callee"
 decoder = "exact 6-byte linked body checked (ld hl,Route23OhThatIsTheBadgeText; jp PrintText); the tail composes the real port_print_text in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "HoFPrintTextAndDelay"
+assembly_source = "engine/movie/hall_of_fame.asm"
+c_symbol = "port_hof_print_text_and_delay"
+c_source = "verification/ports/hof_print_text_and_delay.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "hVBlankOccurred",
+    "PrintText and DelayFrames call-site input snapshots",
+]
+proof_domain = "all register/flag inputs and arbitrary initial hVBlankOccurred byte, with both proven callee contracts applied as arbitrary matching transitions at their call-site boundaries; DelayFrames' 120-iteration count is explicit in the C (c = $78)"
+decoder = "exact 9-byte linked body checked (call PrintText; ld c,$78; jp DelayFrames); both callees compose through explicit state-struct bridges in one angr path-equivalence test"
