@@ -17,12 +17,12 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import linked_bytes, rom_window, symbol_location
-from verification.harness.sm83_shims import (
-    Sm83LoadAHighImmediate,
-    Sm83LoadAImmediate,
-    Sm83StoreAHighImmediate,
-    Sm83StoreAImmediate,
+from verification.harness.rom import (
+    collect_returns,
+    linked_bytes,
+    rom_window,
+    sm83_flags_to_z80,
+    symbol_location,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,15 +30,18 @@ NATIVE_ELF = ROOT / "verification/build/ports.elf"
 ROM = ROOT / "pokered.gbc"
 SYMBOLS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
-DONE = 0xEFFF
-
-W_BUFFER = 0xCEE9
-H_LOADED_ROM_BANK = 0xFFB8
-R_ROMB = 0x2000
+NATIVE_MEMORY = 0x200000
+STACK = 0xD000
+RETURN = 0xFFFF
+MARKER = 0x1234
+FIELDS = ("requested_bank", "loaded_bank", "rom_bank")
+EXPECTED_BODY = bytes.fromhex(
+    "eae9cef0b8f5fae9cee0b8ea0020cdb500f1e0b8ea0020c9"
+)
 
 
 @dataclass(frozen=True)
-class E:
+class Endpoint:
     a: claripy.ast.BV
     f: claripy.ast.BV
     b: claripy.ast.BV
@@ -48,113 +51,169 @@ class E:
     h: claripy.ast.BV
     l: claripy.ast.BV
     memory: claripy.ast.BV
-    result: claripy.ast.BV
+    call_registers: claripy.ast.BV
+    marker: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class CopyDataStep(angr.SimProcedure):
-    """One iteration of CopyData, invoked for FarCopyData's `call CopyData`.
-
-    Models `ld a,[hli]; ld [de],a; inc de; dec bc; ld a,c; or b`. The bank
-    switch around the call is abstracted by the surrounding hooks, and the
-    source byte (captured as `fetched`) is written to [de].
-    """
-
-    def __init__(self, done: int) -> None:
+class LoadField(angr.SimProcedure):
+    def __init__(self, field: str, continuation: int) -> None:
         super().__init__()
-        self._done = done
+        self.field = field
+        self.continuation = continuation
 
     def run(self) -> None:  # type: ignore[override]
-        self.inhibit_autoret = True
-        a = self.state.globals["fetched"]
-        self.state.regs.hl = self.state.regs.hl + 1
-        self.state.globals["written"] = a
-        self.state.regs.de = self.state.regs.de + 1
-        self.state.regs.bc = self.state.regs.bc - 1
-        # `ld a,c; or b` overwrites a with the new b|c (mirrors port_copy_data_step).
-        self.state.regs.a = self.state.regs.c | self.state.regs.b
-        new_bc = self.state.regs.bc
-        self.state.regs.f = claripy.If(new_bc == 0, claripy.BVV(0x40, 8), claripy.BVV(0, 8))
-        self.state.globals["result"] = claripy.If(new_bc == 0, claripy.BVV(1, 8), claripy.BVV(0, 8))
-        self.jump(self._done)
+        self.state.regs.a = self.state.globals[self.field]
+        self.jump(self.continuation)
 
 
-def inputs(tag: str) -> dict:
-    i = symbolic_registers(tag)
-    i["fetched"] = claripy.BVS(f"{tag}_fetched", 8)
-    i["written"] = claripy.BVS(f"{tag}_written", 8)
-    return i
+class StoreField(angr.SimProcedure):
+    def __init__(self, field: str, continuation: int) -> None:
+        super().__init__()
+        self.field = field
+        self.continuation = continuation
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.globals[self.field] = self.state.regs.a
+        self.jump(self.continuation)
 
 
-def assembly(i: dict) -> list[E]:
-    loc = symbol_location(SYMBOLS, "FarCopyData")
-    p = angr.Project(
-        rom_window(ROM, loc.bank),
+class CopyDataSummary(angr.SimProcedure):
+    """Arbitrary transition supplied by the independently proven CopyData."""
+
+    def __init__(self, continuation: int) -> None:
+        super().__init__()
+        self.continuation = continuation
+
+    def run(self) -> None:  # type: ignore[override]
+        call = assembly_registers(self.state)
+        self.state.globals["call_registers"] = claripy.Concat(
+            *(call[register] for register in REGISTERS)
+        )
+        for register in REGISTERS:
+            value = self.state.globals[f"copy_{register}"]
+            if register == "f":
+                value = sm83_flags_to_z80(value)
+            setattr(self.state.regs, register, value)
+        self.state.memory.store(MARKER, self.state.globals["copy_marker"])
+        self.jump(self.continuation)
+
+
+class NativeCopyDataSummary(angr.SimProcedure):
+    """Native-ABI form of the same independently proven transition."""
+
+    def run(
+        self, registers: claripy.ast.BV, memory: claripy.ast.BV
+    ) -> None:  # type: ignore[override]
+        self.state.globals["call_registers"] = self.state.memory.load(registers, 8)
+        for offset, register in enumerate(REGISTERS):
+            self.state.memory.store(
+                registers + offset, self.state.globals[f"copy_{register}"]
+            )
+        self.state.memory.store(memory + MARKER, self.state.globals["copy_marker"])
+
+
+def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
+    values = symbolic_registers(prefix)
+    for field in FIELDS:
+        values[field] = claripy.BVS(f"{prefix}_{field}", 8)
+    for register in REGISTERS:
+        values[f"copy_{register}"] = (
+            claripy.Concat(
+                claripy.BVS(f"{prefix}_copy_flags", 4), claripy.BVV(0, 4)
+            )
+            if register == "f"
+            else claripy.BVS(f"{prefix}_copy_{register}", 8)
+        )
+    values["marker"] = claripy.BVS(f"{prefix}_marker", 8)
+    values["copy_marker"] = claripy.BVS(f"{prefix}_copy_marker", 8)
+    return values
+
+
+def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+    location = symbol_location(SYMBOLS, "FarCopyData")
+    assert linked_bytes(ROM, location, len(EXPECTED_BODY)) == EXPECTED_BODY
+    project = angr.Project(
+        rom_window(ROM, location.bank),
         auto_load_libs=False,
         rebase_granularity=0x100,
         main_opts={
             "backend": "blob",
             "arch": ArchPcode("z80:LE:16:default"),
             "base_addr": 0,
-            "entry_point": loc.address,
+            "entry_point": location.address,
         },
     )
-    q = loc.address
-    p.hook(q, Sm83StoreAImmediate(W_BUFFER, q + 3), length=3)        # ld [wBuffer], a
-    p.hook(q + 3, Sm83LoadAHighImmediate(0xB8, q + 5), length=2)    # ldh a, [hLoadedROMBank]
-    # q+5 push af (native)
-    p.hook(q + 6, Sm83LoadAImmediate(W_BUFFER, q + 9), length=3)    # ld a, [wBuffer]
-    p.hook(q + 9, Sm83StoreAHighImmediate(0xB8, q + 11), length=2)  # ldh [hLoadedROMBank], a
-    p.hook(q + 11, Sm83StoreAImmediate(R_ROMB, q + 14), length=3)   # ld [rROMB], a
-    p.hook(q + 14, CopyDataStep(DONE), length=3)                    # call CopyData -> one step
-    s = p.factory.blank_state(addr=q)
-    set_assembly_registers(s, i)
-    s.globals["fetched"] = i["fetched"]
-    s.globals["written"] = i["written"]
-    m = p.factory.simulation_manager(s)
-    m.explore(find=DONE)
-    assert len(m.found) == 1
-    x = m.found[0]
+    base = location.address
+    project.hook(base, StoreField("requested_bank", base + 3), length=3)
+    project.hook(base + 3, LoadField("loaded_bank", base + 5), length=2)
+    project.hook(base + 6, LoadField("requested_bank", base + 9), length=3)
+    project.hook(base + 9, StoreField("loaded_bank", base + 11), length=2)
+    project.hook(base + 11, StoreField("rom_bank", base + 14), length=3)
+    project.hook(base + 14, CopyDataSummary(base + 17), length=3)
+    project.hook(base + 18, StoreField("loaded_bank", base + 20), length=2)
+    project.hook(base + 20, StoreField("rom_bank", base + 23), length=3)
+    state = project.factory.blank_state(addr=base)
+    set_assembly_registers(state, values)
+    for field in FIELDS:
+        state.globals[field] = values[field]
+    for register in REGISTERS:
+        state.globals[f"copy_{register}"] = values[f"copy_{register}"]
+    state.globals["copy_marker"] = values["copy_marker"]
+    state.globals["call_registers"] = claripy.BVV(0, 64)
+    state.memory.store(MARKER, values["marker"])
+    state.regs.sp = STACK
+    state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     return [
-        E(
-            **assembly_registers(x),
-            memory=claripy.Concat(x.globals["fetched"], x.globals["written"]),
-            result=x.globals["result"],
-            constraints=tuple(x.solver.constraints),
+        Endpoint(
+            **assembly_registers(end),
+            memory=claripy.Concat(*(end.globals[field] for field in FIELDS)),
+            call_registers=end.globals["call_registers"],
+            marker=end.memory.load(MARKER, 1),
+            constraints=tuple(end.solver.constraints),
         )
+        for end in collect_returns(project, state, RETURN)
     ]
 
 
-def native(i: dict) -> list[E]:
-    p = angr.Project(NATIVE_ELF, auto_load_libs=False)
-    fn = p.loader.find_symbol("port_copy_data_step")
-    assert fn is not None
-    s = p.factory.call_state(fn.rebased_addr, NATIVE_STATE)
-    store_native_registers(s, NATIVE_STATE, i)
-    s.memory.store(NATIVE_STATE + 8, i["fetched"])
-    s.memory.store(NATIVE_STATE + 9, i["written"])
-    m = p.factory.simulation_manager(s)
-    m.run()
-    assert not m.errored
+def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+    project = angr.Project(NATIVE_ELF, auto_load_libs=False)
+    function = project.loader.find_symbol("port_far_copy_data")
+    copy_data = project.loader.find_symbol("port_copy_data")
+    assert function is not None and copy_data is not None
+    project.hook(copy_data.rebased_addr, NativeCopyDataSummary())
+    state = project.factory.call_state(
+        function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY
+    )
+    store_native_registers(state, NATIVE_STATE, values)
+    for offset, field in enumerate(FIELDS, 8):
+        state.memory.store(NATIVE_STATE + offset, values[field])
+    for register in REGISTERS:
+        state.globals[f"copy_{register}"] = values[f"copy_{register}"]
+    state.globals["copy_marker"] = values["copy_marker"]
+    state.globals["call_registers"] = claripy.BVV(0, 64)
+    state.memory.store(NATIVE_MEMORY + MARKER, values["marker"])
+    manager = project.factory.simulation_manager(state)
+    manager.run()
+    assert not manager.errored
     return [
-        E(
-            **native_registers(x, NATIVE_STATE),
-            memory=x.memory.load(NATIVE_STATE + 8, 2),
-            result=x.regs.rax[7:0],
-            constraints=tuple(x.solver.constraints),
+        Endpoint(
+            **native_registers(end, NATIVE_STATE),
+            memory=end.memory.load(NATIVE_STATE + 8, len(FIELDS)),
+            call_registers=end.globals["call_registers"],
+            marker=end.memory.load(NATIVE_MEMORY + MARKER, 1),
+            constraints=tuple(end.solver.constraints),
         )
-        for x in m.deadended
+        for end in manager.deadended
     ]
 
 
-@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_transition_equivalence() -> None:
-    i = inputs("far_copy_data")
-    assert_pathwise_equivalent(assembly(i), native(i), (*REGISTERS, "memory", "result"))
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_exact_body() -> None:
-    loc = symbol_location(SYMBOLS, "FarCopyData")
-    assert linked_bytes(ROM, loc, 24) == bytes.fromhex("eae9cef0b8f5fae9cee0b8ea0020cdb500f1e0b8ea0020c9")
+def test_far_copy_data_pathwise_equivalence() -> None:
+    values = _inputs("far_copy_data")
+    assert_pathwise_equivalent(
+        _assembly(values),
+        _native(values),
+        (*REGISTERS, "memory", "call_registers", "marker"),
+    )

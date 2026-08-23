@@ -16989,9 +16989,12 @@ assembly_source = "home/copy.asm"
 c_symbol = "port_far_copy_data"
 c_source = "verification/ports/far_copy_data.c"
 status = "proven"
-observables = ["[DE]..[DE+BC-1] (destination bytes)", "[HL]..[HL+BC-1] (source bytes)", "registers BC/DE/HL (preserved across the ROM bank switch)"]
-proof_domain = "all BC (copy length), HL (source), DE (destination) register values; arbitrary source bytes in the flat memory model"
-decoder = "angr pathwise equivalence proven (verification/tests/test_far_copy_data_equivalence.py): the ROM bank switch (wBuffer + hLoadedROMBank/rROMB) is a no-op in the flat-memory model, so FarCopyData reduces to one iteration of CopyData, which port_far_copy_data performs via port_copy_data_step. The step proof reuses port_copy_data_step and models `call CopyData` as a single byte transition (ld a,[hli]; ld [de],a; inc de; dec bc; ld a,c; or b) with the bank-switch ldhs hooked as no-ops, confirming registers BC/DE/HL and the copied byte match."
+observables = [
+    "all registers and flags",
+    "wBuffer, hLoadedROMBank, rROMB, exact CopyData call registers, and an arbitrary proven CopyData memory post-state",
+]
+proof_domain = "all register/flag/bank inputs and an arbitrary proven CopyData register and memory transition; native production C executes the real complete CopyData loop"
+decoder = "the exact 24-byte body executes under angr with instruction-level bank-access shims and an arbitrary separately proven CopyData transition; the proof observes the exact callee inputs plus bank and AF restoration, while production C directly calls port_copy_data and therefore performs the real transfer loop"
 
 
 

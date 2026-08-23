@@ -1377,6 +1377,13 @@ struct fade_out_audio_state {
 	port_u8 audio_volume;
 };
 
+struct far_copy_data_state {
+	struct cpu_register_state registers;
+	port_u8 requested_bank;
+	port_u8 loaded_bank;
+	port_u8 rom_bank;
+};
+
 struct far_copy_data2_state {
 	struct cpu_register_state registers;
 	port_u8 requested_bank;
@@ -2681,6 +2688,7 @@ _Static_assert(sizeof(struct serial_exchange_nybble_state) == 15, "unexpected AB
 _Static_assert(sizeof(struct wait_for_sound_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct play_sound_state) == 24, "unexpected ABI padding");
 _Static_assert(sizeof(struct fade_out_audio_state) == 26, "unexpected ABI padding");
+_Static_assert(sizeof(struct far_copy_data_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data2_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data3_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_tileset_tile_pattern_data_state) == 14, "unexpected ABI padding");

@@ -1,18 +1,22 @@
 #include "port_state.h"
 
+void port_copy_data(struct cpu_register_state *state, port_u8 *memory);
+
 /* Port of FarCopyData in home/copy.asm.
  *
- * Switches the ROM bank to A, copies BC bytes from [HL] to [DE] via CopyData,
- * then restores the bank. The bank switch is a no-op for the observable in the
- * flat memory model, so the native port just copies BC bytes from [HL] to [DE]. */
+ * Saves the currently loaded bank, switches to A, executes CopyData's full
+ * transfer loop, then restores the saved bank and AF. */
 __attribute__((noinline, used)) void
-port_far_copy_data(struct cpu_register_state *state, port_u8 *memory)
+port_far_copy_data(struct far_copy_data_state *state, port_u8 *memory)
 {
-	port_u16 hl = ((port_u16)state->h << 8) | (port_u16)state->l;
-	port_u16 de = ((port_u16)state->d << 8) | (port_u16)state->e;
-	port_u16 bc = ((port_u16)state->b << 8) | (port_u16)state->c;
-	port_u16 i;
-	for (i = 0; i < bc; i++) {
-		memory[de + i] = memory[hl + i];
-	}
+	port_u8 original_f = state->registers.f;
+	port_u8 original_bank = state->loaded_bank;
+	state->requested_bank = state->registers.a;
+	state->loaded_bank = state->requested_bank;
+	state->rom_bank = state->requested_bank;
+	port_copy_data(&state->registers, memory);
+	state->registers.a = original_bank;
+	state->registers.f = original_f;
+	state->loaded_bank = original_bank;
+	state->rom_bank = original_bank;
 }
