@@ -14677,6 +14677,20 @@ observables = [
 proof_domain = "all register/flag/predef/addition-scratch/memory inputs and arbitrary proven sequential GetPredefRegisters and complete AddBCD transitions; native production C invokes both real functions"
 decoder = "the exact 25-byte body is checked inside the angr path-equivalence proof; the predef-register restore composes with the real full AddBCD loops, including ordered call state, final scratch/register propagation, and shared memory identity"
 
+[[function]]
+assembly_symbol = "CloseLinkConnection"
+assembly_source = "engine/link/cable_club_npc.asm"
+c_symbol = "port_close_link_connection"
+c_source = "verification/ports/close_link_connection.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "serial connection status, send byte, receive byte, and control byte",
+    "exact Delay3 entry state and memory identity",
+]
+proof_domain = "all register/flag/serial/memory inputs and an arbitrary proven complete Delay3 transition; native production C invokes real port_delay3"
+decoder = "the exact 19-byte body is checked inside the angr path-equivalence proof; the complete three-frame delay composes with the four ordered HRAM/I/O writes, XOR flags, and final register state"
+
 
 
 
