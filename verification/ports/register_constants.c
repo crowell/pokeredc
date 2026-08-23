@@ -324,12 +324,14 @@ port_intro_clear_screen(struct cpu_register_state *state, port_u8 *memory)
 }
 
 __attribute__((noinline, used)) void
-port_intro_clear_middle_of_screen(struct cpu_register_state *state)
+port_intro_clear_middle_of_screen(struct cpu_register_state *state,
+	port_u8 *memory)
 {
 	state->h = 0xc3;
 	state->l = 0xf0;
 	state->b = 0;
 	state->c = 0xc8;
+	intro_clear_common(state, memory);
 }
 
 __attribute__((noinline, used)) void

@@ -7440,17 +7440,11 @@ c_symbol = "port_intro_clear_middle_of_screen"
 c_source = "verification/ports/register_constants.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "IntroClearCommon continuation",
+    "all registers and flags",
+    "wTileMap[80..279]",
 ]
-proof_domain = "all general-register and canonical-flag inputs"
-decoder = "exact 6-byte linked entry body checked; the shared IntroClearCommon implementation is an explicit boundary"
+proof_domain = "all general-register and canonical-flag inputs through all 200 middle-screen clearing iterations"
+decoder = "the native port calls the retained IntroClearCommon loop for every zero write and BC transition; angr executes the linked entry and loop with audited LD A,B and OR C semantics and compares the complete terminal register/tilemap state"
 
 
 
