@@ -1,5 +1,8 @@
 #include "port_state.h"
 
+port_u8 port_check_coords(struct check_coords_state *state,
+	const port_u8 *memory);
+
 static void
 slot_machine_get_wheel_setup(struct slot_machine_wheel_setup_state *state,
 	port_u16 destination, port_u16 source)
@@ -303,13 +306,15 @@ port_load_flipped_front_sprite_by_mon_index(
 }
 
 /* Port of ArePlayerCoordsInArray through the shared CheckCoords tail. */
-__attribute__((noinline, used)) void
-port_are_player_coords_in_array(struct memory_transfer_state *state)
+__attribute__((noinline, used)) port_u8
+port_are_player_coords_in_array(struct are_player_coords_state *state,
+	const port_u8 *memory)
 {
-	state->registers.a = state->memory[0];
-	state->registers.b = state->registers.a;
-	state->registers.a = state->memory[1];
-	state->registers.c = state->registers.a;
+	state->check.registers.a = state->player_y;
+	state->check.registers.b = state->check.registers.a;
+	state->check.registers.a = state->player_x;
+	state->check.registers.c = state->check.registers.a;
+	return port_check_coords(&state->check, memory);
 }
 
 static port_u8

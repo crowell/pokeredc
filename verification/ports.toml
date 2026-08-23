@@ -8613,19 +8613,11 @@ c_symbol = "port_are_player_coords_in_array"
 c_source = "verification/ports/memory_transfers.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "wYCoord",
-    "wXCoord",
-    "CheckCoords continuation",
+    "all registers and flags",
+    "wYCoord, wXCoord, exact CheckCoords call registers, wCoordIndex, return decision, and an arbitrary proven CheckCoords memory post-state",
 ]
-proof_domain = "all general-register and canonical-flag inputs and all 256 values of each player coordinate"
-decoder = "exact 8-byte linked entry body checked; SM83 absolute loads modeled explicitly and the shared coordinate search is an explicit boundary"
+proof_domain = "all register/flag/player-coordinate inputs and an arbitrary proven CheckCoords transition"
+decoder = "the exact 8-byte entry executes under angr and composes with the separately proven CheckCoords tail; the proof observes exact B/C setup, preserved registers/flags, callee inputs and arbitrary post-state, while production C directly calls port_check_coords"
 
 
 

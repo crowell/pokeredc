@@ -17,14 +17,24 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import linked_bytes, rom_window, symbol_location
-from verification.harness.sm83_shims import Sm83LoadAImmediate
+from verification.harness.rom import (
+    collect_returns,
+    linked_bytes,
+    rom_window,
+    sm83_flags_to_z80,
+    symbol_location,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
-NATIVE_ELF = ROOT / "verification" / "build" / "ports.elf"
+NATIVE_ELF = ROOT / "verification/build/ports.elf"
 ROM = ROOT / "pokered.gbc"
 SYMBOLS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
+NATIVE_MEMORY = 0x200000
+STACK = 0xD000
+RETURN = 0xFFFF
+MARKER = 0x1234
+EXPECTED_ENTRY = bytes.fromhex("fa61d347fa62d34f")
 
 
 @dataclass(frozen=True)
@@ -37,16 +47,89 @@ class Endpoint:
     e: claripy.ast.BV
     h: claripy.ast.BV
     l: claripy.ast.BV
-    coords: claripy.ast.BV
-    continuation: claripy.ast.BV
+    state_memory: claripy.ast.BV
+    call_registers: claripy.ast.BV
+    marker: claripy.ast.BV
+    result: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-def assembly(inputs: dict[str, claripy.ast.BV]) -> Endpoint:
+class LoadField(angr.SimProcedure):
+    def __init__(self, field: str, continuation: int) -> None:
+        super().__init__()
+        self.field = field
+        self.continuation = continuation
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = self.state.globals[self.field]
+        self.jump(self.continuation)
+
+
+class CheckCoordsSummary(angr.SimProcedure):
+    """Arbitrary transition supplied by the independently proven CheckCoords."""
+
+    def __init__(self, continuation: int) -> None:
+        super().__init__()
+        self.continuation = continuation
+
+    def run(self) -> None:  # type: ignore[override]
+        call = assembly_registers(self.state)
+        self.state.globals["call_registers"] = claripy.Concat(
+            *(call[register] for register in REGISTERS)
+        )
+        for register in REGISTERS:
+            value = self.state.globals[f"callee_{register}"]
+            if register == "f":
+                value = sm83_flags_to_z80(value)
+            setattr(self.state.regs, register, value)
+        self.state.globals["coord_index"] = self.state.globals["callee_coord_index"]
+        self.state.memory.store(MARKER, self.state.globals["callee_marker"])
+        self.state.globals["result"] = self.state.globals["callee_result"]
+        self.jump(self.continuation)
+
+
+class NativeCheckCoordsSummary(angr.SimProcedure):
+    """Native-ABI form of the same independently proven transition."""
+
+    def run(
+        self, check: claripy.ast.BV, memory: claripy.ast.BV
+    ) -> claripy.ast.BV:  # type: ignore[override]
+        self.state.globals["call_registers"] = self.state.memory.load(check, 8)
+        for offset, register in enumerate(REGISTERS):
+            self.state.memory.store(
+                check + offset, self.state.globals[f"callee_{register}"]
+            )
+        self.state.memory.store(check + 8, self.state.globals["callee_coord_index"])
+        self.state.memory.store(
+            memory + MARKER, self.state.globals["callee_marker"]
+        )
+        return self.state.globals["callee_result"]
+
+
+def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
+    values = symbolic_registers(prefix)
+    for field in ("coord_index", "fetched_y", "fetched_x", "player_y", "player_x"):
+        values[field] = claripy.BVS(f"{prefix}_{field}", 8)
+    values["marker"] = claripy.BVS(f"{prefix}_marker", 8)
+    for register in REGISTERS:
+        values[f"callee_{register}"] = (
+            claripy.Concat(
+                claripy.BVS(f"{prefix}_callee_flags", 4), claripy.BVV(0, 4)
+            )
+            if register == "f"
+            else claripy.BVS(f"{prefix}_callee_{register}", 8)
+        )
+    values["callee_coord_index"] = claripy.BVS(
+        f"{prefix}_callee_coord_index", 8
+    )
+    values["callee_marker"] = claripy.BVS(f"{prefix}_callee_marker", 8)
+    values["callee_result"] = claripy.BVS(f"{prefix}_callee_result", 8)
+    return values
+
+
+def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "ArePlayerCoordsInArray")
-    tail = symbol_location(SYMBOLS, "CheckCoords").address
-    y_address = symbol_location(SYMBOLS, "wYCoord").address
-    x_address = symbol_location(SYMBOLS, "wXCoord").address
+    assert linked_bytes(ROM, location, len(EXPECTED_ENTRY)) == EXPECTED_ENTRY
     project = angr.Project(
         rom_window(ROM, location.bank),
         auto_load_libs=False,
@@ -58,70 +141,85 @@ def assembly(inputs: dict[str, claripy.ast.BV]) -> Endpoint:
             "entry_point": location.address,
         },
     )
-    project.hook(
-        location.address,
-        Sm83LoadAImmediate(y_address, location.address + 3),
-        length=3,
-    )
-    project.hook(
-        location.address + 4,
-        Sm83LoadAImmediate(x_address, location.address + 7),
-        length=3,
-    )
-    state = project.factory.blank_state(addr=location.address)
-    set_assembly_registers(state, inputs)
-    state.memory.store(y_address, inputs["y"])
-    state.memory.store(x_address, inputs["x"])
-    manager = project.factory.simulation_manager(state)
-    manager.explore(find=tail)
-    assert not manager.errored and len(manager.found) == 1
-    end = manager.found[0]
-    return Endpoint(
-        **assembly_registers(end),
-        coords=claripy.Concat(end.memory.load(y_address, 1), end.memory.load(x_address, 1)),
-        continuation=claripy.BVV(1, 8),
-        constraints=tuple(end.solver.constraints),
-    )
+    base = location.address
+    project.hook(base, LoadField("player_y", base + 3), length=3)
+    project.hook(base + 4, LoadField("player_x", base + 7), length=3)
+    project.hook(base + 8, CheckCoordsSummary(RETURN), length=0)
+    state = project.factory.blank_state(addr=base)
+    set_assembly_registers(state, values)
+    for field in ("coord_index", "player_y", "player_x"):
+        state.globals[field] = values[field]
+    state.globals["result"] = claripy.BVV(0, 8)
+    state.globals["call_registers"] = claripy.BVV(0, 64)
+    for register in REGISTERS:
+        state.globals[f"callee_{register}"] = values[f"callee_{register}"]
+    for field in ("callee_coord_index", "callee_marker", "callee_result"):
+        state.globals[field] = values[field]
+    state.memory.store(MARKER, values["marker"])
+    state.regs.sp = STACK
+    state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
+    return [
+        Endpoint(
+            **assembly_registers(end),
+            state_memory=claripy.Concat(
+                end.globals["coord_index"],
+                end.globals["player_y"],
+                end.globals["player_x"],
+            ),
+            call_registers=end.globals["call_registers"],
+            marker=end.memory.load(MARKER, 1),
+            result=end.globals["result"],
+            constraints=tuple(end.solver.constraints),
+        )
+        for end in collect_returns(project, state, RETURN)
+    ]
 
 
-def native(inputs: dict[str, claripy.ast.BV]) -> Endpoint:
+def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project = angr.Project(NATIVE_ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_are_player_coords_in_array")
-    assert function
-    state = project.factory.call_state(function.rebased_addr, NATIVE_STATE)
-    store_native_registers(state, NATIVE_STATE, inputs)
-    state.memory.store(NATIVE_STATE + 8, inputs["y"])
-    state.memory.store(NATIVE_STATE + 9, inputs["x"])
+    check_coords = project.loader.find_symbol("port_check_coords")
+    assert function is not None and check_coords is not None
+    project.hook(check_coords.rebased_addr, NativeCheckCoordsSummary())
+    state = project.factory.call_state(
+        function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY
+    )
+    store_native_registers(state, NATIVE_STATE, values)
+    for offset, field in enumerate(
+        ("coord_index", "fetched_y", "fetched_x", "player_y", "player_x"), 8
+    ):
+        state.memory.store(NATIVE_STATE + offset, values[field])
+    state.memory.store(NATIVE_MEMORY + MARKER, values["marker"])
+    state.globals["call_registers"] = claripy.BVV(0, 64)
+    for register in REGISTERS:
+        state.globals[f"callee_{register}"] = values[f"callee_{register}"]
+    for field in ("callee_coord_index", "callee_marker", "callee_result"):
+        state.globals[field] = values[field]
     manager = project.factory.simulation_manager(state)
     manager.run()
-    assert not manager.errored and len(manager.deadended) == 1
-    end = manager.deadended[0]
-    return Endpoint(
-        **native_registers(end, NATIVE_STATE),
-        coords=end.memory.load(NATIVE_STATE + 8, 2),
-        continuation=claripy.BVV(1, 8),
-        constraints=tuple(end.solver.constraints),
-    )
+    assert not manager.errored
+    return [
+        Endpoint(
+            **native_registers(end, NATIVE_STATE),
+            state_memory=claripy.Concat(
+                end.memory.load(NATIVE_STATE + 8, 1),
+                end.memory.load(NATIVE_STATE + 11, 2),
+            ),
+            call_registers=end.globals["call_registers"],
+            marker=end.memory.load(NATIVE_MEMORY + MARKER, 1),
+            result=end.regs.rax[7:0],
+            constraints=tuple(end.solver.constraints),
+        )
+        for end in manager.deadended
+    ]
 
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
-def test_are_player_coords_entry_equivalence() -> None:
-    inputs = symbolic_registers("are_player_coords")
-    inputs["y"] = claripy.BVS("player_y", 8)
-    inputs["x"] = claripy.BVS("player_x", 8)
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_are_player_coords_pathwise_equivalence() -> None:
+    values = _inputs("are_player_coords")
     assert_pathwise_equivalent(
-        [assembly(inputs)],
-        [native(inputs)],
-        (*REGISTERS, "coords", "continuation"),
+        _assembly(values),
+        _native(values),
+        (*REGISTERS, "state_memory", "call_registers", "marker", "result"),
     )
-
-
-def test_are_player_coords_entry_exact_body() -> None:
-    location = symbol_location(SYMBOLS, "ArePlayerCoordsInArray")
-    y_address = symbol_location(SYMBOLS, "wYCoord").address
-    x_address = symbol_location(SYMBOLS, "wXCoord").address
-    expected = bytes(
-        (0xFA, y_address & 0xFF, y_address >> 8, 0x47,
-         0xFA, x_address & 0xFF, x_address >> 8, 0x4F)
-    )
-    assert linked_bytes(ROM, location, len(expected)) == expected
