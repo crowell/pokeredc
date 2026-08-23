@@ -7292,6 +7292,19 @@ proof_domain = "all register/flag/count/value inputs, every data/repetition byte
 decoder = "the exact 39-byte body is checked inside one angr path-equivalence test; XOR/count initialization, CP branch, pair parsing, wrapped byte-count ADD flags, exact FillMemory call contract, DE progression, recurrence, sentinel write, and final INC flags are all proven, while production C runs the complete outer loop and calls real port_fill_memory for every pair"
 
 [[function]]
+assembly_symbol = "DecodeArrowMovementRLE"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_decode_arrow_movement_rle"
+c_source = "verification/ports/decode_arrow_movement_rle.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wSimulatedJoypadStatesIndex, RLE globals, exact DecodeRLEList call registers, and an arbitrary proven decoder memory post-state",
+]
+proof_domain = "all register/flag/global/entry-byte inputs, every 16-bit HL value with wrap, terminator, Y mismatch, X mismatch, and match paths, plus an arbitrary proven DecodeRLEList transition; exhaustive one-entry recurrence proves every $ff-terminated movement table"
+decoder = "the exact 30-byte body executes pathwise under angr for all four loop outcomes; HLI progression, CP flags, four-byte skip recurrence, pointer reconstruction, fixed output pointer, exact decoder call contract, DEC flags, and final index store are proven, while production C scans the complete table and calls real port_decode_rle_list on a match"
+
+[[function]]
 assembly_symbol = "SetSpriteFacingDirection"
 assembly_source = "home/map_objects.asm"
 c_symbol = "port_set_sprite_facing_direction"

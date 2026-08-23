@@ -839,6 +839,15 @@ struct decode_rle_list_state {
 	port_u8 fetched_repetitions;
 };
 
+struct decode_arrow_movement_rle_state {
+	struct decode_rle_list_state rle;
+	port_u8 simulated_joypad_states_index;
+	port_u8 fetched_y;
+	port_u8 fetched_x;
+	port_u8 fetched_pointer_low;
+	port_u8 fetched_pointer_high;
+};
+
 struct screen_coords_state {
 	struct cpu_register_state registers;
 	port_u8 saved_b;
@@ -2777,6 +2786,7 @@ _Static_assert(sizeof(struct init_sprite_status_state) == 13, "unexpected ABI pa
 _Static_assert(sizeof(struct wake_party_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct fill_memory_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct decode_rle_list_state) == 15, "unexpected ABI padding");
+_Static_assert(sizeof(struct decode_arrow_movement_rle_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct screen_coords_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct serial_send_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct map_mon_state) == 12, "unexpected ABI padding");
