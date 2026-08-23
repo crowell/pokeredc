@@ -9884,10 +9884,10 @@ c_symbol = "port_delay3"
 c_source = "verification/ports/delay3.c"
 status = "proven"
 observables = [
-    "C (returns 0 after 3 iterations)",
+    "all registers and flags",
 ]
-proof_domain = "all general-register and canonical-flag inputs; DelayFrame inlined as no-op return"
-decoder = "exact 20-byte linked body checked; `call DelayFrames` modeled as no-op return; `ld c,imm`/`jp` run natively"
+proof_domain = "all general-register and canonical-flag inputs through exactly three DelayFrames iterations, composed with the proved DelayFrame terminal transition"
+decoder = "LD C,3 and JP DelayFrames execute into the real three-iteration DEC/JR loop; each DelayFrame call uses its independently proved acknowledged-VBlank terminal state, matched by explicit native calls"
 
 
 
@@ -24509,5 +24509,5 @@ observables = [
     "rOBP0",
     "rOBP1",
 ]
-proof_domain = "all register/flag and palette inputs through the compositional DelayFrames tail boundary"
-decoder = "real call/fallthrough control flow executes; GBPalWhiteOut's three SM83 high-memory stores are shimmed, and both native callees are invoked explicitly before the proven DelayFrames continuation"
+proof_domain = "all register/flag and palette inputs through all three composed DelayFrames iterations"
+decoder = "real call/fallthrough control flow executes; GBPalWhiteOut's three SM83 high-memory stores are shimmed, while the proved DelayFrame terminal state and SM83 DEC C execute through the complete three-frame native call chain"

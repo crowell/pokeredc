@@ -18,7 +18,7 @@ from verification.harness.registers import (
     symbolic_registers,
 )
 from verification.harness.rom import rom_window, symbol_location
-from verification.harness.sm83_shims import Sm83StoreAHighImmediate
+from verification.harness.sm83_shims import Sm83DecRegister, Sm83StoreAHighImmediate
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,7 +46,18 @@ class Endpoint:
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class TailBoundary(angr.SimProcedure):
+class DelayFrameTerminal(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x50, 8)
+        self.jump(self.next_address)
+
+
+class ReturnBoundary(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
         self.jump(DONE)
 
@@ -81,7 +92,17 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
         Sm83StoreAHighImmediate(0x49, white_out + 7),
         length=2,
     )
-    project.hook(delay_frames, TailBoundary(), length=1)
+    project.hook(
+        delay_frames,
+        DelayFrameTerminal(delay_frames + 3),
+        length=3,
+    )
+    project.hook(
+        delay_frames + 3,
+        Sm83DecRegister("c", delay_frames + 4),
+        length=1,
+    )
+    project.hook(delay_frames + 6, ReturnBoundary(), length=1)
 
     state = project.factory.blank_state(addr=entry.address)
     set_assembly_registers(state, values)
