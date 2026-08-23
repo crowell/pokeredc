@@ -22432,12 +22432,13 @@ assembly_symbol = "ApplyAttackToPlayerPokemonDone"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_apply_attack_to_player_pokemon_done"
 c_source = "verification/ports/apply_attack_to_player_pokemon_done.c"
-status = "partial"
+status = "complete"
 observables = [
     "all registers and flags",
+    "DrawHUDsAndHPBars call input",
 ]
-proof_domain = "all register and flag inputs through the DrawHUDsAndHPBars call chain"
-decoder = "the JP DrawHUDsAndHPBars continuation is implemented as a C call, which invokes the ordered player/enemy HUD call chain; rendering remains beyond the explicit child boundaries"
+proof_domain = "all register and flag inputs with an arbitrary matching transition from the composed DrawHUDsAndHPBars callee"
+decoder = "complete tail-call wrapper: the exact JP target is asserted and the native implementation calls the real port_draw_huds_and_hp_bars symbol with identical input state"
 
 [[function]]
 assembly_symbol = "AttackSubstitute"
