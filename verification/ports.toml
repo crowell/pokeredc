@@ -20966,7 +20966,7 @@ observables = [
     "rBGP",
 ]
 proof_domain = "all register/flag/wOnSGB/rBGP inputs across both SGB and non-SGB palette-selection paths"
-decoder = "the exact 5-byte function entry and exact 11-byte shared SetAnimationBGPalette tail are checked inside the angr path-equivalence proof; native C selects B=$fe when wOnSGB is zero and C=$f8 otherwise, with exact SM83 AND flags and palette write"
+decoder = "the exact 5-byte function entry and exact 11-byte shared SetAnimationBGPalette tail are checked inside the angr path-equivalence proof; native C sets B=$fe/C=$f8 and invokes real port_set_animation_bg_palette, retaining its branch-dependent SM83 flags and palette write"
 
 [[function]]
 assembly_symbol = "AnimationUnusedPalette2"
