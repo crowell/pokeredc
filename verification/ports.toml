@@ -25072,3 +25072,24 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the concrete bank-$12 CeladonMartRoofDrinkList (byte-verified $3c/$3d/$3e/00); every in-bag/not-in-bag combination across the three bounded scan iterations; each predef invocation composes the proven GetQuantityOfItemInBag contract as an arbitrary matching transition while the dispatcher's own RAM effects remain covered by the separate Predef proof"
 decoder = "exact 48-byte linked body checked through the .done terminator store and ret; EA absolute stores, FA load, LDI load, LD A,n, and AND A (with SM83 H-set semantics) run via audited instruction shims; the real loop executes pathwise while native C calls the real port_get_quantity_of_item_in_bag in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "MtMoonB2FReceivedFossilText"
+assembly_source = "scripts/MtMoonB2F.asm"
+c_symbol = "port_mt_moon_b2f_received_fossil_text"
+c_source = "verification/ports/mt_moon_b2f_received_fossil_text.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "PrintText call input",
+    "caller memory marker",
+]
+proof_domain = "all register/flag and marker-memory inputs with an arbitrary matching transition from the composed PrintText callee"
+decoder = "complete tail-call path: the exact linked body (ld hl,MtMoonB2FReceivedFossilText.Text; jp PrintText) and real port_print_text call with caller memory are proved in one angr path-equivalence test"
