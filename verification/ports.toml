@@ -26954,3 +26954,22 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial control bytes, with the proven DisableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail-call boundary"
 decoder = "exact 3-byte linked body checked (jp DisableAutoTextBoxDrawing); the tail composes the real port_disable_auto_text_box_drawing in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "Route15Gate2F_Script"
+assembly_source = "scripts/Route15Gate2F.asm"
+c_symbol = "port_route15_gate2_f_script"
+c_source = "verification/ports/route15_gate2_f_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "all register/flag inputs and arbitrary initial control bytes, with the proven DisableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail-call boundary"
+decoder = "exact 3-byte linked body checked (jp DisableAutoTextBoxDrawing); the tail composes the real port_disable_auto_text_box_drawing in one angr path-equivalence test"
