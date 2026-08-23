@@ -24511,3 +24511,15 @@ observables = [
 ]
 proof_domain = "all register/flag and palette inputs through all three composed DelayFrames iterations"
 decoder = "real call/fallthrough control flow executes; GBPalWhiteOut's three SM83 high-memory stores are shimmed, while the proved DelayFrame terminal state and SM83 DEC C execute through the complete three-frame native call chain"
+
+[[function]]
+assembly_symbol = "ProtectedDelay3"
+assembly_source = "home/text.asm"
+c_symbol = "port_protected_delay3"
+c_source = "verification/ports/protected_delay3.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "all register and canonical-flag inputs through the complete three-frame delay and BC restoration"
+decoder = "the real PUSH BC, CALL Delay3, POP BC, and RET execute around the proved three-iteration DelayFrames composition; native C explicitly calls port_delay3 and restores both saved registers"
