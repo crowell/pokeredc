@@ -7417,17 +7417,11 @@ c_symbol = "port_intro_clear_screen"
 c_source = "verification/ports/register_constants.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
-    "IntroClearCommon continuation",
+    "all registers and flags",
+    "vBGMap1[0..575]",
 ]
-proof_domain = "all general-register and canonical-flag inputs"
-decoder = "exact 8-byte linked entry body checked; the shared IntroClearCommon implementation is an explicit boundary"
+proof_domain = "all general-register and canonical-flag inputs through all 576 VRAM-clearing iterations"
+decoder = "the native port retains the full BC countdown loop and every zero write; angr executes the linked entry and loop with audited LD A,B and OR C semantics and compares the complete terminal register/VRAM state"
 
 
 

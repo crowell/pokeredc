@@ -292,13 +292,35 @@ port_clear_bg_map(struct cpu_register_state *state)
 	state->a = 0x7f;
 }
 
+static __attribute__((noinline)) void
+intro_clear_common(struct cpu_register_state *state, port_u8 *memory)
+{
+	port_u16 hl;
+	port_u16 bc;
+
+	do {
+		hl = (port_u16)(((port_u16)state->h << 8) | state->l);
+		bc = (port_u16)(((port_u16)state->b << 8) | state->c);
+		memory[hl++] = 0;
+		bc--;
+		state->h = (port_u8)(hl >> 8);
+		state->l = (port_u8)hl;
+		state->b = (port_u8)(bc >> 8);
+		state->c = (port_u8)bc;
+		state->a = (port_u8)(state->b | state->c);
+		state->f = state->a == 0 ? PORT_FLAG_Z : 0;
+	} while (state->a != 0);
+}
+
+/* Complete port of IntroClearScreen in engine/movie/intro.asm. */
 __attribute__((noinline, used)) void
-port_intro_clear_screen(struct cpu_register_state *state)
+port_intro_clear_screen(struct cpu_register_state *state, port_u8 *memory)
 {
 	state->h = 0x9c;
 	state->l = 0;
 	state->b = 0x02;
 	state->c = 0x40;
+	intro_clear_common(state, memory);
 }
 
 __attribute__((noinline, used)) void

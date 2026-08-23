@@ -67,12 +67,6 @@ PORTS = (
     ),
     ("ClearBgMap", "FillBgMapCommon", "port_clear_bg_map", bytes.fromhex("3e7f1801")),
     (
-        "IntroClearScreen",
-        "IntroClearCommon",
-        "port_intro_clear_screen",
-        bytes.fromhex("21009c0140021806"),
-    ),
-    (
         "IntroClearMiddleOfScreen",
         "IntroClearCommon",
         "port_intro_clear_middle_of_screen",
