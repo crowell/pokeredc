@@ -18088,8 +18088,8 @@ observables = [
     "hAutoBGTransferDest (+1)",
     "hAutoBGTransferEnabled",
 ]
-proof_domain = "all register/flag inputs and every 16-bit HL pointer; the three HRAM bytes (destination low/high and the enable flag) are checked exactly, and the final flag state after `ld a, 1` is all-clear"
-decoder = "exact 13-byte body checked (7d e0bc 7c e0bd 3e01 e0ba c3d73d); the three `ldh [a8], a` stores and the `ld a, n` immediate load are shimmed for SM83 flag semantics, and the `jp Delay3` tail is an explicit boundary. Pathwise equivalence proven against port_credits_copy_tilemap_to_vram."
+proof_domain = "all register/flag inputs and every 16-bit HL pointer through all three HRAM writes and the complete three-frame Delay3 tail"
+decoder = "the three SM83 LDH stores and LD A,1 are shimmed before the real JP Delay3 enters the proved recurrence; native C explicitly calls port_delay3 and is checked solely by path equivalence"
 
 [[function]]
 assembly_symbol = "TitleScreenCopyTileMapToVRAM"

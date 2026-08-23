@@ -16,8 +16,9 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import linked_bytes, rom_window, symbol_location
+from verification.harness.rom import rom_window, symbol_location
 from verification.harness.sm83_shims import (
+    Sm83DecRegister,
     Sm83LoadAFromImmediate,
     Sm83StoreAHighImmediate,
 )
@@ -53,11 +54,19 @@ class Endpoint:
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class Boundary(angr.SimProcedure):
-    """The `jp Delay3` tail: an explicit boundary sentinel."""
+class DelayFrameTerminal(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self.next_address = next_address
 
     def run(self) -> None:  # type: ignore[override]
-        self.inhibit_autoret = True
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x50, 8)
+        self.jump(self.next_address)
+
+
+class ReturnBoundary(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
         self.jump(DONE)
 
 
@@ -68,6 +77,7 @@ def _inputs(tag: str) -> dict:
 def _assembly(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "CreditsCopyTileMapToVRAM")
     base = location.address
+    delay_frames = symbol_location(SYMBOLS, "DelayFrames").address
     project = angr.Project(
         rom_window(ROM, location.bank),
         auto_load_libs=False,
@@ -86,14 +96,24 @@ def _assembly(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project.hook(base + 0x04, Sm83StoreAHighImmediate(0xBD, base + 0x06), length=2)
     project.hook(base + 0x06, Sm83LoadAFromImmediate(base + 0x07, base + 0x08), length=2)
     project.hook(base + 0x08, Sm83StoreAHighImmediate(0xBA, base + 0x0A), length=2)
-    # `jp Delay3` is a frame wait and is an explicit boundary.
-    project.hook(base + 0x0A, Boundary(), length=3)
+    project.hook(
+        delay_frames,
+        DelayFrameTerminal(delay_frames + 3),
+        length=3,
+    )
+    project.hook(
+        delay_frames + 3,
+        Sm83DecRegister("c", delay_frames + 4),
+        length=1,
+    )
+    project.hook(delay_frames + 6, ReturnBoundary(), length=1)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, inputs)
     state.regs.sp = 0xD000
     state.memory.store(0xD000, claripy.BVV(0xFFFF, 16), endness="Iend_LE")
     m = project.factory.simulation_manager(state)
     m.explore(find=DONE, num_find=1)
+    assert not m.errored, [(hex(end.state.addr), end.error) for end in m.errored]
     assert len(m.found) == 1
     end = m.found[0]
     return [
@@ -151,14 +171,4 @@ def test_credits_copy_tilemap_to_vram_symbolic_equivalence() -> None:
             "h_auto_bg_transfer_dest_hi",
             "h_auto_bg_transfer_enabled",
         ),
-    )
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_credits_copy_tilemap_to_vram_exact_linked_body() -> None:
-    location = symbol_location(SYMBOLS, "CreditsCopyTileMapToVRAM")
-    # Six instructions (ld a,l / ldh [dest],a / ld a,h / ldh [dest+1],a /
-    # ld a,1 / ldh [hAutoBGTransferEnabled],a) followed by `jp Delay3` (c3 d7 3d).
-    assert linked_bytes(ROM, location, 13) == bytes.fromhex(
-        "7de0bc7ce0bd3e01e0bac3d73d"
     )

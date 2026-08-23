@@ -3,8 +3,7 @@
 /* Port of CreditsCopyTileMapToVRAM in engine/movie/credits.asm.
  *
  * Sets the auto-BG-transfer destination to the caller-supplied HL pointer and
- * enables the auto BG transfer, then transfers to Delay3 (a frame wait) which
- * is an explicit boundary. The routine body is:
+ * enables the auto BG transfer, then executes the Delay3 tail. The body is:
  *
  *   ld a, l
  *   ldh [hAutoBGTransferDest], a
@@ -14,12 +13,13 @@
  *   ldh [hAutoBGTransferEnabled], a
  *   jp Delay3
  *
- * Only A and the three HRAM bytes are observable effects; H and L are
- * preserved and the final F is cleared (SM83 `ld a, r` clears Z/N/H/C).
+ * H and L remain intact while Delay3 supplies the final A/F/C state.
  */
 
 #define H_AUTO_BG_TRANSFER_DEST 0xffbcu
 #define H_AUTO_BG_TRANSFER_ENABLED 0xffbau
+
+void port_delay3(struct cpu_register_state *state, port_u8 *memory);
 
 __attribute__((noinline, used)) void
 port_credits_copy_tilemap_to_vram(struct cpu_register_state *state,
@@ -36,4 +36,5 @@ port_credits_copy_tilemap_to_vram(struct cpu_register_state *state,
 	state->a = 1;
 	state->f = 0;
 	memory[H_AUTO_BG_TRANSFER_ENABLED] = 1;
+	port_delay3(state, memory);
 }

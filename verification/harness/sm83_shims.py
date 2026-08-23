@@ -575,6 +575,7 @@ class Sm83LoadAFromImmediate(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
         self.state.regs.a = self.state.memory.load(self._immediate_address, 1)
         self.state.regs.f = claripy.BVV(0, 8)
+        self.jump(self._next_address)
 
 
 class Sm83LoadAFromRegister(angr.SimProcedure):
