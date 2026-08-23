@@ -20941,6 +20941,20 @@ proof_domain = "all register/flag/wOnSGB/rBGP inputs across both SGB and non-SGB
 decoder = "the exact 5-byte function entry and exact 11-byte shared SetAnimationBGPalette tail are checked inside the angr path-equivalence proof; native C selects B or C (both $90) on the exact wOnSGB branch, retaining the branch-dependent SM83 AND flags and palette write"
 
 [[function]]
+assembly_symbol = "SetAnimationBGPalette"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_set_animation_bg_palette"
+c_source = "verification/ports/set_animation_bg_palette.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wOnSGB",
+    "rBGP",
+]
+proof_domain = "all register/flag/wOnSGB/rBGP inputs and arbitrary B/C palette values across both selection paths"
+decoder = "the exact 11-byte linked body is checked inside the angr path-equivalence proof; native C performs the absolute wOnSGB load, exact SM83 AND A flags, B/C selection, and high-memory rBGP write"
+
+[[function]]
 assembly_symbol = "AnimationUnusedPalette1"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_unused_palette1_player"
