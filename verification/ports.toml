@@ -26855,3 +26855,23 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the proven DelayFrames contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact linked body checked; the tail composes the real DelayFrames port in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "ItemUseOaksParcel"
+assembly_source = "engine/items/item_effects.asm"
+c_symbol = "port_item_use_oaks_parcel"
+c_source = "verification/ports/item_use_oaks_parcel.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "ItemUseNotYoursToUse tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs with the proven ItemUseNotYoursToUse contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact linked body checked; the tail composes the real ItemUseNotYoursToUse port in one angr path-equivalence test"
