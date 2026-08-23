@@ -27302,3 +27302,27 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial rSB / hSerialReceiveData / rSC / control / wait bytes, with both proven callee contracts applied as arbitrary matching transitions at their boundaries"
 decoder = "exact 6-byte linked body checked (call Serial_TryEstablishingExternallyClockedConnection; jp EnableAutoTextBoxDrawing); both callees compose through explicit state-struct bridges in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "PlayTrainerMusic"
+assembly_source = "home/trainers.asm"
+c_symbol = "port_play_trainer_music"
+c_source = "verification/ports/play_trainer_music.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wAudioFadeOutControl",
+    "wAudioROMBank",
+    "wAudioSavedROMBank",
+    "wNewSoundID",
+    "both PlaySound call-site input snapshots",
+]
+proof_domain = "symbolic wEngagedTrainerClass and wGymLeaderNo over seven concrete (class, gym) scenarios covering the three rival early rets, the gym-leader ret nz, both ROM-list hits, and the male default; each PlaySound invocation composes the proven PlaySound contract as an arbitrary matching transition at its call site"
+decoder = "exact 76-byte linked body checked including both list scans with per-step cp $ff / cp b flag emulation (N/Z/H/C), LDI pointer advancement, and the tail jp PlaySound; ROM lists byte-verified; native C calls the real port_play_sound twice through an explicit state-struct bridge in one angr path-equivalence test"
