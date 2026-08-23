@@ -20913,6 +20913,20 @@ proof_domain = "all register/flag/wOnSGB/rBGP inputs across both SGB and non-SGB
 decoder = "the exact 5-byte function entry and exact 11-byte shared SetAnimationBGPalette tail are checked inside the angr path-equivalence proof; native C selects B=$f9 when wOnSGB is zero and C=$f4 otherwise, with exact SM83 AND flags and palette write"
 
 [[function]]
+assembly_symbol = "AnimationResetScreenPalette"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_reset_screen_palette"
+c_source = "verification/ports/animation_reset_screen_palette.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wOnSGB",
+    "rBGP",
+]
+proof_domain = "all register/flag/wOnSGB/rBGP inputs across both SGB and non-SGB palette-selection paths"
+decoder = "the exact 5-byte function entry and exact 11-byte shared SetAnimationBGPalette tail are checked inside the angr path-equivalence proof; native C selects B or C (both $e4) on the exact wOnSGB branch, retaining the branch-dependent SM83 AND flags and palette write"
+
+[[function]]
 assembly_symbol = "AnimationUnusedPalette1"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_unused_palette1_player"
