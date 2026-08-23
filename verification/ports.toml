@@ -24368,12 +24368,15 @@ assembly_symbol = "ChangeBGPalColor0_4Frames"
 assembly_source = "engine/gfx/screen_effects.asm"
 c_symbol = "port_change_bg_pal_color0_4frames_private"
 c_source = "verification/ports/change_bg_pal_color0_4frames_private.c"
-status = "partial"
+status = "complete"
 observables = [
     "all registers and flags",
+    "wPredefHL through wPredefBC+1",
+    "rBGP",
+    "GetPredefRegisters and DelayFrames call inputs",
 ]
-proof_domain = "all register/flag inputs through GetPredefRegisters continuation boundary"
-decoder = "GetPredefRegisters call boundary is modeled exactly; background palette mutation, four-frame delay, and palette restoration remain beyond the explicit boundary"
+proof_domain = "all register/flag, predef-register, and rBGP inputs, with arbitrary matching transitions from the independently proved GetPredefRegisters and DelayFrames callees"
+decoder = "complete function: real GetPredefRegisters and DelayFrames calls, background color-0 mutation, four-frame delay setup, and palette restoration are modeled exactly"
 
 [[function]]
 assembly_symbol = "PredefShakeScreenVertically"
