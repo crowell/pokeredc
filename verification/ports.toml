@@ -24495,3 +24495,18 @@ observables = [
 ]
 proof_domain = "all register/flag and status-flag inputs through LinkMenuEmptyText PrintText dispatch"
 decoder = "XOR-A clear, delay-flag store, link-connected bit set, and LinkMenuEmptyText HL load are modeled exactly; textbox drawing, menu input, serial exchange, and continuation paths remain beyond the explicit boundary"
+
+[[function]]
+assembly_symbol = "GBPalWhiteOutWithDelay3"
+assembly_source = "home/palettes.asm"
+c_symbol = "port_gb_pal_white_out_with_delay3"
+c_source = "verification/ports/gb_pal_white_out_with_delay3.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rBGP",
+    "rOBP0",
+    "rOBP1",
+]
+proof_domain = "all register/flag and palette inputs through the compositional DelayFrames tail boundary"
+decoder = "real call/fallthrough control flow executes; GBPalWhiteOut's three SM83 high-memory stores are shimmed, and both native callees are invoked explicitly before the proven DelayFrames continuation"
