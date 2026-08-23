@@ -26655,3 +26655,23 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial wAutoTextBoxDrawingControl / wDoNotWaitForButtonPressAfterDisplayingText bytes, with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail-call boundary"
 decoder = "exact 3-byte linked body checked (jp EnableAutoTextBoxDrawing); the tail composes the real port_enable_auto_text_box_drawing through an explicit state-struct bridge in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "OaksLabMonChoiceEnd"
+assembly_source = "scripts/OaksLab.asm"
+c_symbol = "port_oaks_lab_mon_choice_end"
+c_source = "verification/ports/oaks_lab_mon_choice_end.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "TextScriptEnd hand-off registers",
+]
+proof_domain = "all register/flag inputs with the proven TextScriptEnd contract applied as an arbitrary matching transition at the tail-call boundary"
+decoder = "exact 3-byte linked body checked (jp TextScriptEnd); the tail composes the real port_text_script_end in one angr path-equivalence test"
