@@ -27326,3 +27326,24 @@ observables = [
 ]
 proof_domain = "symbolic wEngagedTrainerClass and wGymLeaderNo over seven concrete (class, gym) scenarios covering the three rival early rets, the gym-leader ret nz, both ROM-list hits, and the male default; each PlaySound invocation composes the proven PlaySound contract as an arbitrary matching transition at its call site"
 decoder = "exact 76-byte linked body checked including both list scans with per-step cp $ff / cp b flag emulation (N/Z/H/C), LDI pointer advancement, and the tail jp PlaySound; ROM lists byte-verified; native C calls the real port_play_sound twice through an explicit state-struct bridge in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "Route23PrintOhThatsTheBadgeTextScript"
+assembly_source = "scripts/Route23.asm"
+c_symbol = "port_route23_print_oh_thats_the_badge_text_script"
+c_source = "verification/ports/route23_print_oh_thats_the_badge_text_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "PrintText call input",
+    "caller memory marker",
+]
+proof_domain = "all register/flag and marker-memory inputs with an arbitrary matching transition from the composed PrintText callee"
+decoder = "exact 6-byte linked body checked (ld hl,Route23OhThatIsTheBadgeText; jp PrintText); the tail composes the real port_print_text in one angr path-equivalence test"
