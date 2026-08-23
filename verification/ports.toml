@@ -27412,3 +27412,43 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial wFrequencyModifier / wTempoModifier bytes, with the proven PlaySound contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact 11-byte linked body checked (xor a; ld [wFrequencyModifier],a; ld [wTempoModifier],a; jp PlaySound); EA absolute stores run via audited instruction shims and the tail composes the real port_play_sound in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "AnimationFlashEnemyMonPic"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_flash_enemy_mon_pic"
+c_source = "verification/ports/animation_flash_enemy_mon_pic.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "CallWithTurnFlipped tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs with the proven CallWithTurnFlipped contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 6-byte linked body checked (ld hl,5389; jp CallWithTurnFlipped); the tail composes the real port_call_with_turn_flipped in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "AnimationShowEnemyMonPic"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_show_enemy_mon_pic"
+c_source = "verification/ports/animation_show_enemy_mon_pic.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "CallWithTurnFlipped tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs with the proven CallWithTurnFlipped contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 6-byte linked body checked (ld hl,539e; jp CallWithTurnFlipped); the tail composes the real port_call_with_turn_flipped in one angr path-equivalence test"
