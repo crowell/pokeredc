@@ -20391,9 +20391,9 @@ decoder = "done label POP BC/DE/HL and RET body checked with an explicit stack r
 [[function]]
 assembly_symbol = "FlashScreenLongDelay"
 assembly_source = "engine/battle/animations.asm"
-c_symbol = "port_flash_screen_long_delay_counter3"
+c_symbol = "port_flash_screen_long_delay"
 c_source = "verification/ports/flash_screen_long_delay.c"
-status = "partial"
+status = "proven"
 observables = [
     "A",
     "F",
@@ -20405,8 +20405,8 @@ observables = [
     "L",
     "wFlashScreenLongCounter",
 ]
-proof_domain = "counter value 3, producing DelayFrames count C=2; DelayFrames is the explicit continuation boundary"
-decoder = "counter-three branch setup checked through an explicit terminal summary; timing implementation remains delegated to DelayFrames"
+proof_domain = "all register/flag inputs and every 8-bit wFlashScreenLongCounter value across the 4-, 2-, and 1-frame paths"
+decoder = "the complete linked compare/branch body executes under angr; the selected frame count is explicit proof state and the native port executes the separately proven DelayFrames loop"
 
 [[function]]
 assembly_symbol = "AnimationFlashScreen"

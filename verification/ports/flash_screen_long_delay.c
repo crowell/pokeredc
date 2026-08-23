@@ -1,13 +1,27 @@
 #include "port_state.h"
 
-#define W_FLASH_SCREEN_LONG_COUNTER 0xd08a
+void port_delay_frames(struct delay_frame_state *state,
+	const port_u8 *observations);
 
-/* Port of FlashScreenLongDelay when the long-screen counter is 3. */
+/* Port of FlashScreenLongDelay in engine/battle/animations.asm. */
 __attribute__((noinline, used)) void
-port_flash_screen_long_delay_counter3(struct cpu_register_state *state, port_u8 *memory)
+port_flash_screen_long_delay(struct flash_screen_long_delay_state *state)
 {
-	memory[W_FLASH_SCREEN_LONG_COUNTER] = 3;
-	state->a = 3;
-	state->c = 2;
-	state->f = 0;
+	static const port_u8 acknowledged_vblank[] = { 0 };
+	struct delay_frame_state delay;
+
+	state->registers.a = state->counter;
+	if (state->registers.a == 4)
+		state->registers.c = 4;
+	else if (state->registers.a == 3)
+		state->registers.c = 2;
+	else
+		state->registers.c = 1;
+	state->frames_waited = state->registers.c;
+
+	delay.registers = state->registers;
+	delay.vblank_occurred = 0;
+	delay.observed_vblank = 0;
+	port_delay_frames(&delay, acknowledged_vblank);
+	state->registers = delay.registers;
 }
