@@ -7304,6 +7304,19 @@ observables = [
 proof_domain = "all register/flag inputs and every match/not-found position in an eight-slot symbolic bag terminated by $ff"
 decoder = "the exact 8-byte wrapper executes under angr and directly composes the real linked GetQuantityOfItemInBag scan; the scan recurrence and final LD A,B/AND A execute pathwise, while native C calls the real proven inventory function"
 
+[[function]]
+assembly_symbol = "SetSpriteMovementBytesToFF"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_set_sprite_movement_bytes_to_ff"
+c_source = "verification/ports/set_sprite_movement_bytes_to_ff.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hSpriteIndex and every possible byte addressed in wSpriteStateData2 and wMapSpriteData",
+]
+proof_domain = "all register/flag inputs, all 256 sprite indices, and arbitrary initial bytes across both complete possible destination regions"
+decoder = "the exact 14-byte wrapper and both real linked pointer callees execute under angr, including nested PUSH/POP and both symbolic indexed writes; native C calls both proven pointer ports and restores the wrapper-saved HL"
+
 
 
 
