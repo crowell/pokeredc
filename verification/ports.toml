@@ -15266,6 +15266,20 @@ observables = [
 proof_domain = "all register/flag/global inputs, all movement directions and animation phases, arbitrary proven callee transitions, and an inductive per-sprite recurrence for every 8-bit sprite count"
 decoder = "the exact 318-byte body is checked inside the path-equivalence proof; native production C executes every control-flow branch, invokes all real directional/map-view/redraw functions, updates scrolling, and runs the full sprite-shift loop with page-local low-byte stride semantics"
 
+[[function]]
+assembly_symbol = "DoBikeSpeedup"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_do_bike_speedup"
+c_source = "verification/ports/do_bike_speedup.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "all AdvancePlayerSprite state",
+    "exact AdvancePlayerSprite call state and memory identity",
+]
+proof_domain = "all register/flag/movement-script/map/joypad/AdvancePlayerSprite inputs, both early returns, both call paths, and an arbitrary proven AdvancePlayerSprite transition; native production C invokes real port_advance_player_sprite"
+decoder = "the exact 20-byte body is checked inside the angr path-equivalence proof; NPC movement suppresses speedup, Route 17 directional input suppresses the extra step, and all other paths tail-call the complete native AdvancePlayerSprite port"
+
 
 
 

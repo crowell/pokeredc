@@ -2106,6 +2106,13 @@ struct advance_player_sprite_state {
 	port_u8 sprite_write_x_low;
 };
 
+struct do_bike_speedup_state {
+	struct advance_player_sprite_state advance;
+	port_u8 npc_movement_script_pointer_table_num;
+	port_u8 cur_map;
+	port_u8 joy_held;
+};
+
 struct replace_tree_block_state {
 	struct cpu_register_state registers;
 	port_u8 map_width;
@@ -3032,6 +3039,7 @@ _Static_assert(sizeof(struct interrupt_return_state) == 13, "unexpected ABI padd
 _Static_assert(sizeof(struct draw_tile_block_state) == 28, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_current_map_view_state) == 29, "unexpected ABI padding");
 _Static_assert(sizeof(struct advance_player_sprite_state) == 52, "unexpected ABI padding");
+_Static_assert(sizeof(struct do_bike_speedup_state) == 55, "unexpected ABI padding");
 _Static_assert(sizeof(struct replace_tree_block_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct transition_copy_tiles2_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct badge_stat_boost_state) == 12, "unexpected ABI padding");
