@@ -14648,6 +14648,20 @@ observables = [
 proof_domain = "all register/flag/predef/subtraction-scratch/memory inputs and arbitrary proven sequential GetPredefRegisters and complete SubBCD transitions; native production C invokes both real functions"
 decoder = "the exact 26-byte body is checked inside the angr path-equivalence proof; the predef-register restore composes with the real full SubBCD loop, including ordered call state, final scratch/register propagation, and shared memory identity"
 
+[[function]]
+assembly_symbol = "AddBCD"
+assembly_source = "engine/math/bcd.asm"
+c_symbol = "port_add_bcd"
+c_source = "verification/ports/add_bcd.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "every addend read",
+    "every BCD sum or overflow-saturation write",
+]
+proof_domain = "all register/flag/read/write inputs and every C/B byte count including zero's 256 iterations; initialization, exhaustive addition, and saturation-fill transitions compose inductively"
+decoder = "the exact 22-byte body is checked inside each angr path-equivalence proof; carry-clear initialization, ADC/DAA semantics, reverse pointer movement, DEC loop flags, overflow rewind, 99 saturation fill, and all continuation outcomes are modeled explicitly"
+
 
 
 
