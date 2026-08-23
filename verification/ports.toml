@@ -13571,6 +13571,20 @@ observables = [
 proof_domain = "all register/flag/index/array-byte inputs and every 16-bit HL value including wrap; exhaustive initialization and one-pair transition equivalence compose inductively for every non-aliased terminated coordinate array length"
 decoder = "exact 29-byte body checked; XOR/store initialization, HLI reads, CP/INC/AND/SCF flags, saved HL around index increment, all three loop outcomes, and pointer progression modeled explicitly"
 
+[[function]]
+assembly_symbol = "CheckBoulderCoords"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_check_boulder_coords"
+c_source = "verification/ports/check_boulder_coords.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "hSpriteIndex and all 257 potentially addressed sprite-state bytes",
+    "exact CheckCoords call registers, wCoordIndex, return decision, and an arbitrary proven CheckCoords memory post-state",
+]
+proof_domain = "all register/flag/global inputs, every 8-bit sprite index, all sprite-state bytes spanning $c204..$c304, and an arbitrary proven CheckCoords transition"
+decoder = "the exact 24-byte wrapper executes under angr; the proof covers SWAP, indexed 16-bit sprite-state addressing, both SUB $04 operations and their flags, saved-HL restoration, and the exact tail-call contract, while production C directly calls port_check_coords"
+
 
 
 

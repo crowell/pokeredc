@@ -1219,6 +1219,11 @@ struct check_coords_state {
 	port_u8 fetched_x;
 };
 
+struct check_boulder_coords_state {
+	struct check_coords_state check;
+	port_u8 sprite_index;
+};
+
 struct safari_zone_check_state {
 	struct cpu_register_state registers;
 	port_u8 event_flags;
@@ -2667,6 +2672,7 @@ _Static_assert(sizeof(struct disable_lcd_state) == 11, "unexpected ABI padding")
 _Static_assert(sizeof(struct print_level_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct print_status_condition_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct check_coords_state) == 11, "unexpected ABI padding");
+_Static_assert(sizeof(struct check_boulder_coords_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct safari_zone_check_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct mansion_block_loader_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct vermilion_ss_anne_state) == 10, "unexpected ABI padding");
