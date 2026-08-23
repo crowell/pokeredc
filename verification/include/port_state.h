@@ -1586,6 +1586,11 @@ struct flash_screen_long_delay_state {
 	port_u8 frames_waited;
 };
 
+struct trade_delay_state {
+	struct cpu_register_state registers;
+	port_u8 frames_waited;
+};
+
 struct connection_tilemap_state {
 	struct cpu_register_state registers;
 	port_u8 strip_width;
@@ -2666,6 +2671,7 @@ _Static_assert(sizeof(struct slot_wheel_match_state) == 14, "unexpected ABI padd
 _Static_assert(sizeof(struct add_inventory_state) == 28, "unexpected ABI padding");
 _Static_assert(sizeof(struct delay_frame_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct flash_screen_long_delay_state) == 10, "unexpected ABI padding");
+_Static_assert(sizeof(struct trade_delay_state) == 9, "unexpected ABI padding");
 _Static_assert(sizeof(struct connection_tilemap_state) == 18, "unexpected ABI padding");
 _Static_assert(sizeof(struct boulder_sprite_collision_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct sprite_in_front_state) == 17, "unexpected ABI padding");
