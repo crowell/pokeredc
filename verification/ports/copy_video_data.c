@@ -17,13 +17,27 @@
 #define H_VBLANK_COPY_DEST 0xFFC9u
 #define H_VBLANK_COPY_SIZE 0xFFC6u
 
-#define DELAYFRAME_ADDR 0x3739u
+void port_delay_frame(struct delay_frame_state *state,
+	const port_u8 *observations);
 
+static void
+copy_video_data_delay_frame(struct cpu_register_state *state)
+{
+	static const port_u8 acknowledged_vblank[] = { 0 };
+	struct delay_frame_state delay;
+
+	delay.registers = *state;
+	delay.vblank_occurred = 0;
+	delay.observed_vblank = 0;
+	port_delay_frame(&delay, acknowledged_vblank);
+	*state = delay.registers;
+}
 
 __attribute__((noinline, used)) void
 port_copy_video_data(struct cpu_register_state *state, port_u8 *memory)
 {
-	(void)state;
+	port_u8 saved_a = state->a;
+	port_u8 saved_f = state->f;
 	port_u8 saved_auto = memory[H_AUTO_BG_TRANSFER_ENABLED];
 	port_u8 saved_bank = memory[H_LOADED_ROM_BANK];
 	memory[H_AUTO_BG_TRANSFER_ENABLED] = 0;
@@ -44,8 +58,7 @@ port_copy_video_data(struct cpu_register_state *state, port_u8 *memory)
 		/* Copy 8 tiles */
 		memory[0xFFC6] = 8;  /* hVBlankCopySize = 8 */
 
-		/* Wait for next VBlank */
-		/* DelayFrame is the explicit no-op timing boundary. */
+		copy_video_data_delay_frame(state);
 
 		/* Decrement remaining tile count */
 		state->c -= 8;
@@ -53,8 +66,11 @@ port_copy_video_data(struct cpu_register_state *state, port_u8 *memory)
 
 	/* Copy remaining tiles (less than 8), including zero. */
 	memory[0xFFC6] = state->c;
+	copy_video_data_delay_frame(state);
 
 	memory[H_LOADED_ROM_BANK] = saved_bank;
 	memory[R_ROMB] = saved_bank;
 	memory[H_AUTO_BG_TRANSFER_ENABLED] = saved_auto;
+	state->a = saved_a;
+	state->f = saved_f;
 }

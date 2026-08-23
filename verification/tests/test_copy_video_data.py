@@ -10,6 +10,7 @@ from archinfo import ArchPcode
 
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
+    REGISTERS,
     assembly_registers,
     native_registers,
     set_assembly_registers,
@@ -36,6 +37,14 @@ COPY_SIZE = 0xFFC6
 
 @dataclass(frozen=True)
 class Endpoint:
+    a: claripy.ast.BV
+    f: claripy.ast.BV
+    b: claripy.ast.BV
+    c: claripy.ast.BV
+    d: claripy.ast.BV
+    e: claripy.ast.BV
+    h: claripy.ast.BV
+    l: claripy.ast.BV
     memory: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
@@ -53,6 +62,7 @@ class CopyVideoSummary(angr.SimProcedure):
         self.state.globals["copy_source_high"] = self.state.regs.d
         self.state.globals["copy_dest"] = self.state.regs.l
         self.state.globals["copy_dest_high"] = self.state.regs.h
+        self.state.regs.c &= 7
         self.state.globals["copy_size"] = self.state.regs.c
         self.jump(DONE)
 
@@ -95,12 +105,12 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     for address, field in zip(MEMORY_ADDRESSES, MEMORY_FIELDS):
         state.memory.store(address, values[field])
         state.globals[field] = values[field]
-    state.add_constraints(values["c"] < 8)
     manager = project.factory.simulation_manager(state)
     manager.explore(find=DONE, num_find=1)
     assert not manager.errored
     return [
         Endpoint(
+            **assembly_registers(end),
             memory=claripy.Concat(*(end.globals[field] for field in MEMORY_FIELDS)),
             constraints=tuple(end.solver.constraints),
         )
@@ -116,12 +126,12 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     store_native_registers(state, NATIVE_STATE, values)
     for address, field in zip(MEMORY_ADDRESSES, MEMORY_FIELDS):
         state.memory.store(NATIVE_MEMORY + address, values[field])
-    state.add_constraints(values["c"] < 8)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
     return [
         Endpoint(
+            **native_registers(end, NATIVE_STATE),
             memory=claripy.Concat(*(end.memory.load(NATIVE_MEMORY + address, 1) for address in MEMORY_ADDRESSES)),
             constraints=tuple(end.solver.constraints),
         )
@@ -131,6 +141,8 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_copy_video_data_small_count_pathwise_equivalence() -> None:
-    values = _inputs("copy_video_small")
-    assert_pathwise_equivalent(_assembly(values), _native(values), ("memory",))
+def test_copy_video_data_all_counts_pathwise_equivalence() -> None:
+    values = _inputs("copy_video_all_counts")
+    assert_pathwise_equivalent(
+        _assembly(values), _native(values), (*REGISTERS, "memory")
+    )
