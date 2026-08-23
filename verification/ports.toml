@@ -19645,6 +19645,19 @@ proof_domain = "all register/flag inputs and an arbitrary proven CopyVideoData r
 decoder = "the exact 12-byte tail wrapper executes under angr and proves DE=$5ea0, HL=$9620, BC=$041e at the callee boundary; native C calls real port_copy_video_data and the proof composes its arbitrary proven post-state"
 
 [[function]]
+assembly_symbol = "LoadHpBarAndStatusTilePatterns"
+assembly_source = "home/load_font.asm"
+c_symbol = "port_load_hp_bar_and_status_tile_patterns"
+c_source = "verification/ports/load_hp_bar_and_status_tile_patterns.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rLCDC, bank state, selected transfer kind, exact callee registers, and an arbitrary proven transfer-memory post-state",
+]
+proof_domain = "all register/flag/LCDC/bank inputs and arbitrary proven FarCopyData2 and LoadHpBarAndStatusTilePatterns.on transitions; includes both LCD-disabled and LCD-enabled paths"
+decoder = "the exact 32-byte dispatcher executes under angr with SM83 LCD load/BIT branching; the off path proves HL=$5ea0, DE=$9620, BC=$01e0, A=$04 before real FarCopyData2, while the on path composes the proven fixed CopyVideoData wrapper"
+
+[[function]]
 assembly_symbol = "InitBattleVariables.notSafariBattle"
 assembly_source = "engine/battle/init_battle_variables.asm"
 c_symbol = "port_init_battle_variables_not_safari_battle"
