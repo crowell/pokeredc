@@ -79,6 +79,18 @@ struct close_link_connection_state {
 	port_u8 serial_control;
 };
 
+struct cable_club_text_box_border_state {
+	struct cpu_register_state registers;
+	port_u8 saved_h;
+	port_u8 saved_l;
+	port_u8 written0;
+	port_u8 written1;
+	port_u8 write0_h;
+	port_u8 write0_l;
+	port_u8 write1_h;
+	port_u8 write1_l;
+};
+
 struct memory_transfer_state {
 	struct cpu_register_state registers;
 	port_u8 memory[3];
@@ -2986,6 +2998,7 @@ _Static_assert(sizeof(struct dma_code_copy_state) == 18, "unexpected ABI padding
 _Static_assert(sizeof(struct dma_routine_state) == 9, "unexpected ABI padding");
 _Static_assert(sizeof(struct selected_move_offset_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct close_link_connection_state) == 12, "unexpected ABI padding");
+_Static_assert(sizeof(struct cable_club_text_box_border_state) == 16, "unexpected ABI padding");
 _Static_assert(sizeof(struct read_joypad_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct disable_lcd_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct print_level_state) == 12, "unexpected ABI padding");

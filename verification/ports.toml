@@ -14691,6 +14691,20 @@ observables = [
 proof_domain = "all register/flag/serial/memory inputs and an arbitrary proven complete Delay3 transition; native production C invokes real port_delay3"
 decoder = "the exact 19-byte body is checked inside the angr path-equivalence proof; the complete three-frame delay composes with the four ordered HRAM/I/O writes, XOR flags, and final register state"
 
+[[function]]
+assembly_symbol = "CableClub_TextBoxBorder"
+assembly_source = "engine/link/cable_club.asm"
+c_symbol = "port_cable_club_text_box_border"
+c_source = "verification/ports/cable_club_text_box_border.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "every corner and vertical-edge write address and value",
+    "every CableClub_DrawHorizontalLine call and memory transition",
+]
+proof_domain = "all register/flag/pointer/height/width/write/memory inputs and arbitrary proven horizontal-line transitions; exact top, exhaustive one-row recurrence, and bottom transitions compose for every 8-bit height including zero's 256 rows"
+decoder = "the exact 45-byte body is checked inside each angr path-equivalence proof; native production C performs all direct tile writes, invokes the real complete horizontal-line loop for top/every middle/bottom row, preserves pushed HL, advances by 20, and executes the full DEC-B loop"
+
 
 
 
