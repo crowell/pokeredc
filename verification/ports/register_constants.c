@@ -59,14 +59,61 @@ port_surfing_attempt_failed(struct cpu_register_state *state)
 	set_hl(state, 0x65de);
 }
 
-/* Ports of the four fade entries through their shared-loop boundaries. */
+void port_delay_frames(struct delay_frame_state *state,
+	const port_u8 *observations);
+
+static __attribute__((noinline)) void
+fade_delay_frames(struct cpu_register_state *state, port_u8 count)
+{
+	static const port_u8 acknowledged_vblank[] = { 0 };
+	struct delay_frame_state delay;
+
+	state->c = count;
+	delay.registers = *state;
+	delay.vblank_occurred = 0;
+	delay.observed_vblank = 0;
+	port_delay_frames(&delay, acknowledged_vblank);
+	*state = delay.registers;
+}
+
+static __attribute__((noinline)) port_u8
+fade_dec_b(struct cpu_register_state *state)
+{
+	port_u8 before = state->b;
+	port_u8 result = (port_u8)(before - 1);
+	port_u8 flags = (port_u8)((state->f & PORT_FLAG_C) | PORT_FLAG_N);
+
+	if (result == 0)
+		flags |= PORT_FLAG_Z;
+	if ((before & 0x0f) == 0)
+		flags |= PORT_FLAG_H;
+	state->b = result;
+	state->f = flags;
+	return result != 0;
+}
+
+/* Complete port of GBFadeInFromBlack in home/fade.asm. */
 __attribute__((noinline, used)) void
-port_gb_fade_in_from_black(struct cpu_register_state *state)
+port_gb_fade_in_from_black(struct cpu_register_state *state, port_u8 *memory)
 {
 	set_hl(state, 0x210d);
 	state->b = 4;
+	do {
+		port_u16 hl = ((port_u16)state->h << 8) | state->l;
+
+		state->a = memory[hl++];
+		memory[0xff47] = state->a;
+		state->a = memory[hl++];
+		memory[0xff48] = state->a;
+		state->a = memory[hl++];
+		memory[0xff49] = state->a;
+		state->h = (port_u8)(hl >> 8);
+		state->l = (port_u8)hl;
+		fade_delay_frames(state, 8);
+	} while (fade_dec_b(state));
 }
 
+/* Remaining fade entries currently stop at their shared-loop boundaries. */
 __attribute__((noinline, used)) void
 port_gb_fade_out_to_white(struct cpu_register_state *state)
 {
