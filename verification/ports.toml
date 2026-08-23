@@ -24400,12 +24400,16 @@ assembly_symbol = "PredefShakeScreenHorizontally"
 assembly_source = "engine/gfx/screen_effects.asm"
 c_symbol = "port_predef_shake_screen_horizontally_private"
 c_source = "verification/ports/predef_shake_screen_horizontally_private.c"
-status = "partial"
+status = "complete"
 observables = [
     "all registers and flags",
+    "wPredefHL through wPredefBC+1",
+    "hMutateWX",
+    "rWX",
+    "GetPredefRegisters, DelayFrames, and horizontal-loop call inputs",
 ]
-proof_domain = "all register/flag inputs through horizontal-shake loop setup"
-decoder = "GetPredefRegisters continuation boundary and XOR-A horizontal-shake initialization are modeled exactly; WX mutation, repeated delays, screen movement, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, predef-register, hMutateWX, and rWX inputs; the counted loop is proved inductively for every B value through its arbitrary-state recurrence"
+decoder = "complete function: real GetPredefRegisters and DelayFrames calls, signed MutateWX clamping, both mutation calls and the intervening delay per iteration, SM83 decrement recurrence, and final WX restoration are modeled exactly"
 
 [[function]]
 assembly_symbol = "ItemUseRepelCommon"
