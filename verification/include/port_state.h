@@ -1602,6 +1602,29 @@ struct is_key_item_wrapper_state {
 	port_u8 mapper_bank;
 };
 
+struct give_pokemon_state {
+	struct cpu_register_state registers;
+	port_u8 party_count;
+	port_u8 box_count;
+	port_u8 added_to_party;
+	port_u8 do_not_wait;
+	port_u8 enemy_battle_status3;
+	port_u8 enemy_mon_species2;
+	port_u8 current_box_num;
+	port_u8 cur_party_species;
+	port_u8 string_buffer[3];
+	port_u8 add_party_mon_called;
+	port_u8 send_to_box_called;
+};
+
+struct give_pokemon_wrapper_state {
+	struct give_pokemon_state give;
+	port_u8 cur_enemy_level;
+	port_u8 mon_data_location;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
 struct differential_decode_state {
 	struct cpu_register_state registers;
 	port_u8 flipped;
@@ -2777,6 +2800,8 @@ _Static_assert(sizeof(struct sub_bcd_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_state) == 18, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_wrapper_state) == 20, "unexpected ABI padding");
 _Static_assert(sizeof(struct is_key_item_wrapper_state) == 10, "unexpected ABI padding");
+_Static_assert(sizeof(struct give_pokemon_state) == 21, "unexpected ABI padding");
+_Static_assert(sizeof(struct give_pokemon_wrapper_state) == 25, "unexpected ABI padding");
 _Static_assert(sizeof(struct differential_decode_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct write_sprite_bits_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct remove_inventory_state) == 23, "unexpected ABI padding");

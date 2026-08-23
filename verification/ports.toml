@@ -17254,6 +17254,21 @@ observables = [
 proof_domain = "all symbolic registers, party/box counts, current box number, current species, and all three mutually exclusive paths: party room, box full, and box insertion"
 decoder = "PC-portable C contract for _GivePokemon: party room sets added_to_party/do_not_wait and records AddPartyMon; box full returns with carry clear; otherwise records SendNewMonToBox, copies the current species, and formats single- or double-digit box text. The angr test proves all registers and explicit state against three assembly paths and retains the exact 71-byte linked body."
 
+[[function]]
+assembly_symbol = "GivePokemon"
+assembly_source = "home/give.asm"
+c_symbol = "port_give_pokemon_wrapper"
+c_source = "verification/ports/give_pokemon_wrapper.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "species, level, party-data selector, and all _GivePokemon state",
+    "loaded and mapper ROM banks",
+    "exact _GivePokemon callback-entry registers and globals",
+]
+proof_domain = "all register/flag, give-pokemon-state, level/location, and bank inputs plus an arbitrary proven _GivePokemon transition; native production C invokes real port_give_pokemon"
+decoder = "the exact 20-byte wrapper executes under angr; species/level stores, XOR flags, farjp target HL=$7da5 and bank B=$13, Bankswitch callback BC=$35e4, arbitrary callback effects, and the unusual final A/B/C/bank state are modeled compositionally"
+
 
 
 

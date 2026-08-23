@@ -1,20 +1,5 @@
 #include "port_state.h"
 
-struct give_pokemon_state {
-    struct cpu_register_state registers;
-    port_u8 party_count;
-    port_u8 box_count;
-    port_u8 added_to_party;
-    port_u8 do_not_wait;
-    port_u8 enemy_battle_status3;
-    port_u8 enemy_mon_species2;
-    port_u8 current_box_num;
-    port_u8 cur_party_species;
-    port_u8 string_buffer[3];
-    port_u8 add_party_mon_called;
-    port_u8 send_to_box_called;
-};
-
 #define PARTY_LENGTH 6u
 #define MONS_PER_BOX 20u
 
