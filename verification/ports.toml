@@ -25665,3 +25665,25 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and arbitrary initial wAutoTextBoxDrawingControl / wDoNotWaitForButtonPressAfterDisplayingText bytes, with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail-call boundary"
 decoder = "exact 3-byte linked body checked (jp EnableAutoTextBoxDrawing); the tail composes the real port_enable_auto_text_box_drawing through an explicit state-struct bridge in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "RedsHouse1F_Script"
+assembly_source = "scripts/RedsHouse1F_Script.asm"
+c_symbol = "port_reds_house1_f_script"
+c_source = "verification/ports/reds_house1_f_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wAutoTextBoxDrawingControl",
+    "wDoNotWaitForButtonPressAfterDisplayingText",
+    "EnableAutoTextBoxDrawing tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs and arbitrary initial wAutoTextBoxDrawingControl / wDoNotWaitForButtonPressAfterDisplayingText bytes, with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail-call boundary"
+decoder = "exact 3-byte linked body checked (jp EnableAutoTextBoxDrawing); the tail composes the real port_enable_auto_text_box_drawing through an explicit state-struct bridge in one angr path-equivalence test"
