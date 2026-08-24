@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cache
 from pathlib import Path
 
 import angr
@@ -10,6 +11,8 @@ from archinfo import ArchPcode
 
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
+    REGISTERS,
+    assembly_registers,
     native_registers,
     set_assembly_registers,
     store_native_registers,
@@ -18,25 +21,27 @@ from verification.harness.registers import (
 from verification.harness.rom import (
     linked_bytes,
     rom_window,
+    sm83_flags_to_z80,
     symbol_location,
-    z80_flags_to_sm83,
 )
+from verification.harness.sm83_shims import Sm83LoadAHighImmediate
 
 ROOT = Path(__file__).resolve().parents[2]
-NATIVE_ELF = ROOT / "verification/build/ports.elf"
+ELF = ROOT / "verification/build/ports.elf"
 ROM = ROOT / "pokered.gbc"
-SYMBOLS = ROOT / "pokered.sym"
+SYMS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
-DONE = 0xEFFF
-MEM_BASE = 0x300000
-MEM_SIZE = 0x10000
-R_DIV = 0xFF04
+STACK = 0xFF80
+RETURN = 0xFFFF
 H_RANDOM_ADD = 0xFFD3
 H_RANDOM_SUB = 0xFFD4
+RANDOM_UNDERSCORE_BANK = 0x04
+RANDOM_UNDERSCORE_ADDRESS = 0x7A8F
+EXPECTED = bytes.fromhex("e5d5c50604218f7acdd635f0d3c1d1e1c9")
 
 
 @dataclass(frozen=True)
-class E:
+class Endpoint:
     a: claripy.ast.BV
     f: claripy.ast.BV
     b: claripy.ast.BV
@@ -45,144 +50,254 @@ class E:
     e: claripy.ast.BV
     h: claripy.ast.BV
     l: claripy.ast.BV
-    h_random_add: claripy.ast.BV
-    h_random_sub: claripy.ast.BV
+    random_add: claripy.ast.BV
+    random_sub: claripy.ast.BV
+    div_first: claripy.ast.BV
+    div_second: claripy.ast.BV
+    loaded_bank: claripy.ast.BV
+    rom_bank: claripy.ast.BV
+    call: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class Random(angr.SimProcedure):
-    def __init__(self, n: int) -> None:
+def _random_transition(
+    registers: dict[str, claripy.ast.BV],
+    random_add: claripy.ast.BV,
+    random_sub: claripy.ast.BV,
+    div_first: claripy.ast.BV,
+    div_second: claripy.ast.BV,
+) -> tuple[dict[str, claripy.ast.BV], claripy.ast.BV, claripy.ast.BV]:
+    carry_in = registers["f"][4:4]
+    first_wide = (
+        claripy.ZeroExt(1, random_add)
+        + claripy.ZeroExt(1, div_first)
+        + claripy.ZeroExt(8, carry_in)
+    )
+    add_out = first_wide[7:0]
+    first_carry = first_wide[8:8]
+    borrow_amount = claripy.ZeroExt(1, div_second) + claripy.ZeroExt(
+        8, first_carry
+    )
+    sub_out = (claripy.ZeroExt(1, random_sub) - borrow_amount)[7:0]
+    half_borrow = claripy.ZeroExt(1, random_sub[3:0]) < (
+        claripy.ZeroExt(1, div_second[3:0]) + claripy.ZeroExt(4, first_carry)
+    )
+    borrow = claripy.ZeroExt(1, random_sub) < borrow_amount
+    flags = (
+        claripy.BVV(0x40, 8)
+        | claripy.If(sub_out == 0, claripy.BVV(0x80, 8), claripy.BVV(0, 8))
+        | claripy.If(half_borrow, claripy.BVV(0x20, 8), claripy.BVV(0, 8))
+        | claripy.If(borrow, claripy.BVV(0x10, 8), claripy.BVV(0, 8))
+    )
+    output = dict(registers)
+    output["a"] = sub_out
+    output["f"] = flags
+    output["b"] = div_second
+    return output, add_out, sub_out
+
+
+def _assembly_call_snapshot(state: angr.SimState) -> claripy.ast.BV:
+    registers = assembly_registers(state)
+    return claripy.Concat(
+        *(registers[name] for name in REGISTERS),
+        state.memory.load(H_RANDOM_ADD, 1),
+        state.memory.load(H_RANDOM_SUB, 1),
+        state.globals["div_first"],
+        state.globals["div_second"],
+        state.globals["loaded_bank"],
+        state.globals["rom_bank"],
+    )
+
+
+class AssemblyFarRandom(angr.SimProcedure):
+    """Proven Bankswitch + Random_ transition at the farcall boundary."""
+
+    def __init__(self, continuation: int) -> None:
         super().__init__()
-        self._n = n
+        self._continuation = continuation
 
     def run(self) -> None:  # type: ignore[override]
-        self.inhibit_autoret = True
-        # Model the whole Random (bank 0) wrapper, which calls the Random_
-        # LCG at 0x7a8f (bank 4) via a bank-switch trampoline, then returns
-        # the updated hRandomAdd in A.
-        f_in = self.state.regs.f
-        rdiv = self.state.memory.load(R_DIV, 1)
-        hsub = self.state.memory.load(H_RANDOM_SUB, 1)
-        ha = self.state.memory.load(H_RANDOM_ADD, 1)
-        # Carry-in is the real (sm83) C flag; the Pcode register holds it in
-        # z80 layout (bit 0), matching the native C flag at sm83 bit 4.
-        c_in = (f_in & 0x01) != 0
-        wide1 = (
-            claripy.ZeroExt(1, ha)
-            + claripy.ZeroExt(1, rdiv)
-            + claripy.If(c_in, claripy.BVV(1, 9), claripy.BVV(0, 9))
+        self.state.globals["call"] = _assembly_call_snapshot(self.state)
+        registers = assembly_registers(self.state)
+        output, random_add, random_sub = _random_transition(
+            registers,
+            self.state.memory.load(H_RANDOM_ADD, 1),
+            self.state.memory.load(H_RANDOM_SUB, 1),
+            self.state.globals["div_first"],
+            self.state.globals["div_second"],
         )
-        ha_new = wide1[7:0]
-        c1 = wide1[8] == 1
-        wide2 = (
-            claripy.ZeroExt(1, hsub)
-            - claripy.ZeroExt(1, rdiv)
-            - claripy.If(c1, claripy.BVV(1, 9), claripy.BVV(0, 9))
+        self.state.regs.a = output["a"]
+        self.state.regs.f = sm83_flags_to_z80(output["f"])
+        self.state.regs.b = output["b"]
+        self.state.memory.store(H_RANDOM_ADD, random_add)
+        self.state.memory.store(H_RANDOM_SUB, random_sub)
+        self.jump(self._continuation)
+
+
+class NativeRandomUnderscore(angr.SimProcedure):
+    def run(self, state_address: claripy.ast.BV) -> None:  # type: ignore[override]
+        self.state.globals["call"] = claripy.Concat(
+            self.state.memory.load(state_address, 12),
+            self.state.globals["loaded_bank"],
+            self.state.globals["rom_bank"],
         )
-        hsub_new = wide2[7:0]
-        c2 = wide2[8] == 1
-        z2 = hsub_new == 0
-        h_half = (hsub & 0x0F) < ((rdiv & 0x0F) + claripy.If(c1, claripy.BVV(1, 8), claripy.BVV(0, 8)))
-        # Final flags come from the sbc (block 2): N=1, plus Z/H/C.
-        f_out = claripy.BVV(0x02, 8)
-        f_out = f_out | claripy.If(z2, claripy.BVV(0x40, 8), claripy.BVV(0, 8))
-        f_out = f_out | claripy.If(h_half, claripy.BVV(0x10, 8), claripy.BVV(0, 8))
-        f_out = f_out | claripy.If(c2, claripy.BVV(0x01, 8), claripy.BVV(0, 8))
-        self.state.regs.a = ha_new
-        self.state.regs.f = f_out
-        self.state.memory.store(H_RANDOM_ADD, ha_new)
-        self.state.memory.store(H_RANDOM_SUB, hsub_new)
-        self.jump(self._n)
+        registers = {
+            name: self.state.memory.load(state_address + offset, 1)
+            for offset, name in enumerate(REGISTERS)
+        }
+        output, random_add, random_sub = _random_transition(
+            registers,
+            self.state.memory.load(state_address + 8, 1),
+            self.state.memory.load(state_address + 9, 1),
+            self.state.memory.load(state_address + 10, 1),
+            self.state.memory.load(state_address + 11, 1),
+        )
+        self.state.memory.store(
+            state_address,
+            claripy.Concat(
+                *(output[name] for name in REGISTERS),
+                random_add,
+                random_sub,
+                self.state.memory.load(state_address + 10, 2),
+            ),
+        )
 
 
-def inputs(p: str) -> dict:
-    i = symbolic_registers(p)
-    i["rdiv"] = claripy.BVS(f"{p}_rdiv", 8)
-    i["ha"] = claripy.BVS(f"{p}_ha", 8)
-    i["hsub"] = claripy.BVS(f"{p}_hsub", 8)
-    return i
+def inputs(prefix: str) -> dict[str, claripy.ast.BV]:
+    values = symbolic_registers(prefix)
+    for field in (
+        "random_add",
+        "random_sub",
+        "div_first",
+        "div_second",
+        "loaded_bank",
+        "rom_bank",
+    ):
+        values[field] = claripy.BVS(f"{prefix}_{field}", 8)
+    return values
 
 
-def assembly(i: dict) -> list[E]:
-    loc = symbol_location(SYMBOLS, "Random")
-    q = loc.address
-    p = angr.Project(
-        rom_window(ROM, loc.bank),
+def _setup(state: angr.SimState, values: dict[str, claripy.ast.BV]) -> None:
+    state.memory.store(H_RANDOM_ADD, values["random_add"])
+    state.memory.store(H_RANDOM_SUB, values["random_sub"])
+    for field in ("div_first", "div_second", "loaded_bank", "rom_bank"):
+        state.globals[field] = values[field]
+    state.globals["call"] = claripy.BVV(0, 112)
+
+
+@cache
+def _assembly_project() -> tuple[angr.Project, int]:
+    location = symbol_location(SYMS, "Random")
+    random_underscore = symbol_location(SYMS, "Random_")
+    assert linked_bytes(ROM, location, len(EXPECTED)) == EXPECTED
+    assert random_underscore.bank == RANDOM_UNDERSCORE_BANK
+    assert random_underscore.address == RANDOM_UNDERSCORE_ADDRESS
+    project = angr.Project(
+        rom_window(ROM, location.bank),
         auto_load_libs=False,
         rebase_granularity=0x100,
         main_opts={
             "backend": "blob",
             "arch": ArchPcode("z80:LE:16:default"),
             "base_addr": 0,
-            "entry_point": q,
+            "entry_point": location.address,
         },
     )
-    p.hook(q, Random(DONE), length=17)
-    s = p.factory.blank_state(addr=q)
-    s.memory.store(R_DIV, i["rdiv"])
-    s.memory.store(H_RANDOM_ADD, i["ha"])
-    s.memory.store(H_RANDOM_SUB, i["hsub"])
-    set_assembly_registers(s, i)
-    m = p.factory.simulation_manager(s)
-    m.explore(find=DONE, num_find=1)
-    assert len(m.found) == 1
-    x = m.found[0]
+    base = location.address
+    project.hook(base + 8, AssemblyFarRandom(base + 11), length=3)
+    project.hook(base + 11, Sm83LoadAHighImmediate(0xD3, base + 13), length=2)
+    return project, base
+
+
+@cache
+def _native_project() -> tuple[angr.Project, int]:
+    project = angr.Project(ELF, auto_load_libs=False)
+    function = project.loader.find_symbol("port_random_generate")
+    random_underscore = project.loader.find_symbol("port_random")
+    assert function is not None and random_underscore is not None
+    project.hook(random_underscore.rebased_addr, NativeRandomUnderscore())
+    return project, function.rebased_addr
+
+
+def assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+    project, function = _assembly_project()
+    state = project.factory.blank_state(addr=function)
+    set_assembly_registers(state, values)
+    _setup(state, values)
+    state.regs.sp = STACK
+    state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
+    manager = project.factory.simulation_manager(state)
+    manager.explore(find=lambda end: end.addr == RETURN)
+    assert not manager.errored and len(manager.found) == 1
     return [
-        E(
-            a=x.regs.a,
-            f=z80_flags_to_sm83(x.regs.f),
-            b=x.regs.b,
-            c=x.regs.c,
-            d=x.regs.d,
-            e=x.regs.e,
-            h=x.regs.h,
-            l=x.regs.l,
-            h_random_add=x.memory.load(H_RANDOM_ADD, 1),
-            h_random_sub=x.memory.load(H_RANDOM_SUB, 1),
-            constraints=tuple(x.solver.constraints),
+        Endpoint(
+            **assembly_registers(end),
+            random_add=end.memory.load(H_RANDOM_ADD, 1),
+            random_sub=end.memory.load(H_RANDOM_SUB, 1),
+            div_first=end.globals["div_first"],
+            div_second=end.globals["div_second"],
+            loaded_bank=end.globals["loaded_bank"],
+            rom_bank=end.globals["rom_bank"],
+            call=end.globals["call"],
+            constraints=tuple(end.solver.constraints),
         )
+        for end in manager.found
     ]
 
 
-def native(i: dict) -> list[E]:
-    p = angr.Project(NATIVE_ELF, auto_load_libs=False)
-    fn = p.loader.find_symbol("port_random_generate")
-    assert fn
-    s = p.factory.call_state(fn.rebased_addr, NATIVE_STATE, claripy.BVV(MEM_BASE, 64))
-    store_native_registers(s, NATIVE_STATE, i)
-    s.memory.store(MEM_BASE + R_DIV, i["rdiv"])
-    s.memory.store(MEM_BASE + H_RANDOM_ADD, i["ha"])
-    s.memory.store(MEM_BASE + H_RANDOM_SUB, i["hsub"])
-    m = p.factory.simulation_manager(s)
-    m.run()
-    assert not m.errored
-    x = m.deadended[0]
-    nr = native_registers(x, NATIVE_STATE)
+def native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+    project, function = _native_project()
+    state = project.factory.call_state(function, NATIVE_STATE)
+    store_native_registers(state, NATIVE_STATE, values)
+    for offset, field in enumerate(
+        (
+            "random_add",
+            "random_sub",
+            "div_first",
+            "div_second",
+            "loaded_bank",
+            "rom_bank",
+        ),
+        8,
+    ):
+        state.memory.store(NATIVE_STATE + offset, values[field])
+    for field in ("loaded_bank", "rom_bank"):
+        state.globals[field] = values[field]
+    state.globals["call"] = claripy.BVV(0, 112)
+    manager = project.factory.simulation_manager(state)
+    manager.run()
+    assert not manager.errored and len(manager.deadended) == 1
     return [
-        E(
-            a=nr["a"],
-            f=nr["f"],
-            b=nr["b"],
-            c=nr["c"],
-            d=nr["d"],
-            e=nr["e"],
-            h=nr["h"],
-            l=nr["l"],
-            h_random_add=x.memory.load(MEM_BASE + H_RANDOM_ADD, 1),
-            h_random_sub=x.memory.load(MEM_BASE + H_RANDOM_SUB, 1),
-            constraints=tuple(x.solver.constraints),
+        Endpoint(
+            **native_registers(end, NATIVE_STATE),
+            random_add=end.memory.load(NATIVE_STATE + 8, 1),
+            random_sub=end.memory.load(NATIVE_STATE + 9, 1),
+            div_first=end.memory.load(NATIVE_STATE + 10, 1),
+            div_second=end.memory.load(NATIVE_STATE + 11, 1),
+            loaded_bank=end.memory.load(NATIVE_STATE + 12, 1),
+            rom_bank=end.memory.load(NATIVE_STATE + 13, 1),
+            call=end.globals["call"],
+            constraints=tuple(end.solver.constraints),
         )
+        for end in manager.deadended
     ]
 
 
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="native")
-def test_transition_equivalence() -> None:
-    i = inputs("random")
-    assert_pathwise_equivalent(assembly(i), native(i), ("a", "b", "c", "d", "e", "h", "l", "h_random_add", "h_random_sub"))
+OBSERVABLES = (
+    *REGISTERS,
+    "random_add",
+    "random_sub",
+    "div_first",
+    "div_second",
+    "loaded_bank",
+    "rom_bank",
+    "call",
+)
 
 
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_exact_body() -> None:
-    loc = symbol_location(SYMBOLS, "Random")
-    assert linked_bytes(ROM, loc, 17) == bytes.fromhex("e5d5c50604218f7acdd635f0d3c1d1e1c9")
+@pytest.mark.skipif(
+    not ELF.exists() or not ROM.exists() or not SYMS.exists(), reason="build"
+)
+def test_random_pathwise_equivalence() -> None:
+    values = inputs("random")
+    assert_pathwise_equivalent(assembly(values), native(values), OBSERVABLES)

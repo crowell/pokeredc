@@ -7,24 +7,14 @@ from verification.tests import test_random_equivalence as random_equivalence
 
 
 @pytest.mark.skipif(
-    not random_equivalence.ROM.exists() or not random_equivalence.SYMBOLS.exists(),
+    not random_equivalence.ROM.exists() or not random_equivalence.SYMS.exists(),
     reason="run `make red`",
 )
-@pytest.mark.skipif(not random_equivalence.NATIVE_ELF.exists(), reason="run native")
+@pytest.mark.skipif(not random_equivalence.ELF.exists(), reason="run native")
 def test_random_pathwise_equivalence() -> None:
     inputs = random_equivalence.inputs("random_compat")
     assert_pathwise_equivalent(
         random_equivalence.assembly(inputs),
         random_equivalence.native(inputs),
-        (
-            "a",
-            "b",
-            "c",
-            "d",
-            "e",
-            "h",
-            "l",
-            "h_random_add",
-            "h_random_sub",
-        ),
+        random_equivalence.OBSERVABLES,
     )

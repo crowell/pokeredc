@@ -364,6 +364,16 @@ struct random_state {
 	port_u8 div_second;
 };
 
+struct random_generate_state {
+	struct cpu_register_state registers;
+	port_u8 random_add;
+	port_u8 random_sub;
+	port_u8 div_first;
+	port_u8 div_second;
+	port_u8 loaded_bank;
+	port_u8 rom_bank;
+};
+
 struct scale_pixels_state {
 	struct cpu_register_state registers;
 	port_u8 written_first;
@@ -2990,6 +3000,8 @@ _Static_assert(sizeof(struct volatile_status_state) == 11, "unexpected ABI paddi
 _Static_assert(sizeof(struct target_substitute_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct title_ball_y_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct random_state) == 12, "unexpected ABI padding");
+_Static_assert(sizeof(struct random_generate_state) == 14,
+    "unexpected ABI padding");
 _Static_assert(sizeof(struct scale_pixels_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct sprite_sheet_data_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct text_box_coords_state) == 12, "unexpected ABI padding");

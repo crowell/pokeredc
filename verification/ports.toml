@@ -17101,10 +17101,14 @@ c_symbol = "port_random_generate"
 c_source = "verification/ports/random.c"
 status = "proven"
 observables = [
-    "A (updated hRandomAdd), hRandomAdd, hRandomSub",
+    "A/F/B/C/D/E/H/L",
+    "hRandomAdd and hRandomSub",
+    "two independent rDIV samples",
+    "loaded and hardware ROM bank state",
+    "Bankswitch/Random_ call-boundary register, random, divider, and bank inputs",
 ]
-proof_domain = "all general-register and canonical-flag inputs; Random_ inlined as a symbolic rDIV-based update to hRandomAdd/hRandomSub"
-decoder = "exact 14-byte linked body checked; `farcall Random_` modeled as a symbolic update to hRandomAdd/hRandomSub based on independent rDIV samples; `push`/`pop`/`ret` run natively"
+proof_domain = "all general-register and canonical-flag inputs, all hRandomAdd/hRandomSub values, two independent rDIV samples, and all loaded/hardware ROM bank values; the proven Random_ transition is composed at the Bankswitch call boundary"
+decoder = "exact 17-byte linked wrapper checked; linked push/pop/ret and register setup execute under angr, only the three-byte Bankswitch call is a compositional boundary using Random_'s complete proven transition, and the native production wrapper calls the real port_random"
 
 
 
