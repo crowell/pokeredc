@@ -23226,14 +23226,23 @@ decoder = "exact 44-byte linked body checked; LDH A,[a8], AND A, BIT 2,[hl], and
 [[function]]
 assembly_symbol = "HazeEffect_"
 assembly_source = "engine/battle/move_effects/haze.asm"
-c_symbol = "port_haze_effect_private"
-c_source = "verification/ports/haze_effect_private.c"
-status = "partial"
+c_symbol = "port_haze_effect"
+c_source = "verification/ports/haze_effect.c"
+status = "proven"
 observables = [
     "all registers and flags",
+    "both stat-modifier rows (wPlayerMonAttackMod/wEnemyMonAttackMod, 8 bytes each)",
+    "both unmodified-stat rows and both battle-stat rows (8 bytes each)",
+    "wEnemyMonStatus / wBattleMonStatus clears",
+    "wEnemySelectedMove / wPlayerSelectedMove $ff blocks for sleep/freeze",
+    "wPlayerDisabledMove / wEnemyDisabledMove / wPlayerDisabledMoveNumber clears",
+    "both battle-status triples after CureVolatileStatuses",
+    "PlayCurrentMoveAnimation call input via CallBankF (B = $0f, HL = $7ba8, DE = selected-move pointer, exact flag hand-off)",
+    "CallBankF return frame (B = entry A, C = entry F)",
+    "PrintText call input (HL = $7a53 StatusChangesEliminatedText)",
 ]
-proof_domain = "all register/flag inputs through the first ResetStatMods call"
-decoder = "A=7 and player stat-modifier pointer setup are modeled exactly; stat resets, stat restoration, status cures, text, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all register/flag and listed-memory inputs across all four terminal paths (player/enemy turn x sleep-or-freeze present); ResetStatMods, ResetStats, and CureVolatileStatuses run as real same-bank loops on both sides; the proven PlayCurrentMoveAnimation transition composes at the CallBankF site and the PrintText tail terminates the path"
+decoder = "exact 93-byte linked body checked; LD A,n, LDH A,[a8], AND A, AND n (with SM83 H-set semantics), RES 7,[HL], LDI/LD [HL],A, and DEC B run via audited instruction shims; the stat loops, status cures, and turn branch execute pathwise while native C calls the real port_play_current_move_animation and port_print_text"
 
 [[function]]
 assembly_symbol = "HealEffect_"
