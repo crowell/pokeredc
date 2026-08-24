@@ -24653,15 +24653,18 @@ decoder = "HiddenItemCoords HL setup, hidden-item loop counter B initialization,
 [[function]]
 assembly_symbol = "CheckIfMoveIsKnown"
 assembly_source = "engine/items/tmhm.asm"
-c_symbol = "port_check_if_move_is_known_private"
-c_source = "verification/ports/check_if_move_is_known_private.c"
-status = "partial"
+c_symbol = "port_check_if_move_is_known"
+c_source = "verification/ports/check_if_move_is_known.c"
+status = "proven"
 observables = [
     "all registers and flags",
-    "wWhichPokemon",
+    "all six party members' move slots (24 bytes at wPartyMon1Moves + k*PARTYMON_STRUCT_LENGTH)",
+    "wWhichPokemon / wMoveNum",
+    "AddNTimes call input (A = party index, BC = $2c, HL = wPartyMon1Moves) and its complete deterministic transition (A := 0, HL += A*BC, F := Z|N|final-add-carry)",
+    "PrintText call input (HL = $7e3b AlreadyKnowsText, B = move number, C = remaining slots, exact cp flag hand-off)",
 ]
-proof_domain = "all register/flag and party-index inputs through AddNTimes entry"
-decoder = "wWhichPokemon load, party-moves HL base, PARTYMON_STRUCT_LENGTH BC setup, and AddNTimes dispatch are modeled exactly; move-number scan, AlreadyKnowsText path, PrintText, carry result, and continuation paths remain beyond the explicit boundary"
+proof_domain = "for each concrete party index k in [0,5] (the PARTY_LENGTH invariant, one parameterized proof per index): all register/flag and move-byte inputs across all five terminal paths per index (match at slot 0-3 with the exact remaining count, or not-known with `and a` flags); the proven AddNTimes transition composes deterministically at its call site and the proven PrintText transition composes at the already-known path"
+decoder = "exact 35-byte linked body checked; LD A,(nn), LDI A,[HL], CP B, DEC C, AND A, and SCF run via audited instruction shims; the four-slot scan loop executes pathwise while native C calls the real port_add_n_times and port_print_text"
 
 [[function]]
 assembly_symbol = "CanLearnTM"
