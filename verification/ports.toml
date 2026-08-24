@@ -22743,12 +22743,16 @@ assembly_symbol = "BattleRandom"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_battle_random"
 c_source = "verification/ports/battle_random.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "A/F/B/C/D/E/H/L with canonical SM83 flags",
+    "wLinkState and wLinkBattleRandomNumberListIndex",
+    "complete 256-byte possible indexed-read region beginning at wLinkBattleRandomNumberList, including all nine regenerated seeds",
+    "hRandomAdd/hRandomSub, two independent rDIV samples, and loaded/hardware ROM bank state",
+    "Random tail-call input snapshot",
 ]
-proof_domain = "all register/flag and wLinkState inputs through the shared-random branch check"
-decoder = "wLinkState load and LINK_STATE_BATTLING CP flags are modeled exactly; shared random-list indexing/seed generation, local Random path, and return/carry continuation remain beyond the explicit boundary"
+proof_domain = "all register/canonical-flag inputs, all wLinkState values, all 256 list-index values, all bytes in the complete 256-byte possible indexed-read region, and all random/divider/bank inputs; three terminal domains are checked for exhaustive input coverage"
+decoder = "exact 56-byte linked body checked; the linked branch, stack operations, indexed read, carry return, and nine-iteration seed-regeneration loop execute under angr with only individual unsupported/incorrect SM83 instructions shimmed; the proven complete Random transition is composed at the tail-call boundary while native C calls the real port_random_generate"
 
 [[function]]
 assembly_symbol = "PlayMoveAnimation"
