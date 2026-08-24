@@ -28051,3 +28051,27 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact 3-byte linked body checked (jp EnableAutoTextBoxDrawing); the tail composes the real port_enable_auto_text_box_drawing through an explicit auto-text-box state bridge in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "AddPartyMon_WriteMovePP"
+assembly_source = "engine/pokemon/add_mon.asm"
+c_symbol = "port_add_party_mon_write_move_pp"
+c_source = "verification/ports/add_party_mon_write_move_pp.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "four source move bytes",
+    "four destination PP bytes",
+    "complete six-byte wMoveData transfer region",
+    "requested, loaded, and hardware ROM-bank state",
+    "all AddNTimes and FarCopyData call-site register snapshots and call counts",
+]
+proof_domain = "all 16 empty/nonempty patterns across the four move slots; every nonempty move ID ranges symbolically over 1..255, with arbitrary initial destination bytes, wMoveData bytes, requested-bank byte, relevant initial registers, and arbitrary separately proven FarCopyData transfer/register outcomes. The proof covers the three distinct real-caller layouts (direct AddPartyMon in-struct source/destination, RestoreBonusPP disjoint party/list ranges, and battle LoadMovePPs ranges); other party slots are constant PARTYMON_STRUCT_LENGTH translations with the same non-aliasing recurrence. The executing loaded/hardware ROM bank is 3, as required while this bank-3 body runs."
+decoder = "exact 39-byte linked AddPartyMon_WriteMovePP body checked; the real four-iteration loop executes on both sides and native C calls the real port_add_n_times and port_far_copy_data. Independently proven complete callee transitions are composed at their entries, including all six copied bytes and bank state. SM83-only LD A,[HL+] and LD A,[a16], incorrectly modeled AND/DEC flags, and the p-code backend's unstable conditional back-edge/empty-branch decoding use individual audited instruction shims; no function-entry or whole-body hook is used."
