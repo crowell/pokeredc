@@ -23257,12 +23257,17 @@ assembly_symbol = "MistEffect_"
 assembly_source = "engine/battle/move_effects/mist.asm"
 c_symbol = "port_mist_effect_private"
 c_source = "verification/ports/mist_effect_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "wPlayerBattleStatus2 / wEnemyBattleStatus2 bytes",
+    "hWhoseTurn",
+    "PlayCurrentMoveAnimation call input (B = $0f, HL = $7ba8, exact flag hand-off)",
+    "PrintText call input (HL = $7f52 ShroudedInMistText)",
+    "jpfar PrintButItFailedText_ hand-off input (B = $0f, HL = $7b53)",
 ]
-proof_domain = "all register/flag, turn, and battle-status inputs through PROTECTED_BY_MIST bit check"
-decoder = "player/enemy status-pointer selection and PROTECTED_BY_MIST BIT flags are modeled exactly; status mutation, animation, text, delay, and failure continuation remain beyond the explicit boundary"
+proof_domain = "all register/flag, turn, and both battle-status bytes across all four terminal paths (player/enemy turn x PROTECTED_BY_MIST clear/set); the proven callees compose their arbitrary matching transitions at their call sites and the two tail callees terminate the path"
+decoder = "exact 39-byte linked body checked; LDH A,[a8], AND A, BIT 1,[hl], and SET 1,[hl] run via audited instruction shims; the turn branch and bit branch execute pathwise while native C calls the real port_play_current_move_animation, port_print_text, and port_print_but_it_failed_text_"
 
 [[function]]
 assembly_symbol = "ParalyzeEffect_"
