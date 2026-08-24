@@ -1478,6 +1478,11 @@ struct add_party_mon_write_move_pp_state {
 	port_u8 rom_bank;
 };
 
+struct load_move_pps_state {
+	struct add_party_mon_write_move_pp_state write_move_pp;
+	port_u8 predef[6];
+};
+
 struct far_copy_data2_state {
 	struct cpu_register_state registers;
 	port_u8 requested_bank;
@@ -3088,6 +3093,8 @@ _Static_assert(sizeof(struct play_sound_state) == 24, "unexpected ABI padding");
 _Static_assert(sizeof(struct fade_out_audio_state) == 26, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct add_party_mon_write_move_pp_state) == 11,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct load_move_pps_state) == 17,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data2_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data3_state) == 11, "unexpected ABI padding");

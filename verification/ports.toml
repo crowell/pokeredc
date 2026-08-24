@@ -28075,3 +28075,29 @@ observables = [
 ]
 proof_domain = "all 16 empty/nonempty patterns across the four move slots; every nonempty move ID ranges symbolically over 1..255, with arbitrary initial destination bytes, wMoveData bytes, requested-bank byte, relevant initial registers, and arbitrary separately proven FarCopyData transfer/register outcomes. The proof covers the three distinct real-caller layouts (direct AddPartyMon in-struct source/destination, RestoreBonusPP disjoint party/list ranges, and battle LoadMovePPs ranges); other party slots are constant PARTYMON_STRUCT_LENGTH translations with the same non-aliasing recurrence. The executing loaded/hardware ROM bank is 3, as required while this bank-3 body runs."
 decoder = "exact 39-byte linked AddPartyMon_WriteMovePP body checked; the real four-iteration loop executes on both sides and native C calls the real port_add_n_times and port_far_copy_data. Independently proven complete callee transitions are composed at their entries, including all six copied bytes and bank state. SM83-only LD A,[HL+] and LD A,[a16], incorrectly modeled AND/DEC flags, and the p-code backend's unstable conditional back-edge/empty-branch decoding use individual audited instruction shims; no function-entry or whole-body hook is used."
+
+[[function]]
+assembly_symbol = "LoadMovePPs"
+assembly_source = "engine/pokemon/add_mon.asm"
+c_symbol = "port_load_move_pps"
+c_source = "verification/ports/load_move_pps.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "six saved predef-register bytes",
+    "requested, loaded, and hardware ROM-bank state",
+    "four source move bytes",
+    "four destination PP bytes",
+    "complete six-byte wMoveData region",
+    "GetPredefRegisters and AddPartyMon_WriteMovePP input snapshots",
+    "unrelated-memory preservation marker",
+]
+proof_domain = "all initial register/flag values, arbitrary saved BC and requested-bank values, arbitrary source/destination/wMoveData bytes, and an arbitrary complete proven AddPartyMon_WriteMovePP post-transition. Saved HL/DE exhaust the real callers: the battle wEnemyMonMoves/wEnemyMonPP-1 layout and all six RestoreBonusPP party-slot move pointers with wNormalMaxPPList-1. Loaded and hardware ROM bank are 3 while the bank-3 wrapper executes."
+decoder = "exact 3-byte CALL GetPredefRegisters body checked and executed; GetPredefRegisters is composed at its callee entry with its complete proven deterministic transition, then the adjacent proven AddPartyMon_WriteMovePP function is composed at the exact fallthrough address with an arbitrary complete transition. Native production C calls both real ports in order. No hook is placed at the LoadMovePPs entry and no instruction shim is required."
