@@ -27985,3 +27985,25 @@ observables = [
 ]
 proof_domain = "symbolic wLoadedMonLevel over all 256 values covering both the level<100 and level>=100 paths through the 16-byte body; PrintLevelCommon entry is a compositional boundary with an arbitrary matching transition"
 decoder = "exact 16-byte linked body checked; FA load of wLoadedMonLevel shimmed (p-code cannot handle it natively); LD [HLI],A / CP $64 / JR C / DEC HL / INC C / JR execute natively; the boundary at PrintLevelCommon entry captures the hand-off state for comparison with native"
+
+[[function]]
+assembly_symbol = "Route5_Script"
+assembly_source = "scripts/Route5.asm"
+c_symbol = "port_route5_script"
+c_source = "verification/ports/route5_script.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wAutoTextBoxDrawingControl",
+    "wDoNotWaitForButtonPressAfterDisplayingText",
+    "EnableAutoTextBoxDrawing tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs with the proven EnableAutoTextBoxDrawing contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 3-byte linked body checked (jp EnableAutoTextBoxDrawing); the tail composes the real port_enable_auto_text_box_drawing through an explicit auto-text-box state bridge in one angr path-equivalence test"
