@@ -1,111 +1,84 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
-
-import angr
-import claripy
-import pytest
+import angr,claripy,pytest
 from archinfo import ArchPcode
-
 from verification.harness.equivalence import assert_pathwise_equivalent
-from verification.harness.registers import (
-    assembly_registers,
-    native_registers,
-    set_assembly_registers,
-    store_native_registers,
-    symbolic_registers,
-)
-from verification.harness.rom import linked_bytes, rom_window, symbol_location
-
-ROOT = Path(__file__).resolve().parents[2]
-NATIVE_ELF = ROOT / "verification/build/ports.elf"
-ROM = ROOT / "pokered.gbc"
-SYMBOLS = ROOT / "pokered.sym"
-NATIVE_STATE = 0x100000
-DONE = 0xEFFF
-
-
+from verification.harness.registers import REGISTERS,assembly_registers,native_registers,set_assembly_registers,store_native_registers,symbolic_registers
+from verification.harness.rom import linked_bytes,rom_window,sm83_flags_to_z80,symbol_location
+from verification.harness.sm83_shims import Sm83AndRegister,Sm83BitAtHl,Sm83LoadAHighImmediate,Sm83SetAtHl
+ROOT=Path(__file__).resolve().parents[2];ELF=ROOT/'verification/build/ports.elf';ROM=ROOT/'pokered.gbc';SYMS=ROOT/'pokered.sym';NS=0x100000;NM=0x200000;STACK=0xd000;RETURN=0xffff;DONE=0xefff;SITES=4;SNAP=8*len(REGISTERS)
+PS3=0xd064;ES3=0xd069;PEF=0xcfd3;EEF=0xcfcd;TURN=0xfff3
+EXPECTED=bytes.fromhex('2164d011d3cff0f3a728062169d011cdcf1afe40200bcb4e201bcbce21d77b1809cb562010cbd621dc7be521a87bcde17be1c3493c0e32cd393721537bc3e17b17874a255017ae4a2550060fc3d635')
 @dataclass(frozen=True)
-class Endpoint:
-    a: claripy.ast.BV
-    f: claripy.ast.BV
-    b: claripy.ast.BV
-    c: claripy.ast.BV
-    d: claripy.ast.BV
-    e: claripy.ast.BV
-    h: claripy.ast.BV
-    l: claripy.ast.BV
-    constraints: tuple[claripy.ast.Bool, ...]
-
-
-class Boundary(angr.SimProcedure):
-    """The tail `jp $36d6` (FarCall dispatcher) is the path boundary."""
-
-    def run(self) -> None:  # type: ignore[override]
-        self.jump(DONE)
-
-
-def _assembly(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
-    loc = symbol_location(SYMBOLS, "ReflectLightScreenEffect")
-    base = loc.address
-    project = angr.Project(
-        rom_window(ROM, loc.bank),
-        auto_load_libs=False,
-        rebase_granularity=0x100,
-        main_opts={
-            "backend": "blob",
-            "arch": ArchPcode("z80:LE:16:default"),
-            "base_addr": 0,
-            "entry_point": base,
-        },
-    )
-    # ld hl, $0x7b97 ; ld b, $0x0e ; jp $36d6
-    project.hook(base + 0x05, Boundary(), length=3)
-    state = project.factory.blank_state(addr=base)
-    set_assembly_registers(state, inputs)
-    manager = project.factory.simulation_manager(state)
-    manager.explore(find=DONE, num_find=1)
-    assert len(manager.found) == 1
-    end = manager.found[0]
-    return [
-        Endpoint(**assembly_registers(end), constraints=tuple(end.solver.constraints))
-    ]
-
-
-def _native(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
-    project = angr.Project(NATIVE_ELF, auto_load_libs=False)
-    function = project.loader.find_symbol("port_reflect_light_screen_effect")
-    assert function is not None
-    state = project.factory.call_state(
-        function.rebased_addr, NATIVE_STATE, claripy.BVV(0, 64)
-    )
-    store_native_registers(state, NATIVE_STATE, inputs)
-    manager = project.factory.simulation_manager(state)
-    manager.run()
-    assert not manager.errored
-    assert len(manager.deadended) == 1
-    end = manager.deadended[0]
-    return [
-        Endpoint(
-            **native_registers(end, NATIVE_STATE),
-            constraints=tuple(end.solver.constraints),
-        )
-    ]
-
-
-@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_reflect_light_screen_effect_symbolic_equivalence() -> None:
-    inputs = symbolic_registers("rlse")
-    assert_pathwise_equivalent(
-        _assembly(inputs),
-        _native(inputs),
-        ("a", "f", "b", "c", "d", "e", "h", "l"),
-    )
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_reflect_light_screen_effect_exact_linked_body() -> None:
-    loc = symbol_location(SYMBOLS, "ReflectLightScreenEffect")
-    assert linked_bytes(ROM, loc, 8) == bytes.fromhex("21977b060ec3d635")
+class E:
+ a:claripy.ast.BV;f:claripy.ast.BV;b:claripy.ast.BV;c:claripy.ast.BV;d:claripy.ast.BV;e:claripy.ast.BV;h:claripy.ast.BV;l:claripy.ast.BV
+ ps3:claripy.ast.BV;es3:claripy.ast.BV;pef:claripy.ast.BV;eef:claripy.ast.BV;turn:claripy.ast.BV
+ ib0:claripy.ast.BV;ib1:claripy.ast.BV;ib2:claripy.ast.BV;ib3:claripy.ast.BV
+ constraints:tuple[claripy.ast.Bool,...]
+class ACall(angr.SimProcedure):
+ """Proven callee composition boundary at the call/far-tail site: record the
+ caller-passed registers (after the thunk's `ld b,BANK` where present), apply
+ this site's arbitrary matching proven transition, then continue after the
+ replaced instruction (or terminate for the never-returning PrintText /
+ jpfar-style tails). The EffectCallBattleCore return frame restores
+ B = entry A, C = entry F (Bankswitch's saved-AF pop)."""
+ def __init__(self,site:int,next_address:int|None,thunk_b:int|None=None,bankswitch_bc:bool=False)->None:
+  super().__init__();self._site=site;self._next=DONE if next_address is None else next_address;self._tb=thunk_b;self._bc=bankswitch_bc
+ def run(self):
+  k=self._site
+  if self._tb is not None:self.state.regs.b=claripy.BVV(self._tb,8)
+  r=assembly_registers(self.state);self.state.globals[f'ib{k}']=claripy.Concat(*(r[x] for x in REGISTERS))
+  for x in REGISTERS:
+   v=self.state.globals[f'out{k}_{x}'];setattr(self.state.regs,x,sm83_flags_to_z80(v) if x=='f' else v)
+  if self._bc:
+   self.state.regs.b=r['a'];self.state.regs.c=r['f']
+  self.jump(self._next)
+class NCall(angr.SimProcedure):
+ def __init__(self,site:int)->None:
+  super().__init__();self._site=site
+ def run(self,s,m):
+  k=self._site
+  self.state.globals[f'ib{k}']=self.state.memory.load(s,8)
+  self.state.memory.store(s,claripy.Concat(*(self.state.globals[f'out{k}_{x}'] for x in REGISTERS)))
+def inputs(p):
+ v=symbolic_registers(p)
+ for name,addr in (('ps3',PS3),('es3',ES3),('pef',PEF),('eef',EEF),('turn',TURN)):v[name]=claripy.BVS(f'{p}_{name}',8)
+ for k in range(SITES):
+  for x in REGISTERS:v[f'out{k}_{x}']=claripy.Concat(claripy.BVS(f'{p}_out{k}_flags',4),claripy.BVV(0,4)) if x=='f' else claripy.BVS(f'{p}_out{k}_{x}',8)
+ return v
+def setup(s,v,native:bool):
+ for k in range(SITES):s.globals[f'ib{k}']=None
+ o=NM if native else 0
+ for name,addr in (('ps3',PS3),('es3',ES3),('pef',PEF),('eef',EEF),('turn',TURN)):s.memory.store(o+addr,v[name])
+ for k in range(SITES):
+  for x in REGISTERS:s.globals[f'out{k}_{x}']=v[f'out{k}_{x}']
+def assembly(v):
+ l=symbol_location(SYMS,'ReflectLightScreenEffect_');pt=symbol_location(SYMS,'PrintText')
+ assert linked_bytes(ROM,l,len(EXPECTED))==EXPECTED
+ p=angr.Project(rom_window(ROM,l.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={'backend':'blob','arch':ArchPcode('z80:LE:16:default'),'base_addr':0,'entry_point':l.address});b=l.address
+ p.hook(b+6,Sm83LoadAHighImmediate(0xf3,b+8),length=2)       # ldh a,[hWhoseTurn]
+ p.hook(b+8,Sm83AndRegister('a',b+9),length=1)               # and a
+ p.hook(b+22,Sm83BitAtHl(1,b+24),length=2)                   # bit HAS_LIGHT_SCREEN_UP,[hl]
+ p.hook(b+26,Sm83SetAtHl(1,b+28),length=2)                   # set HAS_LIGHT_SCREEN_UP,[hl]
+ p.hook(b+33,Sm83BitAtHl(2,b+35),length=2)                   # bit HAS_REFLECT_UP,[hl]
+ p.hook(b+37,Sm83SetAtHl(2,b+39),length=2)                   # set HAS_REFLECT_UP,[hl]
+ p.hook(b+46,ACall(0,b+49,thunk_b=0x0f,bankswitch_bc=True),length=3)  # call EffectCallBattleCore (PlayCurrentMoveAnimation)
+ p.hook(pt.address,ACall(1,None))                            # jp PrintText tail
+ p.hook(b+55,ACall(2,b+58),length=3)                         # call DelayFrames
+ p.hook(b+61,ACall(3,None,thunk_b=0x0f),length=3)            # jp EffectCallBattleCore tail (PrintButItFailedText_)
+ s=p.factory.blank_state(addr=b);set_assembly_registers(s,v);setup(s,v,False);s.regs.sp=STACK;s.memory.store(STACK,claripy.BVV(RETURN,16),endness='Iend_LE')
+ m=p.factory.simulation_manager(s);m.explore(find=lambda st:st.addr==DONE,num_find=64);assert not m.errored and len(m.found)==8
+ return [E(**assembly_registers(x),**{n:x.memory.load(a,1) for n,a in (('ps3',PS3),('es3',ES3),('pef',PEF),('eef',EEF),('turn',TURN))},**{f'ib{k}':(x.globals[f'ib{k}'] if x.globals[f'ib{k}'] is not None else claripy.BVV(0,SNAP)) for k in range(SITES)},constraints=tuple(x.solver.constraints)) for x in m.found]
+def native(v):
+ p=angr.Project(ELF,auto_load_libs=False)
+ syms={n:p.loader.find_symbol(s) for n,s in (('port_play_current_move_animation','port_play_current_move_animation'),('port_print_text','port_print_text'),('port_delay_frames','port_delay_frames'),('port_print_but_it_failed_text_','port_print_but_it_failed_text_'))}
+ assert all(syms.values())
+ for name,k in (('port_play_current_move_animation',0),('port_print_text',1),('port_delay_frames',2),('port_print_but_it_failed_text_',3)):p.hook(syms[name].rebased_addr,NCall(k))
+ f=p.loader.find_symbol('port_reflect_light_screen_effect');assert f
+ s=p.factory.call_state(f.rebased_addr,NS,NM);store_native_registers(s,NS,v);setup(s,v,True)
+ m=p.factory.simulation_manager(s);m.run();assert not m.errored and len(m.deadended)==8
+ return [E(**native_registers(x,NS),**{n:x.memory.load(NM+a,1) for n,a in (('ps3',PS3),('es3',ES3),('pef',PEF),('eef',EEF),('turn',TURN))},**{f'ib{k}':(x.globals[f'ib{k}'] if x.globals[f'ib{k}'] is not None else claripy.BVV(0,SNAP)) for k in range(SITES)},constraints=tuple(x.solver.constraints)) for x in m.deadended]
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMS.exists(),reason='build')
+def test_reflect_light_screen_effect_pathwise_equivalence():
+ v=inputs('reflect_light_screen_effect');assert_pathwise_equivalent(assembly(v),native(v),(*REGISTERS,'ps3','es3','pef','eef','turn','ib0','ib1','ib2','ib3'))

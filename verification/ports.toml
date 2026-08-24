@@ -23330,14 +23330,22 @@ decoder = "player/enemy move-number selection and max-HP pointer setup are model
 [[function]]
 assembly_symbol = "ReflectLightScreenEffect_"
 assembly_source = "engine/battle/move_effects/reflect_light_screen.asm"
-c_symbol = "port_reflect_light_screen_effect_private"
-c_source = "verification/ports/reflect_light_screen_effect_private.c"
-status = "partial"
+c_symbol = "port_reflect_light_screen_effect"
+c_source = "verification/ports/reflect_light_screen_effect.c"
+status = "proven"
 observables = [
     "all registers and flags",
+    "wPlayerBattleStatus3 / wEnemyBattleStatus3 bytes (LIGHT SCREEN / REFLECT bits set)",
+    "wPlayerMoveEffect / wEnemyMoveEffect bytes",
+    "hWhoseTurn",
+    "PlayCurrentMoveAnimation call input via EffectCallBattleCore (B = $0f, HL = $7ba8, DE = effect pointer, HL-status preserved, exact cp-carry flag hand-off)",
+    "EffectCallBattleCore return frame (B = entry A, C = entry F)",
+    "DelayFrames call input (C = $32, A = effect byte, DE/HL pointers, exact flag hand-off)",
+    "PrintText call input (HL = text pointer)",
+    "jpfar-style PrintButItFailedText_ hand-off input (B = $0f, HL = $7b53)",
 ]
-proof_domain = "all register/flag, turn, and move-effect inputs through move-effect load"
-decoder = "player/enemy status and move-effect pointer selection plus move-effect load and AND-A flags are modeled exactly; screen/reflect bit tests, state mutation, animation, delay, text, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, turn, move-effect, and both battle-status3 bytes across all eight terminal paths (player/enemy turn x LIGHT_SCREEN_EFFECT or not x already-up bit); the proven PlayCurrentMoveAnimation, DelayFrames, PrintText, and PrintButItFailedText_ transitions compose at their call sites and the two tail callees terminate the path"
+decoder = "exact 79-byte linked body checked including the shared EffectCallBattleCore thunk; LDH A,[a8], AND A, BIT/Set 1-2,[hl] run via audited instruction shims; the turn, effect-select, and already-up branches execute pathwise while native C calls the real port_play_current_move_animation, port_delay_frames, port_print_text, and port_print_but_it_failed_text_"
 
 [[function]]
 assembly_symbol = "SubstituteEffect_"
