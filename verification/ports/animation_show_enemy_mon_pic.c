@@ -2,7 +2,7 @@
 
 /* Port of AnimationShowEnemyMonPic in engine/battle/animations.asm:
  *
- *   ld hl, 0x539e
+ *   ld hl, ShowMonPic
  *   jp CallWithTurnFlipped
  */
 

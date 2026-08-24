@@ -2,7 +2,7 @@
 
 /* Port of AnimationFlashEnemyMonPic in engine/battle/animations.asm:
  *
- *   ld hl, 0x5389
+ *   ld hl, FlashMonPic
  *   jp CallWithTurnFlipped
  */
 

@@ -27933,3 +27933,36 @@ observables = [
 ]
 proof_domain = "symbolic A input; the proven PrintNumber contract is applied as an arbitrary matching transition at the tail boundary via an explicit print_number_state bridge"
 decoder = "exact 14-byte linked body checked (ld [wTempByteValue],a; ld de,wTempByteValue; ld b,LEFT_ALIGN|1; jp PrintNumber); EA absolute store and LD DE/nn run via audited instruction shims; the tail composes the real port_print_number through a print_number_state bridge in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "AnimationFlashEnemyMonPic"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_flash_enemy_mon_pic"
+c_source = "verification/ports/animation_flash_enemy_mon_pic.c"
+status = "proven"
+observables = [
+    "A", "F", "B", "C", "D", "E", "H", "L",
+    "CallWithTurnFlipped tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs with the proven CallWithTurnFlipped contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 6-byte linked body checked (ld hl,$5389; jp CallWithTurnFlipped); the tail composes the real port_call_with_turn_flipped in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "AnimationShowEnemyMonPic"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_show_enemy_mon_pic"
+c_source = "verification/ports/animation_show_enemy_mon_pic.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "CallWithTurnFlipped tail-call input snapshot",
+]
+proof_domain = "all register/flag inputs with the proven CallWithTurnFlipped contract applied as an arbitrary matching transition at the tail boundary"
+decoder = "exact 6-byte linked body checked (ld hl,$539e; jp CallWithTurnFlipped); the tail composes the real port_call_with_turn_flipped in one angr path-equivalence test"
