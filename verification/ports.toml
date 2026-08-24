@@ -23179,12 +23179,19 @@ assembly_symbol = "ConversionEffect_"
 assembly_source = "engine/battle/move_effects/conversion.asm"
 c_symbol = "port_conversion_effect"
 c_source = "verification/ports/conversion_effect.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "wEnemyMonType1/wEnemyMonType2 and wBattleMonType1/wBattleMonType2 bytes",
+    "wEnemyBattleStatus1 / wPlayerBattleStatus1 bytes",
+    "hWhoseTurn",
+    "PlayCurrentMoveAnimation call input (B = $0f via CallBankF, HL = $7ba8, DE = user types + 1, exact flag hand-off)",
+    "CallBankF return frame (B = entry A, C = entry F per Bankswitch's saved-AF pop)",
+    "PrintText call input (HL = $79cd ConvertedTypeText)",
+    "jpfar PrintButItFailedText_ hand-off input (B = $0f, HL = $7b53)",
 ]
-proof_domain = "all register/flag, turn, and battle-status inputs through the INVULNERABLE bit check"
-decoder = "player/enemy target/user type pointer selection, status selection, and INVULNERABLE BIT flags are modeled exactly; type copying, CallBankF, text, and failure continuation remain beyond the explicit boundary"
+proof_domain = "all register/flag, turn, type-byte, and both battle-status1 bytes across all four terminal paths (player/enemy turn x INVULNERABLE clear/set); the proven callees compose their arbitrary matching transitions at their call sites and the two tail callees terminate the path"
+decoder = "exact 56-byte linked body checked including the shared CallBankF thunk and local PrintButItFailedText fallthrough; LDH A,[a8], LD A,(nn), BIT 6,A, and LDI A,[HL] run via audited instruction shims; the turn swap, bit branch, and two-byte type copy execute pathwise while native C calls the real port_play_current_move_animation, port_print_text, and port_print_but_it_failed_text_"
 
 [[function]]
 assembly_symbol = "DrainHPEffect_"
