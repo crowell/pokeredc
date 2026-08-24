@@ -27966,3 +27966,22 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with the proven CallWithTurnFlipped contract applied as an arbitrary matching transition at the tail boundary"
 decoder = "exact 6-byte linked body checked (ld hl,$539e; jp CallWithTurnFlipped); the tail composes the real port_call_with_turn_flipped in one angr path-equivalence test"
+
+[[function]]
+assembly_symbol = "PrintLevel"
+assembly_source = "home/pokemon.asm"
+c_symbol = "port_print_level"
+c_source = "verification/ports/print_level.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "symbolic wLoadedMonLevel over all 256 values covering both the level<100 and level>=100 paths through the 16-byte body; PrintLevelCommon entry is a compositional boundary with an arbitrary matching transition"
+decoder = "exact 16-byte linked body checked; FA load of wLoadedMonLevel shimmed (p-code cannot handle it natively); LD [HLI],A / CP $64 / JR C / DEC HL / INC C / JR execute natively; the boundary at PrintLevelCommon entry captures the hand-off state for comparison with native"

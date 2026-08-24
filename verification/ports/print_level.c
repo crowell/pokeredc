@@ -1,50 +1,62 @@
 #include "port_state.h"
 
-__attribute__((noinline, used)) void
-port_print_level_begin(struct print_level_state *state)
-{
-	port_u16 hl = (port_u16)(((port_u16)state->registers.h << 8) |
-		state->registers.l);
-	port_u8 level;
-	port_u8 flags = PORT_FLAG_N;
+/* Port of PrintLevel in home/pokemon.asm:
+ *
+ *   ld a, '<LV>'            ; $6e ":L" tile ID
+ *   ld [hli], a
+ *   ld c, 2                 ; number of digits
+ *   ld a, [wLoadedMonLevel] ; $cfb9
+ *   cp 100
+ *   jr c, PrintLevelCommon  ; if level < 100
+ *   dec hl                  ; if level >= 100, write over ":L" tile
+ *   inc c                   ; number of digits = 3
+ *   jr PrintLevelCommon
+ */
 
-	state->registers.a = 0x6e;
-	state->destination_tile = state->registers.a;
+void port_print_level_common(struct cpu_register_state *, port_u8 *);
+
+#define TILE_LV             0x6eu
+#define W_LOADED_MON_LEVEL  0xcfb9u
+
+__attribute__((noinline, used)) void
+port_print_level(struct cpu_register_state *state, port_u8 *memory)
+{
+	port_u16 hl = (port_u16)((state->h << 8) | state->l);
+
+	/* ld a, '<LV>'; ld [hli], a */
+	state->a = TILE_LV;
+	memory[hl] = TILE_LV;
 	hl++;
-	state->registers.c = 2;
-	level = state->loaded_level;
-	state->registers.a = level;
-	if (level == 100)
-		flags |= PORT_FLAG_Z;
-	if ((level & 0x0f) < 4)
-		flags |= PORT_FLAG_H;
-	if (level < 100)
-		flags |= PORT_FLAG_C;
-	state->registers.f = flags;
-	if (level >= 100) {
-		hl--;
-		state->registers.c++;
-		state->registers.f = 0;
-	}
-	state->temp_byte = state->registers.a;
-	state->registers.d = 0xd1;
-	state->registers.e = 0x1e;
-	state->registers.b = 0x41;
-	state->registers.h = (port_u8)(hl >> 8);
-	state->registers.l = (port_u8)hl;
-	state->dispatched = 1;
-}
 
-/* Port of PrintLevel in home/pokemon.asm. */
-__attribute__((noinline, used)) void
-port_print_level(struct print_level_state *state,
-	const struct cpu_register_state *callback_registers,
-	const port_u8 callback_globals[3])
-{
-	port_print_level_begin(state);
-	/* JP PrintNumber is an explicit arbitrary continuation boundary. */
-	state->registers = *callback_registers;
-	state->loaded_level = callback_globals[0];
-	state->destination_tile = callback_globals[1];
-	state->temp_byte = callback_globals[2];
+	/* ld c, 2 */
+	state->c = 0x02u;
+
+	/* ld a, [wLoadedMonLevel]; cp 100 */
+	port_u8 level = memory[W_LOADED_MON_LEVEL];
+	state->a = level;
+
+	{
+		port_u8 f = PORT_FLAG_N;
+		if ((level & 0x0fu) < (100 & 0x0fu))
+			f |= PORT_FLAG_H;
+		if (level < 100)
+			f |= PORT_FLAG_C;
+		if (level == 100)
+			f |= PORT_FLAG_Z;
+		state->f = f;
+	}
+
+	if (level < 100)
+		goto common;
+
+	/* dec hl; inc c */
+	hl--;
+	state->l = (port_u8)hl;
+	state->c++;
+
+common:
+	state->h = (port_u8)(hl >> 8);
+	state->l = (port_u8)hl;
+
+	port_print_level_common(state, memory);
 }
