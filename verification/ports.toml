@@ -23203,12 +23203,18 @@ assembly_symbol = "FocusEnergyEffect_"
 assembly_source = "engine/battle/move_effects/focus_energy.asm"
 c_symbol = "port_focus_energy_effect"
 c_source = "verification/ports/focus_energy_effect.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "wPlayerBattleStatus2 / wEnemyBattleStatus2 bytes",
+    "hWhoseTurn",
+    "PlayCurrentMoveAnimation call input (B = $0f, HL = $7ba8, exact flag hand-off)",
+    "DelayFrames call input (C = $32, HL = selected status pointer, exact flag hand-off)",
+    "PrintText call input (HL = $7fb2)",
+    "jpfar PrintButItFailedText_ hand-off input (B = $0f, HL = $7b53)",
 ]
-proof_domain = "all register/flag, turn, and battle-status inputs through GETTING_PUMPED bit check"
-decoder = "player/enemy status-pointer selection and GETTING_PUMPED BIT flags are modeled exactly; status mutation, animation, text, delay, and failure continuation remain beyond the explicit boundary"
+proof_domain = "all register/flag, turn, and both battle-status bytes across all four terminal paths (player/enemy turn x GETTING_PUMPED clear/set); the three proven callees compose their arbitrary matching transitions at their call sites and the two tail callees terminate the path"
+decoder = "exact 44-byte linked body checked; LDH A,[a8], AND A, BIT 2,[hl], and SET 2,[hl] run via audited instruction shims; the turn branch and bit branch execute pathwise while native C calls the real port_play_current_move_animation, port_delay_frames, port_print_text, and port_print_but_it_failed_text_"
 
 [[function]]
 assembly_symbol = "HazeEffect_"
