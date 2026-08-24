@@ -36,9 +36,10 @@ $(BUILD):
 $(BUILD)/%.o: ports/%.c include/port_state.h | $(BUILD)
 	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
 
+
 $(BUILD)/ports.elf: $(PORT_OBJECTS)
 	@test -n "$(ELF_LD)" || (echo "error: install LLD or set ELF_LD" >&2; exit 1)
-	$(ELF_LD) --build-id=none -e port_string_cmp $(PORT_OBJECTS) -o $@
+	$(ELF_LD) --build-id=none --image-base=0x400000 -e port_string_cmp $(PORT_OBJECTS) -o $@
 
 test: native
 	cd $(ROOT) && python3 -m pytest verification/tests
