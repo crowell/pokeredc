@@ -23291,14 +23291,20 @@ decoder = "player/enemy target-status and move-type pointer selection plus AND-A
 [[function]]
 assembly_symbol = "PayDayEffect_"
 assembly_source = "engine/battle/move_effects/pay_day.asm"
-c_symbol = "port_pay_day_effect_private"
-c_source = "verification/ports/pay_day_effect_private.c"
-status = "partial"
+c_symbol = "port_pay_day_effect"
+c_source = "verification/ports/pay_day_effect.c"
+status = "proven"
 observables = [
     "all registers and flags",
+    "wPayDayMoney bytes (zeroed, hundreds, BCD tens:ones)",
+    "hDividend/hQuotient and hDivisor/hRemainder bytes around both Divide calls",
+    "wTotalPayDayMoney bytes (AddBCDPredef destination)",
+    "Divide call inputs (A = level*2 / remainder, B = $4, HL cursor; exact flags)",
+    "AddBCDPredef call input (A = predef id $0b, BC = $3, DE = wTotalPayDayMoney+2, HL)",
+    "PrintText call input (HL = $7f04 CoinsScatteredText)",
 ]
-proof_domain = "all register/flag, turn, and battle-level inputs through level doubling"
-decoder = "Pay Day money reset, whose-turn level selection, and ADD-A doubling flags are modeled exactly; BCD division, money accumulation, text, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all register/flag, turn, and both battle-level inputs across both turn paths; the proven Divide wrapper contract (F/B/C/D/E/H/L preserved, A = bank byte $0b, quotient/remainder its own proven domain) composes at both Divide call sites, AddBCDPredef's proven arbitrary BCD transition composes at the Predef call, and the PrintText tail terminates the path"
+decoder = "exact 76-byte linked body checked; XOR A, LDH both directions, LD A,(nn), LD A,n, ADD A/ADD B, SWAP A, and LDI stores run via audited instruction shims (LD A,n preserves F); the turn branch, level doubling, BCD digit assembly, and money stores execute pathwise while native C calls the real port_divide_wrapper, port_add_bcd_predef, and port_print_text"
 
 [[function]]
 assembly_symbol = "RecoilEffect_"
