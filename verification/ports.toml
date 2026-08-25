@@ -21257,6 +21257,20 @@ proof_domain = "all register/flag, rWX, and VBlank inputs at both gameplay-reach
 decoder = "exact 34-byte body checked; PUSH/POP frames, LDH, INC/DEC, both inner JR loops, outer backward JR, and RET execute pathwise; DelayFrames is its independently proved exact C=2 transition and native C retains every real do-while loop and call"
 
 [[function]]
+assembly_symbol = "ShakeScreenHorizontallySlow"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_horizontally_slow"
+c_source = "verification/ports/shake_screen_horizontally_slow.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rWX and hVBlankOccurred",
+    "exact slow-shake tail-call input with B=6/C=2 and complete output",
+]
+proof_domain = "all register/flag, rWX, and VBlank inputs; the independently proved slow-shake transition is arbitrary but matching at the exact tail boundary"
+decoder = "exact five-byte LD BC,$0602/JR body checked and executed pathwise; native C sets the same register pair and calls the real slow-shake port"
+
+[[function]]
 assembly_symbol = "_AnimationSquishMonPic"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_squish_mon_pic"
