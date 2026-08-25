@@ -1578,6 +1578,14 @@ struct far_copy_data2_state {
 	port_u8 rom_bank;
 };
 
+struct draw_player_character_state {
+	struct clear_sprites_state sprites;
+	port_u8 requested_bank;
+	port_u8 loaded_bank;
+	port_u8 rom_bank;
+	port_u8 player_character_oam_tile;
+};
+
 struct far_copy_data3_state {
 	struct cpu_register_state registers;
 	port_u8 requested_bank;
@@ -3228,6 +3236,8 @@ _Static_assert(sizeof(struct add_party_mon_write_move_pp_state) == 11,
 _Static_assert(sizeof(struct load_move_pps_state) == 17,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data2_state) == 11, "unexpected ABI padding");
+_Static_assert(sizeof(struct draw_player_character_state) == 172,
+    "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data3_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_tileset_tile_pattern_data_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_text_box_tile_patterns_state) == 12, "unexpected ABI padding");

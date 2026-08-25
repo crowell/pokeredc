@@ -28363,3 +28363,19 @@ observables = [
 ]
 proof_domain = "one parameterized proof per internal species index in [1,190] (the four special IDs proven as their own cases): the fossil/ghost/Mew special paths store their exact sprite dims and pointers, the Mew path composes the proven FarCopyData transfer (A restored to the caller's bank, per-site copy-loop registers and copied bytes), and the normal path composes the proven IndexToPokedex (fetched ordering-table byte = the species' dex number), AddNTimes, and CopyData transitions with the dex domain [1,190] (the defined-Pokémon invariant)"
 decoder = "exact 125-byte linked body checked; LDH both directions, LD A,(nn)/[n],A, CP immediates, DEC A, XOR A, LDI/LD [HL],A, and LD A,r run via audited instruction shims; the special-ID branch cascade and both copy paths execute pathwise while native C calls the real port_index_to_pokedex, port_add_n_times, port_copy_data, and port_far_copy_data"
+
+[[function]]
+assembly_symbol = "DrawPlayerCharacter"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_draw_player_character"
+c_source = "verification/ports/draw_player_character.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all 160 wShadowOAM bytes and wPlayerCharacterOAMTile",
+    "hROMBankTemp, hLoadedROMBank, and rROMB",
+    "ordered FarCopyData2 and ClearSprites call inputs",
+    "an arbitrary proven FarCopyData2 transfer-memory post-state",
+]
+proof_domain = "all initial register/flag, bank, wPlayerCharacterOAMTile, and 160-byte wShadowOAM states, with an arbitrary matching transition from the independently proven FarCopyData2 callee and the complete independently proven ClearSprites transition"
+decoder = "the exact complete 60-byte linked body executes under angr; only the two proven callee boundaries and individual unsupported/mis-modeled SM83 instructions are shimmed, while both real 7-row by 5-column loops execute in assembly and native C and all 160 possible OAM destination bytes are compared"
