@@ -21473,14 +21473,16 @@ assembly_symbol = "PlayApplyingAttackSound"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_play_applying_attack_sound"
 c_source = "verification/ports/play_applying_attack_sound.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "complete WaitForSoundToFinish and PlaySound audio state",
     "wFrequencyModifier",
     "wTempoModifier",
+    "WaitForSoundToFinish and conditional PlaySound call inputs",
 ]
-proof_domain = "all register/flag inputs through the PlaySound call boundary for weak, neutral, and super-effective multipliers 9, 10, and 11"
-decoder = "WaitForSoundToFinish and PlaySound are explicit boundaries; SM83 masking, CP flags, branch-selected modifiers, and sound IDs are modeled exactly"
+proof_domain = "all register/flag, damage-multiplier, modifier, and audio-state inputs across the masked-zero return, neutral multiplier 10, super-effective multipliers 11..127, and not-very-effective multipliers 1..9; independently proved WaitForSoundToFinish and PlaySound transitions are arbitrary but matching at their exact call boundaries"
+decoder = "exact 44-byte body checked; the real WaitForSoundToFinish call, LD/AND/CP flags, ineffective return, all three modifier/sound branches, global writes, and PlaySound tail execute pathwise; native C calls the real port_wait_for_sound_to_finish and port_play_sound"
 
 [[function]]
 assembly_symbol = "BattleTransition"

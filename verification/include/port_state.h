@@ -1483,6 +1483,13 @@ struct play_sound_state {
 	port_u8 audio_saved_rom_bank;
 };
 
+struct play_applying_attack_sound_state {
+	struct play_sound_state sound;
+	port_u8 damage_multipliers;
+	port_u8 frequency_modifier;
+	port_u8 tempo_modifier;
+};
+
 struct fade_out_audio_state {
 	struct play_sound_state sound;
 	port_u8 status_flags2;
@@ -3162,6 +3169,7 @@ _Static_assert(sizeof(struct player_name_sram_state) == 22, "unexpected ABI padd
 _Static_assert(sizeof(struct serial_exchange_nybble_state) == 15, "unexpected ABI padding");
 _Static_assert(sizeof(struct wait_for_sound_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct play_sound_state) == 24, "unexpected ABI padding");
+_Static_assert(sizeof(struct play_applying_attack_sound_state) == 27, "unexpected ABI padding");
 _Static_assert(sizeof(struct fade_out_audio_state) == 26, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct reload_move_data_state) == 28,
