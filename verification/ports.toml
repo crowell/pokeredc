@@ -14583,8 +14583,8 @@ observables = [
     "loaded and mapper ROM banks",
     "exact _Multiply callback-entry registers",
 ]
-proof_domain = "all register/flag, multiply-memory, and bank inputs plus an arbitrary proven _Multiply post-state; native production C invokes real port_multiply"
-decoder = "the exact 13-byte wrapper executes under angr; PUSH/POP preservation of HL/BC, target HL=$7d41, bank B=$0d, Bankswitch callback BC=$35e4, callback effects, A/F behavior, and restoration of both banks are modeled compositionally"
+proof_domain = "all register/canonical-flag, multiply-memory, loaded-bank, and mapper-bank inputs; the complete proven eight-bit _Multiply transition is composed at the Bankswitch boundary"
+decoder = "exact 13-byte linked wrapper checked; linked PUSH/POP/RET and target/bank setup execute under angr, the exact _Multiply callback registers/memory/banks and complete arithmetic post-state are compared, final bank restoration is observable, and native production C invokes real port_multiply"
 
 
 
