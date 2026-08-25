@@ -22153,13 +22153,14 @@ assembly_symbol = "AnyMoveToSelect"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_any_move_to_select"
 c_source = "verification/ports/any_move_to_select.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
-    "wPlayerSelectedMove",
+    "all registers and canonical flags",
+    "wPlayerSelectedMove, wPlayerDisabledMove, all four wBattleMonPP bytes, wTextBoxID, and hVBlankOccurred",
+    "ordered PrintText/DelayFrames calls and 60-frame iteration count",
 ]
-proof_domain = "all register/flag and disabled-move inputs through the disabled-move branch"
-decoder = "STRUGGLE selection, disabled-move load/AND-A flags, and BattleMon PP pointer setup are modeled exactly; PP scan and no-moves paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, disabled-move, PP, textbox, and vblank inputs across the ordinary scan, disabled-slot loop, all early returns, and no-moves path"
+decoder = "exact 59-byte linked body checked inside the functional proof; the real four-entry C loop matches linked control flow, PrintText composes its proven transition, and the native DelayFrames wrapper executes exactly 60 observed iterations"
 
 [[function]]
 assembly_symbol = "SwapMovesInMenu"
