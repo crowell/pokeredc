@@ -23001,14 +23001,16 @@ decoder = "LoadPartyPokeballGfx/SetupOwnPartyPokeballs call boundaries, wIsInBat
 [[function]]
 assembly_symbol = "LoadPartyPokeballGfx"
 assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
-c_symbol = "port_load_party_pokeball_gfx"
+c_symbol = "port_load_party_pokeball_gfx_with_memory"
 c_source = "verification/ports/load_party_pokeball_gfx.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "complete CopyVideoData hardware/HRAM state",
+    "the DelayFrame input",
 ]
-proof_domain = "all register/flag inputs through CopyVideoData"
-decoder = "Pokeball tile source/destination and BC bank/count setup are modeled exactly; CopyVideoData transfer and graphics memory effects remain beyond the explicit boundary"
+proof_domain = "all register/flag and relevant hardware inputs; the fixed four-tile transfer executes the complete repaired CopyVideoData body and composes only the independently proved DelayFrame transition"
+decoder = "exact 12-byte setup/tail body and 62-byte CopyVideoData body checked and executed pathwise; the canonical memory-aware C port makes the real CopyVideoData call, while the old register-only symbol remains solely as compatibility for explicitly partial callers"
 
 [[function]]
 assembly_symbol = "SetupEnemyPartyPokeballs"
