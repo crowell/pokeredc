@@ -1727,6 +1727,12 @@ struct divide_wrapper_state {
 	port_u8 mapper_bank;
 };
 
+struct divide_exp_data_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
 struct is_key_item_wrapper_state {
 	struct cpu_register_state registers;
 	port_u8 loaded_rom_bank;
@@ -3172,6 +3178,8 @@ _Static_assert(sizeof(struct add_bcd_predef_state) == 17, "unexpected ABI paddin
 _Static_assert(sizeof(struct sub_bcd_predef_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_state) == 18, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_wrapper_state) == 20, "unexpected ABI padding");
+_Static_assert(sizeof(struct divide_exp_data_state) == 10,
+    "unexpected ABI padding");
 _Static_assert(sizeof(struct is_key_item_wrapper_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct give_pokemon_state) == 21, "unexpected ABI padding");
 _Static_assert(sizeof(struct give_pokemon_wrapper_state) == 25, "unexpected ABI padding");

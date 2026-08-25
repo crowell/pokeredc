@@ -23188,12 +23188,17 @@ assembly_symbol = "DivideExpDataByNumMonsGainingExp"
 assembly_source = "engine/battle/experience.asm"
 c_symbol = "port_divide_exp_data_by_num_mons_gaining_exp"
 c_source = "verification/ports/divide_exp_data_by_num_mons_gaining_exp.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "wPartyGainExpFlags and wTempByteValue",
+    "all seven enemy base-stat/base-exp bytes",
+    "hDividend/hQuotient, hDivisor/hRemainder, and hDivideBuffer",
+    "loaded and mapper ROM banks",
+    "all seven ordered Divide wrapper call inputs",
 ]
-proof_domain = "all register/flag and wPartyGainExpFlags inputs through bit-count loop setup"
-decoder = "party EXP flags load, B copy, XOR-A, C=8, D=0 setup, and loop boundary are modeled exactly; bit counting, divisor early return, stat/EXP division, and memory writes remain beyond the explicit boundary"
+proof_domain = "all registers, flags, party EXP bitmasks, seven enemy data bytes, divide scratch bytes, and bank inputs; covers the zero/one-participant return and every 2..8-participant seven-division execution"
+decoder = "exact 51 linked bytes asserted inside the functional proof; unsupported SM83 loads/stores and incorrect XOR/SRL/ADC/DEC/CP semantics are instruction-shimmed; the complete proven Divide wrapper transition is composed at each real callee entry while production C executes both real loops and calls port_divide_wrapper seven times"
 
 [[function]]
 assembly_symbol = "GetTrainerName_"
