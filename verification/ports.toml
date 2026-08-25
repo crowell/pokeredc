@@ -14727,8 +14727,8 @@ observables = [
     "hDivisor/hRemainder",
     "all five hDivideBuffer bytes",
 ]
-proof_domain = "all register/flag/high-memory inputs; exact initialization, exhaustive subtraction/shift transitions, and finalization compose inductively for every terminating execution"
-decoder = "exact 136-byte body checked; all LDH aliases, 16-bit SUB/SBC recurrence, quotient increment, multi-byte SLA/RL shifts, E/B control, dividend window advance, divisor SRL/RR, and final quotient/remainder copy modeled explicitly"
+proof_domain = "all register/canonical-flag and divide-memory inputs; exact initialization, exhaustive subtraction and shift/control recurrences with complete path-domain coverage, and finalization compose inductively for every terminating execution"
+decoder = "exact 136-byte body checked inside the functional proof; all LDH aliases, 16-bit SUB/SBC recurrence, quotient increment, multi-byte SLA/RL shifts, E/B control, dividend-window advance, divisor SRL/RR, loop backedges, and final quotient/remainder copy execute or are modeled as individual SM83 instructions, while production port_divide executes the real nested loops"
 
 [[function]]
 assembly_symbol = "Divide"
