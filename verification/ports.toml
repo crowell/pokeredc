@@ -22865,12 +22865,15 @@ assembly_symbol = "LoadHudAndHpBarAndStatusTilePatterns"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_load_hud_and_hp_bar_and_status_tile_patterns"
 c_source = "verification/ports/load_hud_and_hp_bar_and_status_tile_patterns.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "shared bank/scratch state, rLCDC, and video-transfer hardware state",
+    "exact LoadHpBarAndStatusTilePatterns and LoadHudTilePatterns inputs in order",
+    "arbitrary proven transfer-memory post-state",
 ]
-proof_domain = "all register/flag and LCD-control inputs through LCD enabled/disabled selection"
-decoder = "LoadHpBarAndStatusTilePatterns call boundary, LCDC ADD-A flags, and branch selection are modeled exactly; HUD tile copy, video-transfer, hardware, and return paths remain beyond the explicit boundary"
+proof_domain = "all register/flag/LCDC/bank/hardware/scratch inputs and arbitrary proven sequential transitions from LoadHpBarAndStatusTilePatterns and LoadHudTilePatterns"
+decoder = "exact 60-byte call-plus-fallthrough body checked; assembly composes the two complete proven callee transitions, while native C calls both real ports and explicitly maps the HP loader's bank-state ABI into the canonical HUD state"
 
 [[function]]
 assembly_symbol = "LoadHudTilePatterns"
