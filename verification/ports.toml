@@ -28510,3 +28510,16 @@ observables = [
 ]
 proof_domain = "all register inputs and all twelve HRAM/WRAM inputs over every terminating path: both early flag returns, the A/B-held DelayFrame exits under both fast-text variants, the counter==0 fall-through, and the ISR-driven poll spin modeled as its terminating counter==0 observation (the established text-poll boundary precedent; the soft-reset sentinel keeps its proved early return)"
 decoder = "the exact 64-byte linked body, the exact Joypad homecall wrapper, and the exact proved _Joypad callee execute under angr as one unbroken per-instruction hook chain; SM83-only EA/LDH/PUSH/POP/CP/BIT/AND decoder shims plus fork shims for the SLEIGH conditional-branch defect and the proved DelayFrame call-site terminal; the native port calls the real port_joypad_homecall and port_delay_frame, and both sides model the spin's terminating observation identically"
+
+[[function]]
+assembly_symbol = "ScrollTextUpOneLine"
+assembly_source = "home/text.asm"
+c_symbol = "port_scroll_text_up_one_line"
+c_source = "verification/ports/scroll_text_up_one_line.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 80-byte wTileMap scroll region (rows 13-15 plus the cleared row-16 span)",
+]
+proof_domain = "all register inputs and every initial wTileMap byte over the single linear path: the overlapping forward 60-byte row copy (DE < HL so no source clobber), the 18-byte space clear, and five proved DelayFrame waits"
+decoder = "exact 34-byte linked body executes under angr on one linear path as one unbroken per-instruction hook chain; SM83-only LD [HL+]/LD [HL+]-store plus LD16/LD B/LD [DE],A/INC DE/DEC B shims and the proved DelayFrame call-site terminal; the native C executes all three real loops and five real port_delay_frame calls, and writes the faithful loop-exit HL/DE/B and the final DEC B flags (Z|N)"
