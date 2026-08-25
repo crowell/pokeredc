@@ -21085,19 +21085,16 @@ assembly_symbol = "AnimationShakeScreenVertically"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_shake_screen_vertically"
 c_source = "verification/ports/animation_shake_wrappers.c"
-status = "partial"
+status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
+    "wPredefID and wPredefHL through wPredefBC+1",
+    "wPredefParentBank, wPredefBank, hLoadedROMBank, and rROMB",
+    "wDisableVBlankWYUpdate, hMutateWY, and rWY",
+    "PredefShakeScreenVertically target hand-off state",
 ]
-proof_domain = "all CPU register/flag inputs with positive predef shake count"
-decoder = "PredefShakeScreenVertically loop summary is modeled through its final DelayFrames/DEC B iteration and terminating XOR A; predef register-block memory and per-frame hardware writes remain beyond the explicit boundary"
+proof_domain = "all register/flag, ROM-bank, disable-update, hMutateWY, and rWY inputs, including B=$00; the fixed GetPredefPointer table transition and independently proved PredefShakeScreenVertically target compose at their exact call and jump boundaries"
+decoder = "exact 5-byte wrapper and 39-byte Predef dispatcher bodies checked; the real predef jump, register-pair saves, bank-$13 pointer lookup, switch to fixed target bank $12, pushed .done continuation, target hand-off, original A/F restoration, and final parent-bank writes execute pathwise; only audited SM83 absolute/LDH access shims and complete proven callee summaries are used, while native C calls the real port_get_predef_pointer and port_predef_shake_screen_vertically_private"
 
 [[function]]
 assembly_symbol = "AnimationShakeScreenHorizontallyFast"
