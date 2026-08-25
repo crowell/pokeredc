@@ -21343,13 +21343,15 @@ assembly_symbol = "CopyTempPicToMonPic"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_copy_temp_pic_to_mon_pic"
 c_source = "verification/ports/copy_temp_pic_to_mon_pic.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
-    "hWhoseTurn",
+    "hWhoseTurn and the complete CopyVideoData hardware/HRAM state",
+    "all seven DelayFrame inputs in exact order",
+    "both player and enemy destination paths",
 ]
-proof_domain = "all register/flag inputs and arbitrary hWhoseTurn bytes through the CopyVideoData jump continuation"
-decoder = "LDH load and AND-A flags are shimmed exactly; turn-dependent vBackPic/vFrontPic source, wTempPic destination, and PIC_SIZE count are modeled"
+proof_domain = "all register/flag and relevant hardware inputs and every 8-bit hWhoseTurn value; both turn paths execute the complete repaired CopyVideoData body with its fixed 49-tile real loop, composing only the independently proved DelayFrame transition"
+decoder = "exact 20-byte body checked and executed pathwise; only the unsupported LDH read and audited SM83 AND-A flags are shimmed in the wrapper, while native C makes the real CopyVideoData call and both sides execute all seven video-copy delay iterations"
 
 [[function]]
 assembly_symbol = "AnimationWavyScreen"
