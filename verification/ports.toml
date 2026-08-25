@@ -15250,11 +15250,13 @@ c_symbol = "port_title_scroll"
 c_source = "verification/ports/title_scroll.c"
 status = "proven"
 observables = [
-    "all registers and flags",
-    "_TitleScroll continuation",
+    "all registers and canonical flags",
+    "final rLY, rSCX, and wShadowOAMSprite10YCoord",
+    "selected TitleScroll_In/TitleScroll_Out table and exact _TitleScroll call state",
+    "TitleBallYTable and scanline timing inputs",
 ]
-proof_domain = "all general-register and canonical-flag inputs across both initial-D dispatcher paths"
-decoder = "exact 18-byte entry body checked; inward/outward table pointers, starting offsets, zeroed animation selector, AND flags, and _TitleScroll continuation modeled explicitly"
+proof_domain = "all initial register, canonical-flag, rLY, rSCX, and title-ball-Y inputs across D=0 and D!=0 dispatcher paths, with an arbitrary matching transition of the independently proven complete _TitleScroll body"
+decoder = "the exact complete 18-byte dispatcher executes under angr across both branches and composes the independently proven complete 40-byte _TitleScroll body; production C calls real port_title_scroll_body, which executes the real nested loops and real callee calls"
 
 
 

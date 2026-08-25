@@ -3,6 +3,9 @@
 void port_title_scroll_scroll_between(struct scanline_scx_state *,
 	const port_u8 *, const port_u8 *);
 void port_get_title_ball_y(struct title_ball_y_state *);
+void port_title_scroll_body(struct title_scroll_body_state *,
+	const port_u8 *, const port_u8 *,
+	const struct title_scroll_scanline_timing *);
 
 static void
 title_scroll_and(struct cpu_register_state *registers, port_u8 value)
@@ -84,23 +87,31 @@ title_scroll_get_ball_y(struct title_scroll_body_state *state,
 	state->title_ball_y = ball.output_y;
 }
 
-/* Port of TitleScroll's entry dispatcher in engine/movie/title2.asm. */
+/* Port of TitleScroll in engine/movie/title2.asm. */
 __attribute__((noinline, used)) void
-port_title_scroll(struct cpu_register_state *state)
+port_title_scroll(struct title_scroll_body_state *state,
+	const port_u8 *in_table, const port_u8 *out_table,
+	const port_u8 *title_ball_y_table,
+	const struct title_scroll_scanline_timing *timings)
 {
-	state->a = state->d;
-	state->b = 0x72;
-	state->c = 0x47;
-	state->d = 0x88;
-	state->e = 0;
-	state->f = PORT_FLAG_H;
-	if (state->a == 0) {
-		state->f |= PORT_FLAG_Z;
-		state->b = 0x72;
-		state->c = 0x4f;
-		state->d = 0;
-		state->e = 0;
+	struct cpu_register_state *registers = &state->registers;
+	const port_u8 *scroll_table = in_table;
+
+	registers->a = registers->d;
+	registers->b = 0x72;
+	registers->c = 0x47;
+	registers->d = 0x88;
+	registers->e = 0;
+	title_scroll_and(registers, 0xff);
+	if (registers->a == 0) {
+		registers->b = 0x72;
+		registers->c = 0x4f;
+		registers->d = 0;
+		registers->e = 0;
+		scroll_table = out_table;
 	}
+	port_title_scroll_body(state, scroll_table, title_ball_y_table,
+		timings);
 }
 
 /* Port of _TitleScroll in engine/movie/title2.asm. */
