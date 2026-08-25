@@ -28464,7 +28464,7 @@ observables = [
     "exact CopyVideoData tail-call state",
 ]
 proof_domain = "all initial register/flag, output-pointer, sprite-buffer, flip-flag, bank, and video-copy hardware inputs across both flipped and unflipped paths, with an arbitrary matching transition of the independently proven CopyVideoData body"
-decoder = "the exact complete 69-byte linked body executes under angr through all 196 interlace iterations and the optional 784-byte nibble-swap loop; only individual unsupported/mis-modeled SM83 instructions and the proven CopyVideoData tail boundary are shimmed, while native C executes both real loops and calls real port_copy_video_data"
+decoder = "the exact complete 69-byte linked body executes under angr with a concrete stack through all 196 interlace iterations and the optional 784-byte nibble-swap loop; only individual unsupported/mis-modeled SM83 instructions (including SM83-correct AND half-carry semantics) and the proven CopyVideoData tail boundary are shimmed, while native C executes both real loops and calls real port_copy_video_data"
 
 
 
