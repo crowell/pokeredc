@@ -7216,6 +7216,21 @@ decoder = "the native wrapper sets B to zero and calls the real port_is_in_rest_
 
 
 [[function]]
+assembly_symbol = "GetMonName"
+assembly_source = "home/names.asm"
+c_symbol = "port_get_mon_name"
+c_source = "verification/ports/get_mon_name.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wNamedObjectIndex, hLoadedROMBank, and rROMB",
+    "all 11 bytes of wNameBuffer",
+    "exact AddNTimes and CopyData call-register snapshots",
+]
+proof_domain = "all register/canonical-flag, named-object-index, and bank-state inputs; the ten bytes supplied by the independently proven CopyData transition are fully symbolic"
+decoder = "exact 49-byte linked body checked inside the functional test; stack saves/restores, bank switching, index decrement, terminator store, and return execute under angr with only unsupported absolute/high-memory accesses shimmed; complete AddNTimes and CopyData transitions compose at their call sites while native production C invokes the real proven ports"
+
+[[function]]
 assembly_symbol = "CopyToStringBuffer"
 assembly_source = "home/copy_string.asm"
 c_symbol = "port_copy_to_string_buffer"
