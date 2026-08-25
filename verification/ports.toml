@@ -22262,14 +22262,16 @@ decoder = "complete function: IsGhostBattle dispatch, turn/status flag effects, 
 [[function]]
 assembly_symbol = "IsGhostBattle"
 assembly_source = "engine/battle/core.asm"
-c_symbol = "port_is_ghost_battle"
+c_symbol = "port_is_ghost_battle_complete"
 c_source = "verification/ports/is_ghost_battle.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "all registers and canonical flags",
+    "wIsInBattle, wCurMap, and the complete bounded wNumBagItems table",
+    "IsItemInBag call snapshot and call trace",
 ]
-proof_domain = "all register/flag and wIsInBattle inputs through the wild-battle check"
-decoder = "wIsInBattle load and DEC-A flags, including carry preservation, are modeled exactly; map-range and Silph Scope checks remain beyond the explicit boundary"
+proof_domain = "all register/flag, battle-mode, and map-byte inputs across the early return, both map-range exits, and both results of the proven IsItemInBag transition over an eight-slot terminated symbolic bag"
+decoder = "exact 26-byte linked body checked inside the functional proof; only DEC A and the two CP immediates are shimmed for canonical SM83 flags, and production C calls the real inventory port"
 
 [[function]]
 assembly_symbol = "CheckPlayerStatusConditions"
