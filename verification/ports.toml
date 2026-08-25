@@ -23649,15 +23649,16 @@ assembly_symbol = "AICheckIfHPBelowFraction"
 assembly_source = "engine/battle/trainer_ai.asm"
 c_symbol = "port_ai_check_if_hp_below_fraction_private"
 c_source = "verification/ports/ai_check_if_hp_below_fraction_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
-    "hDivisor",
-    "hDividend",
-    "hDividend+1",
+    "enemy current and maximum HP",
+    "hDividend/hQuotient, hDivisor/hRemainder, and hDivideBuffer",
+    "loaded and mapper ROM banks",
+    "exact Divide wrapper call input",
 ]
-proof_domain = "all register/flag, divisor, and enemy-max-HP inputs through Divide setup"
-decoder = "divisor save, enemy max-HP dividend setup, B=2 division precision, and HL/A setup are modeled exactly; division result, current-HP comparison, carry return, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all registers, flags, current/max HP, divide scratch, and bank inputs with nonzero divisor A; includes unequal-high-byte and equal-high-byte/low-byte comparison returns"
+decoder = "exact 35 linked bytes asserted inside the functional proof; unsupported SM83 HRAM loads/stores and HL decrement plus incorrect SUB semantics are instruction-shimmed; the complete proven Divide wrapper transition is composed at its real entry while production C calls port_divide_wrapper"
 
 [[function]]
 assembly_symbol = "AIPrintItemUse"
