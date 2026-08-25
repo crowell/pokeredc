@@ -28480,3 +28480,18 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and every initial wTileMap byte (the proof shows all 360 are fully overwritten with the $7f space tile), over the single linear fill path and the proved Delay3 tail"
 decoder = "exact 19-byte linked body executes under angr on one linear path through both wrapped DEC C/DEC B passes; SM83-only LD [HL+],A plus INC/DEC-register flag shims and the proved Delay3 tail boundary (A:=0, F:=Z|N, C:=0, B/D/E/H/L preserved); the native C executes the real 360-iteration loop and calls the real port_delay3"
+
+[[function]]
+assembly_symbol = "Joypad"
+assembly_source = "home/joypad.asm"
+c_symbol = "port_joypad_homecall"
+c_source = "verification/ports/joypad_homecall.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hLoadedROMBank and the rROMB MBC register",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, hJoyHeld",
+    "wStatusFlags5 and wJoyIgnore",
+]
+proof_domain = "all register inputs and all nine HRAM/WRAM joypad inputs over all four _Joypad terminal paths (PAD_BUTTONS soft-reset sentinel modeled as the proved early return, disable-bit discard, unmasked, and wJoyIgnore-masked)"
+decoder = "the exact 20-byte homecall body and the exact proved _Joypad callee execute under angr as one unbroken per-instruction hook chain (the p-code engine fires hooks only at block starts); SM83-only EA/PUSH-AF/POP-AF/LDH shims plus fork shims for the SLEIGH conditional-branch defect; the native port switches the bank state, calls the real port_joypad, restores A/F per the pop af, and carries the callee's B/D/E scratch results"
