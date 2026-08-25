@@ -381,6 +381,14 @@ struct battle_random_state {
 	port_u8 random_numbers[256];
 };
 
+struct randomize_damage_state {
+	struct battle_random_state battle;
+	port_u8 damage[2];
+	port_u8 product[4];
+	port_u8 multiplier;
+	port_u8 divide_buffer[5];
+};
+
 struct scale_pixels_state {
 	struct cpu_register_state registers;
 	port_u8 written_first;
@@ -3010,6 +3018,8 @@ _Static_assert(sizeof(struct random_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct random_generate_state) == 14,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct battle_random_state) == 272,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct randomize_damage_state) == 284,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct scale_pixels_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct sprite_sheet_data_state) == 12, "unexpected ABI padding");

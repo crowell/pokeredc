@@ -22546,12 +22546,17 @@ assembly_symbol = "RandomizeDamage"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_randomize_damage"
 c_source = "verification/ports/randomize_damage.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "A/F/B/C/D/E/H/L with canonical SM83 flags",
+    "both wDamage bytes and all product/dividend, multiplier/divisor, and divide-scratch bytes",
+    "hRandomAdd/hRandomSub, two independent rDIV samples, and loaded/mapper bank state",
+    "wLinkState, every list index, and the complete 256-byte possible shared-random read region",
+    "exact BattleRandom, Random, Multiply, and Divide call inputs",
+    "random-loop repeat/accept decision",
 ]
-proof_domain = "all register/flag and wDamage high-byte inputs through the initial zero test"
-decoder = "wDamage pointer setup, high-byte load, AND-A flags, and branch boundary are modeled exactly; low-byte early return, BattleRandom loop, Multiply/Divide arithmetic, and damage storage remain beyond the explicit boundary"
+proof_domain = "all register/canonical-flag, damage, random/link/list, arithmetic-scratch, and bank inputs; exact entry, exhaustive one-iteration random recurrence, and accepted-value finalization compose for every terminating retry count, with finalization restricted to its reachable A range [217,255]"
+decoder = "exact 53-byte linked body checked inside the functional proof; both early returns, HLI/LDH setup, RRCA/CP retry backedge, real production while loop, final quotient writes, and complete proven BattleRandom/Multiply/Divide transitions are composed at their call boundaries while native C invokes the real ports"
 
 [[function]]
 assembly_symbol = "ExecuteEnemyMove"
