@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import lru_cache
 from pathlib import Path
 
 import angr
@@ -11,217 +10,78 @@ from archinfo import ArchPcode
 
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
-    native_registers,
-    set_assembly_registers,
-    store_native_registers,
-    symbolic_registers,
+    REGISTERS, assembly_registers, native_registers, set_assembly_registers,
+    store_native_registers, symbolic_registers,
 )
 from verification.harness.rom import (
-    collect_returns,
-    linked_bytes,
-    rom_window,
-    symbol_location,
+    collect_returns, linked_bytes, rom_window, sm83_flags_to_z80, symbol_location,
 )
 from verification.harness.sm83_shims import (
-    Sm83LoadAHighImmediate,
-    Sm83LoadAImmediate,
+    Sm83AddHlRegisterPair, Sm83LoadAHighImmediate, Sm83LoadAImmediate,
 )
 
-
-class AddNTimesInline(angr.SimProcedure):
-    """Model ``call AddNTimes``: hl = hl + bc * a (a = 0 leaves hl unchanged),
-    a = 0, b/c preserved."""
-
-    def __init__(self, next_address: int, **kwargs: object) -> None:
-        super().__init__(**kwargs)
-        self._next_address = next_address
-
-    def run(self) -> None:  # type: ignore[override]
-        state = self.state
-        a = state.regs.a
-        bc = claripy.ZeroExt(8, state.regs.c) | (claripy.ZeroExt(8, state.regs.b) << 8)
-        hl = claripy.ZeroExt(8, state.regs.l) | (claripy.ZeroExt(8, state.regs.h) << 8)
-        new_hl = (hl + bc * claripy.ZeroExt(8, a)) & 0xFFFF
-        state.regs.a = claripy.BVV(0, 8)
-        state.regs.h = claripy.Extract(15, 8, new_hl)
-        state.regs.l = claripy.Extract(7, 0, new_hl)
-        self.jump(self._next_address)
-
-
-ROOT = Path(__file__).resolve().parents[2]
-NATIVE_ELF = ROOT / "verification" / "build" / "ports.elf"
-ROM = ROOT / "pokered.gbc"
-SYMBOLS = ROOT / "pokered.sym"
-GB_RETURN = 0xFFFF
-NATIVE_STATE = 0x100000
-# Local stack base: the enemy-turn battle-PP address (wEnemyMonPP + MOVE_INDEX)
-# collides with the usual 0xD000 stack, so the assembly side uses 0xE000.
-GB_STACK = 0xE000
-
-H_WHOSE_TURN = 0xFFF3
-W_BATTLE_MON_PP = 0xD02D
-W_PARTY_MON1_PP = 0xD188
-W_ENEMY_MON_PP = 0xCFFE
-W_ENEMY_MON1_PP = 0xD8C1
-W_PLAYER_MOVE_LIST_INDEX = 0xCC2E
-W_PLAYER_MON_NUMBER = 0xCC2F
-W_ENEMY_MOVE_LIST_INDEX = 0xCCE2
-W_ENEMY_MON_PARTY_POS = 0xCFE8
-PARTYMON_STRUCT_LENGTH = 0x2C
-
-# Move index and party-mon number are fixed concrete so the PP addresses are
-# concrete and `inc [hl]` can run natively without a symbolic store address.
-# hWhoseTurn (the player/enemy selector) is also concrete; the proof is run
-# once per turn so both branches are verified without a symbolic base address.
-MOVE_INDEX = 2
-WHICH = 0
-
-PLAYER_BATTLE_PP_ADDR = W_BATTLE_MON_PP + MOVE_INDEX
-PLAYER_PARTY_PP_ADDR = W_PARTY_MON1_PP + PARTYMON_STRUCT_LENGTH * WHICH + MOVE_INDEX
-ENEMY_BATTLE_PP_ADDR = W_ENEMY_MON_PP + MOVE_INDEX
-ENEMY_PARTY_PP_ADDR = W_ENEMY_MON1_PP + PARTYMON_STRUCT_LENGTH * WHICH + MOVE_INDEX
-
-
-@lru_cache(maxsize=None)
-def _pp_inputs() -> tuple[claripy.ast.BV, ...]:
-    # Symbolic byte values shared between the asm and native endpoints so the
-    # path comparator pairs the same initial PP variables.
-    return (
-        claripy.BVS("imp_pb_pp", 8),  # player battle PP byte
-        claripy.BVS("imp_pp_pp", 8),  # player party PP byte
-        claripy.BVS("imp_eb_pp", 8),  # enemy battle PP byte
-        claripy.BVS("imp_ep_pp", 8),  # enemy party PP byte
-    )
-
-
-def _store_inputs(state: angr.SimState, whose: int) -> None:
-    pb, pp, eb, ep = _pp_inputs()
-    state.memory.store(H_WHOSE_TURN, claripy.BVV(whose, 8))
-    state.memory.store(PLAYER_BATTLE_PP_ADDR, pb)
-    state.memory.store(PLAYER_PARTY_PP_ADDR, pp)
-    state.memory.store(ENEMY_BATTLE_PP_ADDR, eb)
-    state.memory.store(ENEMY_PARTY_PP_ADDR, ep)
-    # concrete move index / party-mon number -> concrete PP addresses
-    state.memory.store(W_PLAYER_MOVE_LIST_INDEX, claripy.BVV(MOVE_INDEX, 8))
-    state.memory.store(W_PLAYER_MON_NUMBER, claripy.BVV(WHICH, 8))
-    state.memory.store(W_ENEMY_MOVE_LIST_INDEX, claripy.BVV(MOVE_INDEX, 8))
-    state.memory.store(W_ENEMY_MON_PARTY_POS, claripy.BVV(WHICH, 8))
-
+ROOT=Path(__file__).resolve().parents[2];ELF=ROOT/'verification/build/ports.elf';ROM=ROOT/'pokered.gbc';SYMS=ROOT/'pokered.sym'
+NS=0x100000;NM=0x200000;STACK=0xE000;RETURN=0xFFFF
+TURN=0xFFF3;PB=0xD02D;PP=0xD188;EB=0xCFFE;EP=0xD8C1;PMI=0xCC2E;PMN=0xCC2F;EMI=0xCCE2;EMP=0xCFE8;STRIDE=44
+EXPECTED=bytes.fromhex('f0f3a7212dd01188d1fa2ecc280921fecf11c1d8fae2cc06004f0934626b09f0f3a7fa2fcc2803fae8cf012c00cd873a34c9')
 
 @dataclass(frozen=True)
-class Endpoint:
-    m_player_battle_pp: claripy.ast.BV
-    m_player_party_pp: claripy.ast.BV
-    m_enemy_battle_pp: claripy.ast.BV
-    m_enemy_party_pp: claripy.ast.BV
-    constraints: tuple[claripy.ast.Bool, ...]
+class E:
+    a:claripy.ast.BV;f:claripy.ast.BV;b:claripy.ast.BV;c:claripy.ast.BV;d:claripy.ast.BV;e:claripy.ast.BV;h:claripy.ast.BV;l:claripy.ast.BV
+    pp:claripy.ast.BV;call:claripy.ast.BV;constraints:tuple[claripy.ast.Bool,...]
 
+class IncAtHl(angr.SimProcedure):
+    def __init__(self,nxt:int)->None:super().__init__();self.nxt=nxt
+    def run(self)->None:  # type: ignore[override]
+        old=self.state.memory.load(self.state.regs.hl,1);result=old+1;flags=self.state.regs.f&1
+        flags|=claripy.If(result==0,claripy.BVV(0x40,8),claripy.BVV(0,8));flags|=claripy.If((old&0x0f)==0x0f,claripy.BVV(0x10,8),claripy.BVV(0,8))
+        self.state.memory.store(self.state.regs.hl,result);self.state.regs.f=flags;self.jump(self.nxt)
 
-def _assembly_endpoint(inputs: dict[str, claripy.ast.BV], whose: int) -> list[Endpoint]:
-    location = symbol_location(SYMBOLS, "IncrementMovePP")
-    project = angr.Project(
-        rom_window(ROM, location.bank),
-        auto_load_libs=False,
-        rebase_granularity=0x100,
-        main_opts={
-            "backend": "blob",
-            "arch": ArchPcode("z80:LE:16:default"),
-            "base_addr": 0,
-            "entry_point": location.address,
-        },
-    )
-    base = location.address
-    # ldh a, [a8] (0xF0) loads from high RAM; absent from the z80 decoder.
-    project.hook(base + 0x00, Sm83LoadAHighImmediate(0xF3, base + 0x02), length=2)
-    # ld a, [a16] (0xFA) loads are shimmed (absent from the z80 decoder).
-    project.hook(
-        base + 0x09,
-        Sm83LoadAImmediate(W_PLAYER_MOVE_LIST_INDEX, base + 0x0C),
-        length=3,
-    )
-    project.hook(
-        base + 0x14,
-        Sm83LoadAImmediate(W_ENEMY_MOVE_LIST_INDEX, base + 0x17),
-        length=3,
-    )
-    project.hook(base + 0x1F, Sm83LoadAHighImmediate(0xF3, base + 0x21), length=2)
-    project.hook(
-        base + 0x22,
-        Sm83LoadAImmediate(W_PLAYER_MON_NUMBER, base + 0x25),
-        length=3,
-    )
-    project.hook(
-        base + 0x27,
-        Sm83LoadAImmediate(W_ENEMY_MON_PARTY_POS, base + 0x2A),
-        length=3,
-    )
-    project.hook(base + 0x2D, AddNTimesInline(base + 0x30), length=3)
-    state = project.factory.blank_state(addr=base)
-    _store_inputs(state, whose)
-    set_assembly_registers(state, inputs)
-    state.regs.sp = claripy.BVV(GB_STACK, 16)
-    state.memory.store(GB_STACK, claripy.BVV(GB_RETURN, 16), endness="Iend_LE")
-    returned = collect_returns(project, state, GB_RETURN)
-    return [
-        Endpoint(
-            m_player_battle_pp=end.memory.load(PLAYER_BATTLE_PP_ADDR, 1),
-            m_player_party_pp=end.memory.load(PLAYER_PARTY_PP_ADDR, 1),
-            m_enemy_battle_pp=end.memory.load(ENEMY_BATTLE_PP_ADDR, 1),
-            m_enemy_party_pp=end.memory.load(ENEMY_PARTY_PP_ADDR, 1),
-            constraints=tuple(end.solver.constraints),
-        )
-        for end in returned
-    ]
+class AndA(angr.SimProcedure):
+    def __init__(self,nxt:int)->None:super().__init__();self.nxt=nxt
+    def run(self)->None:  # type: ignore[override]
+        self.state.regs.f=claripy.If(self.state.regs.a==0,claripy.BVV(0x50,8),claripy.BVV(0x10,8));self.jump(self.nxt)
 
+class AddSummary(angr.SimProcedure):
+    def __init__(self,nxt:int)->None:super().__init__();self.nxt=nxt
+    def run(self)->None:  # type: ignore[override]
+        raw=claripy.Concat(*(assembly_registers(self.state)[n] for n in REGISTERS));a=self.state.regs.a;bc=self.state.regs.bc;hl=self.state.regs.hl
+        self.state.globals['call']=raw;result=hl+claripy.ZeroExt(8,a)*bc;last=hl+claripy.ZeroExt(8,a-1)*bc;wide=claripy.ZeroExt(1,last)+claripy.ZeroExt(1,bc)
+        flags=claripy.If(a==0,claripy.BVV(0xA0,8),claripy.BVV(0xC0,8)|claripy.If(wide[16]==1,claripy.BVV(0x10,8),claripy.BVV(0,8)))
+        self.state.regs.a=0;self.state.regs.f=sm83_flags_to_z80(flags);self.state.regs.hl=result;self.jump(self.nxt)
 
-def _native_endpoint(inputs: dict[str, claripy.ast.BV], whose: int) -> list[Endpoint]:
-    project = angr.Project(NATIVE_ELF, auto_load_libs=False)
-    function = project.loader.find_symbol("port_increment_move_pp")
-    assert function is not None
-    state = project.factory.call_state(
-        function.rebased_addr, NATIVE_STATE, claripy.BVV(0, 64)
-    )
-    store_native_registers(state, NATIVE_STATE, inputs)
-    _store_inputs(state, whose)
-    manager = project.factory.simulation_manager(state)
-    manager.run()
-    assert not manager.errored
-    return [
-        Endpoint(
-            m_player_battle_pp=end.memory.load(PLAYER_BATTLE_PP_ADDR, 1),
-            m_player_party_pp=end.memory.load(PLAYER_PARTY_PP_ADDR, 1),
-            m_enemy_battle_pp=end.memory.load(ENEMY_BATTLE_PP_ADDR, 1),
-            m_enemy_party_pp=end.memory.load(ENEMY_PARTY_PP_ADDR, 1),
-            constraints=tuple(end.solver.constraints),
-        )
-        for end in manager.deadended
-    ]
+class NativeAddSummary(angr.SimProcedure):
+    def run(self,regs:claripy.ast.BV)->None:  # type: ignore[override]
+        raw=self.state.memory.load(regs,8);a=self.state.memory.load(regs,1);bc=self.state.memory.load(regs+2,2);hl=self.state.memory.load(regs+6,2)
+        self.state.globals['call']=raw;result=hl+claripy.ZeroExt(8,a)*bc;last=hl+claripy.ZeroExt(8,a-1)*bc;wide=claripy.ZeroExt(1,last)+claripy.ZeroExt(1,bc)
+        flags=claripy.If(a==0,claripy.BVV(0xA0,8),claripy.BVV(0xC0,8)|claripy.If(wide[16]==1,claripy.BVV(0x10,8),claripy.BVV(0,8)))
+        self.state.memory.store(regs,claripy.BVV(0,8));self.state.memory.store(regs+1,flags);self.state.memory.store(regs+6,result)
 
+def _inputs(tag:str)->dict[str,claripy.ast.BV]:
+    v=symbolic_registers(tag)
+    for n in ('pb','pp','eb','ep'):v[n]=claripy.BVS(f'{tag}_{n}',8)
+    return v
 
-@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_increment_move_pp_symbolic_equivalence() -> None:
-    inputs = symbolic_registers("imp")
-    for whose in (0, 1):
-        assembly = _assembly_endpoint(inputs, whose)
-        native = _native_endpoint(inputs, whose)
-        assert_pathwise_equivalent(
-            assembly,
-            native,
-            (
-                "m_player_battle_pp",
-                "m_player_party_pp",
-                "m_enemy_battle_pp",
-                "m_enemy_party_pp",
-            ),
-        )
+def _store(s:angr.SimState,v:dict[str,claripy.ast.BV],turn:int,move:int,which:int,base:int=0)->tuple[int,int]:
+    ba=(PB if turn==0 else EB)+move;pa=(PP if turn==0 else EP)+STRIDE*which+move
+    s.memory.store(base+TURN,claripy.BVV(turn,8));s.memory.store(base+PMI,claripy.BVV(move,8));s.memory.store(base+EMI,claripy.BVV(move,8));s.memory.store(base+PMN,claripy.BVV(which,8));s.memory.store(base+EMP,claripy.BVV(which,8))
+    for addr,n in ((PB+move,'pb'),(PP+STRIDE*which+move,'pp'),(EB+move,'eb'),(EP+STRIDE*which+move,'ep')):s.memory.store(base+addr,v[n])
+    return ba,pa
 
+def _end(s:angr.SimState,native:bool,addresses:tuple[int,int])->E:
+    base=NM if native else 0;return E(**(native_registers(s,NS) if native else assembly_registers(s)),pp=claripy.Concat(*(s.memory.load(base+a,1) for a in addresses)),call=s.globals['call'],constraints=tuple(s.solver.constraints))
 
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_increment_move_pp_exact_linked_body() -> None:
-    location = symbol_location(SYMBOLS, "IncrementMovePP")
-    expected = bytes.fromhex(
-        "f0f3a7212dd01188d1fa2ecc280921fecf11c1d8fae2cc06004f093462"
-        "6b09f0f3a7fa2fcc2803fae8cf012c00cd873a34c9"
-    )
-    assert linked_bytes(ROM, location, len(expected)) == expected
+def _asm(v:dict[str,claripy.ast.BV],turn:int,move:int,which:int)->list[E]:
+    loc=symbol_location(SYMS,'IncrementMovePP');assert linked_bytes(ROM,loc,len(EXPECTED))==EXPECTED;p=angr.Project(rom_window(ROM,loc.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={'backend':'blob','arch':ArchPcode('z80:LE:16:default'),'base_addr':0,'entry_point':loc.address});b=loc.address
+    p.hook(b,Sm83LoadAHighImmediate(0xF3,b+2),length=2);p.hook(b+2,AndA(b+3),length=1);p.hook(b+9,Sm83LoadAImmediate(PMI,b+12),length=3);p.hook(b+20,Sm83LoadAImmediate(EMI,b+23),length=3);p.hook(b+26,Sm83AddHlRegisterPair('bc',b+27),length=1);p.hook(b+27,IncAtHl(b+28),length=1);p.hook(b+30,Sm83AddHlRegisterPair('bc',b+31),length=1);p.hook(b+31,Sm83LoadAHighImmediate(0xF3,b+33),length=2);p.hook(b+33,AndA(b+34),length=1);p.hook(b+34,Sm83LoadAImmediate(PMN,b+37),length=3);p.hook(b+39,Sm83LoadAImmediate(EMP,b+42),length=3);p.hook(b+45,AddSummary(b+48),length=3);p.hook(b+48,IncAtHl(b+49),length=1)
+    s=p.factory.blank_state(addr=b);set_assembly_registers(s,v);addresses=_store(s,v,turn,move,which);s.globals['call']=claripy.BVV(0,64);s.regs.sp=STACK;s.memory.store(STACK,claripy.BVV(RETURN,16),endness='Iend_LE');return [_end(x,False,addresses) for x in collect_returns(p,s,RETURN)]
+
+def _native(v:dict[str,claripy.ast.BV],turn:int,move:int,which:int)->list[E]:
+    p=angr.Project(ELF,auto_load_libs=False);fn=p.loader.find_symbol('port_increment_move_pp');add=p.loader.find_symbol('port_add_n_times');assert fn and add;p.hook(add.rebased_addr,NativeAddSummary());s=p.factory.call_state(fn.rebased_addr,NS,NM);store_native_registers(s,NS,v);addresses=_store(s,v,turn,move,which,NM);s.globals['call']=claripy.BVV(0,64);m=p.factory.simulation_manager(s);m.run();assert not m.errored;return [_end(x,True,addresses) for x in m.deadended]
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMS.exists(),reason='build artifacts required')
+def test_increment_move_pp_pathwise_equivalence()->None:
+    for turn in (0,1):
+        for move in range(4):
+            for which in range(6):
+                v=_inputs(f'impp_{turn}_{move}_{which}');assert_pathwise_equivalent(_asm(v,turn,move,which),_native(v,turn,move,which),(*REGISTERS,'pp','call'))

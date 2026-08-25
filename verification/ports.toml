@@ -16818,13 +16818,12 @@ c_symbol = "port_increment_move_pp"
 c_source = "verification/ports/increment_move_pp.c"
 status = "proven"
 observables = [
-    "m_player_battle_pp (PP byte at wBattleMonPP + moveIndex)",
-    "m_player_party_pp (PP byte at wPartyMon1PP + PARTYMON_STRUCT_LENGTH * which + moveIndex)",
-    "m_enemy_battle_pp (PP byte at wEnemyMonPP + moveIndex)",
-    "m_enemy_party_pp (PP byte at wEnemyMon1PP + PARTYMON_STRUCT_LENGTH * which + moveIndex)",
+    "all registers and canonical flags",
+    "selected battle and party PP bytes across every caller-valid destination",
+    "exact AddNTimes call-register snapshot",
 ]
-proof_domain = "all general-register and canonical-flag inputs; hWhoseTurn (player/enemy selector) and the move index / party-mon number are fixed concrete so every PP address is concrete; the four initial PP bytes stay symbolic and shared between the asm and native paths; the proof is run once per turn (whose = 0 player, 1 enemy) so both branches are covered"
-decoder = "exact 50-byte linked body checked; the two `ldh a,[a8]` (0xF0) loads and the four `ld a,[a16]` (0xFA) loads are shimmed (absent from the z80 decoder), and `call AddNTimes` is modeled as `hl = hl + bc*a` (a=0 leaves hl unchanged); `inc [hl]`, `and a`, `jr z`, and the conditional moves run natively under the pcode engine"
+proof_domain = "all register/canonical-flag and PP-byte inputs, both caller-valid turn values, all four move-list indices, and all six party positions; all 48 possible selected battle/party destination pairs are covered"
+decoder = "exact 50-byte linked body checked inside the functional test; turn selection, pointer arithmetic, both PP increments and their flags, exact AddNTimes composition, and final registers are modeled exactly while native production C calls the real proven port_add_n_times"
 
 
 
