@@ -1269,6 +1269,11 @@ struct load_font_tile_patterns_state {
 	port_u8 lcd_control;
 };
 
+struct load_hud_tile_patterns_state {
+	struct far_copy_double_state transfer;
+	port_u8 lcd_control;
+};
+
 struct load_gb_pal_state {
 	struct cpu_register_state registers;
 	port_u8 map_pal_offset;

@@ -22877,12 +22877,15 @@ assembly_symbol = "LoadHudTilePatterns"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_load_hud_tile_patterns"
 c_source = "verification/ports/load_hud_tile_patterns.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "rLCDC and both far-copy/video-transfer state families",
+    "both exact callee inputs in execution order",
+    "arbitrary proven transfer-memory post-state",
 ]
-proof_domain = "all register/flag and LCD-control inputs through LCD enabled/disabled selection"
-decoder = "LCDC load and ADD-A flags plus LCD branch selection are modeled exactly; HUD tile source/destination setup, copy/video transfer, hardware, and return paths remain beyond the explicit boundary"
+proof_domain = "all register/flag/LCDC/bank/hardware/scratch inputs and arbitrary proven transitions for each of the two sequential FarCopyDataDouble or CopyVideoDataDouble calls; includes both LCD-disabled and LCD-enabled paths"
+decoder = "exact 57-byte dispatcher executes under angr with only the unsupported LCDC load and audited ADD-A flag operation shimmed; both paths prove the two fixed source/destination/count setups and ordered calls to the real complete C transfer ports"
 
 [[function]]
 assembly_symbol = "PrintEmptyString"
