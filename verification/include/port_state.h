@@ -1501,6 +1501,16 @@ struct shake_screen_vertically_state {
 	port_u8 predef_bank;
 };
 
+struct shake_screen_horizontally_state {
+	struct play_applying_attack_sound_state sound;
+	port_u8 predef[6];
+	port_u8 mutate_wx;
+	port_u8 wx;
+	port_u8 predef_id;
+	port_u8 predef_parent_bank;
+	port_u8 predef_bank;
+};
+
 struct fade_out_audio_state {
 	struct play_sound_state sound;
 	port_u8 status_flags2;
@@ -3182,6 +3192,7 @@ _Static_assert(sizeof(struct wait_for_sound_state) == 12, "unexpected ABI paddin
 _Static_assert(sizeof(struct play_sound_state) == 24, "unexpected ABI padding");
 _Static_assert(sizeof(struct play_applying_attack_sound_state) == 27, "unexpected ABI padding");
 _Static_assert(sizeof(struct shake_screen_vertically_state) == 39, "unexpected ABI padding");
+_Static_assert(sizeof(struct shake_screen_horizontally_state) == 38, "unexpected ABI padding");
 _Static_assert(sizeof(struct fade_out_audio_state) == 26, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct reload_move_data_state) == 28,
