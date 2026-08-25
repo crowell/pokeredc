@@ -24260,12 +24260,16 @@ assembly_symbol = "HPBarLength"
 assembly_source = "engine/gfx/hp_bar.asm"
 c_symbol = "port_hp_bar_length_private"
 c_source = "verification/ports/hp_bar_length_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "six saved predef-register bytes",
+    "hProduct/hDividend, hMultiplier/hDivisor, and all multiply/divide scratch",
+    "loaded and mapper ROM banks",
+    "ordered GetPredefRegisters and GetHPBarLength call inputs",
 ]
-proof_domain = "all register/flag inputs through GetPredefRegisters continuation boundary"
-decoder = "GetPredefRegisters call boundary is modeled exactly; HP scaling arithmetic, minimum-length clamp, division, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, saved predef-register, math scratch, and bank inputs with nonzero saved DE maximum HP"
+decoder = "exact 3-byte linked wrapper body asserted inside the functional proof; the real CALL is decoded while complete proven GetPredefRegisters and fall-through GetHPBarLength transitions are composed at their real entries; production C calls both real ports"
 
 [[function]]
 assembly_symbol = "GetHPBarLength"
