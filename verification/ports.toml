@@ -21891,12 +21891,14 @@ assembly_symbol = "HasMonFainted"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_has_mon_fainted"
 c_source = "verification/ports/has_mon_fainted.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "all registers and canonical flags",
+    "wWhichPokemon, all six possible party HP pairs, wFirstMonsNotOutYet, and wTextBoxID",
+    "ordered AddNTimes and PrintText call snapshots",
 ]
-proof_domain = "all register/flag and wWhichPokemon inputs through the AddNTimes call"
-decoder = "wWhichPokemon load and HL/BC party-structure setup are modeled exactly; HP comparison and no-will text paths remain beyond the explicit boundary"
+proof_domain = "all register/flag and memory inputs for legal party indices 0 through 5 across the alive return, suppressed no-will text, and printed no-will text paths"
+decoder = "exact 29-byte linked body checked inside the functional proof; AddNTimes composes its proven transition, HP loads and logical flags use instruction shims, and production C calls the real AddNTimes and PrintText ports"
 
 [[function]]
 assembly_symbol = "TryRunningFromBattle"
