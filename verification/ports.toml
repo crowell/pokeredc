@@ -28333,3 +28333,18 @@ observables = [
 ]
 proof_domain = "all register/flag, bank, GetName scratch, saved-register, battle PP, name-buffer, string-buffer, and destination-memory inputs; the incoming move ID ranges over every caller-valid nonzero move; all five independently proven callees are composed with complete matching transitions"
 decoder = "exact 31-byte linked body checked inside the functional proof; the real setup/DEC/final AND instructions execute or use individual exact shims, every callee entry is composed in order, and production C invokes the real proven ports through explicit state bridges"
+
+[[function]]
+assembly_symbol = "FadeInIntroPic"
+assembly_source = "engine/movie/oak_speech/oak_speech.asm"
+c_symbol = "port_fade_in_intro_pic"
+c_source = "verification/ports/fade_in_intro_pic.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rBGP through the six IntroFadePalettes steps ($54 $A8 $FC $F8 $F4 $E4)",
+    "hVBlankOccurred",
+    "DelayFrames iteration count (10 per step, six steps)",
+]
+proof_domain = "all register/flag and palette/hVBlank inputs through the single linear six-step fade path; the proven DelayFrames terminal transition (A := 0, C := 0, F := Z|N, B/DE/HL preserved, iteration count = incoming C) composes at each of the six call sites"
+decoder = "exact 17-byte linked body checked; LDI A,[HL], LDH [rBGP],A, and DEC B run via audited instruction shims; the six-step loop executes pathwise while native C calls the real port_delay_frames"
