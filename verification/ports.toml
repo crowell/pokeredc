@@ -23550,13 +23550,16 @@ assembly_symbol = "ScaleLastSpriteColumnByTwo"
 assembly_source = "engine/battle/scale_sprites.asm"
 c_symbol = "port_scale_last_sprite_column_by_two_private"
 c_source = "verification/ports/scale_last_sprite_column_by_two_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
     "hSpriteInterlaceCounter",
+    "all 28 source bytes and all 56 destination bytes",
+    "all 28 ordered ScalePixelsByTwo call inputs",
+    "fixed loop iteration count",
 ]
-proof_domain = "all register/flag and interlace-counter inputs through loop setup"
-decoder = "interlace counter initialization, BC destination offset setup, and loop-entry registers are modeled exactly; pixel expansion, buffer writes, pointer movement, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all initial A/F/B/C, interlace-counter, source-byte, and destination-byte inputs at both gameplay call-site DE/HL pairs (sSpriteBuffer1 to sSpriteBuffer0 and sSpriteBuffer2 to sSpriteBuffer1)"
+decoder = "exact 26-byte linked body asserted inside the functional proof; unsupported LDH/SWAP/DEC and conditional-jump semantics are instruction-shimmed, all other loop/pointer instructions execute from ROM, the complete proven ScalePixelsByTwo transition is composed at each real call, and production C executes the real 28-iteration loop and real callee"
 
 [[function]]
 assembly_symbol = "_ScrollTrainerPicAfterBattle"
