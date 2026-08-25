@@ -23644,15 +23644,16 @@ decoder = "divisor save, enemy max-HP dividend setup, B=2 division precision, an
 [[function]]
 assembly_symbol = "AIPrintItemUse"
 assembly_source = "engine/battle/trainer_ai.asm"
-c_symbol = "port_ai_print_item_use_private"
+c_symbol = "port_ai_print_item_use"
 c_source = "verification/ports/ai_print_item_use_private.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
-    "wAIItem",
+    "all registers and canonical flags",
+    "complete naming globals, saved state, banks, wAIItem, wAICount, wNamedObjectIndex, wNameBuffer, and wTextBoxID",
+    "ordered AIPrintItemUse_ and DecrementAICount call snapshots",
 ]
-proof_domain = "all register/flag and item inputs through wAIItem store"
-decoder = "wAIItem store is modeled exactly; item-name lookup, text rendering, AI-count handling, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all register/flag, naming-global, saved-state, bank, item/count, buffer, named-object, and textbox inputs with arbitrary matching transitions from both proven callees"
+decoder = "exact nine-byte linked body checked inside the functional proof; wAIItem storage and the two proven callees execute in order while production C calls both real ports and bridges complete register/count state"
 
 [[function]]
 assembly_symbol = "AIPrintItemUse_"
