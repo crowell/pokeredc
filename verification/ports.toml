@@ -22738,13 +22738,14 @@ assembly_symbol = "DoubleOrHalveSelectedStats"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_double_or_halve_selected_stats"
 c_source = "verification/ports/double_or_halve_selected_stats.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
-    "selected stat bytes",
+    "all registers and canonical flags",
+    "turn/selection globals, current stat bytes, and all four 16-bit stats",
+    "ordered DoubleSelectedStats and HalveSelectedStats semantic call snapshots",
 ]
-proof_domain = "selected-stat wrapper call chain with zero player/enemy stat masks"
-decoder = "ordered DoubleSelectedStats then HalveSelectedStats C calls are modeled exactly for the no-selected-stat path; nonzero stat-mask arithmetic and predef register-block integration remain beyond the explicit boundary"
+proof_domain = "all register/flag/global/stat inputs with arbitrary matching complete transitions from both proven selected-stat callees"
+decoder = "exact 16-byte linked far-call wrapper checked inside the functional proof; bank/address setup selects DoubleSelectedStats then HalveSelectedStats, while production C calls both real ports in the same order"
 
 [[function]]
 assembly_symbol = "CalculateModifiedStats"
