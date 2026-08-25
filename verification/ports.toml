@@ -24327,12 +24327,16 @@ assembly_symbol = "UpdateHPBar_CalcOldNewHPBarPixels"
 assembly_source = "engine/gfx/hp_bar.asm"
 c_symbol = "port_update_hp_bar_calc_pixels_private"
 c_source = "verification/ports/update_hp_bar_calc_pixels_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "max, old, and new HP words",
+    "hProduct/hDividend, hMultiplier/hDivisor, and all multiply/divide scratch",
+    "loaded and mapper ROM banks",
+    "ordered inputs to both GetHPBarLength calls",
 ]
-proof_domain = "all register/flag and max/old/new HP inputs through first GetHPBarLength setup"
-decoder = "max-HP, old-HP, and new-HP memory loads into DE/BC/HL plus GetHPBarLength continuation boundary are modeled exactly; pixel calculations, stack restoration, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, max/old/new HP, math scratch, and bank inputs with nonzero maximum HP"
+decoder = "exact 32-byte linked body asserted inside the functional proof; unsupported SM83 post-increment loads are instruction-shimmed, all remaining stack/register instructions execute from the ROM, and complete proven GetHPBarLength transitions are composed twice at the real entry while production C makes both real calls"
 
 [[function]]
 assembly_symbol = "LoadPokedexTilePatterns"
