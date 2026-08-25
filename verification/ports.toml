@@ -28495,3 +28495,18 @@ observables = [
 ]
 proof_domain = "all register inputs and all nine HRAM/WRAM joypad inputs over all four _Joypad terminal paths (PAD_BUTTONS soft-reset sentinel modeled as the proved early return, disable-bit discard, unmasked, and wJoyIgnore-masked)"
 decoder = "the exact 20-byte homecall body and the exact proved _Joypad callee execute under angr as one unbroken per-instruction hook chain (the p-code engine fires hooks only at block starts); SM83-only EA/PUSH-AF/POP-AF/LDH shims plus fork shims for the SLEIGH conditional-branch defect; the native port switches the bank state, calls the real port_joypad, restores A/F per the pop af, and carries the callee's B/D/E scratch results"
+
+[[function]]
+assembly_symbol = "PrintLetterDelay"
+assembly_source = "home/print_text.asm"
+c_symbol = "port_print_letter_delay"
+c_source = "verification/ports/print_letter_delay.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hFrameCounter",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, hJoyHeld",
+    "hLoadedROMBank, rROMB, wStatusFlags5, wJoyIgnore, wLetterPrintingDelayFlags, wOptions",
+]
+proof_domain = "all register inputs and all twelve HRAM/WRAM inputs over every terminating path: both early flag returns, the A/B-held DelayFrame exits under both fast-text variants, the counter==0 fall-through, and the ISR-driven poll spin modeled as its terminating counter==0 observation (the established text-poll boundary precedent; the soft-reset sentinel keeps its proved early return)"
+decoder = "the exact 64-byte linked body, the exact Joypad homecall wrapper, and the exact proved _Joypad callee execute under angr as one unbroken per-instruction hook chain; SM83-only EA/LDH/PUSH/POP/CP/BIT/AND decoder shims plus fork shims for the SLEIGH conditional-branch defect and the proved DelayFrame call-site terminal; the native port calls the real port_joypad_homecall and port_delay_frame, and both sides model the spin's terminating observation identically"
