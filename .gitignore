@@ -25,6 +25,7 @@
 # equivalence-verification build products and environments
 verification/.venv/
 verification/build/
+verification/build-mac/
 
 # save game files
 *.sgm

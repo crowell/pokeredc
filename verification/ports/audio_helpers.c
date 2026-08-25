@@ -916,11 +916,29 @@ port_audio1_init_pitch_slide_vars(struct audio_init_pitch_slide_state *state)
 	audio_init_pitch_slide_vars(state);
 }
 
+/* Symbol aliases are ELF-only; Mach-O (macOS glue build) uses wrappers. */
+#ifdef __ELF__
 void port_audio2_init_pitch_slide_vars(struct audio_init_pitch_slide_state *state)
 	__attribute__((alias("port_audio1_init_pitch_slide_vars"), used));
 
 void port_audio3_init_pitch_slide_vars(struct audio_init_pitch_slide_state *state)
 	__attribute__((alias("port_audio1_init_pitch_slide_vars"), used));
+#else
+void port_audio2_init_pitch_slide_vars(struct audio_init_pitch_slide_state *state);
+void port_audio3_init_pitch_slide_vars(struct audio_init_pitch_slide_state *state);
+
+void
+port_audio2_init_pitch_slide_vars(struct audio_init_pitch_slide_state *state)
+{
+	port_audio1_init_pitch_slide_vars(state);
+}
+
+void
+port_audio3_init_pitch_slide_vars(struct audio_init_pitch_slide_state *state)
+{
+	port_audio1_init_pitch_slide_vars(state);
+}
+#endif
 
 static void
 audio_execute_music(struct audio_execute_music_state *state)

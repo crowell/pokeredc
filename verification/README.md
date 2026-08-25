@@ -9,9 +9,79 @@ harness. The first vertical slice targets `StringCmp` from
 - RGBDS 1.0.3 (`rgbasm`, `rgblink`, and `rgbfix`) to build the original ROM
 - Clang with an ELF-capable linker for the freestanding native-C side
 - Python 3 with the packages in `requirements.txt`
-
+- SDL2 for the macOS glue layer (MacPorts: `sudo port install libsdl2`)
+ 
 The checked-out repository already records the required RGBDS version in
-`.rgbds-version`.
+ `.rgbds-version`.
+
+## Running on macOS (glue layer)
+
+`platform/` is the host ("console hardware + OS") layer that runs the C
+ports on a Mac instead of inside the symbolic-verification harness. It owns
+the flat Game Boy address space, renders VRAM/OAM/I/O registers to an SDL2
+window, maps the keyboard onto the joypad byte at `hJoyInput`, synthesizes
+audio from the APU register file (`$FF10-$FF3F`), and services one VBlank
+period per frame (59.7275 Hz) by calling the ported routines
+(`port_auto_bg_map_transfer`, `port_vblank_copy*`, `port_joypad`).
+
+```sh
+# from repo root: build the ROM once
+make red
+# build and run: real title screen -> main menu -> new-game intro
+make -C verification run-mac
+```
+
+The default mode drives pokered's actual boot flow (see
+`platform/game.c`): `Init` port, font/text-box tile uploads through
+`VBlankCopyDouble`, `DisplayTitleScreen` composed from ROM logo graphics,
+`MainMenu` with working NEW GAME selection, and the `StartNewGame`/
+`OakSpeech` prefix. Every function that is not ported yet is logged in
+`verification/REQUIRED.md` with a matching `REQUIRED:` comment at its call
+site in `platform/game.c`; the driver shows an on-screen "PORT BOUNDARY"
+marker where composition currently stops.
+
+Controls: arrows/WASD = D-pad, X/K = A, Z/J = B, Return = Start,
+Backspace/Right-Shift = Select, Esc quits.
+
+`--demo` keeps the earlier synthetic glue-test screen (APU tones, cursor
+sprite, palette flip) for isolated video/audio testing:
+
+```sh
+verification/build-mac/pokered-mac --demo
+```
+
+Headless verification without opening a window:
+
+```sh
+make -C verification mac
+verification/build-mac/pokered-mac --rom pokered.gbc --smoke \
+    --out /tmp/smoke.ppm --dump /tmp/mem.bin
+```
+
+The smoke run checks the font upload byte-for-byte against the ROM
+(`font_byte_mismatches`), samples known-blank background pixels, counts
+non-audio-silent samples, and writes the final frame as PPM.
+
+Layer map:
+
+- `platform/rom.c` - ROM image loading; keeps the `$4000-$7FFF` bank window
+  in sync with `[hLoadedROMBank]`
+- `platform/video.c` - software DMG PPU: BG/window/sprites,
+  `$8000`/`$8800` tile addressing (pokered boots in `$8800` mode),
+  BGP/OBP palettes
+- `platform/apu.c` - pulse-channel synth (duty/envelope/length/frequency)
+  driven by the NR register file; wave/noise channels pending
+- `platform/kernel.c` - VBlank service composed of ported routines, plus
+  `kernel_copy_video_data_double()`, which supplies the vblank interleaving
+  that `CopyVideoDataDouble` gets from real interrupts on hardware (the
+  freestanding ports model those interleavings symbolically)
+- `platform/main_sdl.c` - SDL2 shell, input mapping, frame pacing, demo
+
+Known divergences from hardware while the port is incomplete:
+`PrepareOAMData` is not composed yet, so sprites render straight from the
+shadow OAM layout; `RedrawRowOrColumn` is not serviced; audio plays only
+what glue/demo code writes into the NR registers until the audio-engine
+ports are chained end-to-end.
 
 ## Build and test
 
