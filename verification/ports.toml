@@ -7216,6 +7216,20 @@ decoder = "the native wrapper sets B to zero and calls the real port_is_in_rest_
 
 
 [[function]]
+assembly_symbol = "GetName"
+assembly_source = "home/names2.asm"
+c_symbol = "port_get_name"
+c_source = "verification/ports/get_name.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all name-selection globals, bank state, and the complete 20-byte name buffer",
+    "saved stack state and exact GetMachineName, GetMonName, and CopyData call snapshots",
+]
+proof_domain = "all register/canonical-flag and name-index inputs for each caller-valid list type 1 through 7; arbitrary pointer-table bytes and callee memory transitions; exhaustive character/name scan recurrence for both ordinary-pointer and $ffff-wrap classes; arbitrary reachable saved state at final copy"
+decoder = "exact 116-byte linked body checked inside the functional test; early machine tail, monster-name branch, banked pointer lookup, nested terminator/name scan, fixed 20-byte copy, pointer stores, stack restoration, and bank restoration are proven compositionally; native production C calls all three real proven ports and executes both real scan loops"
+
+[[function]]
 assembly_symbol = "GetMonName"
 assembly_source = "home/names.asm"
 c_symbol = "port_get_mon_name"
