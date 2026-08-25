@@ -23657,15 +23657,16 @@ decoder = "wAIItem store is modeled exactly; item-name lookup, text rendering, A
 [[function]]
 assembly_symbol = "AIPrintItemUse_"
 assembly_source = "engine/battle/trainer_ai.asm"
-c_symbol = "port_ai_print_item_use_name_private"
+c_symbol = "port_ai_print_item_use_"
 c_source = "verification/ports/ai_print_item_use_private_name.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
-    "wNamedObjectIndex",
+    "all registers and canonical flags",
+    "complete naming globals, saved state, banks, wAIItem, wNamedObjectIndex, wNameBuffer, and wTextBoxID",
+    "ordered GetItemName and PrintText call snapshots",
 ]
-proof_domain = "all register/flag, wAIItem, and named-object inputs through GetItemName setup"
-decoder = "wAIItem load, wNamedObjectIndex store, and GetItemName continuation boundary are modeled exactly; item-name text pointer setup and PrintText continuation remain beyond the explicit boundary"
+proof_domain = "all register/flag, naming-global, saved-state, bank, buffer, wAIItem, named-object, and textbox inputs with arbitrary matching complete GetItemName transition"
+decoder = "exact 15-byte linked body checked inside the functional proof; item load/store, complete GetItemName transition, text-pointer setup, and proven PrintText tail execute in order while production C calls both real ports"
 
 [[function]]
 assembly_symbol = "DisplayUsedMoveText"
