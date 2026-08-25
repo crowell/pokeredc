@@ -14740,10 +14740,10 @@ observables = [
     "all registers and flags",
     "all _Divide dividend, divisor, and scratch bytes",
     "loaded and mapper ROM banks",
-    "exact _Divide callback-entry registers",
+    "exact _Divide callback-entry registers, memory, and banks",
 ]
-proof_domain = "all register/flag, divide-memory, and bank inputs plus an arbitrary proven _Divide post-state; native production C invokes real port_divide"
-decoder = "the exact 26-byte wrapper executes under angr; PUSH/POP preservation of HL/DE/BC, homecall bank $0d setup, exact _Divide entry, callback effects, saved loaded-bank AF restoration, and both final bank writes are modeled compositionally"
+proof_domain = "all register/canonical-flag, divide-memory, and bank inputs with the game-wide Divide calling contract B in [2,4] and a nonzero divisor; the complete proven quotient/remainder/scratch transition is composed at the _Divide boundary"
+decoder = "exact 26-byte linked wrapper checked; linked PUSH/POP/RET, saved loaded-bank AF, bank-$0d setup, and both final bank writes execute under angr, exact _Divide call inputs and complete outputs are compared, and native production C invokes real port_divide"
 
 
 
