@@ -21237,12 +21237,15 @@ assembly_symbol = "AnimationShowMonPic"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_show_mon_pic"
 c_source = "verification/ports/animation_show_mon_pic.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "hWhoseTurn, hBaseTileID, and hAutoBGTransferEnabled",
+    "the complete union of player/enemy tilemap destinations",
+    "all four callee inputs and outputs in exact call/tail-call order",
 ]
-proof_domain = "all register/flag inputs through the entry XOR A and the GetTileIDList continuation boundary"
-decoder = "entry XOR A semantics are shimmed exactly; GetTileIDList is an explicit downstream continuation boundary"
+proof_domain = "all register/flag, turn, HRAM, and possible destination-memory inputs; the independently proved GetTileIDList, row-pointer, CopyPicTiles, and Delay3 transitions are arbitrary but matching at their exact boundaries"
+decoder = "exact 13-byte body checked; XOR A, all three CALLs, and the Delay3 tail JP execute pathwise, while native C calls every real port and carries the full 64 KiB address space into the real copy implementation"
 
 [[function]]
 assembly_symbol = "_AnimationSquishMonPic"

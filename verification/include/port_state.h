@@ -831,6 +831,14 @@ struct copy_tile_ids_state {
 	port_u8 downscaled_size;
 };
 
+struct animation_show_mon_pic_state {
+	struct cpu_register_state registers;
+	port_u8 whose_turn;
+	port_u8 base_tile;
+	port_u8 auto_transfer;
+	port_u8 memory[65536];
+};
+
 struct call_function_table_state {
 	struct cpu_register_state registers;
 	port_u8 fetched_low;
@@ -3138,6 +3146,8 @@ _Static_assert(sizeof(struct scanline_scx_state) == 10, "unexpected ABI padding"
 _Static_assert(sizeof(struct menu_save_tiles_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct option_cursor_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct copy_tile_ids_state) == 26, "unexpected ABI padding");
+_Static_assert(sizeof(struct animation_show_mon_pic_state) == 65547,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct predef_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct predef_pointer_state) == 19, "unexpected ABI padding");
 _Static_assert(sizeof(struct update_sprite_image_state) == 13, "unexpected ABI padding");
