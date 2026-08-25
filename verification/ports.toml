@@ -23053,12 +23053,14 @@ assembly_symbol = "MoveMissed"
 assembly_source = "engine/battle/effects.asm"
 c_symbol = "port_move_missed"
 c_source = "verification/ports/move_missed.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "all registers and canonical flags",
+    "wTextBoxID and exact pointed move-effect preservation",
+    "ConditionalPrintButItFailed and PrintButItFailedText_ call snapshots and terminal trace",
 ]
-proof_domain = "all register/flag and pointed move-effect inputs through the stat-lowering comparison"
-decoder = "move-effect load and ATTACK_DOWN_SIDE_EFFECT CP flags are modeled exactly; ConditionalPrintButItFailed continuation remains beyond the explicit boundary"
+proof_domain = "all register/flag inputs, all 256 pointed move-effect bytes, and all 256 wMoveDidntMiss values; threshold return, successful-side-effect return, and failure-text tail domains are all covered"
+decoder = "exact 7-byte linked body checked inside the functional proof; LD A,[DE], CP, RET NC, and the ConditionalPrintButItFailed tail execute with exact instruction shims and complete proven continuation composition; production C calls both real proven ports"
 
 [[function]]
 assembly_symbol = "PrintStatText"
