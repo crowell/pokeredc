@@ -901,3 +901,45 @@ class Sm83SwapRegister(angr.SimProcedure):
         setattr(self.state.regs, self._register, result)
         self.state.regs.f = flags
         self.jump(self._next_address)
+
+
+class Sm83XorA(angr.SimProcedure):
+    """Correct SM83 ``XOR A`` (AF): A := 0, Z set, N/H/C clear."""
+
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self._next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0x40, 8)
+        self.jump(self._next_address)
+
+
+class Sm83LoadABytePreserveF(angr.SimProcedure):
+    """Correct SM83 ``LD A,n`` (3E): A := immediate; flags unchanged.
+
+    The shared Sm83LoadAFromImmediate clears F, which is wrong when live
+    flags cross a later call boundary."""
+
+    def __init__(self, immediate_address: int, next_address: int) -> None:
+        super().__init__()
+        self._immediate_address = immediate_address
+        self._next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = self.state.memory.load(self._immediate_address, 1)
+        self.jump(self._next_address)
+
+
+class Sm83LdAFromRegPreserveF(angr.SimProcedure):
+    """Correct SM83 ``LD A,r`` (78-7F): A := register; flags unchanged."""
+
+    def __init__(self, register: str, next_address: int) -> None:
+        super().__init__()
+        self._register = register
+        self._next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = getattr(self.state.regs, self._register)
+        self.jump(self._next_address)
