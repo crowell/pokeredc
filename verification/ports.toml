@@ -22249,15 +22249,14 @@ assembly_symbol = "PrintGhostText"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_print_ghost_text"
 c_source = "verification/ports/print_ghost_text.c"
-status = "complete"
+status = "proven"
 observables = [
-    "all registers and flags",
-    "ghost-state bytes",
-    "IsGhostBattle and PrintText call inputs",
-    "caller memory marker",
+    "all registers and canonical flags",
+    "complete IsGhostBattle memory, hWhoseTurn, wBattleMonStatus, and wTextBoxID",
+    "ordered IsGhostBattle and PrintText call snapshots",
 ]
-proof_domain = "all register/flag, ghost-state, and marker-memory inputs with arbitrary matching transitions from the composed IsGhostBattle and PrintText callees"
-decoder = "complete function: IsGhostBattle dispatch, turn/status flag effects, both text pointers, real PrintText calls with caller memory, early returns, and XOR-A returns are modeled exactly"
+proof_domain = "all register/flag, ghost-memory, turn, status, and textbox inputs with an arbitrary matching transition from proven IsGhostBattle across every return and both text paths"
+decoder = "exact 31-byte linked body checked inside the functional proof; only LDH/absolute loads, AND immediates, and XOR A are instruction-shimmed, while production C calls the real complete IsGhostBattle and PrintText ports"
 
 [[function]]
 assembly_symbol = "IsGhostBattle"
