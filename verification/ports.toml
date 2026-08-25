@@ -7230,6 +7230,20 @@ proof_domain = "all register/canonical-flag, name-selection-global, bank, and bu
 decoder = "exact 25-byte linked body checked inside the functional test; list type/index/bank setup, the complete GetName transition, fixed wNameBuffer DE result, and pushed-HL restoration are modeled exactly while native production C calls the real proven port_get_name"
 
 [[function]]
+assembly_symbol = "GetItemName"
+assembly_source = "home/names.asm"
+c_symbol = "port_get_item_name"
+c_source = "verification/ports/get_item_name.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all name-selection globals, saved state, banks, and complete 20-byte name buffer",
+    "exact GetName or GetMachineName call-state snapshot and terminal trace",
+]
+proof_domain = "all register/flag, name-global, saved-state, bank, and buffer inputs plus all 256 wNamedObjectIndex values; both ordinary-item and TM/HM domains are covered"
+decoder = "exact 36-byte linked body checked inside the functional proof; push/pop preservation, HM01 comparison, ordinary-item setup, machine branch, fixed name-buffer DE result, and both proven callee transitions are composed exactly while production C calls the real ports"
+
+[[function]]
 assembly_symbol = "GetName"
 assembly_source = "home/names2.asm"
 c_symbol = "port_get_name"
