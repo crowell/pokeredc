@@ -23041,12 +23041,14 @@ assembly_symbol = "CantLowerAnymore"
 assembly_source = "engine/battle/effects.asm"
 c_symbol = "port_cant_lower_anymore"
 c_source = "verification/ports/cant_lower_anymore.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "all registers and canonical flags",
+    "pointed move-effect byte and wTextBoxID",
+    "exact PrintText tail input and terminal trace",
 ]
-proof_domain = "all register/flag and pointed move-effect inputs through the stat-lowering threshold comparison"
-decoder = "move-effect load and ATTACK_DOWN_SIDE_EFFECT CP flags are modeled exactly; threshold return and NothingHappenedText continuation remain beyond the explicit boundary"
+proof_domain = "all register/flag inputs and all 256 pointed move-effect values at both real player/enemy move-effect addresses; both threshold return and NothingHappenedText rendering domains are covered"
+decoder = "exact 10-byte linked body checked inside the functional proof; LD A,[DE], CP, RET NC, text-pointer setup, and the PrintText tail execute with exact instruction shims and complete proven callee composition; production C calls real port_print_text"
 
 [[function]]
 assembly_symbol = "MoveMissed"
