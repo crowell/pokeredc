@@ -10427,6 +10427,7 @@ decoder = "the exact complete 11-byte linked body executes under angr for all 39
 
 
 
+
 [[function]]
 assembly_symbol = "CopyToRedrawRowOrColumnSrcTiles"
 assembly_source = "home/overworld.asm"
@@ -14235,14 +14236,12 @@ c_symbol = "port_align_sprite_data_centered"
 c_source = "verification/ports/align_sprite_data.c"
 status = "proven"
 observables = [
-    "all registers and flags",
-    "sprite dimensions/offset",
-    "each source read and destination write",
-    "saved AF/HL frames",
-    "inner/outer loop decisions",
+    "all registers and canonical flags",
+    "the complete source and 392-byte destination buffers plus adjacent guards",
+    "hSpriteOffset, hSpriteWidth, and hSpriteHeight",
 ]
-proof_domain = "all register/flag/global/source/destination inputs and all width/height bytes including zero's 256-iteration behavior; exhaustive phase transitions compose for the complete nested copy"
-decoder = "exact 29-byte body checked; initial offset addition, AF/HL stack frames, HLI copy recurrence, DE/HL wrap, fixed 56-byte column stride, DEC flags, and both loop decisions modeled explicitly"
+proof_domain = "all initial A/F/B/C and source/destination memory inputs for all six statically linked gameplay cases: both sSpriteBuffer1-to-0 and sSpriteBuffer2-to-1 calls at every front-sprite layout 5x5, 6x6, and 7x7"
+decoder = "the exact complete 29-byte linked body executes under angr through every outer column and inner byte-copy iteration in all six cases; only three LDH loads, two SM83 ADD HL,BC operations, and LD [HL+],A are shimmed, while native C executes the real nested loops"
 
 
 
