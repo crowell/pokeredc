@@ -17,7 +17,7 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import rom_window, symbol_location
+from verification.harness.rom import linked_bytes, rom_window, symbol_location
 from verification.harness.sm83_shims import Sm83DecRegister
 
 
@@ -139,6 +139,8 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run red")
 def test_delay_frames_one_step_pathwise_equivalence() -> None:
+    location = symbol_location(SYMBOLS, "DelayFrames")
+    assert linked_bytes(ROM, location, 7) == bytes.fromhex("cdaf200d20fac9")
     values = symbolic_registers("delay_frames_step")
     values["vblank_occurred"] = claripy.BVS("delay_frames_vblank", 8)
     values["observed_vblank"] = claripy.BVS("delay_frames_observed", 8)

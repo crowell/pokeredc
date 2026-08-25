@@ -17070,7 +17070,7 @@ observables = [
     "hVBlankOccurred",
 ]
 proof_domain = "all register/flag/C inputs by one-step induction over the complete 1..256-iteration recurrence, composed with the independently proved DelayFrame terminal transition"
-decoder = "the DelayFrame call is a proved compositional boundary; SM83 DEC C and the actual JR NZ split are checked pathwise against the C step, whose wrapper retains the real do-while loop and DelayFrame call"
+decoder = "exact seven-byte linked body checked inside the functional recurrence proof; DelayFrame is a proven compositional boundary, SM83 DEC C and the real JR NZ split are pathwise equivalent, and the C wrapper retains the real do-while loop and call"
 
 
 
