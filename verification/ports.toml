@@ -10085,9 +10085,11 @@ observables = [
     "all registers and flags",
     "hAutoBGTransferEnabled, hLoadedROMBank, hROMBankTemp, rROMB",
     "hVBlankCopySource, hVBlankCopyDest, hVBlankCopySize",
+    "hVBlankOccurred and every DelayFrame input in exact loop order",
+    "all 256 tile counts across the real chunk loop",
 ]
-proof_domain = "all general-register and canonical-flag inputs, all relevant symbolic hardware state, and every 8-bit tile count across all zero/remainder/full-chunk paths"
-decoder = "the native port performs every eight-tile DelayFrame plus the mandatory final DelayFrame, retains the subtraction loop, and restores AF and bank/transfer state; angr proves the complete terminal register and hardware contract for all symbolic counts"
+proof_domain = "all general-register and canonical-flag inputs, all relevant symbolic hardware state, and every 8-bit tile count represented exhaustively by 32 symbolic three-bit remainder classes; the independently proved one-observation DelayFrame transition is composed at every real call"
+decoder = "exact 62-byte body checked and executed pathwise; only unsupported LDH/absolute-store instructions and audited SM83 XOR/CP/SUB flag operations are shimmed, while both assembly and native execute the real subtraction loop and every DelayFrame call"
 
 
 
