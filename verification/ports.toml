@@ -23069,12 +23069,14 @@ assembly_symbol = "PrintStatText"
 assembly_source = "engine/battle/effects.asm"
 c_symbol = "port_print_stat_text"
 c_source = "verification/ports/print_stat_text.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "all registers and canonical flags",
+    "complete ten-byte wStringBuffer result and source-table preservation",
+    "exact CopyData call-register snapshot",
 ]
-proof_domain = "all register/flag inputs through the stat-name search loop"
-decoder = "StatModTextStrings HL and '@' delimiter C setup are modeled exactly; stat-name scanning, wStringBuffer copy, and continuation remain beyond the explicit boundary"
+proof_domain = "all register/flag and destination-buffer inputs for each of the six caller-valid stat indices; every delimiter-scan loop length and every selected fixed-length source window are covered"
+decoder = "exact 23-byte linked body checked inside the functional proof; the real nested delimiter scan executes on both sides with exact DEC/LDI/CP shims, and the complete proven CopyData transition is composed at the tail while production C calls real port_copy_data"
 
 [[function]]
 assembly_symbol = "PrintNoEffectText"
