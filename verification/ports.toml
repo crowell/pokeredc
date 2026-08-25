@@ -28579,3 +28579,18 @@ observables = [
 ]
 proof_domain = "all register inputs, every symbolic pushed-text-pointer value, and all nine joypad/bank memory inputs over both PAUSE exits and all seven native Joypad path combinations; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
 decoder = "the exact complete 20-byte linked handler executes under angr; the independently proved Joypad homecall is a complete composition boundary, while the exact 7-byte DelayFrames body executes its real 30-iteration DEC C/JR loop with only the proved DelayFrame terminal and CALL/RET plumbing shimmed; the native port calls real port_joypad_homecall and real port_delay_frames, whose loop is also executed and counted through the matching proved DelayFrame boundary"
+
+[[function]]
+assembly_symbol = "LoadUncompressedSpriteData"
+assembly_source = "home/pics.asm"
+c_symbol = "port_load_uncompressed_sprite_data"
+c_source = "verification/ports/load_uncompressed_sprite_data.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hSpriteWidth, hSpriteHeight, hSpriteOffset, rRAMB, wSpriteFlipped, and video-copy hardware state",
+    "all three 392-byte sprite buffers and adjacent guards",
+    "the exact ordered input state of both ZeroSpriteBuffer calls, both AlignSpriteDataCentered calls, and the InterlaceMergeSpriteBuffers tail",
+]
+proof_domain = "all initial register/flag, output-pointer, sprite-buffer, bank, flip, and video-copy inputs for the three statically linked square gameplay layouts (packed dimensions $55, $66, and $77); each independently proven callee receives an arbitrary matching complete transition after its full input state is proved equal"
+decoder = "the exact complete 80-byte linked body executes under angr through every arithmetic, HRAM write, register setup, and the five ordered callee boundaries; only individual SM83 instructions and the independently proven ZeroSpriteBuffer, AlignSpriteDataCentered, and InterlaceMergeSpriteBuffers transitions are shimmed, while native C performs the exact dimension arithmetic and calls the real C ports twice, twice, and once respectively"
