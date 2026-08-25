@@ -21515,6 +21515,21 @@ proof_domain = "all register/flag, audio, damage, modifier, predef, ROM-bank, hM
 decoder = "exact 8-byte body checked; the PlayApplyingAttackSound call, ld b,$08, and jp AnimationShakeScreenHorizontallyFast tail execute pathwise, while native C calls both real ports and shares loaded-ROM/rROMB state between them"
 
 [[function]]
+assembly_symbol = "ShakeScreenHorizontallyLight"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_horizontally_light"
+c_source = "verification/ports/shake_screen_horizontally_light.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "complete PlayApplyingAttackSound audio/modifier state",
+    "complete AnimationShakeScreenHorizontallyFast predef/hardware state",
+    "both callee inputs in call order, with B=$02 at the shake hand-off",
+]
+proof_domain = "all register/flag, audio, damage, modifier, predef, ROM-bank, hMutateWX, and rWX inputs; the independently proved sound and horizontal-shake transitions are arbitrary but matching at their exact call and tail-jump boundaries"
+decoder = "exact 8-byte body checked; the PlayApplyingAttackSound call, ld b,$02, and jp AnimationShakeScreenHorizontallyFast tail execute pathwise, while native C calls both real ports and shares loaded-ROM/rROMB state between them"
+
+[[function]]
 assembly_symbol = "BattleTransition"
 assembly_source = "engine/battle/battle_transitions.asm"
 c_symbol = "port_battle_transition"
