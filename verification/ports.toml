@@ -23800,15 +23800,16 @@ decoder = "filtered-bag pointer setup, hItemCounter reset, and loop-entry state 
 [[function]]
 assembly_symbol = "LoadFossilItemAndMonName"
 assembly_source = "engine/events/cinnabar_lab.asm"
-c_symbol = "port_load_fossil_item_and_mon_name_private"
+c_symbol = "port_load_fossil_item_and_mon_name"
 c_source = "verification/ports/load_fossil_item_and_mon_name_private.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
-    "wNamedObjectIndex",
+    "all registers and canonical flags",
+    "complete naming globals, saved state, banks, wNamedObjectIndex, wNameBuffer, and wStringBuffer",
+    "ordered GetMonName, CopyToStringBuffer, and GetItemName call snapshots",
 ]
-proof_domain = "all register/flag and fossil-mon inputs through GetMonName setup"
-decoder = "wFossilMon load, wNamedObjectIndex store, and GetMonName continuation boundary are modeled exactly; string copy, fossil-item lookup, item-name loading, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, naming-global, saved-state, bank, buffer, fossil-mon, and fossil-item byte inputs with arbitrary matching complete transitions from all three proven callees"
+decoder = "exact 22-byte linked body checked inside the functional proof; both fossil loads and named-object stores execute exactly, all three proven callees are composed in order through explicit state bridges, and production C calls their real ports"
 
 [[function]]
 assembly_symbol = "DisplayDiploma"
