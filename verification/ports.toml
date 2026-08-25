@@ -23024,12 +23024,18 @@ assembly_symbol = "CheckDefrost"
 assembly_source = "engine/battle/effects.asm"
 c_symbol = "port_check_defrost"
 c_source = "verification/ports/check_defrost.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "hWhoseTurn and both move-type bytes",
+    "both active-mon status bytes",
+    "both party-position bytes",
+    "all six possible player and enemy roster status destinations",
+    "wTextBoxID",
+    "ordered AddNTimes and PrintText call inputs",
 ]
-proof_domain = "all register/flag inputs through the frozen-status mask test"
-decoder = "FRZ AND-A mask and branch flags are modeled exactly; turn/move-type/fire checks, status writes, roster updates, text, and defrost continuation remain beyond the explicit boundary"
+proof_domain = "all registers, flags, turn and move-type bytes, status bytes, and legal party indices 0..5; every early return and both successful defrost paths"
+decoder = "exact 65 linked bytes asserted inside the functional proof; only unsupported SM83 loads/stores and incorrect AND/SUB/XOR instruction semantics are shimmed; proven AddNTimes and PrintText transitions are composed at their entries"
 
 [[function]]
 assembly_symbol = "StatModifierUpEffect"
