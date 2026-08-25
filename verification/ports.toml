@@ -28424,3 +28424,32 @@ observables = [
 ]
 proof_domain = "all initial A/F/H/L, rLY, rSCX, and title-ball-Y states at the three complete statically linked gameplay entry domains: TitleScroll_In (BC=$7247,D=$88,E=0), TitleScroll_Out (BC=$724f,D=0,E=0), and TitleScroll_WaitBall (BC=$7244,D=0,E=1), with arbitrary terminating proven scanline transitions"
 decoder = "the exact complete 40-byte shared body executes under angr through every outer table entry and all 45 inner iterations; only the two independently proven callee boundaries and audited SM83 AND/SWAP/ADD/DEC flag shims are used, while the native port executes the real nested loops and calls the real scanline and title-ball C ports in order"
+
+[[function]]
+assembly_symbol = "TitleScreenScrollInMon"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_title_screen_scroll_in_mon"
+c_source = "verification/ports/title_screen_scroll_in_mon.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "rLY, rSCX, wShadowOAMSprite10YCoord, and hWY",
+    "hLoadedROMBank and rROMB before, during, and after the far call",
+    "exact TitleScroll call registers and table/timing inputs",
+]
+proof_domain = "all initial register, canonical-flag, scroll/hardware, hWY, and bank states through the single complete path, with an arbitrary matching transition of the independently proven complete TitleScroll body"
+decoder = "the exact complete 14-byte linked body executes under angr; only the independently proven Bankswitch/TitleScroll call boundary and the XOR A / LDH instruction shims are used, while production C calls real port_title_scroll and preserves the far-call bank and saved-AF-to-BC effects"
+
+[[function]]
+assembly_symbol = "InitializeToggleableObjectsFlags"
+assembly_source = "engine/overworld/toggleable_objects.asm"
+c_symbol = "port_initialize_toggleable_objects_flags"
+c_source = "verification/ports/initialize_toggleable_objects_flags.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 32-byte wToggleableObjectFlags region",
+    "wToggleableObjectCounter",
+]
+proof_domain = "all register/flag inputs, every initial wToggleableObjectFlags byte and counter value (the proof shows both are fully cleared), over the single concrete 228-entry ToggleableObjectStates walk ending at the $ff sentinel"
+decoder = "exact 50-byte linked body executes under angr on one linear path; SM83-only EA/2A/FA decoder shims plus the two proven callee boundaries (FillMemory clear, ToggleableObjectFlagAction set with the flag byte read-modify-write at HL+C/8); the 687-byte table is byte-verified against ROM and the native port calls the real port_fill_memory and port_toggleable_object_flag_action in order"
