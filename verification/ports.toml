@@ -21378,12 +21378,15 @@ assembly_symbol = "CopyMonsterSpriteData"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_copy_monster_sprite_data"
 c_source = "verification/ports/copy_monster_sprite_data.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "hROMBankTemp, hLoadedROMBank, and rROMB",
+    "the exact 16-byte source and destination regions",
+    "the complete FarCopyData2 tail-call input and output",
 ]
-proof_domain = "all register/flag inputs through the FarCopyData2 jump continuation"
-decoder = "TILE_SIZE count and MonsterSprite bank load are modeled with exact flag preservation; FarCopyData2 remains the explicit downstream boundary"
+proof_domain = "all register/flag and bank inputs for all eight linked gameplay call sites in AnimationSubstitute; their fixed MonsterSprite source and wTempPic destination regions exhaust the function's gameplay domain, and the independently proved FarCopyData2 transition is arbitrary but matching at the exact tail boundary"
+decoder = "exact eight-byte LD BC,$0010/LD A,$05/JP body checked and executed pathwise without instruction shims; native C sets the same count and bank and tail-composes the real FarCopyData2 port, whose real CopyData loop transfers all 16 bytes"
 
 [[function]]
 assembly_symbol = "HideSubstituteShowMonAnim"

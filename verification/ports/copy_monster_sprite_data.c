@@ -3,13 +3,15 @@
 #define TILE_SIZE 0x10u
 #define MONSTER_SPRITE_BANK 5u
 
-/* FarCopyData2 is the explicit continuation boundary for this helper. */
+void port_far_copy_data2(struct far_copy_data2_state *, port_u8 *);
+
+/* Port of CopyMonsterSpriteData in engine/battle/animations.asm. */
 __attribute__((noinline, used)) void
-port_copy_monster_sprite_data(struct cpu_register_state *state,
-    port_u8 *memory)
+port_copy_monster_sprite_data(struct far_copy_data2_state *state,
+	port_u8 *memory)
 {
-	(void)memory;
-	state->b = (port_u8)(TILE_SIZE >> 8);
-	state->c = (port_u8)TILE_SIZE;
-	state->a = (port_u8)MONSTER_SPRITE_BANK;
+	state->registers.b = (port_u8)(TILE_SIZE >> 8);
+	state->registers.c = (port_u8)TILE_SIZE;
+	state->registers.a = (port_u8)MONSTER_SPRITE_BANK;
+	port_far_copy_data2(state, memory);
 }
