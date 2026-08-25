@@ -22530,12 +22530,15 @@ assembly_symbol = "MirrorMoveCopyMove"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_mirror_move_copy_move"
 c_source = "verification/ports/mirror_move_copy_move.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "all registers and canonical flags",
+    "both selected-move bytes and wTextBoxID",
+    "complete ReloadMoveData state and arbitrary callee-visible memory marker",
+    "exact PrintText or ReloadMoveData call snapshot and terminal trace",
 ]
-proof_domain = "all register/flag and used-move inputs through the selected-move store"
-decoder = "player/enemy used-move selection, selected-move and move-number pointer setup, and AND-A flags are modeled exactly; Mirror Move failure/reload branches and text/data calls remain beyond the explicit boundary"
+proof_domain = "all register/flag and ReloadMoveData-state inputs, both caller-valid turn values, and all 256 selected used-move values; the zero, MIRROR_MOVE, and every successful reload input domain are covered with arbitrary matching complete callee transitions"
+decoder = "exact 39-byte linked body checked inside the functional proof; turn selection, selected-move store, CP/AND flags, both failure branches, PrintText return, XOR success flag, and ReloadMoveData tail execute with individual exact shims and proven callee composition; production C calls both real ports"
 
 [[function]]
 assembly_symbol = "MetronomePickMove"
