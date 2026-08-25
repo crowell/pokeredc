@@ -28523,3 +28523,16 @@ observables = [
 ]
 proof_domain = "all register inputs and every initial wTileMap byte over the single linear path: the overlapping forward 60-byte row copy (DE < HL so no source clobber), the 18-byte space clear, and five proved DelayFrame waits"
 decoder = "exact 34-byte linked body executes under angr on one linear path as one unbroken per-instruction hook chain; SM83-only LD [HL+]/LD [HL+]-store plus LD16/LD B/LD [DE],A/INC DE/DEC B shims and the proved DelayFrame call-site terminal; the native C executes all three real loops and five real port_delay_frame calls, and writes the faithful loop-exit HL/DE/B and the final DEC B flags (Z|N)"
+
+[[function]]
+assembly_symbol = "PrintBCDDigit"
+assembly_source = "home/print_bcd.asm"
+c_symbol = "port_print_bcd_digit_full"
+c_source = "verification/ports/print_bcd_digit_full.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the 4-byte destination window at the concrete HL",
+]
+proof_domain = "all register inputs (A's low nibble and the B leading-zeroes/left-align/money-sign latch bits symbolic) and every initial destination-window byte, over all six terminal paths: three nonzero output variants (plain, money-sign prefix, plain-after-latch), the zero-with-leading-zeroes output, and both suppressed-zero returns (left-align untouched, right-align HL advance); the PrintLetterDelay tail is the continuation terminal and composes through the independently proved delay"
+decoder = "exact 35-byte linked body executes under angr as one unbroken per-instruction hook chain; SM83 AND/BIT/RES/ADD/LD [HL],n/INC HL/LD [HL+],A shims plus fork shims for the SLEIGH conditional-branch defect; the native C computes the full digit dispatch, the add-'0' flag semantics (Z/H/C), and the entry AND mask/flag effects"
