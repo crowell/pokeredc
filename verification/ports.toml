@@ -14252,7 +14252,6 @@ decoder = "the exact complete 29-byte linked body executes under angr through ev
 
 
 
-
 [[function]]
 assembly_symbol = "WriteOAMBlock"
 assembly_source = "home/oam.asm"
@@ -28452,3 +28451,19 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, every initial wToggleableObjectFlags byte and counter value (the proof shows both are fully cleared), over the single concrete 228-entry ToggleableObjectStates walk ending at the $ff sentinel"
 decoder = "exact 50-byte linked body executes under angr on one linear path; SM83-only EA/2A/FA decoder shims plus the two proven callee boundaries (FillMemory clear, ToggleableObjectFlagAction set with the flag byte read-modify-write at HL+C/8); the 687-byte table is byte-verified against ROM and the native port calls the real port_fill_memory and port_toggleable_object_flag_action in order"
+
+[[function]]
+assembly_symbol = "PrepareOakSpeech"
+assembly_source = "engine/movie/oak_speech/oak_speech.asm"
+c_symbol = "port_prepare_oak_speech"
+c_source = "verification/ports/prepare_oak_speech.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wLetterPrintingDelayFlags, wOptions, wStatusFlags6",
+    "wOptionsInitialized",
+    "the 11 installed player-name bytes",
+    "the cleared sprite-data and player-data region samples",
+]
+proof_domain = "all register/flag inputs and all four option-byte inputs, over both wOptionsInitialized branches (InitOptions called and skipped) on both sides"
+decoder = "the exact 75-byte linked body and the exact 11-byte InitOptions callee (byte-verified, same bank) execute under angr; SM83-only FA/EA/XOR-A decoder shims only, with the proven FillMemory/CopyData transitions carried at their call sites including the tail JP whose RET pops the caller sentinel; the native port calls the real port_fill_memory, port_init_options, and port_copy_data in order"
