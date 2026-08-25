@@ -8836,18 +8836,13 @@ c_symbol = "port_animation_hide_mon_pic"
 c_source = "verification/ports/battle_animation_helpers.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
     "hWhoseTurn",
-    "ClearMonPicFromTileMap continuation",
+    "complete union of player/enemy tilemap destinations",
+    "exact ClearMonPicFromTileMap tail-call input and output",
 ]
-proof_domain = "all general-register and canonical-flag inputs and all 256 turn values across both control-flow paths"
-decoder = "exact 11-byte linked entry body checked; SM83 high-memory load modeled explicitly and the shared tilemap-clearing implementation is an explicit boundary"
+proof_domain = "all register/flag, turn, and possible destination-memory inputs across zero and nonzero turn paths; the independently proved clear transition is arbitrary but matching at the exact fallthrough boundary"
+decoder = "exact 11-byte entry checked; LDH, AND flags, both turn-dependent A offsets, JR convergence, and fallthrough into ClearMonPicFromTileMap execute pathwise, while native C calls the real clear port on the shared 64 KiB memory"
 
 
 
