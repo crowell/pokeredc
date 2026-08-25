@@ -16979,10 +16979,12 @@ c_symbol = "port_get_machine_name"
 c_source = "verification/ports/get_machine_name.c"
 status = "proven"
 observables = [
-    "wNameBuffer[0..4] (the machine name: a 2-char TM/HM prefix followed by the zero-padded two-digit machine number and the '@' terminator, in pokered text encoding)",
+    "all registers and canonical flags",
+    "wNamedObjectIndex and all five written wNameBuffer bytes",
+    "exact CopyData call-register snapshot",
 ]
-proof_domain = "all general-register and canonical-flag inputs; [wNamedObjectIndex] is fixed concrete per test, the HiddenPrefix/TechnicalPrefix ROM bytes are concrete, while the four general registers stay symbolic"
-decoder = "exact 73-byte linked body checked; `call CopyData` is modeled as a 2-byte forward copy from [HL] (HiddenPrefix/TechnicalPrefix) to [DE] (wNameBuffer) (CopyDataSim); `ld a,[a16]` (0xFA, reading wNamedObjectIndex) and `ld [a16],a` (0xEA, writing wNamedObjectIndex) are shimmed (absent from z80); `ld hl,nn`/`ld de,nn`/`ld bc,nn`/`sub a,imm`/`ld b,imm`/`add a,imm`/`add b`/`ld [de],a`/`inc de`/`pop af`/`push af`/`ret` run natively"
+proof_domain = "all register/canonical-flag and 256 named-object-index inputs; both copied prefix bytes are symbolic; the loop step is exhaustive for all A/B/register states, and the finish phase uses the reachable fixed destination pointer with otherwise arbitrary live and saved registers"
+decoder = "exact 73-byte linked body checked inside the functional test; symbolic TM/HM branching, stack state, exact CopyData composition, the subtraction/increment loop recurrence, three output writes, object-index restoration, and all register pops are proven in entry/step/finish phases; native production C calls the real proven CopyData port and executes the real loop"
 
 
 

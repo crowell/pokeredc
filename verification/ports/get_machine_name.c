@@ -1,50 +1,129 @@
 #include "port_state.h"
 
-/* Port of GetMachineName in home/names.asm.
- *
- * Copies the two-character "TM"/"HM" prefix for the machine whose id is held
- * in [wNamedObjectIndex] into wNameBuffer, then appends the zero-padded
- * two-digit machine number and the '@' text terminator. HMs (id < TM01) have
- * NUM_HMS added so the shared TM digit-printing code works. The prefix strings
- * live in ROM and the two-byte copy is inlined (mirroring the `call CopyData`). */
+#define GMN_NAME_BUFFER 0xcd6du
+#define GMN_HIDDEN_PREFIX 0x303eu
+#define GMN_TECHNICAL_PREFIX 0x303cu
+#define GMN_TM01 0xc9u
+#define GMN_NUM_HMS 5u
+#define GMN_TEXT_ZERO 0xf6u
+#define GMN_TERMINATOR 0x50u
 
-#define W_NAMED_OBJECT_INDEX 0xd11eu
-#define W_NAME_BUFFER 0xcd6du
-#define HIDDEN_PREFIX 0x303eu
-#define TECHNICAL_PREFIX 0x303cu
-#define TM01 0xc9u
-#define NUM_HMS 5u
-#define TEXT_TERMINATOR 0x50u /* '@' in the pokered text charset */
-#define TEXT_DIGIT_ZERO 0xf6u /* '0' in the pokered text charset */
+struct get_machine_name_state {
+	struct cpu_register_state registers;
+	port_u8 named_object_index;
+	struct cpu_register_state saved;
+};
+
+void port_copy_data(struct cpu_register_state *state, port_u8 *memory);
+
+static void
+set_sub_flags(struct cpu_register_state *registers, port_u8 left, port_u8 right)
+{
+	port_u8 result = (port_u8)(left - right);
+	registers->f = PORT_FLAG_N;
+	if (result == 0)
+		registers->f |= PORT_FLAG_Z;
+	if ((left & 0x0f) < (right & 0x0f))
+		registers->f |= PORT_FLAG_H;
+	if (left < right)
+		registers->f |= PORT_FLAG_C;
+	registers->a = result;
+}
+
+static void
+set_add_flags(struct cpu_register_state *registers, port_u8 right)
+{
+	port_u8 left = registers->a;
+	port_u16 result = (port_u16)left + right;
+	registers->a = (port_u8)result;
+	registers->f = 0;
+	if (registers->a == 0)
+		registers->f |= PORT_FLAG_Z;
+	if ((left & 0x0f) + (right & 0x0f) > 0x0f)
+		registers->f |= PORT_FLAG_H;
+	if (result > 0xff)
+		registers->f |= PORT_FLAG_C;
+}
 
 __attribute__((noinline, used)) void
-port_get_machine_name(struct cpu_register_state *state, port_u8 *memory)
+port_get_machine_name_begin(struct get_machine_name_state *state, port_u8 *memory)
 {
-	(void)state;
-	port_u8 id = memory[W_NAMED_OBJECT_INDEX];
-	port_u8 digit_id;
-	port_u16 prefix_src;
-	if (id < TM01) {
-		/* HM: bump the id so the shared TM printing code works. */
-		digit_id = (port_u8)(id + NUM_HMS);
-		prefix_src = HIDDEN_PREFIX;
+	state->saved = state->registers;
+	state->saved.a = state->named_object_index;
+	state->registers.a = state->named_object_index;
+	set_sub_flags(&state->registers, state->registers.a, GMN_TM01);
+	if (state->registers.f & PORT_FLAG_C) {
+		state->registers.a = state->named_object_index;
+		set_add_flags(&state->registers, GMN_NUM_HMS);
+		state->named_object_index = state->registers.a;
+		state->registers.h = (port_u8)(GMN_HIDDEN_PREFIX >> 8);
+		state->registers.l = (port_u8)GMN_HIDDEN_PREFIX;
 	} else {
-		digit_id = id;
-		prefix_src = TECHNICAL_PREFIX;
+		state->registers.a = state->named_object_index;
+		state->registers.h = (port_u8)(GMN_TECHNICAL_PREFIX >> 8);
+		state->registers.l = (port_u8)GMN_TECHNICAL_PREFIX;
 	}
-	memory[W_NAME_BUFFER + 0] = memory[prefix_src + 0];
-	memory[W_NAME_BUFFER + 1] = memory[prefix_src + 1];
+	state->registers.b = 0;
+	state->registers.c = 2;
+	state->registers.d = (port_u8)(GMN_NAME_BUFFER >> 8);
+	state->registers.e = (port_u8)GMN_NAME_BUFFER;
+	port_copy_data(&state->registers, memory);
+	set_sub_flags(
+		&state->registers, state->named_object_index, (port_u8)(GMN_TM01 - 1));
+	state->registers.b = GMN_TEXT_ZERO;
+}
 
-	/* Two-digit, zero-padded machine number after the prefix. */
-	port_u8 v = (port_u8)(digit_id - (TM01 - 1));
-	port_u8 b = TEXT_DIGIT_ZERO;
-	while (v >= 10) {
-		v = (port_u8)(v - 10);
-		b = (port_u8)(b + 1);
-	}
-	memory[W_NAME_BUFFER + 2] = b;
-	memory[W_NAME_BUFFER + 3] = (port_u8)(v + TEXT_DIGIT_ZERO);
-	memory[W_NAME_BUFFER + 4] = TEXT_TERMINATOR;
-	/* Restore the original object index (asm pops the saved value). */
-	memory[W_NAMED_OBJECT_INDEX] = id;
+__attribute__((noinline, used)) port_u8
+port_get_machine_name_step(struct get_machine_name_state *state)
+{
+	port_u8 old_b;
+	set_sub_flags(&state->registers, state->registers.a, 10);
+	if (state->registers.f & PORT_FLAG_C)
+		return 1;
+	old_b = state->registers.b;
+	state->registers.b++;
+	state->registers.f &= PORT_FLAG_C;
+	if (state->registers.b == 0)
+		state->registers.f |= PORT_FLAG_Z;
+	if ((old_b & 0x0f) == 0x0f)
+		state->registers.f |= PORT_FLAG_H;
+	return 0;
+}
+
+__attribute__((noinline, used)) void
+port_get_machine_name_finish(struct get_machine_name_state *state, port_u8 *memory)
+{
+	port_u16 de;
+	port_u8 remainder;
+	port_u8 remainder_flags;
+
+	set_add_flags(&state->registers, 10);
+	remainder = state->registers.a;
+	remainder_flags = state->registers.f;
+	state->registers.a = state->registers.b;
+	de = (port_u16)(((port_u16)state->registers.d << 8) | state->registers.e);
+	memory[de] = state->registers.a;
+	de++;
+	state->registers.d = (port_u8)(de >> 8);
+	state->registers.e = (port_u8)de;
+	state->registers.a = remainder;
+	state->registers.f = remainder_flags;
+	state->registers.b = GMN_TEXT_ZERO;
+	set_add_flags(&state->registers, state->registers.b);
+	memory[de] = state->registers.a;
+	de++;
+	state->registers.a = GMN_TERMINATOR;
+	memory[de] = state->registers.a;
+	state->named_object_index = state->saved.a;
+	state->registers = state->saved;
+}
+
+/* Port of GetMachineName in home/names.asm. */
+__attribute__((noinline, used)) void
+port_get_machine_name(struct get_machine_name_state *state, port_u8 *memory)
+{
+	port_get_machine_name_begin(state, memory);
+	while (!port_get_machine_name_step(state))
+		;
+	port_get_machine_name_finish(state, memory);
 }
