@@ -21485,6 +21485,21 @@ proof_domain = "all register/flag, damage-multiplier, modifier, and audio-state 
 decoder = "exact 44-byte body checked; the real WaitForSoundToFinish call, LD/AND/CP flags, ineffective return, all three modifier/sound branches, global writes, and PlaySound tail execute pathwise; native C calls the real port_wait_for_sound_to_finish and port_play_sound"
 
 [[function]]
+assembly_symbol = "ShakeScreenVertically"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_vertically"
+c_source = "verification/ports/shake_screen_vertically.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "complete PlayApplyingAttackSound audio/modifier state",
+    "complete AnimationShakeScreenVertically predef/hardware state",
+    "both callee inputs in call order, with B=$08 at the shake hand-off",
+]
+proof_domain = "all register/flag, audio, damage, modifier, predef, ROM-bank, disable-update, hMutateWY, and rWY inputs; the independently proved sound and vertical-shake transitions are arbitrary but matching at their exact call and tail-jump boundaries"
+decoder = "exact 8-byte body checked; the PlayApplyingAttackSound call, ld b,$08, and jp AnimationShakeScreenVertically tail execute pathwise, while native C calls both real ports and shares loaded-ROM/rROMB state between them"
+
+[[function]]
 assembly_symbol = "BattleTransition"
 assembly_source = "engine/battle/battle_transitions.asm"
 c_symbol = "port_battle_transition"
