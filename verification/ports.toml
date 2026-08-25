@@ -28379,3 +28379,17 @@ observables = [
 ]
 proof_domain = "all initial register/flag, bank, wPlayerCharacterOAMTile, and 160-byte wShadowOAM states, with an arbitrary matching transition from the independently proven FarCopyData2 callee and the complete independently proven ClearSprites transition"
 decoder = "the exact complete 60-byte linked body executes under angr; only the two proven callee boundaries and individual unsupported/mis-modeled SM83 instructions are shimmed, while both real 7-row by 5-column loops execute in assembly and native C and all 160 possible OAM destination bytes are compared"
+
+[[function]]
+assembly_symbol = "DisplayTitleScreen.ScrollTitleScreenPokemonLogo"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_scroll_title_screen_pokemon_logo"
+c_source = "verification/ports/scroll_title_screen_pokemon_logo.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hSCY, hVBlankOccurred, and the acknowledged VBlank observation",
+    "the ordered DelayFrame call trace for every loop iteration",
+]
+proof_domain = "all initial A/F/H/L, hSCY, and VBlank states at all seven statically linked gameplay call sites: BC=hSCY and (D,E)=($fc,16),($03,4),($fd,4),($02,2),($fe,2),($01,2),($ff,2); these are the complete call domain of this local subroutine"
+decoder = "the exact complete 10-byte linked body executes under angr; only the independently proven DelayFrame call and SM83 ADD A,D / DEC E flag semantics are shimmed, while LD A,[BC], LD [BC],A, JR NZ, and the full 32 aggregate gameplay iterations execute in both assembly and native C"
