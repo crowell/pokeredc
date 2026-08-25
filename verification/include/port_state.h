@@ -980,6 +980,11 @@ struct clear_screen_area_state {
 	port_u8 written;
 };
 
+struct clear_mon_pic_from_tilemap_state {
+	struct cpu_register_state registers;
+	port_u8 memory[65536];
+};
+
 struct daycare_exp_state {
 	struct cpu_register_state registers;
 	port_u8 in_use;
@@ -3316,6 +3321,8 @@ _Static_assert(sizeof(struct map_mon_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct bit_count_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_bytes_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct clear_screen_area_state) == 13, "unexpected ABI padding");
+_Static_assert(sizeof(struct clear_mon_pic_from_tilemap_state) == 65544,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct daycare_exp_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct music_bank_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct player_control_state) == 11, "unexpected ABI padding");

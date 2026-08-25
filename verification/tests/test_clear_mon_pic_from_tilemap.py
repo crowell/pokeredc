@@ -1,33 +1,191 @@
 from __future__ import annotations
+
+from dataclasses import dataclass
 from pathlib import Path
-import angr,claripy,pytest
+
+import angr
+import claripy
+import pytest
 from archinfo import ArchPcode
+
 from verification.harness.equivalence import assert_pathwise_equivalent
-from verification.harness.registers import assembly_registers,native_registers,set_assembly_registers,store_native_registers,symbolic_registers
-from verification.harness.rom import linked_bytes,rom_window,symbol_location
-ROOT=Path(__file__).resolve().parents[2];NATIVE_ELF=ROOT/"verification/build/ports.elf";ROM=ROOT/"pokered.gbc";SYMBOLS=ROOT/"pokered.sym";NATIVE_STATE=0x100000;DONE=0xEFFF
-FIELDS=('start_offset',)+tuple(f'tile{i}' for i in range(49))+('clear_called',)
-EXPECTED_BODY=bytes.fromhex('e5d5c55f160021a0c319010707cdc418c1d1e1c9')
+from verification.harness.registers import (
+    REGISTERS,
+    assembly_registers,
+    native_registers,
+    set_assembly_registers,
+    store_native_registers,
+    symbolic_registers,
+)
+from verification.harness.rom import (
+    collect_returns,
+    linked_bytes,
+    rom_window,
+    sm83_flags_to_z80,
+    symbol_location,
+)
+
+ROOT = Path(__file__).resolve().parents[2]
+NATIVE_ELF = ROOT / "verification/build/ports.elf"
+ROM = ROOT / "pokered.gbc"
+SYMBOLS = ROOT / "pokered.sym"
+NATIVE_STATE = 0x100000
+STACK = 0xD000
+RETURN = 0xFFFF
+REGION_START = 0xC3A0
+REGION_SIZE = 0xC51E - REGION_START
+EXPECTED = bytes.fromhex("e5d5c55f160021a0c319010707cdc418c1d1e1c9")
+
+
+@dataclass(frozen=True)
 class Endpoint:
- def __init__(self,regs,values,constraints):self.__dict__.update(regs);self.__dict__.update(values);self.constraints=tuple(constraints)
-class Summary(angr.SimProcedure):
- def run(self)->None:
-  st=self.state.copy();st.globals['start_offset']=st.regs.a;st.globals['clear_called']=claripy.BVV(1,8)
-  for i in range(49):st.globals[f'tile{i}']=claripy.BVV(0x7f,8)
-  self.inhibit_autoret=True;self.successors.add_successor(st,DONE,claripy.BoolV(True),'Ijk_Boring')
-def _assembly(i):
- l=symbol_location(SYMBOLS,'ClearMonPicFromTileMap');q=l.address;p=angr.Project(rom_window(ROM,l.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={'backend':'blob','arch':ArchPcode('z80:LE:16:default'),'base_addr':0,'entry_point':q});p.hook(q,Summary(),length=1);s=p.factory.blank_state(addr=q);set_assembly_registers(s,i)
- for f in FIELDS:s.globals[f]=i[f]
- m=p.factory.simulation_manager(s);m.explore(find=DONE,num_find=1);assert len(m.found)==1;x=m.found[0];return [Endpoint(assembly_registers(x),{f:x.globals[f] for f in FIELDS},x.solver.constraints)]
-def _native(i):
- p=angr.Project(NATIVE_ELF,auto_load_libs=False);fn=p.loader.find_symbol('port_clear_mon_pic_from_tilemap');assert fn;s=p.factory.call_state(fn.rebased_addr,NATIVE_STATE);store_native_registers(s,NATIVE_STATE,i)
- for off,f in enumerate(FIELDS,8):s.memory.store(NATIVE_STATE+off,i[f])
- m=p.factory.simulation_manager(s);m.run();assert not m.errored and len(m.deadended)==1;x=m.deadended[0];return [Endpoint(native_registers(x,NATIVE_STATE),{f:x.memory.load(NATIVE_STATE+off,1) for off,f in enumerate(FIELDS,8)},x.solver.constraints)]
-@pytest.mark.skipif(not NATIVE_ELF.exists(),reason='run native')
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(),reason='run red')
-def test_clear_mon_pic_from_tilemap_pathwise_equivalence():
- i=symbolic_registers('clear_pic');
- for f in FIELDS:i[f]=claripy.BVS('clear_pic_'+f,8)
- assert_pathwise_equivalent(_assembly(i),_native(i),('a','f','b','c','d','e','h','l',*FIELDS))
-def test_clear_mon_pic_from_tilemap_exact_linked_body():
- l=symbol_location(SYMBOLS,'ClearMonPicFromTileMap');assert linked_bytes(ROM,l,len(EXPECTED_BODY))==EXPECTED_BODY
+    a: claripy.ast.BV
+    f: claripy.ast.BV
+    b: claripy.ast.BV
+    c: claripy.ast.BV
+    d: claripy.ast.BV
+    e: claripy.ast.BV
+    h: claripy.ast.BV
+    l: claripy.ast.BV
+    memory: claripy.ast.BV
+    clear_call: claripy.ast.BV
+    constraints: tuple[claripy.ast.Bool, ...]
+
+
+class AssemblyClearSummary(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.state.globals["clear_call"] = claripy.Concat(
+            *(assembly_registers(self.state)[name] for name in REGISTERS),
+            self.state.memory.load(REGION_START, REGION_SIZE),
+        )
+        for register in REGISTERS:
+            value = self.state.globals[f"clear_out_{register}"]
+            if register == "f":
+                value = sm83_flags_to_z80(value)
+            setattr(self.state.regs, register, value)
+        self.state.memory.store(
+            REGION_START, self.state.globals["clear_out_memory"]
+        )
+        return_address = self.state.memory.load(
+            self.state.regs.sp, 2, endness="Iend_LE"
+        )
+        self.state.regs.sp += 2
+        self.jump(return_address)
+
+
+class NativeClearSummary(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        address = self.state.regs.rdi
+        memory = self.state.regs.rsi
+        self.state.globals["clear_call"] = claripy.Concat(
+            self.state.memory.load(address, 8),
+            self.state.memory.load(memory + REGION_START, REGION_SIZE),
+        )
+        for index, register in enumerate(REGISTERS):
+            self.state.memory.store(
+                address + index, self.state.globals[f"clear_out_{register}"]
+            )
+        self.state.memory.store(
+            memory + REGION_START, self.state.globals["clear_out_memory"]
+        )
+
+
+def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
+    values = symbolic_registers(prefix)
+    values["memory"] = claripy.BVS(f"{prefix}_memory", REGION_SIZE * 8)
+    for register in REGISTERS:
+        if register == "f":
+            values["clear_out_f"] = claripy.Concat(
+                claripy.BVS(f"{prefix}_clear_out_flags", 4),
+                claripy.BVV(0, 4),
+            )
+        else:
+            values[f"clear_out_{register}"] = claripy.BVS(
+                f"{prefix}_clear_out_{register}", 8
+            )
+    values["clear_out_memory"] = claripy.BVS(
+        f"{prefix}_clear_out_memory", REGION_SIZE * 8
+    )
+    return values
+
+
+def _setup_outputs(
+    state: angr.SimState, values: dict[str, claripy.ast.BV]
+) -> None:
+    for register in REGISTERS:
+        state.globals[f"clear_out_{register}"] = values[
+            f"clear_out_{register}"
+        ]
+    state.globals["clear_out_memory"] = values["clear_out_memory"]
+
+
+def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+    location = symbol_location(SYMBOLS, "ClearMonPicFromTileMap")
+    clear = symbol_location(SYMBOLS, "ClearScreenArea")
+    assert linked_bytes(ROM, location, len(EXPECTED)) == EXPECTED
+    project = angr.Project(
+        rom_window(ROM, location.bank),
+        auto_load_libs=False,
+        rebase_granularity=0x100,
+        main_opts={
+            "backend": "blob",
+            "arch": ArchPcode("z80:LE:16:default"),
+            "base_addr": 0,
+            "entry_point": location.address,
+        },
+    )
+    project.hook(clear.address, AssemblyClearSummary())
+    state = project.factory.blank_state(addr=location.address)
+    set_assembly_registers(state, values)
+    state.regs.sp = claripy.BVV(STACK, 16)
+    state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
+    state.memory.store(REGION_START, values["memory"])
+    _setup_outputs(state, values)
+    return [
+        Endpoint(
+            **assembly_registers(end),
+            memory=end.memory.load(REGION_START, REGION_SIZE),
+            clear_call=end.globals["clear_call"],
+            constraints=tuple(end.solver.constraints),
+        )
+        for end in collect_returns(project, state, RETURN)
+    ]
+
+
+def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+    project = angr.Project(NATIVE_ELF, auto_load_libs=False)
+    function = project.loader.find_symbol("port_clear_mon_pic_from_tilemap")
+    clear = project.loader.find_symbol("port_clear_screen_area")
+    assert function is not None and clear is not None
+    project.hook(clear.rebased_addr, NativeClearSummary())
+    state = project.factory.call_state(function.rebased_addr, NATIVE_STATE)
+    store_native_registers(state, NATIVE_STATE, values)
+    state.memory.store(
+        NATIVE_STATE + 8 + REGION_START, values["memory"]
+    )
+    _setup_outputs(state, values)
+    manager = project.factory.simulation_manager(state)
+    manager.run()
+    assert not manager.errored and len(manager.deadended) == 1
+    return [
+        Endpoint(
+            **native_registers(end, NATIVE_STATE),
+            memory=end.memory.load(
+                NATIVE_STATE + 8 + REGION_START, REGION_SIZE
+            ),
+            clear_call=end.globals["clear_call"],
+            constraints=tuple(end.solver.constraints),
+        )
+        for end in manager.deadended
+    ]
+
+
+@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_clear_mon_pic_from_tilemap_pathwise_equivalence() -> None:
+    values = _inputs("clear_mon_pic_from_tilemap")
+    assert_pathwise_equivalent(
+        _assembly(values),
+        _native(values),
+        (*REGISTERS, "memory", "clear_call"),
+    )

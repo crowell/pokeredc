@@ -18220,13 +18220,12 @@ c_symbol = "port_clear_mon_pic_from_tilemap"
 c_source = "verification/ports/clear_mon_pic_from_tilemap.c"
 status = "proven"
 observables = [
-    "A/F/B/C/D/E/H/L",
-    "start_offset",
-    "tile_writes[49] (7x7 ordered writes)",
-    "clear_called",
+    "all registers and flags",
+    "the complete union of all possible 7x7 destination regions",
+    "exact ClearScreenArea call input and output",
 ]
-proof_domain = "all symbolic initial registers and A offsets; the 7x7 ClearScreenArea write sequence is exercised through the explicit call-boundary state"
-decoder = "PC-portable C contract for ClearMonPicFromTileMap: start_offset records A, clear_called records the ClearScreenArea boundary, and all 49 ordered tile writes become the blank tile 0x7f. The angr test proves all registers and explicit write state against a one-path assembly summary and retains the exact 20-byte linked body."
+proof_domain = "all register/flag, A-offset, and possible destination-memory inputs; the independently proved full-domain ClearScreenArea transition is arbitrary but matching at its exact call boundary"
+decoder = "exact 20-byte body checked; all three saved register pairs, DE/HL setup, ADD HL,DE flags, BC=7x7, real ClearScreenArea call, and ordered register restoration execute pathwise; native C calls the real loop over a full 64 KiB address space"
 
 
 
@@ -21394,18 +21393,6 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and initial tileset byte through the LoadMoveAnimationTiles continuation"
 decoder = "push/pop setup and SM83 absolute store are modeled exactly; the tileset write precedes the explicit LoadMoveAnimationTiles boundary"
-
-[[function]]
-assembly_symbol = "ClearMonPicFromTileMap"
-assembly_source = "engine/battle/animations.asm"
-c_symbol = "port_clear_mon_pic_from_tilemap_wrapper"
-c_source = "verification/ports/clear_mon_pic_from_tilemap_wrapper.c"
-status = "partial"
-observables = [
-    "all registers and flags",
-]
-proof_domain = "all register/flag inputs through the ADD HL,DE continuation after setting the tilemap destination and 7x7 dimensions"
-decoder = "push/pop preservation, LD E,A, LD D,0, HL tilemap origin, and BC=0x0707 setup are modeled exactly"
 
 [[function]]
 assembly_symbol = "GetMoveSound"
