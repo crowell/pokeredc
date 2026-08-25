@@ -153,6 +153,8 @@ def test_generic_ai_symbolic_equivalence() -> None:
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_decrement_ai_count_symbolic_equivalence() -> None:
+    location = symbol_location(SYMBOLS, "DecrementAICount")
+    assert linked_bytes(ROM, location, 6) == bytes.fromhex("21dfcc3537c9")
     inputs = symbolic_registers("decrement_ai_count")
     inputs["ai_count"] = claripy.BVS("decrement_ai_count_value", 8)
     assert_pathwise_equivalent(
@@ -166,9 +168,3 @@ def test_decrement_ai_count_symbolic_equivalence() -> None:
 def test_generic_ai_machine_code_is_accounted_for() -> None:
     location = symbol_location(SYMBOLS, "GenericAI")
     assert linked_bytes(ROM, location, 2) == bytes.fromhex("a7c9")
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_decrement_ai_count_machine_code_is_accounted_for() -> None:
-    location = symbol_location(SYMBOLS, "DecrementAICount")
-    assert linked_bytes(ROM, location, 6) == bytes.fromhex("21dfcc3537c9")

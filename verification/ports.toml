@@ -607,7 +607,7 @@ observables = [
     "wAICount",
 ]
 proof_domain = "all general-register, canonical-flag, and wAICount byte inputs"
-decoder = "machine bytes verified; DEC [HL] flags shimmed"
+decoder = "exact six-byte linked body checked inside the all-input functional proof; only DEC [HL] is shimmed for canonical SM83 flags"
 
 
 
