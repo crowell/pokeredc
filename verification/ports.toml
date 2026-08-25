@@ -28563,3 +28563,19 @@ observables = [
 ]
 proof_domain = "all register inputs, the dispatcher's pushed text pointer (HL), and every initial wTileMap byte over the single linear path; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
 decoder = "exact 18-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims, with the proved ScrollTextUpOneLine callee executing for real (twice) through its own unbroken hook chain; the native C blanks the arrow slot, calls the real port_scroll_text_up_one_line twice, and models the dispatcher's pop hl as the entry HL"
+
+[[function]]
+assembly_symbol = "TextCommand_PAUSE"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_pause"
+c_source = "verification/ports/text_command_pause.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the dispatcher's symbolic pushed text pointer restored into HL",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, hJoyHeld",
+    "hLoadedROMBank, rROMB, wStatusFlags5, and wJoyIgnore",
+    "the exact number of DelayFrame transitions (zero or thirty)",
+]
+proof_domain = "all register inputs, every symbolic pushed-text-pointer value, and all nine joypad/bank memory inputs over both PAUSE exits and all seven native Joypad path combinations; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "the exact complete 20-byte linked handler executes under angr; the independently proved Joypad homecall is a complete composition boundary, while the exact 7-byte DelayFrames body executes its real 30-iteration DEC C/JR loop with only the proved DelayFrame terminal and CALL/RET plumbing shimmed; the native port calls real port_joypad_homecall and real port_delay_frames, whose loop is also executed and counted through the matching proved DelayFrame boundary"
