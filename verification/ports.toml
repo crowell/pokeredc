@@ -21097,6 +21097,20 @@ proof_domain = "all register/flag, ROM-bank, disable-update, hMutateWY, and rWY 
 decoder = "exact 5-byte wrapper and 39-byte Predef dispatcher bodies checked; the real predef jump, register-pair saves, bank-$13 pointer lookup, switch to fixed target bank $12, pushed .done continuation, target hand-off, original A/F restoration, and final parent-bank writes execute pathwise; only audited SM83 absolute/LDH access shims and complete proven callee summaries are used, while native C calls the real port_get_predef_pointer and port_predef_shake_screen_vertically_private"
 
 [[function]]
+assembly_symbol = "AnimationShakeScreen"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_shake_screen"
+c_source = "verification/ports/animation_shake_screen.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "complete AnimationShakeScreenHorizontallyFast wrapper state",
+    "AnimationShakeScreenHorizontallyFast call input with B=$08",
+]
+proof_domain = "all register/flag and horizontal-wrapper state inputs; the independently proved AnimationShakeScreenHorizontallyFast transition is arbitrary but matching at the exact fallthrough boundary"
+decoder = "exact 2-byte ld b,$08 entry checked and executed before the proven horizontal-wrapper fallthrough boundary; native C assigns B=$08 and calls the real port_animation_shake_screen_horizontally_fast"
+
+[[function]]
 assembly_symbol = "AnimationShakeScreenHorizontallyFast"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_shake_screen_horizontally_fast"
