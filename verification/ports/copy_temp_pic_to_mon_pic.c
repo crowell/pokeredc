@@ -6,10 +6,12 @@
 #define W_TEMP_PIC   0xc6e8u
 #define PIC_SIZE     0x31u
 
-/* CopyVideoData is the explicit continuation for this setup. */
+void port_copy_video_data(struct cpu_register_state *, port_u8 *);
+
+/* Port of CopyTempPicToMonPic in engine/battle/animations.asm. */
 __attribute__((noinline, used)) void
 port_copy_temp_pic_to_mon_pic(struct cpu_register_state *state,
-    port_u8 *memory)
+	port_u8 *memory)
 {
 	port_u8 whose_turn = memory[H_WHOSE_TURN];
 	port_u16 source = whose_turn == 0 ? V_BACK_PIC : V_FRONT_PIC;
@@ -23,4 +25,5 @@ port_copy_temp_pic_to_mon_pic(struct cpu_register_state *state,
 	state->a = whose_turn;
 	state->f = (port_u8)(PORT_FLAG_H |
 	    (whose_turn == 0 ? PORT_FLAG_Z : 0));
+	port_copy_video_data(state, memory);
 }

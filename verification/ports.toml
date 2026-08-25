@@ -8836,18 +8836,13 @@ c_symbol = "port_animation_hide_mon_pic"
 c_source = "verification/ports/battle_animation_helpers.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
     "hWhoseTurn",
-    "ClearMonPicFromTileMap continuation",
+    "complete union of player/enemy tilemap destinations",
+    "exact ClearMonPicFromTileMap tail-call input and output",
 ]
-proof_domain = "all general-register and canonical-flag inputs and all 256 turn values across both control-flow paths"
-decoder = "exact 11-byte linked entry body checked; SM83 high-memory load modeled explicitly and the shared tilemap-clearing implementation is an explicit boundary"
+proof_domain = "all register/flag, turn, and possible destination-memory inputs across zero and nonzero turn paths; the independently proved clear transition is arbitrary but matching at the exact fallthrough boundary"
+decoder = "exact 11-byte entry checked; LDH, AND flags, both turn-dependent A offsets, JR convergence, and fallthrough into ClearMonPicFromTileMap execute pathwise, while native C calls the real clear port on the shared 64 KiB memory"
 
 
 
@@ -10090,9 +10085,11 @@ observables = [
     "all registers and flags",
     "hAutoBGTransferEnabled, hLoadedROMBank, hROMBankTemp, rROMB",
     "hVBlankCopySource, hVBlankCopyDest, hVBlankCopySize",
+    "hVBlankOccurred and every DelayFrame input in exact loop order",
+    "all 256 tile counts across the real chunk loop",
 ]
-proof_domain = "all general-register and canonical-flag inputs, all relevant symbolic hardware state, and every 8-bit tile count across all zero/remainder/full-chunk paths"
-decoder = "the native port performs every eight-tile DelayFrame plus the mandatory final DelayFrame, retains the subtraction loop, and restores AF and bank/transfer state; angr proves the complete terminal register and hardware contract for all symbolic counts"
+proof_domain = "all general-register and canonical-flag inputs, all relevant symbolic hardware state, and every 8-bit tile count represented exhaustively by 32 symbolic three-bit remainder classes; the independently proved one-observation DelayFrame transition is composed at every real call"
+decoder = "exact 62-byte body checked and executed pathwise; only unsupported LDH/absolute-store instructions and audited SM83 XOR/CP/SUB flag operations are shimmed, while both assembly and native execute the real subtraction loop and every DelayFrame call"
 
 
 
@@ -17212,9 +17209,11 @@ observables = [
     "all registers and flags",
     "hAutoBGTransferEnabled, hLoadedROMBank, hROMBankTemp, rROMB",
     "hVBlankCopyDoubleSource, hVBlankCopyDoubleDest, hVBlankCopyDoubleSize",
+    "hVBlankOccurred and every DelayFrame input in exact loop order",
+    "all 256 tile counts across the real chunk loop",
 ]
-proof_domain = "all general-register and canonical-flag inputs, all relevant symbolic hardware state, and every 8-bit tile count across all zero/remainder/full-chunk paths"
-decoder = "the native port performs every eight-tile DelayFrame plus the mandatory final DelayFrame, retains the subtraction loop, and restores AF and bank/transfer state; angr proves the complete terminal register and hardware contract for all symbolic counts"
+proof_domain = "all general-register and canonical-flag inputs, all relevant symbolic hardware state, and every 8-bit tile count represented exhaustively by 32 symbolic three-bit remainder classes; the independently proved one-observation DelayFrame transition is composed at every real call"
+decoder = "exact 62-byte body checked and executed pathwise; only unsupported LDH/absolute-store instructions and audited SM83 XOR/CP/SUB flag operations are shimmed, while both assembly and native execute the real subtraction loop and every DelayFrame call"
 
 
 
@@ -18220,13 +18219,12 @@ c_symbol = "port_clear_mon_pic_from_tilemap"
 c_source = "verification/ports/clear_mon_pic_from_tilemap.c"
 status = "proven"
 observables = [
-    "A/F/B/C/D/E/H/L",
-    "start_offset",
-    "tile_writes[49] (7x7 ordered writes)",
-    "clear_called",
+    "all registers and flags",
+    "the complete union of all possible 7x7 destination regions",
+    "exact ClearScreenArea call input and output",
 ]
-proof_domain = "all symbolic initial registers and A offsets; the 7x7 ClearScreenArea write sequence is exercised through the explicit call-boundary state"
-decoder = "PC-portable C contract for ClearMonPicFromTileMap: start_offset records A, clear_called records the ClearScreenArea boundary, and all 49 ordered tile writes become the blank tile 0x7f. The angr test proves all registers and explicit write state against a one-path assembly summary and retains the exact 20-byte linked body."
+proof_domain = "all register/flag, A-offset, and possible destination-memory inputs; the independently proved full-domain ClearScreenArea transition is arbitrary but matching at its exact call boundary"
+decoder = "exact 20-byte body checked; all three saved register pairs, DE/HL setup, ADD HL,DE flags, BC=7x7, real ClearScreenArea call, and ordered register restoration execute pathwise; native C calls the real loop over a full 64 KiB address space"
 
 
 
@@ -18673,17 +18671,12 @@ c_symbol = "port_load_battle_transition_tile"
 c_source = "verification/ports/load_battle_transition_tile.c"
 status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
+    "complete CopyVideoData hardware/HRAM state",
+    "the exact single DelayFrame input",
 ]
-proof_domain = "all 256 initial A/F and the remaining register inputs; the three 16-bit immediates are bound to the RGBDS constants (HL=wTilemap, DE=BattleTransitionTile, BC=len)."
-decoder = "exact 12-byte body checked (21f08f11594a01011cc34818); the tail `jp` is an explicit boundary. Pathwise equivalence proven against port_load_battle_transition_tile across all register/flag inputs, including F (LD rr,nn and JP do not affect flags)."
+proof_domain = "all register/flag and relevant hardware inputs; the fixed one-tile transfer executes the complete repaired CopyVideoData body and composes only the independently proved DelayFrame transition"
+decoder = "exact 12-byte setup/tail body and 62-byte CopyVideoData body checked and executed pathwise; native C makes the real CopyVideoData call, and both sides execute the mandatory single delay iteration"
 
 [[function]]
 assembly_symbol = "MtMoonB2FCheckGotAFossil"
@@ -21085,38 +21078,46 @@ assembly_symbol = "AnimationShakeScreenVertically"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_shake_screen_vertically"
 c_source = "verification/ports/animation_shake_wrappers.c"
-status = "partial"
+status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
+    "wPredefID and wPredefHL through wPredefBC+1",
+    "wPredefParentBank, wPredefBank, hLoadedROMBank, and rROMB",
+    "wDisableVBlankWYUpdate, hMutateWY, and rWY",
+    "PredefShakeScreenVertically target hand-off state",
 ]
-proof_domain = "all CPU register/flag inputs with positive predef shake count"
-decoder = "PredefShakeScreenVertically loop summary is modeled through its final DelayFrames/DEC B iteration and terminating XOR A; predef register-block memory and per-frame hardware writes remain beyond the explicit boundary"
+proof_domain = "all register/flag, ROM-bank, disable-update, hMutateWY, and rWY inputs, including B=$00; the fixed GetPredefPointer table transition and independently proved PredefShakeScreenVertically target compose at their exact call and jump boundaries"
+decoder = "exact 5-byte wrapper and 39-byte Predef dispatcher bodies checked; the real predef jump, register-pair saves, bank-$13 pointer lookup, switch to fixed target bank $12, pushed .done continuation, target hand-off, original A/F restoration, and final parent-bank writes execute pathwise; only audited SM83 absolute/LDH access shims and complete proven callee summaries are used, while native C calls the real port_get_predef_pointer and port_predef_shake_screen_vertically_private"
+
+[[function]]
+assembly_symbol = "AnimationShakeScreen"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_shake_screen"
+c_source = "verification/ports/animation_shake_screen.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "complete AnimationShakeScreenHorizontallyFast wrapper state",
+    "AnimationShakeScreenHorizontallyFast call input with B=$08",
+]
+proof_domain = "all register/flag and horizontal-wrapper state inputs; the independently proved AnimationShakeScreenHorizontallyFast transition is arbitrary but matching at the exact fallthrough boundary"
+decoder = "exact 2-byte ld b,$08 entry checked and executed before the proven horizontal-wrapper fallthrough boundary; native C assigns B=$08 and calls the real port_animation_shake_screen_horizontally_fast"
 
 [[function]]
 assembly_symbol = "AnimationShakeScreenHorizontallyFast"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_shake_screen_horizontally_fast"
 c_source = "verification/ports/animation_shake_horizontal.c"
-status = "partial"
+status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and flags",
+    "wPredefID and wPredefHL through wPredefBC+1",
+    "wPredefParentBank, wPredefBank, hLoadedROMBank, and rROMB",
+    "hMutateWX and rWX",
+    "PredefShakeScreenHorizontally target hand-off state",
 ]
-proof_domain = "all CPU register/flag inputs with positive predef shake count"
-decoder = "PredefShakeScreenHorizontally loop summary is modeled through its final DelayFrames/DEC B iteration and WX restoration; predef register-block memory and per-frame hardware writes remain beyond the explicit boundary"
+proof_domain = "all register/flag, ROM-bank, hMutateWX, and rWX inputs, including B=$00; the fixed GetPredefPointer table transition and independently proved PredefShakeScreenHorizontally target compose at their exact call and jump boundaries"
+decoder = "exact 5-byte wrapper and 39-byte Predef dispatcher bodies checked; the real predef jump, register-pair saves, bank-$13 pointer lookup, switch to fixed target bank $12, pushed .done continuation, target hand-off, original A/F restoration, and final parent-bank writes execute pathwise; only audited SM83 absolute/LDH access shims and complete proven callee summaries are used, while native C calls the real port_get_predef_pointer and port_predef_shake_screen_horizontally_private"
 
 [[function]]
 assembly_symbol = "_AnimationWaterDroplets"
@@ -21229,12 +21230,58 @@ assembly_symbol = "AnimationShowMonPic"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_show_mon_pic"
 c_source = "verification/ports/animation_show_mon_pic.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "hWhoseTurn, hBaseTileID, and hAutoBGTransferEnabled",
+    "the complete union of player/enemy tilemap destinations",
+    "all four callee inputs and outputs in exact call/tail-call order",
 ]
-proof_domain = "all register/flag inputs through the entry XOR A and the GetTileIDList continuation boundary"
-decoder = "entry XOR A semantics are shimmed exactly; GetTileIDList is an explicit downstream continuation boundary"
+proof_domain = "all register/flag, turn, HRAM, and possible destination-memory inputs; the independently proved GetTileIDList, row-pointer, CopyPicTiles, and Delay3 transitions are arbitrary but matching at their exact boundaries"
+decoder = "exact 13-byte body checked; XOR A, all three CALLs, and the Delay3 tail JP execute pathwise, while native C calls every real port and carries the full 64 KiB address space into the real copy implementation"
+
+[[function]]
+assembly_symbol = "AnimationShakeScreenHorizontallySlow"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_shake_screen_horizontally_slow"
+c_source = "verification/ports/animation_shake_screen_horizontally_slow.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rWX and hVBlankOccurred",
+    "every DelayFrames input in exact loop order",
+    "both real inner loops and the real outer loop",
+]
+proof_domain = "all register/flag, rWX, and VBlank inputs at both gameplay-reachable entries B=6/C=2 and B=3/C=2; these are the only linked callers"
+decoder = "exact 34-byte body checked; PUSH/POP frames, LDH, INC/DEC, both inner JR loops, outer backward JR, and RET execute pathwise; DelayFrames is its independently proved exact C=2 transition and native C retains every real do-while loop and call"
+
+[[function]]
+assembly_symbol = "ShakeScreenHorizontallySlow"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_horizontally_slow"
+c_source = "verification/ports/shake_screen_horizontally_slow.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rWX and hVBlankOccurred",
+    "exact slow-shake tail-call input with B=6/C=2 and complete output",
+]
+proof_domain = "all register/flag, rWX, and VBlank inputs; the independently proved slow-shake transition is arbitrary but matching at the exact tail boundary"
+decoder = "exact five-byte LD BC,$0602/JR body checked and executed pathwise; native C sets the same register pair and calls the real slow-shake port"
+
+[[function]]
+assembly_symbol = "ShakeScreenHorizontallySlow2"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_horizontally_slow2"
+c_source = "verification/ports/shake_screen_horizontally_slow2.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rWX and hVBlankOccurred",
+    "exact slow-shake fallthrough input with B=3/C=2 and complete output",
+]
+proof_domain = "all register/flag, rWX, and VBlank inputs; the independently proved slow-shake transition is arbitrary but matching at the exact fallthrough boundary"
+decoder = "exact three-byte LD BC,$0302 body and physical fallthrough adjacency checked and executed pathwise; native C sets the same register pair and calls the real slow-shake port"
 
 [[function]]
 assembly_symbol = "_AnimationSquishMonPic"
@@ -21293,13 +21340,15 @@ assembly_symbol = "CopyTempPicToMonPic"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_copy_temp_pic_to_mon_pic"
 c_source = "verification/ports/copy_temp_pic_to_mon_pic.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
-    "hWhoseTurn",
+    "hWhoseTurn and the complete CopyVideoData hardware/HRAM state",
+    "all seven DelayFrame inputs in exact order",
+    "both player and enemy destination paths",
 ]
-proof_domain = "all register/flag inputs and arbitrary hWhoseTurn bytes through the CopyVideoData jump continuation"
-decoder = "LDH load and AND-A flags are shimmed exactly; turn-dependent vBackPic/vFrontPic source, wTempPic destination, and PIC_SIZE count are modeled"
+proof_domain = "all register/flag and relevant hardware inputs and every 8-bit hWhoseTurn value; both turn paths execute the complete repaired CopyVideoData body with its fixed 49-tile real loop, composing only the independently proved DelayFrame transition"
+decoder = "exact 20-byte body checked and executed pathwise; only the unsupported LDH read and audited SM83 AND-A flags are shimmed in the wrapper, while native C makes the real CopyVideoData call and both sides execute all seven video-copy delay iterations"
 
 [[function]]
 assembly_symbol = "AnimationWavyScreen"
@@ -21330,12 +21379,15 @@ assembly_symbol = "CopyMonsterSpriteData"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_copy_monster_sprite_data"
 c_source = "verification/ports/copy_monster_sprite_data.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "hROMBankTemp, hLoadedROMBank, and rROMB",
+    "the exact 16-byte source and destination regions",
+    "the complete FarCopyData2 tail-call input and output",
 ]
-proof_domain = "all register/flag inputs through the FarCopyData2 jump continuation"
-decoder = "TILE_SIZE count and MonsterSprite bank load are modeled with exact flag preservation; FarCopyData2 remains the explicit downstream boundary"
+proof_domain = "all register/flag and bank inputs for all eight linked gameplay call sites in AnimationSubstitute; their fixed MonsterSprite source and wTempPic destination regions exhaust the function's gameplay domain, and the independently proved FarCopyData2 transition is arbitrary but matching at the exact tail boundary"
+decoder = "exact eight-byte LD BC,$0010/LD A,$05/JP body checked and executed pathwise without instruction shims; native C sets the same count and bank and tail-composes the real FarCopyData2 port, whose real CopyData loop transfers all 16 bytes"
 
 [[function]]
 assembly_symbol = "HideSubstituteShowMonAnim"
@@ -21383,18 +21435,6 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and initial tileset byte through the LoadMoveAnimationTiles continuation"
 decoder = "push/pop setup and SM83 absolute store are modeled exactly; the tileset write precedes the explicit LoadMoveAnimationTiles boundary"
-
-[[function]]
-assembly_symbol = "ClearMonPicFromTileMap"
-assembly_source = "engine/battle/animations.asm"
-c_symbol = "port_clear_mon_pic_from_tilemap_wrapper"
-c_source = "verification/ports/clear_mon_pic_from_tilemap_wrapper.c"
-status = "partial"
-observables = [
-    "all registers and flags",
-]
-proof_domain = "all register/flag inputs through the ADD HL,DE continuation after setting the tilemap destination and 7x7 dimensions"
-decoder = "push/pop preservation, LD E,A, LD D,0, HL tilemap origin, and BC=0x0707 setup are modeled exactly"
 
 [[function]]
 assembly_symbol = "GetMoveSound"
@@ -21465,14 +21505,61 @@ assembly_symbol = "PlayApplyingAttackSound"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_play_applying_attack_sound"
 c_source = "verification/ports/play_applying_attack_sound.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "complete WaitForSoundToFinish and PlaySound audio state",
     "wFrequencyModifier",
     "wTempoModifier",
+    "WaitForSoundToFinish and conditional PlaySound call inputs",
 ]
-proof_domain = "all register/flag inputs through the PlaySound call boundary for weak, neutral, and super-effective multipliers 9, 10, and 11"
-decoder = "WaitForSoundToFinish and PlaySound are explicit boundaries; SM83 masking, CP flags, branch-selected modifiers, and sound IDs are modeled exactly"
+proof_domain = "all register/flag, damage-multiplier, modifier, and audio-state inputs across the masked-zero return, neutral multiplier 10, super-effective multipliers 11..127, and not-very-effective multipliers 1..9; independently proved WaitForSoundToFinish and PlaySound transitions are arbitrary but matching at their exact call boundaries"
+decoder = "exact 44-byte body checked; the real WaitForSoundToFinish call, LD/AND/CP flags, ineffective return, all three modifier/sound branches, global writes, and PlaySound tail execute pathwise; native C calls the real port_wait_for_sound_to_finish and port_play_sound"
+
+[[function]]
+assembly_symbol = "ShakeScreenVertically"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_vertically"
+c_source = "verification/ports/shake_screen_vertically.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "complete PlayApplyingAttackSound audio/modifier state",
+    "complete AnimationShakeScreenVertically predef/hardware state",
+    "both callee inputs in call order, with B=$08 at the shake hand-off",
+]
+proof_domain = "all register/flag, audio, damage, modifier, predef, ROM-bank, disable-update, hMutateWY, and rWY inputs; the independently proved sound and vertical-shake transitions are arbitrary but matching at their exact call and tail-jump boundaries"
+decoder = "exact 8-byte body checked; the PlayApplyingAttackSound call, ld b,$08, and jp AnimationShakeScreenVertically tail execute pathwise, while native C calls both real ports and shares loaded-ROM/rROMB state between them"
+
+[[function]]
+assembly_symbol = "ShakeScreenHorizontallyHeavy"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_horizontally_heavy"
+c_source = "verification/ports/shake_screen_horizontally_heavy.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "complete PlayApplyingAttackSound audio/modifier state",
+    "complete AnimationShakeScreenHorizontallyFast predef/hardware state",
+    "both callee inputs in call order, with B=$08 at the shake hand-off",
+]
+proof_domain = "all register/flag, audio, damage, modifier, predef, ROM-bank, hMutateWX, and rWX inputs; the independently proved sound and horizontal-shake transitions are arbitrary but matching at their exact call and tail-jump boundaries"
+decoder = "exact 8-byte body checked; the PlayApplyingAttackSound call, ld b,$08, and jp AnimationShakeScreenHorizontallyFast tail execute pathwise, while native C calls both real ports and shares loaded-ROM/rROMB state between them"
+
+[[function]]
+assembly_symbol = "ShakeScreenHorizontallyLight"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_horizontally_light"
+c_source = "verification/ports/shake_screen_horizontally_light.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "complete PlayApplyingAttackSound audio/modifier state",
+    "complete AnimationShakeScreenHorizontallyFast predef/hardware state",
+    "both callee inputs in call order, with B=$02 at the shake hand-off",
+]
+proof_domain = "all register/flag, audio, damage, modifier, predef, ROM-bank, hMutateWX, and rWX inputs; the independently proved sound and horizontal-shake transitions are arbitrary but matching at their exact call and tail-jump boundaries"
+decoder = "exact 8-byte body checked; the PlayApplyingAttackSound call, ld b,$02, and jp AnimationShakeScreenHorizontallyFast tail execute pathwise, while native C calls both real ports and shares loaded-ROM/rROMB state between them"
 
 [[function]]
 assembly_symbol = "BattleTransition"
@@ -22778,24 +22865,30 @@ assembly_symbol = "LoadHudAndHpBarAndStatusTilePatterns"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_load_hud_and_hp_bar_and_status_tile_patterns"
 c_source = "verification/ports/load_hud_and_hp_bar_and_status_tile_patterns.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "shared bank/scratch state, rLCDC, and video-transfer hardware state",
+    "exact LoadHpBarAndStatusTilePatterns and LoadHudTilePatterns inputs in order",
+    "arbitrary proven transfer-memory post-state",
 ]
-proof_domain = "all register/flag and LCD-control inputs through LCD enabled/disabled selection"
-decoder = "LoadHpBarAndStatusTilePatterns call boundary, LCDC ADD-A flags, and branch selection are modeled exactly; HUD tile copy, video-transfer, hardware, and return paths remain beyond the explicit boundary"
+proof_domain = "all register/flag/LCDC/bank/hardware/scratch inputs and arbitrary proven sequential transitions from LoadHpBarAndStatusTilePatterns and LoadHudTilePatterns"
+decoder = "exact 60-byte call-plus-fallthrough body checked; assembly composes the two complete proven callee transitions, while native C calls both real ports and explicitly maps the HP loader's bank-state ABI into the canonical HUD state"
 
 [[function]]
 assembly_symbol = "LoadHudTilePatterns"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_load_hud_tile_patterns"
 c_source = "verification/ports/load_hud_tile_patterns.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "rLCDC and both far-copy/video-transfer state families",
+    "both exact callee inputs in execution order",
+    "arbitrary proven transfer-memory post-state",
 ]
-proof_domain = "all register/flag and LCD-control inputs through LCD enabled/disabled selection"
-decoder = "LCDC load and ADD-A flags plus LCD branch selection are modeled exactly; HUD tile source/destination setup, copy/video transfer, hardware, and return paths remain beyond the explicit boundary"
+proof_domain = "all register/flag/LCDC/bank/hardware/scratch inputs and arbitrary proven transitions for each of the two sequential FarCopyDataDouble or CopyVideoDataDouble calls; includes both LCD-disabled and LCD-enabled paths"
+decoder = "exact 57-byte dispatcher executes under angr with only the unsupported LCDC load and audited ADD-A flag operation shimmed; both paths prove the two fixed source/destination/count setups and ordered calls to the real complete C transfer ports"
 
 [[function]]
 assembly_symbol = "PrintEmptyString"
@@ -22914,14 +23007,16 @@ decoder = "LoadPartyPokeballGfx/SetupOwnPartyPokeballs call boundaries, wIsInBat
 [[function]]
 assembly_symbol = "LoadPartyPokeballGfx"
 assembly_source = "engine/battle/draw_hud_pokeball_gfx.asm"
-c_symbol = "port_load_party_pokeball_gfx"
+c_symbol = "port_load_party_pokeball_gfx_with_memory"
 c_source = "verification/ports/load_party_pokeball_gfx.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "complete CopyVideoData hardware/HRAM state",
+    "the DelayFrame input",
 ]
-proof_domain = "all register/flag inputs through CopyVideoData"
-decoder = "Pokeball tile source/destination and BC bank/count setup are modeled exactly; CopyVideoData transfer and graphics memory effects remain beyond the explicit boundary"
+proof_domain = "all register/flag and relevant hardware inputs; the fixed four-tile transfer executes the complete repaired CopyVideoData body and composes only the independently proved DelayFrame transition"
+decoder = "exact 12-byte setup/tail body and 62-byte CopyVideoData body checked and executed pathwise; the canonical memory-aware C port makes the real CopyVideoData call, while the old register-only symbol remains solely as compatibility for explicitly partial callers"
 
 [[function]]
 assembly_symbol = "SetupEnemyPartyPokeballs"
@@ -23526,37 +23621,46 @@ assembly_symbol = "ScaleSpriteByTwo"
 assembly_source = "engine/battle/scale_sprites.asm"
 c_symbol = "port_scale_sprite_by_two_private"
 c_source = "verification/ports/scale_sprite_by_two_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "hSpriteInterlaceCounter and all three 392-byte sprite buffers",
+    "ordered inputs to both ScaleLastSpriteColumnByTwo and both ScaleFirstThreeSpriteColumnsByTwo invocations",
+    "all composed fixed-loop iteration and pixel-call counts",
 ]
-proof_domain = "all register/flag inputs through the first sprite-column scaling call"
-decoder = "input/output sprite-buffer pointer setup for the first scaling call is modeled exactly; pixel expansion, buffer writes, second chunk processing, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all initial register/flag, interlace-counter, and 1,176 sprite-buffer byte inputs across the two fixed gameplay chunks"
+decoder = "exact 21-byte linked wrapper body asserted inside the functional proof; all pointer loads and CALLs execute from ROM, complete proven last-column and first-three-column transitions are composed in exact last/first/last/fallthrough-first order, all 784 output bytes and unchanged source buffer are compared, and production C invokes all four real ports"
 
 [[function]]
 assembly_symbol = "ScaleFirstThreeSpriteColumnsByTwo"
 assembly_source = "engine/battle/scale_sprites.asm"
 c_symbol = "port_scale_first_three_sprite_columns_by_two_private"
 c_source = "verification/ports/scale_first_three_sprite_columns_by_two_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "all 84 source bytes and all 336 destination bytes",
+    "all 168 ordered ScalePixelsByTwo call inputs",
+    "84 inner-loop iterations and 168 pixel calls",
 ]
-proof_domain = "all register/flag inputs through the first column-loop setup"
-decoder = "three-column loop counter and inner-loop counter initialization are modeled exactly; pixel expansion, buffer writes, pointer movement, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all initial A/F/B/C and source/destination byte inputs at the sole gameplay entry pair DE=sSpriteBuffer1+$5b and HL=sSpriteBuffer0+$14f"
+decoder = "exact 40-byte linked body asserted inside the functional proof; unsupported SWAP/DEC/ADD-HL and conditional-jump semantics are instruction-shimmed, all remaining nested-loop and pointer instructions execute from ROM, the complete proven ScalePixelsByTwo transition is composed at all 168 real calls, and production C executes the real 3-by-28 loops and real callee"
 
 [[function]]
 assembly_symbol = "ScaleLastSpriteColumnByTwo"
 assembly_source = "engine/battle/scale_sprites.asm"
 c_symbol = "port_scale_last_sprite_column_by_two_private"
 c_source = "verification/ports/scale_last_sprite_column_by_two_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
     "hSpriteInterlaceCounter",
+    "all 28 source bytes and all 56 destination bytes",
+    "all 28 ordered ScalePixelsByTwo call inputs",
+    "fixed loop iteration count",
 ]
-proof_domain = "all register/flag and interlace-counter inputs through loop setup"
-decoder = "interlace counter initialization, BC destination offset setup, and loop-entry registers are modeled exactly; pixel expansion, buffer writes, pointer movement, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all initial A/F/B/C, interlace-counter, source-byte, and destination-byte inputs at both gameplay call-site DE/HL pairs (sSpriteBuffer1 to sSpriteBuffer0 and sSpriteBuffer2 to sSpriteBuffer1)"
+decoder = "exact 26-byte linked body asserted inside the functional proof; unsupported LDH/SWAP/DEC and conditional-jump semantics are instruction-shimmed, all other loop/pointer instructions execute from ROM, the complete proven ScalePixelsByTwo transition is composed at each real call, and production C executes the real 28-iteration loop and real callee"
 
 [[function]]
 assembly_symbol = "_ScrollTrainerPicAfterBattle"

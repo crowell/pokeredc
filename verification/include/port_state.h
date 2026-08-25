@@ -831,6 +831,14 @@ struct copy_tile_ids_state {
 	port_u8 downscaled_size;
 };
 
+struct animation_show_mon_pic_state {
+	struct cpu_register_state registers;
+	port_u8 whose_turn;
+	port_u8 base_tile;
+	port_u8 auto_transfer;
+	port_u8 memory[65536];
+};
+
 struct call_function_table_state {
 	struct cpu_register_state registers;
 	port_u8 fetched_low;
@@ -970,6 +978,11 @@ struct clear_screen_area_state {
 	port_u8 saved_b;
 	port_u8 saved_c;
 	port_u8 written;
+};
+
+struct clear_mon_pic_from_tilemap_state {
+	struct cpu_register_state registers;
+	port_u8 memory[65536];
 };
 
 struct daycare_exp_state {
@@ -1256,6 +1269,11 @@ struct load_font_tile_patterns_state {
 	port_u8 lcd_control;
 };
 
+struct load_hud_tile_patterns_state {
+	struct far_copy_double_state transfer;
+	port_u8 lcd_control;
+};
+
 struct load_gb_pal_state {
 	struct cpu_register_state registers;
 	port_u8 map_pal_offset;
@@ -1481,6 +1499,34 @@ struct play_sound_state {
 	port_u8 dispatch_called;
 	port_u8 low_health_alarm;
 	port_u8 audio_saved_rom_bank;
+};
+
+struct play_applying_attack_sound_state {
+	struct play_sound_state sound;
+	port_u8 damage_multipliers;
+	port_u8 frequency_modifier;
+	port_u8 tempo_modifier;
+};
+
+struct shake_screen_vertically_state {
+	struct play_applying_attack_sound_state sound;
+	port_u8 predef[6];
+	port_u8 disable_vblank_wy_update;
+	port_u8 mutate_wy;
+	port_u8 wy;
+	port_u8 predef_id;
+	port_u8 predef_parent_bank;
+	port_u8 predef_bank;
+};
+
+struct shake_screen_horizontally_state {
+	struct play_applying_attack_sound_state sound;
+	port_u8 predef[6];
+	port_u8 mutate_wx;
+	port_u8 wx;
+	port_u8 predef_id;
+	port_u8 predef_parent_bank;
+	port_u8 predef_bank;
 };
 
 struct fade_out_audio_state {
@@ -1919,6 +1965,12 @@ struct delay_frame_state {
 	port_u8 observed_vblank;
 };
 
+struct animation_shake_horizontal_slow_state {
+	struct cpu_register_state registers;
+	port_u8 wx;
+	port_u8 vblank_occurred;
+};
+
 struct predef_shake_vertical_state {
 	struct cpu_register_state registers;
 	port_u8 predef[6];
@@ -1927,11 +1979,29 @@ struct predef_shake_vertical_state {
 	port_u8 wy;
 };
 
+struct animation_shake_vertical_state {
+	struct predef_shake_vertical_state shake;
+	port_u8 predef_id;
+	port_u8 predef_parent_bank;
+	port_u8 predef_bank;
+	port_u8 loaded_rom_bank;
+	port_u8 rom_bank;
+};
+
 struct predef_shake_horizontal_state {
 	struct cpu_register_state registers;
 	port_u8 predef[6];
 	port_u8 mutate_wx;
 	port_u8 wx;
+};
+
+struct animation_shake_horizontal_state {
+	struct predef_shake_horizontal_state shake;
+	port_u8 predef_id;
+	port_u8 predef_parent_bank;
+	port_u8 predef_bank;
+	port_u8 loaded_rom_bank;
+	port_u8 rom_bank;
 };
 
 struct calculate_modified_stats_state {
@@ -3092,6 +3162,8 @@ _Static_assert(sizeof(struct scanline_scx_state) == 10, "unexpected ABI padding"
 _Static_assert(sizeof(struct menu_save_tiles_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct option_cursor_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct copy_tile_ids_state) == 26, "unexpected ABI padding");
+_Static_assert(sizeof(struct animation_show_mon_pic_state) == 65547,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct predef_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct predef_pointer_state) == 19, "unexpected ABI padding");
 _Static_assert(sizeof(struct update_sprite_image_state) == 13, "unexpected ABI padding");
@@ -3144,6 +3216,9 @@ _Static_assert(sizeof(struct player_name_sram_state) == 22, "unexpected ABI padd
 _Static_assert(sizeof(struct serial_exchange_nybble_state) == 15, "unexpected ABI padding");
 _Static_assert(sizeof(struct wait_for_sound_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct play_sound_state) == 24, "unexpected ABI padding");
+_Static_assert(sizeof(struct play_applying_attack_sound_state) == 27, "unexpected ABI padding");
+_Static_assert(sizeof(struct shake_screen_vertically_state) == 39, "unexpected ABI padding");
+_Static_assert(sizeof(struct shake_screen_horizontally_state) == 38, "unexpected ABI padding");
 _Static_assert(sizeof(struct fade_out_audio_state) == 26, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct reload_move_data_state) == 28,
@@ -3196,8 +3271,12 @@ _Static_assert(sizeof(struct remove_inventory_state) == 23, "unexpected ABI padd
 _Static_assert(sizeof(struct slot_wheel_match_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct add_inventory_state) == 28, "unexpected ABI padding");
 _Static_assert(sizeof(struct delay_frame_state) == 10, "unexpected ABI padding");
+_Static_assert(sizeof(struct animation_shake_horizontal_slow_state) == 10,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct predef_shake_vertical_state) == 17, "unexpected ABI padding");
+_Static_assert(sizeof(struct animation_shake_vertical_state) == 22, "unexpected ABI padding");
 _Static_assert(sizeof(struct predef_shake_horizontal_state) == 16, "unexpected ABI padding");
+_Static_assert(sizeof(struct animation_shake_horizontal_state) == 21, "unexpected ABI padding");
 _Static_assert(sizeof(struct calculate_modified_stats_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct flash_screen_long_delay_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct trade_delay_state) == 9, "unexpected ABI padding");
@@ -3255,6 +3334,8 @@ _Static_assert(sizeof(struct map_mon_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct bit_count_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct divide_bytes_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct clear_screen_area_state) == 13, "unexpected ABI padding");
+_Static_assert(sizeof(struct clear_mon_pic_from_tilemap_state) == 65544,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct daycare_exp_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct music_bank_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct player_control_state) == 11, "unexpected ABI padding");

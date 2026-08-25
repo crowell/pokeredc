@@ -301,15 +301,21 @@ port_get_enemy_animation_type(struct memory_predicate_state *state)
 	select_animation_type(state, 1, 2);
 }
 
-/* Port of AnimationHideMonPic through ClearMonPicFromTileMap. */
+void port_clear_mon_pic_from_tilemap(
+	struct clear_mon_pic_from_tilemap_state *state);
+
+/* Port of AnimationHideMonPic in engine/battle/animations.asm. */
 __attribute__((noinline, used)) void
-port_animation_hide_mon_pic(struct subanimation_transform_state *state)
+port_animation_hide_mon_pic(struct clear_mon_pic_from_tilemap_state *state)
 {
-	state->registers.a = state->whose_turn;
+	port_u8 whose_turn = state->memory[0xfff3];
+
+	state->registers.a = whose_turn;
 	state->registers.f = PORT_FLAG_H;
-	if (state->whose_turn == 0)
+	if (whose_turn == 0)
 		state->registers.f |= PORT_FLAG_Z;
-	state->registers.a = state->whose_turn == 0 ? 101 : 12;
+	state->registers.a = whose_turn == 0 ? 101 : 12;
+	port_clear_mon_pic_from_tilemap(state);
 }
 
 /* Port of FallingObjects_InitXCoords. */
