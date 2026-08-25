@@ -10101,22 +10101,6 @@ decoder = "exact 62-byte body checked and executed pathwise; only unsupported LD
 
 
 
-[[function]]
-assembly_symbol = "ClearScreen"
-assembly_source = "home/copy2.asm"
-c_symbol = "port_clear_screen"
-c_source = "verification/ports/clear_screen.c"
-status = "proven"
-proof_domain = "all general-register and canonical-flag inputs through the complete 360-byte tile loop and three-frame Delay3 tail"
-decoder = "the native nested loops retain every tile write and counter transition, then call port_delay3 on the live register state; the angr path summary checks the complete terminal register/memory contract"
-observables = [
-    "all registers and flags",
-    "wTileMap[0..SCREEN_AREA+1] (cleared to space 0x7F)",
-]
-
-
-
-
 
 
 
@@ -28467,3 +28451,32 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and all four option-byte inputs, over both wOptionsInitialized branches (InitOptions called and skipped) on both sides"
 decoder = "the exact 75-byte linked body and the exact 11-byte InitOptions callee (byte-verified, same bank) execute under angr; SM83-only FA/EA/XOR-A decoder shims only, with the proven FillMemory/CopyData transitions carried at their call sites including the tail JP whose RET pops the caller sentinel; the native port calls the real port_fill_memory, port_init_options, and port_copy_data in order"
+[[function]]
+assembly_symbol = "InterlaceMergeSpriteBuffers"
+assembly_source = "home/pics.asm"
+c_symbol = "port_interlace_merge_sprite_buffers"
+c_source = "verification/ports/interlace_merge_sprite_buffers.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all three 392-byte sprite buffers and adjacent guards",
+    "rRAMB, wSpriteFlipped, hSpriteInterlaceCounter/hROMBankTemp, and all CopyVideoData hardware state",
+    "exact CopyVideoData tail-call state",
+]
+proof_domain = "all initial register/flag, output-pointer, sprite-buffer, flip-flag, bank, and video-copy hardware inputs across both flipped and unflipped paths, with an arbitrary matching transition of the independently proven CopyVideoData body"
+decoder = "the exact complete 69-byte linked body executes under angr through all 196 interlace iterations and the optional 784-byte nibble-swap loop; only individual unsupported/mis-modeled SM83 instructions and the proven CopyVideoData tail boundary are shimmed, while native C executes both real loops and calls real port_copy_video_data"
+
+
+
+[[function]]
+assembly_symbol = "ClearScreen"
+assembly_source = "home/copy2.asm"
+c_symbol = "port_clear_screen"
+c_source = "verification/ports/clear_screen.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 360-byte wTileMap region",
+]
+proof_domain = "all register/flag inputs and every initial wTileMap byte (the proof shows all 360 are fully overwritten with the $7f space tile), over the single linear fill path and the proved Delay3 tail"
+decoder = "exact 19-byte linked body executes under angr on one linear path through both wrapped DEC C/DEC B passes; SM83-only LD [HL+],A plus INC/DEC-register flag shims and the proved Delay3 tail boundary (A:=0, F:=Z|N, C:=0, B/D/E/H/L preserved); the native C executes the real 360-iteration loop and calls the real port_delay3"
