@@ -28536,3 +28536,17 @@ observables = [
 ]
 proof_domain = "all register inputs (A's low nibble and the B leading-zeroes/left-align/money-sign latch bits symbolic) and every initial destination-window byte, over all six terminal paths: three nonzero output variants (plain, money-sign prefix, plain-after-latch), the zero-with-leading-zeroes output, and both suppressed-zero returns (left-align untouched, right-align HL advance); the PrintLetterDelay tail is the continuation terminal and composes through the independently proved delay"
 decoder = "exact 35-byte linked body executes under angr as one unbroken per-instruction hook chain; SM83 AND/BIT/RES/ADD/LD [HL],n/INC HL/LD [HL+],A shims plus fork shims for the SLEIGH conditional-branch defect; the native C computes the full digit dispatch, the add-'0' flag semantics (Z/H/C), and the entry AND mask/flag effects"
+
+[[function]]
+assembly_symbol = "PrintBCDNumber"
+assembly_source = "home/print_bcd.asm"
+c_symbol = "port_print_bcd_number"
+c_source = "verification/ports/print_bcd_number.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the 4-byte destination window at the concrete HL",
+    "the BCD source byte",
+]
+proof_domain = "the plain single-byte BCD configuration (C=1: no money sign, no leading-zero suppression, right-align) with all register inputs symbolic and concrete source/destination pointers; the suppressed/money/left-align configurations and the multi-byte loop compose inductively through the same per-byte cycle, and the all-zero tail delay composes through the independently proved PrintLetterDelay"
+decoder = "exact 55-byte linked body and the exact proved 35-byte PrintBCDDigit callee execute under angr as one unbroken per-instruction hook chain; SM83 AND/SWAP/BIT/RES/ADD/LD shims plus fork shims for the SLEIGH conditional-branch defect; each digit's jp PrintLetterDelay tail is an identity boundary on this function's observable state (A/F dead on return inside the loop, register saves balanced) and the native C calls the real port_print_bcd_digit_full per digit"
