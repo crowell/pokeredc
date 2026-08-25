@@ -21242,6 +21242,21 @@ proof_domain = "all register/flag, turn, HRAM, and possible destination-memory i
 decoder = "exact 13-byte body checked; XOR A, all three CALLs, and the Delay3 tail JP execute pathwise, while native C calls every real port and carries the full 64 KiB address space into the real copy implementation"
 
 [[function]]
+assembly_symbol = "AnimationShakeScreenHorizontallySlow"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_animation_shake_screen_horizontally_slow"
+c_source = "verification/ports/animation_shake_screen_horizontally_slow.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rWX and hVBlankOccurred",
+    "every DelayFrames input in exact loop order",
+    "both real inner loops and the real outer loop",
+]
+proof_domain = "all register/flag, rWX, and VBlank inputs at both gameplay-reachable entries B=6/C=2 and B=3/C=2; these are the only linked callers"
+decoder = "exact 34-byte body checked; PUSH/POP frames, LDH, INC/DEC, both inner JR loops, outer backward JR, and RET execute pathwise; DelayFrames is its independently proved exact C=2 transition and native C retains every real do-while loop and call"
+
+[[function]]
 assembly_symbol = "_AnimationSquishMonPic"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_squish_mon_pic"

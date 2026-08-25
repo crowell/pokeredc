@@ -1960,6 +1960,12 @@ struct delay_frame_state {
 	port_u8 observed_vblank;
 };
 
+struct animation_shake_horizontal_slow_state {
+	struct cpu_register_state registers;
+	port_u8 wx;
+	port_u8 vblank_occurred;
+};
+
 struct predef_shake_vertical_state {
 	struct cpu_register_state registers;
 	port_u8 predef[6];
@@ -3260,6 +3266,8 @@ _Static_assert(sizeof(struct remove_inventory_state) == 23, "unexpected ABI padd
 _Static_assert(sizeof(struct slot_wheel_match_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct add_inventory_state) == 28, "unexpected ABI padding");
 _Static_assert(sizeof(struct delay_frame_state) == 10, "unexpected ABI padding");
+_Static_assert(sizeof(struct animation_shake_horizontal_slow_state) == 10,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct predef_shake_vertical_state) == 17, "unexpected ABI padding");
 _Static_assert(sizeof(struct animation_shake_vertical_state) == 22, "unexpected ABI padding");
 _Static_assert(sizeof(struct predef_shake_horizontal_state) == 16, "unexpected ABI padding");
