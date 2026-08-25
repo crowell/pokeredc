@@ -21271,6 +21271,20 @@ proof_domain = "all register/flag, rWX, and VBlank inputs; the independently pro
 decoder = "exact five-byte LD BC,$0602/JR body checked and executed pathwise; native C sets the same register pair and calls the real slow-shake port"
 
 [[function]]
+assembly_symbol = "ShakeScreenHorizontallySlow2"
+assembly_source = "engine/battle/animations.asm"
+c_symbol = "port_shake_screen_horizontally_slow2"
+c_source = "verification/ports/shake_screen_horizontally_slow2.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rWX and hVBlankOccurred",
+    "exact slow-shake fallthrough input with B=3/C=2 and complete output",
+]
+proof_domain = "all register/flag, rWX, and VBlank inputs; the independently proved slow-shake transition is arbitrary but matching at the exact fallthrough boundary"
+decoder = "exact three-byte LD BC,$0302 body and physical fallthrough adjacency checked and executed pathwise; native C sets the same register pair and calls the real slow-shake port"
+
+[[function]]
 assembly_symbol = "_AnimationSquishMonPic"
 assembly_source = "engine/battle/animations.asm"
 c_symbol = "port_animation_squish_mon_pic"
