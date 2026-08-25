@@ -28158,3 +28158,19 @@ observables = [
 ]
 proof_domain = "all initial register/flag values, arbitrary saved BC and requested-bank values, arbitrary source/destination/wMoveData bytes, and an arbitrary complete proven AddPartyMon_WriteMovePP post-transition. Saved HL/DE exhaust the real callers: the battle wEnemyMonMoves/wEnemyMonPP-1 layout and all six RestoreBonusPP party-slot move pointers with wNormalMaxPPList-1. Loaded and hardware ROM bank are 3 while the bank-3 wrapper executes."
 decoder = "exact 3-byte CALL GetPredefRegisters body checked and executed; GetPredefRegisters is composed at its callee entry with its complete proven deterministic transition, then the adjacent proven AddPartyMon_WriteMovePP function is composed at the exact fallthrough address with an arbitrary complete transition. Native production C calls both real ports in order. No hook is placed at the LoadMovePPs entry and no instruction shim is required."
+
+[[function]]
+assembly_symbol = "ReloadMoveData"
+assembly_source = "engine/battle/core.asm"
+c_symbol = "port_reload_move_data"
+c_source = "verification/ports/reload_move_data.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wNamedObjectIndex and all callee-visible battle/name/string memory",
+    "requested, loaded, and hardware ROM-bank state",
+    "complete GetName scratch and saved-register state",
+    "ordered AddNTimes, FarCopyData, IncrementMovePP, GetMoveName, and CopyToStringBuffer call snapshots",
+]
+proof_domain = "all register/flag, bank, GetName scratch, saved-register, battle PP, name-buffer, string-buffer, and destination-memory inputs; the incoming move ID ranges over every caller-valid nonzero move; all five independently proven callees are composed with complete matching transitions"
+decoder = "exact 31-byte linked body checked inside the functional proof; the real setup/DEC/final AND instructions execute or use individual exact shims, every callee entry is composed in order, and production C invokes the real proven ports through explicit state bridges"
