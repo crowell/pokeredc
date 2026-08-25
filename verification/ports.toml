@@ -10411,11 +10411,11 @@ c_symbol = "port_zero_sprite_buffer"
 c_source = "verification/ports/copy_string.c"
 status = "proven"
 observables = [
-    "all registers and flags",
-    "all 392 zero bytes written",
+    "all registers and canonical flags",
+    "all 392 destination bytes and the adjacent overrun guards",
 ]
-proof_domain = "all register/flag inputs and all 16-bit HL values including pointer wraparound; fixed 392-byte setup composes with exhaustive one-write recurrence"
-decoder = "exact 11-byte body and SPRITEBUFFERSIZE constant checked; XOR flags, HLI zero write, DEC BC, OR flags, both loop paths, and return modeled explicitly"
+proof_domain = "all initial A/F/B/C/D/E and destination-memory inputs at both statically linked gameplay call sites, with HL=sSpriteBuffer0 ($a000) and HL=sSpriteBuffer1 ($a188) respectively"
+decoder = "the exact complete 11-byte linked body executes under angr for all 392 iterations at both call sites; only SM83 XOR A, LD [HL+],A, and OR C instruction shims are used, while native C executes its real complete loop"
 
 
 
