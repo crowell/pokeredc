@@ -66,25 +66,35 @@ Ported fragments ready to compose once the drivers above exist:
 `port_move_pic_left`, `port_oak_speech_slide_pic_right`,
 `port_get_default_name_found_name`, `port_give_pokemon`,
 `port_oaks_lab_mon_choice_end`, `port_starter_dex_private`.
+
 ## Overworld — future phase (walking around)
 
 Per coverage scan: `OverworldLoop`, `EnterMap`, `EnterMapAnim`,
 `CheckWarpsNoCollision*` family, `CheckTilePassable` /
 `CollisionCheckOnLand/OnWater/JoypadOverworld`,
 `IsPlayerStandingOnDoorTileOrWarpTile`, `UpdateSprites`, `PrepareOAMData`
-(sprite DMA processing), full-body `TryDoWildEncounter`. Ported and ready to
-compose once those exist: `AdvancePlayerSprite`, `LoadCurrentMapView`,
-`ReloadMapData`, `ReloadTilesetTilePatterns`, `Schedule{North,South}Row/
-{East,West}ColumnRedraw`, `RedrawRowOrColumn`, `AutoBgMapTransfer`,
-`IsPlayerStandingOnWarp`, `GetTileSpriteStandsOn`, joypad suite.
+(sprite DMA processing), full-body `TryDoWildEncounter`. Ported and ready
+to compose once those exist: `AdvancePlayerSprite`, `LoadCurrentMapView`,
+`ReloadMapData`, `ReloadTilesetTilePatterns`,
+`Schedule{North,South}Row/{East,West}ColumnRedraw`,
+`RedrawRowOrColumn`, `AutoBgMapTransfer`, `IsPlayerStandingOnWarp`,
+`GetTileSpriteStandsOn`, joypad suite.
 
 ## Battle — future phase
 
-`BattleCore` (whole file) is the big blocker; partial entries exist for
+Post-merge (upstream `ds4`), now **proven** and ready to compose:
+`PlayApplyingAttackSound`, `CopyTempPicToMonPic`, `CopyMonsterSpriteData`,
+`AnimationShowMonPic` / `AnimationHideMonPic` /
+`ClearMonPicFromTileMap`, the full shake-screen family
+(`AnimationShakeScreen*`, `ShakeScreenVertically`,
+`ShakeScreenHorizontally{Heavy,Light,Fast,Slow,Slow2}`),
+`ScaleSpriteByTwo` + column scalers, `LoadHudTilePatterns`,
+`LoadHudAndHpBarAndStatusTilePatterns`, `LoadPartyPokeballGfx`,
+`LoadBattleTransitionTile`, and complete `CopyVideoData` /
+`CopyVideoDataDouble` semantics.
+
+Remaining blockers: `BattleCore` (whole file); partial entries for
 `MainInBattleLoop`, `ExecutePlayerMove/EnemyMove`, `CalculateDamage`,
 `CriticalHitTest`, `MoveHitTest`, `DisplayBattleMenu`,
-`MoveSelectionMenu`, HP-bar suite (proven), AI suite, faint/end-of-battle
-handlers. Composing one wild-battle turn additionally needs:
-`DoBattleTransitionAndInitBattleVariables` completion, animation framework
-bodies (`PlayAnimation`/`DrawFrameBlock` partials), text-chain above, and
-audio.
+`MoveSelectionMenu`; faint/end-of-battle handlers; the dialogue chain
+(`TextCommandProcessor`) above; and the audio engine.
