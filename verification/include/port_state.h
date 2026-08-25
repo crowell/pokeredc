@@ -805,6 +805,13 @@ struct title_scroll_body_state {
 	port_u8 title_ball_y;
 };
 
+struct title_screen_scroll_in_mon_state {
+	struct title_scroll_body_state scroll;
+	port_u8 wy;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
 struct menu_save_tiles_state {
 	struct cpu_register_state registers;
 	port_u8 fetched;
@@ -3187,6 +3194,8 @@ _Static_assert(sizeof(struct sprite_facing_delay_state) == 15, "unexpected ABI p
 _Static_assert(sizeof(struct wavy_scx_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct scanline_scx_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct title_scroll_body_state) == 11,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct title_screen_scroll_in_mon_state) == 14,
 	"unexpected ABI padding");
 _Static_assert(sizeof(struct menu_save_tiles_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct option_cursor_state) == 14, "unexpected ABI padding");

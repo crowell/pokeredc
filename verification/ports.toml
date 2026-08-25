@@ -28435,7 +28435,7 @@ observables = [
     "all registers and canonical flags",
     "rLY, rSCX, wShadowOAMSprite10YCoord, and hWY",
     "hLoadedROMBank and rROMB before, during, and after the far call",
-    "exact TitleScroll call registers and table/timing inputs",
+    "exact TitleScroll entry state, active bank state, and table/timing inputs",
 ]
 proof_domain = "all initial register, canonical-flag, scroll/hardware, hWY, and bank states through the single complete path, with an arbitrary matching transition of the independently proven complete TitleScroll body"
 decoder = "the exact complete 14-byte linked body executes under angr; only the independently proven Bankswitch/TitleScroll call boundary and the XOR A / LDH instruction shims are used, while production C calls real port_title_scroll and preserves the far-call bank and saved-AF-to-BC effects"
