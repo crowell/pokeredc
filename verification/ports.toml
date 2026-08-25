@@ -14568,8 +14568,8 @@ observables = [
     "hMultiplier",
     "all four hMultiplyBuffer bytes",
 ]
-proof_domain = "all register/flag/high-memory inputs; exact initialization, exhaustive one-bit transition, and finalization compose inductively for all eight multiplier bits"
-decoder = "exact 100-byte body checked; all LDH aliases, SRL/SLA/RL, four-byte ADD/ADC carry chain, DEC termination, shifts, loop recurrence, and final product copy modeled explicitly"
+proof_domain = "all register/canonical-flag and multiply-memory inputs; exact initialization, an exhaustive one-bit transition with complete path-domain coverage, and finalization compose inductively for the fixed eight multiplier bits"
+decoder = "exact 100-byte body checked inside the functional proof; all LDH aliases, SRL/SLA/RL, four-byte ADD/ADC carry chain, DEC termination, loop backedge, and final product copy execute or are modeled as individual SM83 instructions, while production port_multiply executes the real eight-step while loop"
 
 [[function]]
 assembly_symbol = "Multiply"
