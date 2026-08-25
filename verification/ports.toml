@@ -7216,6 +7216,20 @@ decoder = "the native wrapper sets B to zero and calls the real port_is_in_rest_
 
 
 [[function]]
+assembly_symbol = "GetMoveName"
+assembly_source = "home/names.asm"
+c_symbol = "port_get_move_name"
+c_source = "verification/ports/get_move_name.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all name-selection globals and the complete 20-byte name buffer",
+    "exact GetName call-state snapshot",
+]
+proof_domain = "all register/canonical-flag, name-selection-global, bank, and buffer inputs with an arbitrary matching complete transition from the proven GetName callee"
+decoder = "exact 25-byte linked body checked inside the functional test; list type/index/bank setup, the complete GetName transition, fixed wNameBuffer DE result, and pushed-HL restoration are modeled exactly while native production C calls the real proven port_get_name"
+
+[[function]]
 assembly_symbol = "GetName"
 assembly_source = "home/names2.asm"
 c_symbol = "port_get_name"
