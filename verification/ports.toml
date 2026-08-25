@@ -21965,12 +21965,14 @@ assembly_symbol = "ReadPlayerMonCurHPAndStatus"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_read_player_mon_cur_hp_status"
 c_source = "verification/ports/read_player_mon_cur_hp_status.c"
-status = "partial"
+status = "proven"
 observables = [
-    "all registers and flags",
+    "all registers and canonical flags",
+    "wPlayerMonNumber, wBattleMonHP through wBattleMonStatus, and the complete possible six-member party destination region",
+    "AddNTimes call snapshot",
 ]
-proof_domain = "all register/flag and player-mon-number inputs through the AddNTimes call"
-decoder = "wPlayerMonNumber load and party-pointer/structure setup are modeled exactly; HP/status copy and battle-state writes remain beyond the explicit boundary"
+proof_domain = "all register/flag and memory inputs for legal party indices 0 through 5; all six indexed destinations and the real fixed four-byte CopyData loop"
+decoder = "exact 23-byte linked caller body checked inside the functional proof; AddNTimes uses its proven complete transition and the real linked/native CopyData loops execute, with only individual load/store, 16-bit increment/decrement, and OR instructions shimmed"
 
 [[function]]
 assembly_symbol = "DrawHUDsAndHPBars"
