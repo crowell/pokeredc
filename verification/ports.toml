@@ -23538,12 +23538,15 @@ assembly_symbol = "ScaleFirstThreeSpriteColumnsByTwo"
 assembly_source = "engine/battle/scale_sprites.asm"
 c_symbol = "port_scale_first_three_sprite_columns_by_two_private"
 c_source = "verification/ports/scale_first_three_sprite_columns_by_two_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "all 84 source bytes and all 336 destination bytes",
+    "all 168 ordered ScalePixelsByTwo call inputs",
+    "84 inner-loop iterations and 168 pixel calls",
 ]
-proof_domain = "all register/flag inputs through the first column-loop setup"
-decoder = "three-column loop counter and inner-loop counter initialization are modeled exactly; pixel expansion, buffer writes, pointer movement, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all initial A/F/B/C and source/destination byte inputs at the sole gameplay entry pair DE=sSpriteBuffer1+$5b and HL=sSpriteBuffer0+$14f"
+decoder = "exact 40-byte linked body asserted inside the functional proof; unsupported SWAP/DEC/ADD-HL and conditional-jump semantics are instruction-shimmed, all remaining nested-loop and pointer instructions execute from ROM, the complete proven ScalePixelsByTwo transition is composed at all 168 real calls, and production C executes the real 3-by-28 loops and real callee"
 
 [[function]]
 assembly_symbol = "ScaleLastSpriteColumnByTwo"
