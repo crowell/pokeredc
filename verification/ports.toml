@@ -24272,13 +24272,15 @@ assembly_symbol = "GetHPBarLength"
 assembly_source = "engine/gfx/hp_bar.asm"
 c_symbol = "port_get_hp_bar_length_private"
 c_source = "verification/ports/get_hp_bar_length_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
-    "hMultiplicand",
+    "hProduct/hDividend, hMultiplier/hDivisor, and all multiply/divide scratch",
+    "loaded and mapper ROM banks",
+    "ordered Multiply and Divide wrapper call inputs",
 ]
-proof_domain = "all register/flag and BC inputs through Multiply setup"
-decoder = "multiplicand buffer initialization, 48-pixel scale factor, and Multiply continuation boundary are modeled exactly; HP scaling shifts, division, minimum-length clamp, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all registers, flags, math scratch, and bank inputs with nonzero DE maximum HP; covers one-byte and scaled two-byte divisors plus zero/nonzero pixel results"
+decoder = "exact 62 linked bytes asserted inside the functional proof; unsupported SM83 HRAM and increment/decrement loads/stores plus incorrect XOR/AND/SRL/RR semantics are instruction-shimmed; complete proven Multiply and Divide wrapper transitions are composed at real entries while production C calls both real ports"
 
 [[function]]
 assembly_symbol = "UpdateHPBar2"
