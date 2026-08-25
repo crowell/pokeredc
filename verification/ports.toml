@@ -28550,3 +28550,16 @@ observables = [
 ]
 proof_domain = "the plain single-byte BCD configuration (C=1: no money sign, no leading-zero suppression, right-align) with all register inputs symbolic and concrete source/destination pointers; the suppressed/money/left-align configurations and the multi-byte loop compose inductively through the same per-byte cycle, and the all-zero tail delay composes through the independently proved PrintLetterDelay"
 decoder = "exact 55-byte linked body and the exact proved 35-byte PrintBCDDigit callee execute under angr as one unbroken per-instruction hook chain; SM83 AND/SWAP/BIT/RES/ADD/LD shims plus fork shims for the SLEIGH conditional-branch defect; each digit's jp PrintLetterDelay tail is an identity boundary on this function's observable state (A/F dead on return inside the loop, register saves balanced) and the native C calls the real port_print_bcd_digit_full per digit"
+
+[[function]]
+assembly_symbol = "TextCommand_SCROLL"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_scroll"
+c_source = "verification/ports/text_command_scroll.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 80-byte wTileMap scroll region (including the blanked down-arrow slot)",
+]
+proof_domain = "all register inputs, the dispatcher's pushed text pointer (HL), and every initial wTileMap byte over the single linear path; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 18-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims, with the proved ScrollTextUpOneLine callee executing for real (twice) through its own unbroken hook chain; the native C blanks the arrow slot, calls the real port_scroll_text_up_one_line twice, and models the dispatcher's pop hl as the entry HL"
