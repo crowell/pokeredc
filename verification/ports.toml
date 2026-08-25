@@ -23526,12 +23526,15 @@ assembly_symbol = "ScaleSpriteByTwo"
 assembly_source = "engine/battle/scale_sprites.asm"
 c_symbol = "port_scale_sprite_by_two_private"
 c_source = "verification/ports/scale_sprite_by_two_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "hSpriteInterlaceCounter and all three 392-byte sprite buffers",
+    "ordered inputs to both ScaleLastSpriteColumnByTwo and both ScaleFirstThreeSpriteColumnsByTwo invocations",
+    "all composed fixed-loop iteration and pixel-call counts",
 ]
-proof_domain = "all register/flag inputs through the first sprite-column scaling call"
-decoder = "input/output sprite-buffer pointer setup for the first scaling call is modeled exactly; pixel expansion, buffer writes, second chunk processing, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all initial register/flag, interlace-counter, and 1,176 sprite-buffer byte inputs across the two fixed gameplay chunks"
+decoder = "exact 21-byte linked wrapper body asserted inside the functional proof; all pointer loads and CALLs execute from ROM, complete proven last-column and first-three-column transitions are composed in exact last/first/last/fallthrough-first order, all 784 output bytes and unchanged source buffer are compared, and production C invokes all four real ports"
 
 [[function]]
 assembly_symbol = "ScaleFirstThreeSpriteColumnsByTwo"
