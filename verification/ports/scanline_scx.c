@@ -78,6 +78,14 @@ port_scroll_title_screen_game_version(struct scanline_scx_state *state,
 	scanline_scx_run(state, before, after);
 }
 
+/* Port of _TitleScroll.ScrollBetween in engine/movie/title2.asm. */
+__attribute__((noinline, used)) void
+port_title_scroll_scroll_between(struct scanline_scx_state *state,
+	const port_u8 *before, const port_u8 *after)
+{
+	port_scroll_title_screen_game_version(state, before, after);
+}
+
 __attribute__((noinline, used)) void
 port_scroll_credits_mon_left_first_setup(struct scanline_scx_state *state)
 {

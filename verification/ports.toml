@@ -28393,3 +28393,17 @@ observables = [
 ]
 proof_domain = "all initial A/F/H/L, hSCY, and VBlank states at all seven statically linked gameplay call sites: BC=hSCY and (D,E)=($fc,16),($03,4),($fd,4),($02,2),($fe,2),($01,2),($ff,2); these are the complete call domain of this local subroutine"
 decoder = "the exact complete 10-byte linked body executes under angr; only the independently proven DelayFrame call and SM83 ADD A,D / DEC E flag semantics are shimmed, while LD A,[BC], LD [BC],A, JR NZ, and the full 32 aggregate gameplay iterations execute in both assembly and native C"
+
+[[function]]
+assembly_symbol = "_TitleScroll.ScrollBetween"
+assembly_source = "engine/movie/title2.asm"
+c_symbol = "port_title_scroll_scroll_between"
+c_source = "verification/ports/scanline_scx.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "every rLY poll and the final observed rLY",
+    "rSCX",
+]
+proof_domain = "all register/flag/hardware inputs and arbitrary finite pre-write/post-write rLY sequences ending with LY equal to L and unequal to H respectively; the arbitrary-length recurrence is inherited from the independently proven byte-identical ScrollTitleScreenGameVersion body"
+decoder = "the exact complete 14-byte linked body executes under angr for both shortest and repeated-poll traces and is asserted byte-identical to the independently functionally proven ScrollTitleScreenGameVersion body; native C calls that real shared loop implementation, with only SM83 LDH/CP instruction shims used on the assembly side"
