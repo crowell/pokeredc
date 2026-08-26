@@ -28677,3 +28677,17 @@ observables = [
 ]
 proof_domain = "all initial register/flag, sprite-buffer, and relevant-global inputs for both gameplay buffer origins ($a188 and $a310), all three statically linked square gameplay dimensions (40, 48, and 56 pixels), and both symbolic flip branches; the four immutable linked decode tables are fixed to their exact ROM bytes, and the two independently proven callees receive their complete exact transitions"
 decoder = "the exact complete 153-byte linked body executes under angr through both table-selection paths and the real nested row/column loops (200/288/392 writes, 400/576/784 decode calls, and 40/48/56 pointer commits); only individual SM83 instructions and the independently proven StoreSpriteOutputPointer and DifferentialDecodeNybble transitions are shimmed, while native C executes the same loops and calls both real C ports; the immutable table lookup is represented by its exhaustively checked equivalent Boolean transform"
+
+[[function]]
+assembly_symbol = "TextCommand_BCD"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_bcd"
+c_source = "verification/ports/text_command_bcd.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the three text-stream operand bytes",
+    "the complete PrintBCDNumber call-input register state and exact one-call count",
+]
+proof_domain = "all entry register/canonical-flag inputs and all 24-bit source-pointer/flags-length operands at a concrete representative text-stream location; this includes every gameplay flags/length configuration, and the independently proven PrintBCDNumber receives an arbitrary matching complete transition after its full register input state is proved equal"
+decoder = "the exact complete 18-byte linked handler executes under angr through all three LD [HL+] operands, the saved text-pointer stack round trip, register marshaling, the proved PrintBCDNumber boundary, both post-call cursor copies, and the relative continuation jump; native C calls the real port_print_bcd_number and preserves its complete transition before restoring the text pointer"
