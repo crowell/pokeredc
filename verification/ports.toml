@@ -28662,3 +28662,18 @@ observables = [
 ]
 proof_domain = "the non-link configuration (wLinkState concrete non-battling; the link-battling branch loops into TextCommand_WAIT_BUTTON and is out of this domain) with the entry A/B/C/D/E symbolic, the entry F concrete-clear, HL concrete (the pushed text pointer, modeled as the entry HL), and the arrow slot symbolic; the ManualTextScroll call composes through the proved port under its terminating A/B observation (the established text-poll boundary precedent); the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
 decoder = "exact 27-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims (the pop written through the p-code's byte-swapped HL pair view), the cp LINK_STATE_BATTLING flag boundary, and the ManualTextScroll call-site boundary carrying the proved terminating transition; the native C writes the arrow and blank tiles, calls the real port_manual_text_scroll with the entry state mapped to its typed inputs, and carries the compare's flag semantics"
+
+[[function]]
+assembly_symbol = "SpriteDifferentialDecode"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_sprite_differential_decode"
+c_source = "verification/ports/sprite_differential_decode.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteCurPosX, wSpriteCurPosY, wSpriteWidth, wSpriteHeight, wSpriteFlipped, wSpriteOutputPtr, wSpriteOutputPtrCached, and both decode-table pointers",
+    "the complete 392-byte possible sprite-buffer destination region and its two adjacent guard bytes",
+    "the exact StoreSpriteOutputPointer and DifferentialDecodeNybble call counts",
+]
+proof_domain = "all initial register/flag, sprite-buffer, and relevant-global inputs for both gameplay buffer origins ($a188 and $a310), all three statically linked square gameplay dimensions (40, 48, and 56 pixels), and both symbolic flip branches; the four immutable linked decode tables are fixed to their exact ROM bytes, and the two independently proven callees receive their complete exact transitions"
+decoder = "the exact complete 153-byte linked body executes under angr through both table-selection paths and the real nested row/column loops (200/288/392 writes, 400/576/784 decode calls, and 40/48/56 pointer commits); only individual SM83 instructions and the independently proven StoreSpriteOutputPointer and DifferentialDecodeNybble transitions are shimmed, while native C executes the same loops and calls both real C ports; the immutable table lookup is represented by its exhaustively checked equivalent Boolean transform"
