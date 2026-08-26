@@ -15716,11 +15716,11 @@ observables = [
     "all registers and flags",
     "number/power/saved-number HRAM",
     "leading-zero state",
-    "tile write and destination pointer",
+    "the complete ordered 2-through-7 tile-write value/address trace plus the final tile write and destination pointer",
     "digit-loop continuation",
 ]
 proof_domain = "all register/flag, caller-valid 1/2/3-byte and 2-through-7-digit configurations, arbitrary source bytes, number, power, saved-number, write, stack-shadow, and leading-zero inputs; entry decoding, all five decimal places, every three-byte subtraction/borrow/rollback path, division-by-ten, tens/ones finalization, and NextDigit behavior compose"
-decoder = "exact 312-byte body checked; input-width loads, digit dispatch, all five linked power-of-ten constants, SM83 compare/subtract/inc/dec/AND/OR/ADD/BIT flags, quotient recurrence, nested borrow across all three bytes, underflow restoration, leading-zero tile emission, past-digit marker, pointer wrap, and saved BC/DE restoration modeled explicitly"
+decoder = "exact 312-byte body checked; input-width loads, digit dispatch, all five linked power-of-ten constants, SM83 compare/subtract/inc/dec/AND/OR/ADD/BIT flags, quotient recurrence, nested borrow across all three bytes, underflow restoration, every ordered leading-zero/digit tile emission, past-digit marker, pointer wrap, and saved BC/DE restoration modeled explicitly; the native wrapper executes the real loops and retains the complete write trace for flat-memory callers"
 
 
 

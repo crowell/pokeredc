@@ -2596,6 +2596,11 @@ struct print_number_state {
 	port_u8 saved_c;
 	port_u8 saved_d;
 	port_u8 saved_e;
+	port_u8 record_writes;
+	port_u8 write_count;
+	port_u8 write_trace_values[7];
+	port_u8 write_trace_h[7];
+	port_u8 write_trace_l[7];
 };
 
 struct evolution_after_battle_state {
@@ -3366,7 +3371,7 @@ _Static_assert(sizeof(struct serial_interrupt_state) == 24, "unexpected ABI padd
 _Static_assert(sizeof(struct special_warp_state) == 28, "unexpected ABI padding");
 _Static_assert(sizeof(struct trainer_move_choice_state) == 47, "unexpected ABI padding");
 _Static_assert(sizeof(struct trainer_ai_mod_state) == 45, "unexpected ABI padding");
-_Static_assert(sizeof(struct print_number_state) == 29, "unexpected ABI padding");
+_Static_assert(sizeof(struct print_number_state) == 52, "unexpected ABI padding");
 _Static_assert(sizeof(struct evolution_after_battle_state) == 80, "unexpected ABI padding");
 _Static_assert(sizeof(struct evolution_reload_tileset_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct rename_evolved_mon_state) == 45, "unexpected ABI padding");

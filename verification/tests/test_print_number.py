@@ -10,7 +10,24 @@ from verification.harness.sm83_shims import Sm83AddRegister,Sm83AndImmediate,Sm8
 
 ROOT=Path(__file__).resolve().parents[2];NATIVE_ELF=ROOT/'verification/build/ports.elf';ROM=ROOT/'pokered.gbc';SYMBOLS=ROOT/'pokered.sym';NATIVE_STATE=0x100000
 REPEAT=0xeff1;DONE=0xeff2
-NAMES=('past','number0','number1','number2','power0','power1','power2','saved0','saved1','saved2','source0','source1','source2','written','did_write','write_h','write_l','saved_b','saved_c','saved_d','saved_e')
+TRACE_SIZE=7
+NAMES=(
+ 'past','number0','number1','number2','power0','power1','power2','saved0','saved1','saved2',
+ 'source0','source1','source2','written','did_write','write_h','write_l','saved_b','saved_c','saved_d','saved_e',
+ 'record_writes','write_count',
+ *(f'write_trace_value{i}' for i in range(TRACE_SIZE)),
+ *(f'write_trace_h{i}' for i in range(TRACE_SIZE)),
+ *(f'write_trace_l{i}' for i in range(TRACE_SIZE)),
+)
+
+def record_write(state,value,condition=claripy.BoolV(True)):
+ count=state.globals['write_count'];active=claripy.And(condition,state.globals['record_writes']!=0,count<TRACE_SIZE)
+ for i in range(TRACE_SIZE):
+  select=claripy.And(active,count==i)
+  state.globals[f'write_trace_value{i}']=claripy.If(select,value,state.globals[f'write_trace_value{i}'])
+  state.globals[f'write_trace_h{i}']=claripy.If(select,state.regs.h,state.globals[f'write_trace_h{i}'])
+  state.globals[f'write_trace_l{i}']=claripy.If(select,state.regs.l,state.globals[f'write_trace_l{i}'])
+ state.globals['write_count']=claripy.If(active,count+1,count)
 
 class Boundary(angr.SimProcedure):
  def __init__(self,n):super().__init__();self.n=n
@@ -21,18 +38,22 @@ class Continuation(angr.SimProcedure):
 class WriteTile(angr.SimProcedure):
  def __init__(self,n,immediate=False):super().__init__();self.n=n;self.immediate=immediate
  def run(self):
-  self.state.globals['written']=claripy.BVV(0xf6,8) if self.immediate else self.state.regs.a;self.state.globals['did_write']=claripy.BVV(1,8);self.state.globals['write_h']=self.state.regs.h;self.state.globals['write_l']=self.state.regs.l;self.jump(self.n)
+  value=claripy.BVV(0xf6,8) if self.immediate else self.state.regs.a;record_write(self.state,value);self.state.globals['written']=value;self.state.globals['did_write']=claripy.BVV(1,8);self.state.globals['write_h']=self.state.regs.h;self.state.globals['write_l']=self.state.regs.l;self.jump(self.n)
 class WriteTileHli(WriteTile):
  def run(self):
-  self.state.globals['written']=self.state.regs.a;self.state.globals['did_write']=claripy.BVV(1,8);self.state.globals['write_h']=self.state.regs.h;self.state.globals['write_l']=self.state.regs.l;self.state.regs.hl=self.state.regs.hl+1;self.jump(self.n)
+  record_write(self.state,self.state.regs.a);self.state.globals['written']=self.state.regs.a;self.state.globals['did_write']=claripy.BVV(1,8);self.state.globals['write_h']=self.state.regs.h;self.state.globals['write_l']=self.state.regs.l;self.state.regs.hl=self.state.regs.hl+1;self.jump(self.n)
 class LeadingZero(angr.SimProcedure):
  def __init__(self,n):super().__init__();self.n=n
  def run(self):
   d=self.state.regs.d;self.state.regs.f=(self.state.regs.f&1)|0x10|claripy.If((d&0x80)==0,claripy.BVV(0x40,8),claripy.BVV(0,8));w=(d&0x80)!=0
+  record_write(self.state,claripy.BVV(0xf6,8),w)
   self.state.globals['written']=claripy.If(w,claripy.BVV(0xf6,8),self.state.globals['written']);self.state.globals['did_write']=claripy.If(w,claripy.BVV(1,8),self.state.globals['did_write']);self.state.globals['write_h']=claripy.If(w,self.state.regs.h,self.state.globals['write_h']);self.state.globals['write_l']=claripy.If(w,self.state.regs.l,self.state.globals['write_l']);self.jump(self.n)
 class XorA(angr.SimProcedure):
  def __init__(self,n):super().__init__();self.n=n
  def run(self):self.state.regs.a=0;self.state.regs.f=claripy.BVV(0x40,8);self.jump(self.n)
+class AndA(angr.SimProcedure):
+ def __init__(self,n):super().__init__();self.n=n
+ def run(self):self.state.regs.f=claripy.BVV(0x10,8)|claripy.If(self.state.regs.a==0,claripy.BVV(0x40,8),claripy.BVV(0,8));self.jump(self.n)
 class BranchZ(angr.SimProcedure):
  def __init__(self,z,nz):super().__init__();self.z=z;self.nz=nz
  def run(self):
@@ -74,6 +95,7 @@ def project():
 def setup(s,i):
  set_assembly_registers(s,i);s.memory.store(0xff95,claripy.Concat(*(i[n] for n in NAMES[:10])))
  for n in NAMES[10:]:s.globals[n]=i[n]
+ s.solver.add(i['record_writes']==1,i['write_count']<TRACE_SIZE)
 def memory(x):
  return claripy.Concat(x.memory.load(0xff95,10),*(x.globals[n] for n in NAMES[10:]))
 def ep(x,c):return E(**assembly_registers(x),memory=memory(x),continuation=(claripy.BVV(c,8) if isinstance(c,int) else c),constraints=tuple(x.solver.constraints))
@@ -110,13 +132,13 @@ def assembly_digit(i):
  p.hook(q+0x11a,Sm83OrRegister('c',q+0x11b),length=1);p.hook(q+0x11f,Sm83AddRegister('c',q+0x120),length=1);p.hook(q+0x120,WriteTile(q+0x121),length=1);p.hook(q+0x123,Boundary(DONE),length=1);p.hook(q+0x124,LeadingZero(DONE),length=6)
  s=p.factory.blank_state(addr=q+0xc8);setup(s,i);ends=collect(p.factory.simulation_manager(s),{REPEAT,DONE});return [ep(x,1 if x.addr==REPEAT else 0) for x in ends]
 def assembly_next(i):
- p,q=project();hram_hooks(p,q,reads=((0x132,0x95),));p.hook(q+0x12a,Sm83BitRegister(7,'d',q+0x12c),length=2);p.hook(q+0x12e,Sm83BitRegister(6,'d',q+0x130),length=2);p.hook(q+0x134,Sm83AndImmediate(0xff,q+0x135),length=1);p.hook(q+0x135,BranchZ(DONE,q+0x136),length=1);p.hook(q+0x137,Boundary(DONE),length=1);s=p.factory.blank_state(addr=q+0x12a);setup(s,i);return [ep(x,0) for x in collect(p.factory.simulation_manager(s),{DONE})]
+ p,q=project();hram_hooks(p,q,reads=((0x132,0x95),));p.hook(q+0x12a,Sm83BitRegister(7,'d',q+0x12c),length=2);p.hook(q+0x12e,Sm83BitRegister(6,'d',q+0x130),length=2);p.hook(q+0x134,AndA(q+0x135),length=1);p.hook(q+0x135,BranchZ(DONE,q+0x136),length=1);p.hook(q+0x137,Boundary(DONE),length=1);s=p.factory.blank_state(addr=q+0x12a);setup(s,i);return [ep(x,0) for x in collect(p.factory.simulation_manager(s),{DONE})]
 def assembly_tens(i):
  p,q=project();p.hook(q+0xa1,Sm83CpImmediate(10,q+0xa3),length=2);p.hook(q+0xa5,Sm83SubImmediate(10,q+0xa7),length=2);p.hook(q+0xa7,Sm83IncRegister('c',q+0xa8),length=1);p.hook(q+0xa8,Boundary(REPEAT),length=2);p.hook(q+0xaa,Boundary(DONE),length=1);s=p.factory.blank_state(addr=q+0xa1);setup(s,i);ends=collect(p.factory.simulation_manager(s),{REPEAT,DONE});return [ep(x,1 if x.addr==REPEAT else 0) for x in ends]
 def assembly_tens_finish(i):
  p,q=project();hram_hooks(p,q,reads=((0xab,0x95),),writes=((0xae,0x95),));p.hook(q+0xad,Sm83OrRegister('c',q+0xae),length=1);p.hook(q+0xb2,LeadingZero(q+0xb5),length=3,replace=True);p.hook(q+0xb9,Sm83AddRegister('c',q+0xba),length=1);p.hook(q+0xba,WriteTile(q+0xbb),length=1);p.hook(q+0xbb,Boundary(DONE),length=1,replace=True);s=p.factory.blank_state(addr=q+0xaa);setup(s,i);return [ep(x,0) for x in collect(p.factory.simulation_manager(s),{DONE})]
 def native(name,i,returns):
- p=angr.Project(NATIVE_ELF,auto_load_libs=False);fn=p.loader.find_symbol(name);assert fn;s=p.factory.call_state(fn.rebased_addr,NATIVE_STATE);store_native_registers(s,NATIVE_STATE,i);s.memory.store(NATIVE_STATE+8,claripy.Concat(*(i[n] for n in NAMES)));m=p.factory.simulation_manager(s);m.run();assert not m.errored;return [E(**native_registers(x,NATIVE_STATE),memory=x.memory.load(NATIVE_STATE+8,len(NAMES)),continuation=(x.regs.rax[7:0] if returns else claripy.BVV(0,8)),constraints=tuple(x.solver.constraints)) for x in m.deadended]
+ p=angr.Project(NATIVE_ELF,auto_load_libs=False);fn=p.loader.find_symbol(name);assert fn;s=p.factory.call_state(fn.rebased_addr,NATIVE_STATE);store_native_registers(s,NATIVE_STATE,i);s.memory.store(NATIVE_STATE+8,claripy.Concat(*(i[n] for n in NAMES)));s.solver.add(i['record_writes']==1,i['write_count']<TRACE_SIZE);m=p.factory.simulation_manager(s);m.run();assert not m.errored;return [E(**native_registers(x,NATIVE_STATE),memory=x.memory.load(NATIVE_STATE+8,len(NAMES)),continuation=(x.regs.rax[7:0] if returns else claripy.BVV(0,8)),constraints=tuple(x.solver.constraints)) for x in m.deadended]
 CASES=((assembly_entry,'port_print_number_begin',True),
  (lambda i:assembly_power(i,0x47,0x53,((0x49,0x99),(0x4d,0x9a),(0x51,0x9b))),'port_print_number_power_millions',False),
  (lambda i:assembly_power(i,0x59,0x65,((0x5b,0x99),(0x5f,0x9a),(0x63,0x9b))),'port_print_number_power_hundred_thousands',False),
