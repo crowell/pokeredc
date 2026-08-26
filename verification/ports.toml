@@ -28648,3 +28648,17 @@ observables = [
 ]
 proof_domain = "the non-link configuration (wLinkState concrete non-battling; the link-battling branch loops through the dispatcher and is out of this domain) with the entry A symbolic, the entry F concrete-clear (the raw-vs-canonical representation of the non-SM83 flag bits is out of scope for this pass-through handler), and the entry BC/DE symbolic; the ManualTextScroll call composes through the proved port under its terminating A/B observation (the established text-poll boundary precedent); the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
 decoder = "exact 12-byte linked body executes under angr on one linear path; SM83-only PUSH/POP BC and POP HL shims (the pop written through the p-code's byte-swapped HL pair view); the ManualTextScroll call-site boundary carries the proved terminating transition (the saved registers pass through, A := SFX_PRESS_AB); the native C calls the real port_manual_text_scroll with the entry state mapped to its typed inputs"
+
+[[function]]
+assembly_symbol = "TextCommand_PROMPT_BUTTON"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_prompt_button"
+c_source = "verification/ports/text_command_prompt_button.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the down-arrow slot at wTileMap+(18,16)",
+    "wLinkState",
+]
+proof_domain = "the non-link configuration (wLinkState concrete non-battling; the link-battling branch loops into TextCommand_WAIT_BUTTON and is out of this domain) with the entry A/B/C/D/E symbolic, the entry F concrete-clear, HL concrete (the pushed text pointer, modeled as the entry HL), and the arrow slot symbolic; the ManualTextScroll call composes through the proved port under its terminating A/B observation (the established text-poll boundary precedent); the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 27-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims (the pop written through the p-code's byte-swapped HL pair view), the cp LINK_STATE_BATTLING flag boundary, and the ManualTextScroll call-site boundary carrying the proved terminating transition; the native C writes the arrow and blank tiles, calls the real port_manual_text_scroll with the entry state mapped to its typed inputs, and carries the compare's flag semantics"
