@@ -28707,3 +28707,19 @@ observables = [
 ]
 proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs; arbitrary matching complete post-state from the independently proven SpriteDifferentialDecode; both gameplay buffer selections; all three statically linked square gameplay dimensions (40, 48, and 56 pixels); and both symbolic flip paths"
 decoder = "the exact complete 112-byte linked body and 16-byte NybbleReverseTable execute under angr through both flip paths and the real nested row/column loops (200/288/392 XOR writes); only individual SM83 instructions and the independently proven complete ResetSpriteBufferPointers, SpriteDifferentialDecode, and ReverseNybble transitions are shimmed; native C executes both real pointer resets, the real differential decode, every loop iteration, and zero or 400/576/784 real nybble-reversal calls"
+
+[[function]]
+assembly_symbol = "UnpackSpriteMode2"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_unpack_sprite_mode2"
+c_source = "verification/ports/unpack_sprite_mode2.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteCurPosX, wSpriteCurPosY, wSpriteWidth, wSpriteHeight, wSpriteLoadFlags, wSpriteFlipped, wSpriteOutputPtr, wSpriteOutputPtrCached, and both decode-table pointers",
+    "the complete 392-byte regions of both possible sprite buffers and the 16-byte NybbleReverseTable",
+    "the complete SpriteDifferentialDecode and XorSpriteChunks call-input register/global/buffer state",
+    "exact ResetSpriteBufferPointers, SpriteDifferentialDecode, and XorSpriteChunks call counts",
+]
+proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs, including both gameplay buffer selections and every initial flip value; arbitrary matching complete post-states from the independently proven SpriteDifferentialDecode and XorSpriteChunks bodies after their full call inputs are proved equal"
+decoder = "the exact complete 32-byte linked body executes under angr through both real pointer resets, saved-AF flip suppression/restoration, cached-output-pointer load, decode call, and XorSpriteChunks tail jump; only individual unsupported SM83 instructions and the independently proven complete ResetSpriteBufferPointers, SpriteDifferentialDecode, and XorSpriteChunks transitions are shimmed, while native C calls all three real ports in the exact order and preserves the tail-call result"
