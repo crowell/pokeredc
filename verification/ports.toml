@@ -28756,3 +28756,18 @@ observables = [
 ]
 proof_domain = "all initial register/canonical-flag, RNG/hardware-bank, initialized-field, complete game-progress, and complete toggleable-object inputs; all four divider reads are independent, the first three proven callees use their complete exact transitions, and the independently proven toggleable-object tail receives an arbitrary matching complete post-state after its full call input is proved equal"
 decoder = "the exact complete 80-byte linked body executes under angr through both RNG samples, every scalar/list/money/badge/coin write, the full 200-byte clear, and the final tail jump; only individual unsupported SM83 high-memory, absolute-store, HLI/HLD, and XOR instructions plus the independently proven complete Random, InitializeEmptyList, FillMemory, and InitializeToggleableObjectsFlags boundaries are shimmed, while native C calls every real port in the exact order"
+
+[[function]]
+assembly_symbol = "TextCommand_BOX"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_box"
+c_source = "verification/ports/text_command_box.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the four text-stream operand bytes and restored advanced text pointer",
+    "the complete 360-byte wTileMap region",
+    "the complete TextBoxBorder call-input register/tilemap state and exact one-call count",
+]
+proof_domain = "all entry register/canonical-flag and complete tilemap inputs with a concrete representative text-stream pointer; all symbolic gameplay box operands whose positive 1..18 height/width and upper-left address keep the complete border inside wTileMap; the independently proven TextBoxBorder receives an arbitrary matching complete post-state after its full call input is proved equal"
+decoder = "the exact complete 18-byte linked handler executes under angr through the dispatcher pop, all four HLI operand reads, saved text-pointer stack round trip, register marshaling, proved TextBoxBorder boundary, and relative continuation jump; native C calls the real port_text_box_border and restores the advanced text pointer exactly"
