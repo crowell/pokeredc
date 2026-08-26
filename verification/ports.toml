@@ -28594,3 +28594,18 @@ observables = [
 ]
 proof_domain = "all initial register/flag, output-pointer, sprite-buffer, bank, flip, and video-copy inputs for the three statically linked square gameplay layouts (packed dimensions $55, $66, and $77); each independently proven callee receives an arbitrary matching complete transition after its full input state is proved equal"
 decoder = "the exact complete 80-byte linked body executes under angr through every arithmetic, HRAM write, register setup, and the five ordered callee boundaries; only individual SM83 instructions and the independently proven ZeroSpriteBuffer, AlignSpriteDataCentered, and InterlaceMergeSpriteBuffers transitions are shimmed, while native C performs the exact dimension arithmetic and calls the real C ports twice, twice, and once respectively"
+
+[[function]]
+assembly_symbol = "ReadNextInputBit"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_read_next_input_bit"
+c_source = "verification/ports/read_next_input_bit.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteInputBitCounter, wSpriteInputCurByte, and wSpriteInputPtr",
+    "the current compressed-stream source byte",
+    "the exact optional ReadNextInputByte call input state",
+]
+proof_domain = "all register/flag, counter, current-byte, source-byte, and compressed-stream pointer inputs with the pointer anywhere in the gameplay ROM window $4000-$7fff, over both the cached-byte and refill paths; the independently proven ReadNextInputByte receives an arbitrary matching complete transition after its full input is proved equal"
+decoder = "the exact complete 27-byte linked body executes under angr across both paths; only individual SM83 absolute loads/stores, DEC A, RLCA, AND, the conditional branch, and the proven ReadNextInputByte boundary are shimmed, while native C performs the real counter/rotate logic and calls the real port_read_next_input_byte on the refill path"
