@@ -25,9 +25,9 @@ with the real call.
 | `EnableLCD` / `DisableLCD` tail commit | home/lcd.asm | LCD toggle around tile uploads *(inlined: rLCDC write; `port_disable_lcd` covers flag semantics)* |
 | `SaveScreenTilesToBuffer2` | home/window.asm | screen buffer swap before logo draw *(inlined memcpy wTileMap↔wTileMapBackup $C508)* |
 | `LoadScreenTilesFromBuffer1/2` | home/window.asm | same swap-back *(inlined memcpy)* |
-| `DrawPlayerCharacter` | engine/movie/title.asm | walking player sprite on the Pokémon logo |
+| ~~`DrawPlayerCharacter`~~ | engine/movie/title.asm | **PORTED & composed** (`port_draw_player_character`; host mirrors `state->sprites.oam[]` into wShadowOAM) |
 | `LoadTitleMonSprite` | engine/movie/title.asm | starter mon picture shown on logo |
-| `ScrollTitleScreenPokemonLogo` | engine/movie/title2.asm | animated logo scroll-in *(driver animates hSCY $40→0)* |
+| ~~`ScrollTitleScreenPokemonLogo`~~ | engine/movie/title.asm | **PORTED** (`port_scroll_title_screen_pokemon_logo`) - consumes all DelayFrames in one call; driver keeps frame-paced hSCY until pacing is host-driven |
 | ~~`ScrollTitleScreenGameVersion`~~ | engine/movie/title2.asm | **PORTED** (`port_scroll_title_screen_game_version`, takes observed LY/SCX arrays) - not yet wired into the driver |
 | `TitleScreenScrollInMon` | engine/movie/title2.asm | mon slide-in after scroll |
 
@@ -55,12 +55,17 @@ Ported and available for deeper composition: `port_scroll_title_screen_game_vers
 |---|---|---|
 | `TextCommandProcessor` | home/text.asm | **all real dialogue rendering** (control codes <PKMN>/scroll/prompt). Driver falls back to raw `PlaceString` of ROM strings |
 | `DisplayTextBoxID_` / MESSAGE_BOX template | home/textbox.asm + engine/text_box.asm | standard message-box layout (driver draws border+text manually). Composable pieces exist: `port_search_text_box_table`, `port_get_text_box_id_coords`, two-option-menu tile savers |
-| `PrepareOakSpeech` | oak_speech.asm | intro state prep |
 | `InitPlayerData2` | oak_speech/init_player_data.asm | party/inventory for a new file |
+| ~~`GetMonHeader`~~ / ~~`FadeInIntroPic`~~ | home/pokemon.asm, engine/movie/intro.asm | **PORTED & composed** (`port_get_mon_header` with A=Nidorino/$A7; `port_fade_in_intro_pic` six-step BGP fade) |
 | `IntroDisplayPicCenteredOrUpperRight`, `FadeInIntroPic`, `GBFadeOutToWhite`, `GBFadeInFromWhite` | engine/movie/intro.asm, home/fade.asm | Oak/Nidorino pictures and fades |
 | `GetMonHeader`, `LoadFlippedFrontSpriteByMonIndex` | home/pokemon.asm, home/pics.asm | Nidorino battle pic |
 | `ChoosePlayerName` / `ChooseRivalName` / naming screen | engine/menus/naming_screen.asm | naming screens (`port_choose_player_name_done`, `port_ask_name_declined_nickname`, `port_calc_string_length`, `port_load_ed_tile` are ported tails) |
 | `PlayMusic` (Music_OakSpeech) | audio/ | intro theme |
+
+Text-engine progress toward `TextCommandProcessor`: `TextCommand_PAUSE`,
+`TextCommand_SCROLL`, `PrintLetterDelay`, `ScrollTextUpOneLine`,
+`PrintBCDDigit`/`PrintBCDNumber`, and the `Joypad` homecall wrapper are
+now ported.
 
 Ported fragments ready to compose once the drivers above exist:
 `port_move_pic_left`, `port_oak_speech_slide_pic_right`,

@@ -33,6 +33,13 @@ void port_load_text_box_tile_patterns(
 	struct load_text_box_tile_patterns_state *state, port_u8 *memory);
 void port_title_screen_copy_tilemap_to_vram(struct cpu_register_state *state,
 	port_u8 *memory);
+void port_prepare_oak_speech(struct cpu_register_state *state,
+	port_u8 *memory);
+void port_get_mon_header(struct cpu_register_state *state, port_u8 *memory);
+void port_fade_in_intro_pic(struct cpu_register_state *state,
+	port_u8 *memory);
+void port_draw_player_character(struct draw_player_character_state *state,
+	port_u8 *memory);
 
 /*
  * These two ports define their state structs inside their own .c files, so
@@ -289,8 +296,29 @@ game_enter_title(struct mac_kernel *kernel, uint8_t *memory,
 		}
 	}
 
-	/* REQUIRED: DrawPlayerCharacter (title.asm) - player sprite on logo.
-	 * Pokeball in hand: wShadowOAMSprite10 Y := $74 (inlined). */
+	/* DrawPlayerCharacter through its port: player-title gfx from bank 4
+	 * into vSprites plus the 7x5 shadow-OAM block (window pinned to the
+	 * graphics bank for the internal FarCopyData2). */
+	{
+		struct draw_player_character_state dpc;
+		port_u8 saved_bank = memory[H_LOADED_ROM_BANK];
+
+		memset(&dpc, 0, sizeof(dpc));
+		dpc.requested_bank = BANK_LOGOS;
+		dpc.loaded_bank = BANK_LOGOS;
+		dpc.rom_bank = BANK_LOGOS;
+		memory[H_LOADED_ROM_BANK] = BANK_LOGOS;
+		rom_sync_window(memory, rom, &kernel->cached_rom_bank);
+		port_draw_player_character(&dpc, memory);
+		memory[H_LOADED_ROM_BANK] = saved_bank;
+		rom_sync_window(memory, rom, &kernel->cached_rom_bank);
+		/* The port leaves the sprite block in state->sprites.oam[]
+		 * (ClearSprites contract); DMA-mirror it into wShadowOAM. */
+		memcpy(memory + W_SHADOW_OAM, dpc.sprites.oam,
+		    sizeof(dpc.sprites.oam));
+	}
+
+	/* Pokeball in hand: wShadowOAMSprite10 Y := $74 (inlined). */
 	memory[W_SHADOW_OAM + 10u * 4u] = 0x74;
 
 	/* REQUIRED: SaveScreenTilesToBuffer2/LoadScreenTilesFromBuffer2 -
@@ -306,8 +334,8 @@ game_enter_title(struct mac_kernel *kernel, uint8_t *memory,
 	memory[R_OBP0] = 0xE4;
 	memory[R_OBP1] = 0xE4;
 
-	/* REQUIRED: LoadTitleMonSprite, TitleScreenScrollInMon,
-	 * TitleScreenAnimateBallIfStarterOut, TitleScreenPickNewMon,
+	/* REQUIRED: LoadTitleMonSprite, TitleScreenAnimateBallIfStarterOut,
+	 * TitleScreenPickNewMon,
 	 * PlaySound(Music_TitleScreen)/PlayCry/WaitForSoundToFinish -
 	 * starter-mon visuals and title music are not composable yet. */
 
@@ -444,6 +472,14 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 
 	port_clear_screen(&regs, memory);
 
+	/* PrepareOakSpeech through its port (fills intro buffers, models
+	 * InitOptions and the name CopyData internally). */
+	port_prepare_oak_speech(&regs, memory);
+
+	/* GetMonHeader for Nidorino ($A7), feeding later picture loads. */
+	regs.a = 0xA7;
+	port_get_mon_header(&regs, memory);
+
 	/* LoadTextBoxTilePatterns (LCD-off synchronous branch). */
 	{
 		struct load_text_box_tile_patterns_state tbox;
@@ -472,7 +508,12 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	}
 	place_rom_string(kernel, memory, rom, 2, 14, SRC_OAK_SPEECH_TEXT1);
 
-	/* REQUIRED: PrepareOakSpeech, InitPlayerData2, PlayMusic,
+	/* FadeInIntroPic through its port: the six-step background-palette
+	 * fade (DelayFrames consumed per proof observation). The picture
+	 * display routine itself is still REQUIRED below. */
+	port_fade_in_intro_pic(&regs, memory);
+
+	/* REQUIRED: InitPlayerData2, PlayMusic,
 	 * IntroDisplayPicCenteredOrUpperRight, FadeInIntroPic,
 	 * GetMonHeader, LoadFlippedFrontSpriteByMonIndex, MovePicLeft +
 	 * oak_speech_slide pair, ChoosePlayerName/ChooseRivalName,
@@ -493,8 +534,10 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 
 	switch (game->phase) {
 	case MAC_PHASE_TITLE:
-		/* REQUIRED: ScrollTitleScreenPokemonLogo - driver animates
-		 * hSCY toward 0 (CheckForUserInterruption timing). */
+		/* REQUIRED: ScrollTitleScreenPokemonLogo is PORTED
+	 * (port_scroll_title_screen_pokemon_logo) but consumes all its
+	 * DelayFrames inside one call; the driver keeps frame-paced hSCY
+	 * stepping until the pacing model is host-driven. */
 		if (game->frames_in_phase <= TITLE_SCROLL_FRAMES) {
 			unsigned scy = 0x40u -
 			    game->frames_in_phase *
