@@ -28800,3 +28800,18 @@ observables = [
 ]
 proof_domain = "all entry register/canonical-flag, complete audio, bank-control, and cry-modifier inputs with unified hLoadedROMBank/rROMB aliases; arbitrary matching complete post-states from the independently proven GetCryData and WaitForSoundToFinish bodies and the proven PlaySound observable transition after every complete call input is proved equal"
 decoder = "the exact complete 9-byte linked body executes under angr through the GetCryData call, PlaySound call, and WaitForSoundToFinish tail jump; native C calls all three real ports in exact order, synchronizes the shared audio bank globals across their portable state adapters, and preserves the tail result"
+
+[[function]]
+assembly_symbol = "TextCommand_SOUND"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_sound"
+c_source = "verification/ports/text_command_sound.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags plus the restored advanced text pointer and command byte",
+    "the complete PlaySound audio state, bank-control bytes, cry modifiers, and immutable 570-byte CryData table",
+    "the exact immutable 20-byte TextCommandSounds table",
+    "the complete ordered PlaySound/WaitForSoundToFinish or PlayCry call-input states and exact per-path call counts",
+]
+proof_domain = "all entry register/canonical-flag, complete audio, bank-control, and cry-modifier inputs at a concrete representative text-stream location for all ten legal sound commands: seven ordinary SFX commands and the Nidorina, Pidgeot, and Dewgong cry commands; independently proven callees receive arbitrary matching complete post-states after every full call input is proved equal"
+decoder = "the exact complete 51-byte linked handler executes under angr through the dispatcher pop, real linear table-search loop, all three cry comparisons, ordinary PlaySound/Wait calls, cry-path DE save/restore and PlayCry call, both stack restorations, and both continuation jumps; only individual unsupported SM83 stack/load/compare instructions and the independently proven complete callee transitions are shimmed, while native C executes the same finite table search and calls the real ports"
