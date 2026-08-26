@@ -28609,3 +28609,56 @@ observables = [
 ]
 proof_domain = "all register/flag, counter, current-byte, source-byte, and compressed-stream pointer inputs with the pointer anywhere in the gameplay ROM window $4000-$7fff, over both the cached-byte and refill paths; the independently proven ReadNextInputByte receives an arbitrary matching complete transition after its full input is proved equal"
 decoder = "the exact complete 27-byte linked body executes under angr across both paths; only individual SM83 absolute loads/stores, DEC A, RLCA, AND, the conditional branch, and the proven ReadNextInputByte boundary are shimmed, while native C performs the real counter/rotate logic and calls the real port_read_next_input_byte on the refill path"
+
+[[function]]
+assembly_symbol = "TextCommand_MOVE"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_move"
+c_source = "verification/ports/text_command_move.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wTextDest and wTextDest+1",
+    "the two operand bytes in the text stream",
+]
+proof_domain = "all register inputs, the dispatcher's pushed text pointer (concrete in this domain, with the two operand bytes symbolic), and both wTextDest bytes over the single linear path; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 14-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims (the pop written through the p-code's byte-swapped HL pair view) and LD [HL+],A; the native C reads the two operand bytes, stores the destination to wTextDest, carries it in BC, and sets the exit A to the last loaded byte"
+
+[[function]]
+assembly_symbol = "TextCommand_LOW"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_low"
+c_source = "verification/ports/text_command_low.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+]
+proof_domain = "all register inputs and the dispatcher's pushed text pointer (modeled as the entry HL) over the single linear path; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 7-byte linked body executes under angr on one linear path; SM83-only POP HL shim (written through the p-code's byte-swapped HL pair view) and LD BC,nn; the native C sets BC to the bottom dialogue row and models the pop as the entry HL"
+
+[[function]]
+assembly_symbol = "TextCommand_WAIT_BUTTON"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_wait_button"
+c_source = "verification/ports/text_command_wait_button.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wLinkState",
+]
+proof_domain = "the non-link configuration (wLinkState concrete non-battling; the link-battling branch loops through the dispatcher and is out of this domain) with the entry A symbolic, the entry F concrete-clear (the raw-vs-canonical representation of the non-SM83 flag bits is out of scope for this pass-through handler), and the entry BC/DE symbolic; the ManualTextScroll call composes through the proved port under its terminating A/B observation (the established text-poll boundary precedent); the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 12-byte linked body executes under angr on one linear path; SM83-only PUSH/POP BC and POP HL shims (the pop written through the p-code's byte-swapped HL pair view); the ManualTextScroll call-site boundary carries the proved terminating transition (the saved registers pass through, A := SFX_PRESS_AB); the native C calls the real port_manual_text_scroll with the entry state mapped to its typed inputs"
+
+[[function]]
+assembly_symbol = "TextCommand_PROMPT_BUTTON"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_prompt_button"
+c_source = "verification/ports/text_command_prompt_button.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the down-arrow slot at wTileMap+(18,16)",
+    "wLinkState",
+]
+proof_domain = "the non-link configuration (wLinkState concrete non-battling; the link-battling branch loops into TextCommand_WAIT_BUTTON and is out of this domain) with the entry A/B/C/D/E symbolic, the entry F concrete-clear, HL concrete (the pushed text pointer, modeled as the entry HL), and the arrow slot symbolic; the ManualTextScroll call composes through the proved port under its terminating A/B observation (the established text-poll boundary precedent); the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 27-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims (the pop written through the p-code's byte-swapped HL pair view), the cp LINK_STATE_BATTLING flag boundary, and the ManualTextScroll call-site boundary carrying the proved terminating transition; the native C writes the arrow and blank tiles, calls the real port_manual_text_scroll with the entry state mapped to its typed inputs, and carries the compare's flag semantics"
