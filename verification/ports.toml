@@ -28771,3 +28771,18 @@ observables = [
 ]
 proof_domain = "all entry register/canonical-flag and complete tilemap inputs with a concrete representative text-stream pointer; all symbolic gameplay box operands whose positive 1..18 height/width and upper-left address keep the complete border inside wTileMap; the independently proven TextBoxBorder receives an arbitrary matching complete post-state after its full call input is proved equal"
 decoder = "the exact complete 18-byte linked handler executes under angr through the dispatcher pop, all four HLI operand reads, saved text-pointer stack round trip, register marshaling, proved TextBoxBorder boundary, and relative continuation jump; native C calls the real port_text_box_border and restores the advanced text pointer exactly"
+
+[[function]]
+assembly_symbol = "GetCryData"
+assembly_source = "home/pokemon.asm"
+c_symbol = "port_get_cry_data"
+c_source = "verification/ports/get_cry_data.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wBankswitchHomeTemp, hLoadedROMBank, wBankswitchHomeSavedROMBank, rROMB, wFrequencyModifier, and wTempoModifier",
+    "the complete immutable 570-byte CryData table",
+    "the complete ordered BankswitchHome and BankswitchBack call-input register/bank state and exact one-call counts",
+]
+proof_domain = "all entry register/canonical-flag, bank-control, and cry-modifier inputs for every valid internal Pokemon index 1..190; the exact linked CryData table is fixed by symbol location, length, and SHA-256, and both independently proven bank-switch callees receive their complete exact transitions"
+decoder = "the exact complete 35-byte linked body executes under angr through the species-index decrement, three 16-bit table-offset additions, all three banked CryData reads, both modifier writes, restored bank, and final cry-SFX arithmetic; only individual unsupported or mis-modeled SM83 instructions and the independently proven complete BankswitchHome and BankswitchBack transitions are shimmed, while native C calls both real bank-switch ports in order"
