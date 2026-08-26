@@ -36,10 +36,31 @@ void port_title_screen_copy_tilemap_to_vram(struct cpu_register_state *state,
 void port_prepare_oak_speech(struct cpu_register_state *state,
 	port_u8 *memory);
 void port_get_mon_header(struct cpu_register_state *state, port_u8 *memory);
+void port_print_game_version_on_title_screen(
+	struct cpu_register_state *state, port_u8 *memory);
 void port_fade_in_intro_pic(struct cpu_register_state *state,
 	port_u8 *memory);
 void port_draw_player_character(struct draw_player_character_state *state,
 	port_u8 *memory);
+
+/* SoftReset keeps its state local to ports/soft_reset.c. */
+struct soft_reset_mirror {
+	struct cpu_register_state registers;
+	port_u8 audio_rom_bank;
+	port_u8 audio_saved_bank;
+	port_u8 fade_out_control;
+	port_u8 new_sound_id;
+	port_u8 last_music_sound_id;
+	port_u8 stop_all_sounds_called;
+	port_u8 palette_whiteout_called;
+	port_u8 delay_frames_requested;
+	port_u8 delay_frames_called;
+};
+
+_Static_assert(sizeof(struct soft_reset_mirror) == 17,
+	"mirror of soft_reset.c struct drifted");
+
+void port_soft_reset(struct soft_reset_mirror *state);
 
 /*
  * These two ports define their state structs inside their own .c files, so
@@ -105,6 +126,9 @@ void port_start_new_game_debug(struct start_new_game_debug_mirror *state);
 #define SRC_VERSION_ON_TITLE_TEXT 0x45A1u
 #define SRC_OAK_SPEECH_TEXT1 0x6253u
 #define SRC_DEBUG_PLAYER_NAME 0x45AAu /* "NINTEN@" */
+#define SPECIES_CHARMANDER 0xB0u /* STARTER1 (data/pokemon/title_mons.asm) */
+#define W_CUR_PARTY_SPECIES 0xCF91u
+#define W_CUR_SPECIES 0xD0B5u
 #define SRC_DEBUG_RIVAL_NAME 0x45B1u /* "SONY@" */
 
 /* ---- VRAM / WRAM targets ------------------------------------------ */
@@ -334,7 +358,19 @@ game_enter_title(struct mac_kernel *kernel, uint8_t *memory,
 	memory[R_OBP0] = 0xE4;
 	memory[R_OBP1] = 0xE4;
 
-	/* REQUIRED: LoadTitleMonSprite, TitleScreenAnimateBallIfStarterOut,
+	/* LoadTitleMonSprite head: starter species into wCurPartySpecies/
+	 * wCurSpecies + GetMonHeader. The front-pic transfer half is still
+	 * REQUIRED (port_load_front_sprite_by_mon_index is a boundary). */
+	memory[W_CUR_PARTY_SPECIES] = SPECIES_CHARMANDER;
+	memory[W_CUR_SPECIES] = SPECIES_CHARMANDER;
+	{
+		struct cpu_register_state regs = { 0 };
+
+		regs.a = SPECIES_CHARMANDER;
+		port_get_mon_header(&regs, memory);
+	}
+
+	/* REQUIRED: TitleScreenAnimateBallIfStarterOut,
 	 * TitleScreenPickNewMon,
 	 * PlaySound(Music_TitleScreen)/PlayCry/WaitForSoundToFinish -
 	 * starter-mon visuals and title music are not composable yet. */
@@ -532,6 +568,20 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 
 	game->frames_in_phase++;
 
+	/* TrySoftReset: _Joypad compares [hJoyInput] against PAD_BUTTONS
+	 * (the diff port leaves HRAM untouched on that input), so the
+	 * driver keys off the raw poll byte. Init is the asm fallthrough,
+	 * re-entering the title. */
+	if (memory[H_JOYINPUT] == PAD_BUTTONS) {
+		struct soft_reset_mirror sr;
+
+		memset(&sr, 0, sizeof(sr));
+		port_soft_reset(&sr);
+		gb_reset_memory(memory, rom);
+		game_boot(kernel, memory, rom, game);
+		return;
+	}
+
 	switch (game->phase) {
 	case MAC_PHASE_TITLE:
 		/* REQUIRED: ScrollTitleScreenPokemonLogo is PORTED
@@ -548,8 +598,16 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 			/* PrintGameVersionOnTitleScreen =
 			 * hlcoord(7,8)+PlaceString(VersionOnTitleScreenText),
 			 * both ported sides composed here. */
-			place_rom_string(kernel, memory, rom, 7, 8,
-			    SRC_VERSION_ON_TITLE_TEXT);
+			{
+				struct cpu_register_state vregs = { 0 };
+
+				memory[H_LOADED_ROM_BANK] = BANK_TEXT;
+				rom_sync_window(memory, rom,
+				    &kernel->cached_rom_bank);
+				port_print_game_version_on_title_screen(
+				    &vregs, memory);
+				port_place_string(&vregs, memory);
+			}
 			game->version_shown = 1;
 		}
 		/* REQUIRED: CheckForUserInterruption - direct edge read. */
