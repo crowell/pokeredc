@@ -28739,3 +28739,20 @@ observables = [
 ]
 proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs over every 8-bit unpack mode: mode 0, mode 2, and all 254 nonzero/non-2 values; arbitrary matching complete post-states from the independently proven callees after every full ordered call input is proved equal"
 decoder = "the exact complete 21-byte linked dispatcher executes under angr through all three terminal paths: two ordered SpriteDifferentialDecode calls for mode 0, the XorSpriteChunks tail for every other non-2 mode, and the UnpackSpriteMode2 tail for mode 2; only individual SM83 load/compare/AND/branch instructions and the independently proven complete callee transitions are shimmed, while native C executes the same dispatch and calls the real ports"
+
+[[function]]
+assembly_symbol = "InitPlayerData2"
+assembly_source = "engine/movie/oak_speech/init_player_data.asm"
+c_symbol = "port_init_player_data2"
+c_source = "verification/ports/init_player_data2.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all four independent rDIV samples, hRandomAdd, hRandomSub, hLoadedROMBank, and rROMB",
+    "both wPlayerID bytes, wUnusedPlayerDataByte, all four initialized two-byte list heads, all three wPlayerMoney bytes, wMonDataLocation, both badge bytes, and both coin bytes",
+    "the complete 200-byte wGameProgressFlags region",
+    "the complete 32-byte wToggleableObjectFlags region and wToggleableObjectCounter",
+    "the complete ordered input states and exact call counts for two Random calls, four InitializeEmptyList calls, FillMemory, and the InitializeToggleableObjectsFlags tail",
+]
+proof_domain = "all initial register/canonical-flag, RNG/hardware-bank, initialized-field, complete game-progress, and complete toggleable-object inputs; all four divider reads are independent, the first three proven callees use their complete exact transitions, and the independently proven toggleable-object tail receives an arbitrary matching complete post-state after its full call input is proved equal"
+decoder = "the exact complete 80-byte linked body executes under angr through both RNG samples, every scalar/list/money/badge/coin write, the full 200-byte clear, and the final tail jump; only individual unsupported SM83 high-memory, absolute-store, HLI/HLD, and XOR instructions plus the independently proven complete Random, InitializeEmptyList, FillMemory, and InitializeToggleableObjectsFlags boundaries are shimmed, while native C calls every real port in the exact order"

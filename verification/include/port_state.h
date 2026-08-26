@@ -374,6 +374,13 @@ struct random_generate_state {
 	port_u8 rom_bank;
 };
 
+struct init_player_data2_state {
+	struct cpu_register_state registers;
+	port_u8 div_samples[4];
+	port_u8 loaded_bank;
+	port_u8 rom_bank;
+};
+
 struct battle_random_state {
 	struct random_generate_state random;
 	port_u8 link_state;
@@ -3143,6 +3150,8 @@ _Static_assert(sizeof(struct target_substitute_state) == 11, "unexpected ABI pad
 _Static_assert(sizeof(struct title_ball_y_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct random_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct random_generate_state) == 14,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct init_player_data2_state) == 14,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct battle_random_state) == 272,
     "unexpected ABI padding");
