@@ -28623,3 +28623,15 @@ observables = [
 ]
 proof_domain = "all register inputs, the dispatcher's pushed text pointer (concrete in this domain, with the two operand bytes symbolic), and both wTextDest bytes over the single linear path; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
 decoder = "exact 14-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims (the pop written through the p-code's byte-swapped HL pair view) and LD [HL+],A; the native C reads the two operand bytes, stores the destination to wTextDest, carries it in BC, and sets the exit A to the last loaded byte"
+
+[[function]]
+assembly_symbol = "TextCommand_LOW"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_low"
+c_source = "verification/ports/text_command_low.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+]
+proof_domain = "all register inputs and the dispatcher's pushed text pointer (modeled as the entry HL) over the single linear path; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 7-byte linked body executes under angr on one linear path; SM83-only POP HL shim (written through the p-code's byte-swapped HL pair view) and LD BC,nn; the native C sets BC to the bottom dialogue row and models the pop as the entry HL"
