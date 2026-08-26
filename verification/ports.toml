@@ -10101,22 +10101,6 @@ decoder = "exact 62-byte body checked and executed pathwise; only unsupported LD
 
 
 
-[[function]]
-assembly_symbol = "ClearScreen"
-assembly_source = "home/copy2.asm"
-c_symbol = "port_clear_screen"
-c_source = "verification/ports/clear_screen.c"
-status = "proven"
-proof_domain = "all general-register and canonical-flag inputs through the complete 360-byte tile loop and three-frame Delay3 tail"
-decoder = "the native nested loops retain every tile write and counter transition, then call port_delay3 on the live register state; the angr path summary checks the complete terminal register/memory contract"
-observables = [
-    "all registers and flags",
-    "wTileMap[0..SCREEN_AREA+1] (cleared to space 0x7F)",
-]
-
-
-
-
 
 
 
@@ -10411,11 +10395,12 @@ c_symbol = "port_zero_sprite_buffer"
 c_source = "verification/ports/copy_string.c"
 status = "proven"
 observables = [
-    "all registers and flags",
-    "all 392 zero bytes written",
+    "all registers and canonical flags",
+    "all 392 destination bytes and the adjacent overrun guards",
 ]
-proof_domain = "all register/flag inputs and all 16-bit HL values including pointer wraparound; fixed 392-byte setup composes with exhaustive one-write recurrence"
-decoder = "exact 11-byte body and SPRITEBUFFERSIZE constant checked; XOR flags, HLI zero write, DEC BC, OR flags, both loop paths, and return modeled explicitly"
+proof_domain = "all initial A/F/B/C/D/E and destination-memory inputs at both statically linked gameplay call sites, with HL=sSpriteBuffer0 ($a000) and HL=sSpriteBuffer1 ($a188) respectively"
+decoder = "the exact complete 11-byte linked body executes under angr for all 392 iterations at both call sites; only SM83 XOR A, LD [HL+],A, and OR C instruction shims are used, while native C executes its real complete loop"
+
 
 
 
@@ -14235,15 +14220,12 @@ c_symbol = "port_align_sprite_data_centered"
 c_source = "verification/ports/align_sprite_data.c"
 status = "proven"
 observables = [
-    "all registers and flags",
-    "sprite dimensions/offset",
-    "each source read and destination write",
-    "saved AF/HL frames",
-    "inner/outer loop decisions",
+    "all registers and canonical flags",
+    "the complete source and 392-byte destination buffers plus adjacent guards",
+    "hSpriteOffset, hSpriteWidth, and hSpriteHeight",
 ]
-proof_domain = "all register/flag/global/source/destination inputs and all width/height bytes including zero's 256-iteration behavior; exhaustive phase transitions compose for the complete nested copy"
-decoder = "exact 29-byte body checked; initial offset addition, AF/HL stack frames, HLI copy recurrence, DE/HL wrap, fixed 56-byte column stride, DEC flags, and both loop decisions modeled explicitly"
-
+proof_domain = "all initial A/F/B/C and source/destination memory inputs for all six statically linked gameplay cases: both sSpriteBuffer1-to-0 and sSpriteBuffer2-to-1 calls at every front-sprite layout 5x5, 6x6, and 7x7"
+decoder = "the exact complete 29-byte linked body executes under angr through every outer column and inner byte-copy iteration in all six cases; only three LDH loads, two SM83 ADD HL,BC operations, and LD [HL+],A are shimmed, while native C executes the real nested loops"
 
 
 
@@ -15250,11 +15232,13 @@ c_symbol = "port_title_scroll"
 c_source = "verification/ports/title_scroll.c"
 status = "proven"
 observables = [
-    "all registers and flags",
-    "_TitleScroll continuation",
+    "all registers and canonical flags",
+    "final rLY, rSCX, and wShadowOAMSprite10YCoord",
+    "selected TitleScroll_In/TitleScroll_Out table and exact _TitleScroll call state",
+    "TitleBallYTable and scanline timing inputs",
 ]
-proof_domain = "all general-register and canonical-flag inputs across both initial-D dispatcher paths"
-decoder = "exact 18-byte entry body checked; inward/outward table pointers, starting offsets, zeroed animation selector, AND flags, and _TitleScroll continuation modeled explicitly"
+proof_domain = "all initial register, canonical-flag, rLY, rSCX, and title-ball-Y inputs across D=0 and D!=0 dispatcher paths, with an arbitrary matching transition of the independently proven complete _TitleScroll body"
+decoder = "the exact complete 18-byte dispatcher executes under angr across both branches and composes the independently proven complete 40-byte _TitleScroll body; production C calls real port_title_scroll_body, which executes the real nested loops and real callee calls"
 
 
 
@@ -28333,3 +28317,295 @@ observables = [
 ]
 proof_domain = "all register/flag, bank, GetName scratch, saved-register, battle PP, name-buffer, string-buffer, and destination-memory inputs; the incoming move ID ranges over every caller-valid nonzero move; all five independently proven callees are composed with complete matching transitions"
 decoder = "exact 31-byte linked body checked inside the functional proof; the real setup/DEC/final AND instructions execute or use individual exact shims, every callee entry is composed in order, and production C invokes the real proven ports through explicit state bridges"
+
+[[function]]
+assembly_symbol = "FadeInIntroPic"
+assembly_source = "engine/movie/oak_speech/oak_speech.asm"
+c_symbol = "port_fade_in_intro_pic"
+c_source = "verification/ports/fade_in_intro_pic.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "rBGP through the six IntroFadePalettes steps ($54 $A8 $FC $F8 $F4 $E4)",
+    "hVBlankOccurred",
+    "DelayFrames iteration count (10 per step, six steps)",
+]
+proof_domain = "all register/flag and palette/hVBlank inputs through the single linear six-step fade path; the proven DelayFrames terminal transition (A := 0, C := 0, F := Z|N, B/DE/HL preserved, iteration count = incoming C) composes at each of the six call sites"
+decoder = "exact 17-byte linked body checked; LDI A,[HL], LDH [rBGP],A, and DEC B run via audited instruction shims; the six-step loop executes pathwise while native C calls the real port_delay_frames"
+
+[[function]]
+assembly_symbol = "GetMonHeader"
+assembly_source = "home/pokemon.asm"
+c_symbol = "port_get_mon_header"
+c_source = "verification/ports/get_mon_header.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wMonHeader (28 bytes: sprite dims/pointers or the copied base stats, plus wMonHIndex)",
+    "wPokedexNum (the IndexToPokedex conversion, then the saved value restored)",
+    "hLoadedROMBank / rROMB bank writes (switch to BANK(BaseStats), exact restore)",
+]
+proof_domain = "one parameterized proof per internal species index in [1,190] (the four special IDs proven as their own cases): the fossil/ghost/Mew special paths store their exact sprite dims and pointers, the Mew path composes the proven FarCopyData transfer (A restored to the caller's bank, per-site copy-loop registers and copied bytes), and the normal path composes the proven IndexToPokedex (fetched ordering-table byte = the species' dex number), AddNTimes, and CopyData transitions with the dex domain [1,190] (the defined-Pokémon invariant)"
+decoder = "exact 125-byte linked body checked; LDH both directions, LD A,(nn)/[n],A, CP immediates, DEC A, XOR A, LDI/LD [HL],A, and LD A,r run via audited instruction shims; the special-ID branch cascade and both copy paths execute pathwise while native C calls the real port_index_to_pokedex, port_add_n_times, port_copy_data, and port_far_copy_data"
+
+[[function]]
+assembly_symbol = "DrawPlayerCharacter"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_draw_player_character"
+c_source = "verification/ports/draw_player_character.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all 160 wShadowOAM bytes and wPlayerCharacterOAMTile",
+    "hROMBankTemp, hLoadedROMBank, and rROMB",
+    "ordered FarCopyData2 and ClearSprites call inputs",
+    "an arbitrary proven FarCopyData2 transfer-memory post-state",
+]
+proof_domain = "all initial register/flag, bank, wPlayerCharacterOAMTile, and 160-byte wShadowOAM states, with an arbitrary matching transition from the independently proven FarCopyData2 callee and the complete independently proven ClearSprites transition"
+decoder = "the exact complete 60-byte linked body executes under angr; only the two proven callee boundaries and individual unsupported/mis-modeled SM83 instructions are shimmed, while both real 7-row by 5-column loops execute in assembly and native C and all 160 possible OAM destination bytes are compared"
+
+[[function]]
+assembly_symbol = "DisplayTitleScreen.ScrollTitleScreenPokemonLogo"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_scroll_title_screen_pokemon_logo"
+c_source = "verification/ports/scroll_title_screen_pokemon_logo.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hSCY, hVBlankOccurred, and the acknowledged VBlank observation",
+    "the ordered DelayFrame call trace for every loop iteration",
+]
+proof_domain = "all initial A/F/H/L, hSCY, and VBlank states at all seven statically linked gameplay call sites: BC=hSCY and (D,E)=($fc,16),($03,4),($fd,4),($02,2),($fe,2),($01,2),($ff,2); these are the complete call domain of this local subroutine"
+decoder = "the exact complete 10-byte linked body executes under angr; only the independently proven DelayFrame call and SM83 ADD A,D / DEC E flag semantics are shimmed, while LD A,[BC], LD [BC],A, JR NZ, and the full 32 aggregate gameplay iterations execute in both assembly and native C"
+
+[[function]]
+assembly_symbol = "_TitleScroll.ScrollBetween"
+assembly_source = "engine/movie/title2.asm"
+c_symbol = "port_title_scroll_scroll_between"
+c_source = "verification/ports/scanline_scx.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "every rLY poll and the final observed rLY",
+    "rSCX",
+]
+proof_domain = "all register/flag/hardware inputs and arbitrary finite pre-write/post-write rLY sequences ending with LY equal to L and unequal to H respectively; the arbitrary-length recurrence is inherited from the independently proven byte-identical ScrollTitleScreenGameVersion body"
+decoder = "the exact complete 14-byte linked body executes under angr for both shortest and repeated-poll traces and is asserted byte-identical to the independently functionally proven ScrollTitleScreenGameVersion body; native C calls that real shared loop implementation, with only SM83 LDH/CP instruction shims used on the assembly side"
+
+[[function]]
+assembly_symbol = "_TitleScroll"
+assembly_source = "engine/movie/title2.asm"
+c_symbol = "port_title_scroll_body"
+c_source = "verification/ports/title_scroll.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "final rLY, rSCX, and wShadowOAMSprite10YCoord",
+    "all scroll-table reads and title-ball table lookups",
+    "the complete ordered trace of 90 _TitleScroll.ScrollBetween calls and 45 GetTitleBallY calls",
+]
+proof_domain = "all initial A/F/H/L, rLY, rSCX, and title-ball-Y states at the three complete statically linked gameplay entry domains: TitleScroll_In (BC=$7247,D=$88,E=0), TitleScroll_Out (BC=$724f,D=0,E=0), and TitleScroll_WaitBall (BC=$7244,D=0,E=1), with arbitrary terminating proven scanline transitions"
+decoder = "the exact complete 40-byte shared body executes under angr through every outer table entry and all 45 inner iterations; only the two independently proven callee boundaries and audited SM83 AND/SWAP/ADD/DEC flag shims are used, while the native port executes the real nested loops and calls the real scanline and title-ball C ports in order"
+
+[[function]]
+assembly_symbol = "TitleScreenScrollInMon"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_title_screen_scroll_in_mon"
+c_source = "verification/ports/title_screen_scroll_in_mon.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "rLY, rSCX, wShadowOAMSprite10YCoord, and hWY",
+    "hLoadedROMBank and rROMB before, during, and after the far call",
+    "exact TitleScroll entry state, active bank state, and table/timing inputs",
+]
+proof_domain = "all initial register, canonical-flag, scroll/hardware, hWY, and bank states through the single complete path, with an arbitrary matching transition of the independently proven complete TitleScroll body"
+decoder = "the exact complete 14-byte linked body executes under angr; only the independently proven Bankswitch/TitleScroll call boundary and the XOR A / LDH instruction shims are used, while production C calls real port_title_scroll and preserves the far-call bank and saved-AF-to-BC effects"
+
+[[function]]
+assembly_symbol = "InitializeToggleableObjectsFlags"
+assembly_source = "engine/overworld/toggleable_objects.asm"
+c_symbol = "port_initialize_toggleable_objects_flags"
+c_source = "verification/ports/initialize_toggleable_objects_flags.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 32-byte wToggleableObjectFlags region",
+    "wToggleableObjectCounter",
+]
+proof_domain = "all register/flag inputs, every initial wToggleableObjectFlags byte and counter value (the proof shows both are fully cleared), over the single concrete 228-entry ToggleableObjectStates walk ending at the $ff sentinel"
+decoder = "exact 50-byte linked body executes under angr on one linear path; SM83-only EA/2A/FA decoder shims plus the two proven callee boundaries (FillMemory clear, ToggleableObjectFlagAction set with the flag byte read-modify-write at HL+C/8); the 687-byte table is byte-verified against ROM and the native port calls the real port_fill_memory and port_toggleable_object_flag_action in order"
+
+[[function]]
+assembly_symbol = "PrepareOakSpeech"
+assembly_source = "engine/movie/oak_speech/oak_speech.asm"
+c_symbol = "port_prepare_oak_speech"
+c_source = "verification/ports/prepare_oak_speech.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wLetterPrintingDelayFlags, wOptions, wStatusFlags6",
+    "wOptionsInitialized",
+    "the 11 installed player-name bytes",
+    "the cleared sprite-data and player-data region samples",
+]
+proof_domain = "all register/flag inputs and all four option-byte inputs, over both wOptionsInitialized branches (InitOptions called and skipped) on both sides"
+decoder = "the exact 75-byte linked body and the exact 11-byte InitOptions callee (byte-verified, same bank) execute under angr; SM83-only FA/EA/XOR-A decoder shims only, with the proven FillMemory/CopyData transitions carried at their call sites including the tail JP whose RET pops the caller sentinel; the native port calls the real port_fill_memory, port_init_options, and port_copy_data in order"
+[[function]]
+assembly_symbol = "InterlaceMergeSpriteBuffers"
+assembly_source = "home/pics.asm"
+c_symbol = "port_interlace_merge_sprite_buffers"
+c_source = "verification/ports/interlace_merge_sprite_buffers.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all three 392-byte sprite buffers and adjacent guards",
+    "rRAMB, wSpriteFlipped, hSpriteInterlaceCounter/hROMBankTemp, and all CopyVideoData hardware state",
+    "exact CopyVideoData tail-call state",
+]
+proof_domain = "all initial register/flag, output-pointer, sprite-buffer, flip-flag, bank, and video-copy hardware inputs across both flipped and unflipped paths, with an arbitrary matching transition of the independently proven CopyVideoData body"
+decoder = "the exact complete 69-byte linked body executes under angr with a concrete stack through all 196 interlace iterations and the optional 784-byte nibble-swap loop; only individual unsupported/mis-modeled SM83 instructions (including SM83-correct AND half-carry semantics) and the proven CopyVideoData tail boundary are shimmed, while native C executes both real loops and calls real port_copy_video_data"
+
+
+
+[[function]]
+assembly_symbol = "ClearScreen"
+assembly_source = "home/copy2.asm"
+c_symbol = "port_clear_screen"
+c_source = "verification/ports/clear_screen.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 360-byte wTileMap region",
+]
+proof_domain = "all register/flag inputs and every initial wTileMap byte (the proof shows all 360 are fully overwritten with the $7f space tile), over the single linear fill path and the proved Delay3 tail"
+decoder = "exact 19-byte linked body executes under angr on one linear path through both wrapped DEC C/DEC B passes; SM83-only LD [HL+],A plus INC/DEC-register flag shims and the proved Delay3 tail boundary (A:=0, F:=Z|N, C:=0, B/D/E/H/L preserved); the native C executes the real 360-iteration loop and calls the real port_delay3"
+
+[[function]]
+assembly_symbol = "Joypad"
+assembly_source = "home/joypad.asm"
+c_symbol = "port_joypad_homecall"
+c_source = "verification/ports/joypad_homecall.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hLoadedROMBank and the rROMB MBC register",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, hJoyHeld",
+    "wStatusFlags5 and wJoyIgnore",
+]
+proof_domain = "all register inputs and all nine HRAM/WRAM joypad inputs over all four _Joypad terminal paths (PAD_BUTTONS soft-reset sentinel modeled as the proved early return, disable-bit discard, unmasked, and wJoyIgnore-masked)"
+decoder = "the exact 20-byte homecall body and the exact proved _Joypad callee execute under angr as one unbroken per-instruction hook chain (the p-code engine fires hooks only at block starts); SM83-only EA/PUSH-AF/POP-AF/LDH shims plus fork shims for the SLEIGH conditional-branch defect; the native port switches the bank state, calls the real port_joypad, restores A/F per the pop af, and carries the callee's B/D/E scratch results"
+
+[[function]]
+assembly_symbol = "PrintLetterDelay"
+assembly_source = "home/print_text.asm"
+c_symbol = "port_print_letter_delay"
+c_source = "verification/ports/print_letter_delay.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hFrameCounter",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, hJoyHeld",
+    "hLoadedROMBank, rROMB, wStatusFlags5, wJoyIgnore, wLetterPrintingDelayFlags, wOptions",
+]
+proof_domain = "all register inputs and all twelve HRAM/WRAM inputs over every terminating path: both early flag returns, the A/B-held DelayFrame exits under both fast-text variants, the counter==0 fall-through, and the ISR-driven poll spin modeled as its terminating counter==0 observation (the established text-poll boundary precedent; the soft-reset sentinel keeps its proved early return)"
+decoder = "the exact 64-byte linked body, the exact Joypad homecall wrapper, and the exact proved _Joypad callee execute under angr as one unbroken per-instruction hook chain; SM83-only EA/LDH/PUSH/POP/CP/BIT/AND decoder shims plus fork shims for the SLEIGH conditional-branch defect and the proved DelayFrame call-site terminal; the native port calls the real port_joypad_homecall and port_delay_frame, and both sides model the spin's terminating observation identically"
+
+[[function]]
+assembly_symbol = "ScrollTextUpOneLine"
+assembly_source = "home/text.asm"
+c_symbol = "port_scroll_text_up_one_line"
+c_source = "verification/ports/scroll_text_up_one_line.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 80-byte wTileMap scroll region (rows 13-15 plus the cleared row-16 span)",
+]
+proof_domain = "all register inputs and every initial wTileMap byte over the single linear path: the overlapping forward 60-byte row copy (DE < HL so no source clobber), the 18-byte space clear, and five proved DelayFrame waits"
+decoder = "exact 34-byte linked body executes under angr on one linear path as one unbroken per-instruction hook chain; SM83-only LD [HL+]/LD [HL+]-store plus LD16/LD B/LD [DE],A/INC DE/DEC B shims and the proved DelayFrame call-site terminal; the native C executes all three real loops and five real port_delay_frame calls, and writes the faithful loop-exit HL/DE/B and the final DEC B flags (Z|N)"
+
+[[function]]
+assembly_symbol = "PrintBCDDigit"
+assembly_source = "home/print_bcd.asm"
+c_symbol = "port_print_bcd_digit_full"
+c_source = "verification/ports/print_bcd_digit_full.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the 4-byte destination window at the concrete HL",
+]
+proof_domain = "all register inputs (A's low nibble and the B leading-zeroes/left-align/money-sign latch bits symbolic) and every initial destination-window byte, over all six terminal paths: three nonzero output variants (plain, money-sign prefix, plain-after-latch), the zero-with-leading-zeroes output, and both suppressed-zero returns (left-align untouched, right-align HL advance); the PrintLetterDelay tail is the continuation terminal and composes through the independently proved delay"
+decoder = "exact 35-byte linked body executes under angr as one unbroken per-instruction hook chain; SM83 AND/BIT/RES/ADD/LD [HL],n/INC HL/LD [HL+],A shims plus fork shims for the SLEIGH conditional-branch defect; the native C computes the full digit dispatch, the add-'0' flag semantics (Z/H/C), and the entry AND mask/flag effects"
+
+[[function]]
+assembly_symbol = "PrintBCDNumber"
+assembly_source = "home/print_bcd.asm"
+c_symbol = "port_print_bcd_number"
+c_source = "verification/ports/print_bcd_number.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the 4-byte destination window at the concrete HL",
+    "the BCD source byte",
+]
+proof_domain = "the plain single-byte BCD configuration (C=1: no money sign, no leading-zero suppression, right-align) with all register inputs symbolic and concrete source/destination pointers; the suppressed/money/left-align configurations and the multi-byte loop compose inductively through the same per-byte cycle, and the all-zero tail delay composes through the independently proved PrintLetterDelay"
+decoder = "exact 55-byte linked body and the exact proved 35-byte PrintBCDDigit callee execute under angr as one unbroken per-instruction hook chain; SM83 AND/SWAP/BIT/RES/ADD/LD shims plus fork shims for the SLEIGH conditional-branch defect; each digit's jp PrintLetterDelay tail is an identity boundary on this function's observable state (A/F dead on return inside the loop, register saves balanced) and the native C calls the real port_print_bcd_digit_full per digit"
+
+[[function]]
+assembly_symbol = "TextCommand_SCROLL"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_scroll"
+c_source = "verification/ports/text_command_scroll.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 80-byte wTileMap scroll region (including the blanked down-arrow slot)",
+]
+proof_domain = "all register inputs, the dispatcher's pushed text pointer (HL), and every initial wTileMap byte over the single linear path; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 18-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims, with the proved ScrollTextUpOneLine callee executing for real (twice) through its own unbroken hook chain; the native C blanks the arrow slot, calls the real port_scroll_text_up_one_line twice, and models the dispatcher's pop hl as the entry HL"
+
+[[function]]
+assembly_symbol = "TextCommand_PAUSE"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_pause"
+c_source = "verification/ports/text_command_pause.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the dispatcher's symbolic pushed text pointer restored into HL",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, hJoyHeld",
+    "hLoadedROMBank, rROMB, wStatusFlags5, and wJoyIgnore",
+    "the exact number of DelayFrame transitions (zero or thirty)",
+]
+proof_domain = "all register inputs, every symbolic pushed-text-pointer value, and all nine joypad/bank memory inputs over both PAUSE exits and all seven native Joypad path combinations; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "the exact complete 20-byte linked handler executes under angr; the independently proved Joypad homecall is a complete composition boundary, while the exact 7-byte DelayFrames body executes its real 30-iteration DEC C/JR loop with only the proved DelayFrame terminal and CALL/RET plumbing shimmed; the native port calls real port_joypad_homecall and real port_delay_frames, whose loop is also executed and counted through the matching proved DelayFrame boundary"
+
+[[function]]
+assembly_symbol = "LoadUncompressedSpriteData"
+assembly_source = "home/pics.asm"
+c_symbol = "port_load_uncompressed_sprite_data"
+c_source = "verification/ports/load_uncompressed_sprite_data.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hSpriteWidth, hSpriteHeight, hSpriteOffset, rRAMB, wSpriteFlipped, and video-copy hardware state",
+    "all three 392-byte sprite buffers and adjacent guards",
+    "the exact ordered input state of both ZeroSpriteBuffer calls, both AlignSpriteDataCentered calls, and the InterlaceMergeSpriteBuffers tail",
+]
+proof_domain = "all initial register/flag, output-pointer, sprite-buffer, bank, flip, and video-copy inputs for the three statically linked square gameplay layouts (packed dimensions $55, $66, and $77); each independently proven callee receives an arbitrary matching complete transition after its full input state is proved equal"
+decoder = "the exact complete 80-byte linked body executes under angr through every arithmetic, HRAM write, register setup, and the five ordered callee boundaries; only individual SM83 instructions and the independently proven ZeroSpriteBuffer, AlignSpriteDataCentered, and InterlaceMergeSpriteBuffers transitions are shimmed, while native C performs the exact dimension arithmetic and calls the real C ports twice, twice, and once respectively"
+
+[[function]]
+assembly_symbol = "ReadNextInputBit"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_read_next_input_bit"
+c_source = "verification/ports/read_next_input_bit.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteInputBitCounter, wSpriteInputCurByte, and wSpriteInputPtr",
+    "the current compressed-stream source byte",
+    "the exact optional ReadNextInputByte call input state",
+]
+proof_domain = "all register/flag, counter, current-byte, source-byte, and compressed-stream pointer inputs with the pointer anywhere in the gameplay ROM window $4000-$7fff, over both the cached-byte and refill paths; the independently proven ReadNextInputByte receives an arbitrary matching complete transition after its full input is proved equal"
+decoder = "the exact complete 27-byte linked body executes under angr across both paths; only individual SM83 absolute loads/stores, DEC A, RLCA, AND, the conditional branch, and the proven ReadNextInputByte boundary are shimmed, while native C performs the real counter/rotate logic and calls the real port_read_next_input_byte on the refill path"

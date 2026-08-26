@@ -793,6 +793,25 @@ struct scanline_scx_state {
 	port_u8 scx;
 };
 
+struct title_scroll_scanline_timing {
+	const port_u8 *before;
+	const port_u8 *after;
+};
+
+struct title_scroll_body_state {
+	struct cpu_register_state registers;
+	port_u8 ly;
+	port_u8 scx;
+	port_u8 title_ball_y;
+};
+
+struct title_screen_scroll_in_mon_state {
+	struct title_scroll_body_state scroll;
+	port_u8 wy;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
 struct menu_save_tiles_state {
 	struct cpu_register_state registers;
 	port_u8 fetched;
@@ -1578,6 +1597,14 @@ struct far_copy_data2_state {
 	port_u8 rom_bank;
 };
 
+struct draw_player_character_state {
+	struct clear_sprites_state sprites;
+	port_u8 requested_bank;
+	port_u8 loaded_bank;
+	port_u8 rom_bank;
+	port_u8 player_character_oam_tile;
+};
+
 struct far_copy_data3_state {
 	struct cpu_register_state registers;
 	port_u8 requested_bank;
@@ -1961,6 +1988,13 @@ struct add_inventory_state {
 
 struct delay_frame_state {
 	struct cpu_register_state registers;
+	port_u8 vblank_occurred;
+	port_u8 observed_vblank;
+};
+
+struct scroll_title_screen_pokemon_logo_state {
+	struct cpu_register_state registers;
+	port_u8 scroll_y;
 	port_u8 vblank_occurred;
 	port_u8 observed_vblank;
 };
@@ -3159,6 +3193,10 @@ _Static_assert(sizeof(struct init_sprite_screen_state) == 15, "unexpected ABI pa
 _Static_assert(sizeof(struct sprite_facing_delay_state) == 15, "unexpected ABI padding");
 _Static_assert(sizeof(struct wavy_scx_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct scanline_scx_state) == 10, "unexpected ABI padding");
+_Static_assert(sizeof(struct title_scroll_body_state) == 11,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct title_screen_scroll_in_mon_state) == 14,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct menu_save_tiles_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct option_cursor_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct copy_tile_ids_state) == 26, "unexpected ABI padding");
@@ -3228,6 +3266,8 @@ _Static_assert(sizeof(struct add_party_mon_write_move_pp_state) == 11,
 _Static_assert(sizeof(struct load_move_pps_state) == 17,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data2_state) == 11, "unexpected ABI padding");
+_Static_assert(sizeof(struct draw_player_character_state) == 172,
+    "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_data3_state) == 11, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_tileset_tile_pattern_data_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct load_text_box_tile_patterns_state) == 12, "unexpected ABI padding");
@@ -3271,6 +3311,8 @@ _Static_assert(sizeof(struct remove_inventory_state) == 23, "unexpected ABI padd
 _Static_assert(sizeof(struct slot_wheel_match_state) == 14, "unexpected ABI padding");
 _Static_assert(sizeof(struct add_inventory_state) == 28, "unexpected ABI padding");
 _Static_assert(sizeof(struct delay_frame_state) == 10, "unexpected ABI padding");
+_Static_assert(sizeof(struct scroll_title_screen_pokemon_logo_state) == 11,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct animation_shake_horizontal_slow_state) == 10,
 	"unexpected ABI padding");
 _Static_assert(sizeof(struct predef_shake_vertical_state) == 17, "unexpected ABI padding");
