@@ -28723,3 +28723,19 @@ observables = [
 ]
 proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs, including both gameplay buffer selections and every initial flip value; arbitrary matching complete post-states from the independently proven SpriteDifferentialDecode and XorSpriteChunks bodies after their full call inputs are proved equal"
 decoder = "the exact complete 32-byte linked body executes under angr through both real pointer resets, saved-AF flip suppression/restoration, cached-output-pointer load, decode call, and XorSpriteChunks tail jump; only individual unsupported SM83 instructions and the independently proven complete ResetSpriteBufferPointers, SpriteDifferentialDecode, and XorSpriteChunks transitions are shimmed, while native C calls all three real ports in the exact order and preserves the tail-call result"
+
+[[function]]
+assembly_symbol = "UnpackSprite"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_unpack_sprite"
+c_source = "verification/ports/unpack_sprite.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteCurPosX, wSpriteCurPosY, wSpriteWidth, wSpriteHeight, wSpriteUnpackMode/wSpriteLoadFlags, wSpriteFlipped, wSpriteOutputPtr, wSpriteOutputPtrCached, and both decode-table pointers",
+    "the complete 392-byte regions of both possible sprite buffers and the 16-byte NybbleReverseTable",
+    "the complete ordered call-input register/global/buffer states for both SpriteDifferentialDecode calls and the XorSpriteChunks or UnpackSpriteMode2 tail",
+    "exact SpriteDifferentialDecode, XorSpriteChunks, and UnpackSpriteMode2 call counts",
+]
+proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs over every 8-bit unpack mode: mode 0, mode 2, and all 254 nonzero/non-2 values; arbitrary matching complete post-states from the independently proven callees after every full ordered call input is proved equal"
+decoder = "the exact complete 21-byte linked dispatcher executes under angr through all three terminal paths: two ordered SpriteDifferentialDecode calls for mode 0, the XorSpriteChunks tail for every other non-2 mode, and the UnpackSpriteMode2 tail for mode 2; only individual SM83 load/compare/AND/branch instructions and the independently proven complete callee transitions are shimmed, while native C executes the same dispatch and calls the real ports"
