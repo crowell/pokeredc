@@ -28786,3 +28786,17 @@ observables = [
 ]
 proof_domain = "all entry register/canonical-flag, bank-control, and cry-modifier inputs for every valid internal Pokemon index 1..190; the exact linked CryData table is fixed by symbol location, length, and SHA-256, and both independently proven bank-switch callees receive their complete exact transitions"
 decoder = "the exact complete 35-byte linked body executes under angr through the species-index decrement, three 16-bit table-offset additions, all three banked CryData reads, both modifier writes, restored bank, and final cry-SFX arithmetic; only individual unsupported or mis-modeled SM83 instructions and the independently proven complete BankswitchHome and BankswitchBack transitions are shimmed, while native C calls both real bank-switch ports in order"
+
+[[function]]
+assembly_symbol = "PlayCry"
+assembly_source = "home/pokemon.asm"
+c_symbol = "port_play_cry"
+c_source = "verification/ports/play_cry.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete PlaySound audio state, bank-control bytes, cry modifiers, and immutable 570-byte CryData table",
+    "the complete ordered GetCryData, PlaySound, and WaitForSoundToFinish call-input states and exact one-call counts",
+]
+proof_domain = "all entry register/canonical-flag, complete audio, bank-control, and cry-modifier inputs with unified hLoadedROMBank/rROMB aliases; arbitrary matching complete post-states from the independently proven GetCryData and WaitForSoundToFinish bodies and the proven PlaySound observable transition after every complete call input is proved equal"
+decoder = "the exact complete 9-byte linked body executes under angr through the GetCryData call, PlaySound call, and WaitForSoundToFinish tail jump; native C calls all three real ports in exact order, synchronizes the shared audio bank globals across their portable state adapters, and preserves the tail result"
