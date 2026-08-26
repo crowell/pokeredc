@@ -52,8 +52,7 @@ Ported and available for deeper composition: `port_scroll_title_screen_game_vers
 
 
 | asm label | defined at | gates |
-|---|---|---|
-| `TextCommandProcessor` | home/text.asm | **all real dialogue rendering** (control codes <PKMN>/scroll/prompt). Driver falls back to raw `PlaceString` of ROM strings |
+| `TextCommandProcessor` | home/text.asm | **all real dialogue rendering**. Dispatcher + BOX/START/RAM/BCD/START_ASM/NUM/DOTS/SOUND/FAR still open; six handlers are ported and proven (`TextCommand_{SCROLL,PAUSE,MOVE,LOW,WAIT_BUTTON,PROMPT_BUTTON}`) plus `PrintLetterDelay`/`ScrollTextUpOneLine`/`PrintBCDDigit`/`PrintBCDNumber`. Driver falls back to raw `PlaceString` of ROM strings |
 | `DisplayTextBoxID_` / MESSAGE_BOX template | home/textbox.asm + engine/text_box.asm | standard message-box layout (driver draws border+text manually). Composable pieces exist: `port_search_text_box_table`, `port_get_text_box_id_coords`, two-option-menu tile savers |
 | `InitPlayerData2` | oak_speech/init_player_data.asm | party/inventory for a new file |
 | ~~`GetMonHeader`~~ / ~~`FadeInIntroPic`~~ | home/pokemon.asm, engine/movie/intro.asm | **PORTED & composed** (`port_get_mon_header` with A=Nidorino/$A7; `port_fade_in_intro_pic` six-step BGP fade) |
