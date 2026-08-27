@@ -28854,6 +28854,49 @@ proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-
 decoder = "exact 14-byte linked body e1545d6069cd5519626b2318be verified; the post-call tail (ld h,d; ld l,e; inc hl) and the PlaceString call are each shimmed with an angr SimProcedure; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
 
 [[function]]
+assembly_symbol = "TextCommand_DOTS"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_dots"
+c_source = "verification/ports/text_command_dots.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "text destination window (TEXT_DEST..TEXT_DEST+count-1), the rendered ellipsis tiles",
+    "H_JOYINPUT, H_JOYLAST, H_JOYHELD, H_JOYPRESSED, H_JOYRELEASED",
+    "W_STATUSFLAGS5, W_JOYIGNORE",
+    "delay_frame_calls",
+]
+proof_domain = "all general-register and canonical-flag inputs, all joy input/ignore/status inputs, and the text pointer and destination fixed at concrete RAM addresses (the handler treats both opaquely); counts 1-4 exercised; every feasible terminal path composed through the proved port_joypad_homecall and port_delay_frames boundaries"
+decoder = "exact 34-byte linked body e12a57e560693e7522d5cd9a01d1f0b4e60320050e0acd39371520ea444de1c3551b verified; the per-instruction hook chain reconstructs HL from (regs.h << 8) | regs.l so the rewritten LDH/store paths map to the pcode high/low bytes, and the AND $03 / DEC D flag semantics are corrected via Sm83AndImmediateCorrect and Sm83DecRegister; the Joypad and DelayFrames calls compose through the proved port_joypad_homecall and port_delay_frames transitions"
+
+[[function]]
+assembly_symbol = "TextCommand_START_ASM"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_start_asm"
+c_source = "verification/ports/text_command_start_asm.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "hJoyHeld, wStatusFlags5, wJoyIgnore (no side effects)",
+]
+proof_domain = "all general-register and canonical-flag inputs and the text pointer read off the dispatcher stack (shared symbolically, so the proof covers every text-pointer value); the embedded assembly reached via the final jp hl is treated as a boundary and composes through the dispatcher proof"
+decoder = "exact 6-byte linked body e111551bd5e9 verified; pop hl, ld de,NextTextCommand, push de, jp hl are each shimmed with an angr SimProcedure; the trampoline's observable effect is HL := the popped text pointer and DE := NextTextCommand, with no register or memory side effects"
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_RAM"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_ram"
@@ -28872,3 +28915,39 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-bit text pointer (TEXTPTR) holding a concrete 2-byte little-endian pointer to a RAM source (SRC) that holds the concrete 'HELLO@' string, and the destination window (DEST); the internal call to PlaceString is treated as a proved compositional boundary and replaced by an angr SimProcedure that writes the rendered tile bytes and leaves B/C, D/E, A, and F at the documented post-call values"
 decoder = "exact 14-byte linked body e12a5f2a57e56069cd5519e118b0 verified; the ld a,[hli] post-increment loads (0x2A) are shimmed with an angr SimProcedure because the generic z80 p-code arch mis-decodes them as LD HL,(nn), and the PlaceString call is shimmed; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
+
+[[function]]
+assembly_symbol = "TextCommandProcessor"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_processor"
+c_source = "verification/ports/text_command_processor.c"
+status = "proven"
+observables = [
+    "dispatch target (TextCommand handler/FAR/SOUND or TX_END)",
+    "wLetterPrintingDelayFlags",
+    "hClearLetterPrintingDelayFlags (unchanged)",
+    "wTextDest",
+]
+proof_domain = "all canonical flag, clear-delay-flag, and B:C destination inputs; each TX_END, TX_FAR, TX_SOUND_POKEDEX_RATING, and all 14 jump-table command values exercised; every dispatch target is treated as a compositional terminal boundary, while TX_END restores the saved delay flags"
+decoder = "exact 56-byte linked body fa58d3f5cbcf5ff0f4abea58d379ea3acc78ea3bcc2afe502005f1ea58d3c9e5fe17caa31cfe0ed2311c21c11cc58706004f09c12a666fe9 verified; SM83-only absolute/HL+ loads, arithmetic, stack operations, conditional jumps, and JP (HL) are shimmed; the jump-table target is captured from the actual ROM table and compared with the native handler boundary"
+
+[[function]]
+assembly_symbol = "TextCommand_FAR"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_far"
+c_source = "verification/ports/text_command_far.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "hLoadedROMBank",
+    "rROMB",
+    "far-command argument bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs, an arbitrary 3-byte far-command argument at a fixed text pointer, and arbitrary initial hLoadedROMBank/rROMB values; the recursive TextCommandProcessor call is treated as a no-op compositional boundary, while the bank switch, D:E far pointer load, HL restoration, and bank restoration are exercised"
+decoder = "exact 30-byte linked body e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b verified; SM83 HL+ loads and LDH stores are shimmed, the recursive processor call is replaced by a returning boundary, and the final jp NextTextCommand is the terminal sentinel"
