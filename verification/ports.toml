@@ -29002,3 +29002,22 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, arbitrary text-pointer bytes, and every legal screen coordinate (row 0..17, column 0..19); GetAddressOfScreenCoords composes through its complete proven coordinate transition"
 decoder = "exact 14-byte linked body 2a5f2a57d52a5f7e57cd7573d1c9 verified; all HL+ loads and stack pointer restoration are shimmed, while the coordinate call is replaced by its proven symbolic transition"
+
+[[function]]
+assembly_symbol = "IsSurfingAllowed"
+assembly_source = "engine/overworld/field_move_messages.asm"
+c_symbol = "port_is_surfing_allowed"
+c_source = "verification/ports/is_surfing_allowed.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wStatusFlags1",
+    "wStatusFlags6",
+    "wCurMap",
+    "Seafoam event byte",
+    "wCoordIndex",
+    "wTextBoxID",
+    "wYCoord / wXCoord",
+]
+proof_domain = "all general-register and canonical-flag inputs plus symbolic status, map, event, coordinate, coordinate-index, and text-box bytes; forced-bike, non-Seafoam, both-boulders-down, stair-miss, and stair-match terminal paths are all exercised, with ArePlayerCoordsInArray and PrintText composed through their proven transitions"
+decoder = "exact 53-byte linked body 2128d7cbcefa32d7cb6f2020fa5ed3fea2c0fa81d8e603fe03c821f74dcdbf34d02128d7cb8e21fa4dc3493c2128d7cb8e21ff4dc3493c verified; SM83 bit/set/reset, absolute loads, AND/CP, conditional returns, and bank-3 JP PrintText tails are shimmed, while the coordinate and text callees use complete proven boundaries"
