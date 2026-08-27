@@ -29122,3 +29122,20 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites seam; DEC flags and homecall bank/A/F restoration are preserved exactly, while the _UpdateSprites sprite iteration remains an explicit boundary"
 decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed, while production C models the DEC flags and calls the explicit port_update_sprites_private seam with the real bank-register save/restore contract; the bank-1 sprite body is not yet ported"
+
+[[function]]
+assembly_symbol = "DisplayOptionMenu"
+assembly_source = "engine/menus/main_menu.asm"
+c_symbol = "port_display_option_menu"
+c_source = "verification/ports/display_option_menu.c"
+status = "partial"
+observables = [
+    "wCurrentMenuItem and wLastMenuItem",
+    "wLetterPrintingDelayFlags and wOptionsCancelCursorX",
+    "wTopMenuItemY and wTopMenuItemX",
+    "wOptionsTextSpeedCursorX, wOptionsBattleAnimCursorX, and wOptionsBattleStyleCursorX",
+    "wOptions and hAutoBGTransferEnabled",
+    "the cancel input's A/B register result",
+]
+proof_domain = "the complete setup plus one host-driven cancel iteration with TEXT SPEED initialized from wOptions=5 and hJoy5=PAD_B; option cursor setup, persistent option decoding, and the cancel sound return are compared, while the internal polling loop and display-only drawing calls remain host continuations"
+decoder = "the exact 101-byte linked setup body executes under angr; individual SM83 absolute/HRAM stores and the proven setup/call boundaries are shimmed, then the real linked loop is entered through an explicit cancel-input continuation; native C preserves the setup and one-iteration option state machine, with full interactive-loop composition still pending"
