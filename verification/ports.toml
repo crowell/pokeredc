@@ -15001,8 +15001,8 @@ observables = [
     "wTownVisitedFlag",
     "the complete wToggleableObjectList destination",
 ]
-proof_domain = "known town-map setup with an empty toggleable-object list; town-visited bit setting, pointer-table lookup, empty-list sentinel write, and final register state are compared pathwise"
-decoder = "exact 98-byte body checked; FlagActionPredef and Divide are composed at audited boundaries, while the empty-list map scan executes under angr; non-empty toggle records and route-map flag cases remain to be expanded"
+proof_domain = "map-0 town setup covering an empty list, two matching toggle records, and a nonmatching record; town-visited bit setting, pointer-table lookup, list writes/sentinel, map-stop behavior, and final registers/flags are compared pathwise"
+decoder = "exact 98-byte body checked; FlagActionPredef and Divide are composed at audited boundaries, while individual SM83 pointer arithmetic, HRAM, register-transfer, conditional-branch, and DE-write backend gaps are shimmed; route-map flag behavior and symbolic pointer-table domains remain"
 
 
 

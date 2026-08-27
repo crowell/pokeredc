@@ -12,6 +12,16 @@ static port_u16 read_word(const port_u8 *memory, port_u16 address)
 	return (port_u16)(memory[address] | ((port_u16)memory[(port_u16)(address + 1u)] << 8));
 }
 
+static port_u8 cp_flags(port_u8 left, port_u8 right)
+{
+	port_u8 result = (port_u8)(left - right);
+	port_u8 flags = PORT_FLAG_N;
+	if ((left & 0x0fu) < (right & 0x0fu)) flags |= PORT_FLAG_H;
+	if (left < right) flags |= PORT_FLAG_C;
+	if (result == 0u) flags |= PORT_FLAG_Z;
+	return flags;
+}
+
 __attribute__((noinline, used)) void
 port_mark_town_visited_and_load_toggleable_objects(
 	struct cpu_register_state *registers, port_u8 *memory)
@@ -24,15 +34,21 @@ port_mark_town_visited_and_load_toggleable_objects(
 	port_u16 destination = W_TOGGLE_LIST;
 	for (;;) {
 		port_u8 record_map = memory[source++];
-		if (record_map == 0xffu || record_map != map)
+		if (record_map == 0xffu) {
+			registers->f = PORT_FLAG_Z | PORT_FLAG_N;
 			break;
+		}
+		if (record_map != map) {
+			registers->f = cp_flags(record_map, map);
+			break;
+		}
 		memory[destination++] = memory[source++];
 		memory[destination++] = (port_u8)offset++;
+		registers->c++;
 		source++;
 	}
 	memory[destination] = 0xffu;
 	registers->a = 0xffu;
-	registers->f = PORT_FLAG_Z | PORT_FLAG_N;
 	registers->h = (port_u8)(source >> 8); registers->l = (port_u8)source;
 	registers->d = (port_u8)(destination >> 8); registers->e = (port_u8)destination;
 }
