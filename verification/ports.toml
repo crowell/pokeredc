@@ -12601,6 +12601,24 @@ decoder = "exact 28-byte body and HRAM offsets checked; INC-E addressing, ordere
 
 
 [[function]]
+assembly_symbol = "CheckTilePassable"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_tile_passable"
+c_source = "verification/ports/check_tile_passable.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wTileInFrontOfPlayer and C/A tile state",
+    "collision-table pointer traversal",
+    "passable and sentinel carry results",
+]
+proof_domain = "fixed current-map front-tile setup with passable, non-passable, and $ff sentinel cases; the complete finite collision-table scan, pointer advance, match return, and sentinel SCF path are compared"
+decoder = "exact 26-byte body checked; proven front-tile composition, HLI table reads, CP branches, unconditional scan back-edge, and SCF/return terminal paths execute under angr"
+
+
+
+
+[[function]]
 assembly_symbol = "GetTileAndCoordsInFrontOfPlayer"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_get_tile_and_coords_in_front"
