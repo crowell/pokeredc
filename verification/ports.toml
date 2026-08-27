@@ -28875,6 +28875,26 @@ observables = [
 proof_domain = "all general-register and canonical-flag inputs, all joy input/ignore/status inputs, and the text pointer and destination fixed at concrete RAM addresses (the handler treats both opaquely); counts 1-4 exercised; every feasible terminal path composed through the proved port_joypad_homecall and port_delay_frames boundaries"
 decoder = "exact 34-byte linked body e12a57e560693e7522d5cd9a01d1f0b4e60320050e0acd39371520ea444de1c3551b verified; the per-instruction hook chain reconstructs HL from (regs.h << 8) | regs.l so the rewritten LDH/store paths map to the pcode high/low bytes, and the AND $03 / DEC D flag semantics are corrected via Sm83AndImmediateCorrect and Sm83DecRegister; the Joypad and DelayFrames calls compose through the proved port_joypad_homecall and port_delay_frames transitions"
 
+[[function]]
+assembly_symbol = "TextCommand_START_ASM"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_start_asm"
+c_source = "verification/ports/text_command_start_asm.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "hJoyHeld, wStatusFlags5, wJoyIgnore (no side effects)",
+]
+proof_domain = "all general-register and canonical-flag inputs and the text pointer read off the dispatcher stack (shared symbolically, so the proof covers every text-pointer value); the embedded assembly reached via the final jp hl is treated as a boundary and composes through the dispatcher proof"
+decoder = "exact 6-byte linked body e111551bd5e9 verified; pop hl, ld de,NextTextCommand, push de, jp hl are each shimmed with an angr SimProcedure; the trampoline's observable effect is HL := the popped text pointer and DE := NextTextCommand, with no register or memory side effects"
+
+
 
 [[function]]
 assembly_symbol = "TextCommand_RAM"
