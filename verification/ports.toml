@@ -29090,3 +29090,19 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 256 hour and minute byte values plus arbitrary adjacent source/HRAM/trace/tile state, both actual callers' fixed HL destinations (13,15 and 13,8), every one-/two-/three-digit hours path, and the fixed two-digit leading-zero minutes path; both PrintNumber calls use arbitrary matching complete proven transitions"
 decoder = "the exact complete 21-byte linked body executes under angr; only individual immediate register loads, the fixed separator store/HL increment, and the two independently proven PrintNumber boundaries are shimmed, while production C calls real port_print_number twice, transfers all memory-backed fields at both calls, preserves the separator ordering, and applies both complete write traces"
+
+[[function]]
+assembly_symbol = "DisplayContinueGameInfo"
+assembly_source = "engine/menus/main_menu.asm"
+c_symbol = "port_display_continue_game_info"
+c_source = "verification/ports/display_continue_game_info.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "the complete tilemap destination region and adjacent observed memory",
+    "hAutoBGTransferEnabled",
+    "complete ordered TextBoxBorder, PlaceString, PrintNumBadges, PrintNumOwnedMons, PrintPlayTime, and DelayFrames call inputs",
+    "complete final states for all seven composed callees",
+]
+proof_domain = "all general-register and canonical-flag inputs, arbitrary tilemap/global/observation state, arbitrary complete post-state transitions for the seven composed callees, and the fixed save-screen text, player-name, badge, owned-mon, and play-time destinations; the exact seven-call ordering and hAutoBGTransferEnabled disable/enable sequence are preserved"
+decoder = "the exact complete 58-byte linked body executes under angr; only individual XOR/store/load instructions and seven independently proven callee boundaries are shimmed, while production C calls real port_text_box_border, port_place_string, port_print_num_badges, port_print_num_owned_mons, port_print_play_time, and port_delay_frames"
