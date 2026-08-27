@@ -28915,3 +28915,18 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-bit text pointer (TEXTPTR) holding a concrete 2-byte little-endian pointer to a RAM source (SRC) that holds the concrete 'HELLO@' string, and the destination window (DEST); the internal call to PlaceString is treated as a proved compositional boundary and replaced by an angr SimProcedure that writes the rendered tile bytes and leaves B/C, D/E, A, and F at the documented post-call values"
 decoder = "exact 14-byte linked body e12a5f2a57e56069cd5519e118b0 verified; the ld a,[hli] post-increment loads (0x2A) are shimmed with an angr SimProcedure because the generic z80 p-code arch mis-decodes them as LD HL,(nn), and the PlaceString call is shimmed; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
+
+[[function]]
+assembly_symbol = "TextCommandProcessor"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_processor"
+c_source = "verification/ports/text_command_processor.c"
+status = "proven"
+observables = [
+    "dispatch target (TextCommand handler/FAR/SOUND or TX_END)",
+    "wLetterPrintingDelayFlags",
+    "hClearLetterPrintingDelayFlags (unchanged)",
+    "wTextDest",
+]
+proof_domain = "all canonical flag, clear-delay-flag, and B:C destination inputs; each TX_END, TX_FAR, TX_SOUND_POKEDEX_RATING, and all 14 jump-table command values exercised; every dispatch target is treated as a compositional terminal boundary, while TX_END restores the saved delay flags"
+decoder = "exact 56-byte linked body fa58d3f5cbcf5ff0f4abea58d379ea3acc78ea3bcc2afe502005f1ea58d3c9e5fe17caa31cfe0ed2311c21c11cc58706004f09c12a666fe9 verified; SM83-only absolute/HL+ loads, arithmetic, stack operations, conditional jumps, and JP (HL) are shimmed; the jump-table target is captured from the actual ROM table and compared with the native handler boundary"
