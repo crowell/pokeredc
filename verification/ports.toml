@@ -29106,3 +29106,19 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, arbitrary tilemap/global/observation state, arbitrary complete post-state transitions for the seven composed callees, and the fixed save-screen text, player-name, badge, owned-mon, and play-time destinations; the exact seven-call ordering and hAutoBGTransferEnabled disable/enable sequence are preserved"
 decoder = "the exact complete 58-byte linked body executes under angr; only individual XOR/store/load instructions and seven independently proven callee boundaries are shimmed, while production C calls real port_text_box_border, port_place_string, port_print_num_badges, port_print_num_owned_mons, port_print_play_time, and port_delay_frames"
+
+[[function]]
+assembly_symbol = "UpdateSprites"
+assembly_source = "home/update_sprites.asm"
+c_symbol = "port_update_sprites"
+c_source = "verification/ports/update_sprites.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wUpdateSpritesEnabled",
+    "hLoadedROMBank and rROMB",
+    "complete ordered _UpdateSprites call input",
+    "complete post-state from the banked _UpdateSprites seam",
+]
+proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites seam; DEC flags and homecall bank/A/F restoration are preserved exactly"
+decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed, while production C models the DEC flags and calls the explicit port_update_sprites_private seam with the real bank-register save/restore contract"
