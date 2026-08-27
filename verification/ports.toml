@@ -15028,7 +15028,7 @@ observables = [
     "loaded ROM bank and mapper state",
     "town-visited and toggleable-object writes",
 ]
-proof_domain = "map 0 no-previous-map early return plus a normal empty-object map with zero connections/warps/signs/sprites, linked fixed-header/object data, tileset and wild-data calls, dimensions, music, and bank state; nonzero connection/warp/sign/sprite branches remain"
+proof_domain = "map 0 no-previous-map early return plus normal maps with zero connections, zero or one warp, zero signs/sprites, linked fixed-header/object data, tileset and wild-data calls, dimensions, music, and bank state; nonzero connection/sign/sprite branches remain"
 decoder = "exact 444-byte body checked; MarkTown and SwitchToMapRomBank boundaries, fixed-header/connection/object zero-case segments, status branch, proven tileset/wild callees, and finish tail are shimmed compositionally while production C contains the complete variable-length loops"
 
 [[function]]
