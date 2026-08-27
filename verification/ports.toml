@@ -12601,6 +12601,23 @@ decoder = "exact 28-byte body and HRAM offsets checked; INC-E addressing, ordere
 
 
 [[function]]
+assembly_symbol = "GetTileAndCoordsInFrontOfPlayer"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_get_tile_and_coords_in_front"
+c_source = "verification/ports/get_tile_and_coords_in_front.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "front-facing D/E coordinates",
+    "wTileInFrontOfPlayer and C/A tile result",
+]
+proof_domain = "all register/flag inputs, all four documented facing directions, symbolic coordinate bytes including increment/decrement wraps, and the four fixed tilemap reads"
+decoder = "exact 56-byte body checked; GetPredefRegisters boundary, absolute tile/coordinate reads, CP branches, direction arithmetic, and final tile store are executed and compared pathwise"
+
+
+
+
+[[function]]
 assembly_symbol = "GetTileTwoStepsInFrontOfPlayer"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_get_tile_two_steps_in_front_of_player"
