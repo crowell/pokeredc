@@ -82,6 +82,14 @@ print_bit(struct cpu_register_state *r, port_u8 bit, port_u8 value)
 static void
 print_write(struct print_number_state *s, port_u8 value)
 {
+	if (s->record_writes && s->write_count < 7u) {
+		port_u8 index = s->write_count;
+
+		s->write_trace_values[index] = value;
+		s->write_trace_h[index] = s->registers.h;
+		s->write_trace_l[index] = s->registers.l;
+		s->write_count++;
+	}
 	s->written = value; s->did_write = 1;
 	s->write_h = s->registers.h; s->write_l = s->registers.l;
 }
@@ -257,6 +265,8 @@ port_print_number_ones_finish(struct print_number_state *s)
 __attribute__((noinline, used)) void
 port_print_number(struct print_number_state *s)
 {
+	s->record_writes = 1;
+	s->write_count = 0;
 	port_u8 place = port_print_number_begin(s);
 	for (; place >= 3; place--) {
 		if (place == 7) port_print_number_power_millions(s);

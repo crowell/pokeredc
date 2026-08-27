@@ -15716,11 +15716,11 @@ observables = [
     "all registers and flags",
     "number/power/saved-number HRAM",
     "leading-zero state",
-    "tile write and destination pointer",
+    "the complete ordered 2-through-7 tile-write value/address trace plus the final tile write and destination pointer",
     "digit-loop continuation",
 ]
 proof_domain = "all register/flag, caller-valid 1/2/3-byte and 2-through-7-digit configurations, arbitrary source bytes, number, power, saved-number, write, stack-shadow, and leading-zero inputs; entry decoding, all five decimal places, every three-byte subtraction/borrow/rollback path, division-by-ten, tens/ones finalization, and NextDigit behavior compose"
-decoder = "exact 312-byte body checked; input-width loads, digit dispatch, all five linked power-of-ten constants, SM83 compare/subtract/inc/dec/AND/OR/ADD/BIT flags, quotient recurrence, nested borrow across all three bytes, underflow restoration, leading-zero tile emission, past-digit marker, pointer wrap, and saved BC/DE restoration modeled explicitly"
+decoder = "exact 312-byte body checked; input-width loads, digit dispatch, all five linked power-of-ten constants, SM83 compare/subtract/inc/dec/AND/OR/ADD/BIT flags, quotient recurrence, nested borrow across all three bytes, underflow restoration, every ordered leading-zero/digit tile emission, past-digit marker, pointer wrap, and saved BC/DE restoration modeled explicitly; the native wrapper executes the real loops and retains the complete write trace for flat-memory callers"
 
 
 
@@ -28662,3 +28662,213 @@ observables = [
 ]
 proof_domain = "the non-link configuration (wLinkState concrete non-battling; the link-battling branch loops into TextCommand_WAIT_BUTTON and is out of this domain) with the entry A/B/C/D/E symbolic, the entry F concrete-clear, HL concrete (the pushed text pointer, modeled as the entry HL), and the arrow slot symbolic; the ManualTextScroll call composes through the proved port under its terminating A/B observation (the established text-poll boundary precedent); the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
 decoder = "exact 27-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims (the pop written through the p-code's byte-swapped HL pair view), the cp LINK_STATE_BATTLING flag boundary, and the ManualTextScroll call-site boundary carrying the proved terminating transition; the native C writes the arrow and blank tiles, calls the real port_manual_text_scroll with the entry state mapped to its typed inputs, and carries the compare's flag semantics"
+
+[[function]]
+assembly_symbol = "SpriteDifferentialDecode"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_sprite_differential_decode"
+c_source = "verification/ports/sprite_differential_decode.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteCurPosX, wSpriteCurPosY, wSpriteWidth, wSpriteHeight, wSpriteFlipped, wSpriteOutputPtr, wSpriteOutputPtrCached, and both decode-table pointers",
+    "the complete 392-byte possible sprite-buffer destination region and its two adjacent guard bytes",
+    "the exact StoreSpriteOutputPointer and DifferentialDecodeNybble call counts",
+]
+proof_domain = "all initial register/flag, sprite-buffer, and relevant-global inputs for both gameplay buffer origins ($a188 and $a310), all three statically linked square gameplay dimensions (40, 48, and 56 pixels), and both symbolic flip branches; the four immutable linked decode tables are fixed to their exact ROM bytes, and the two independently proven callees receive their complete exact transitions"
+decoder = "the exact complete 153-byte linked body executes under angr through both table-selection paths and the real nested row/column loops (200/288/392 writes, 400/576/784 decode calls, and 40/48/56 pointer commits); only individual SM83 instructions and the independently proven StoreSpriteOutputPointer and DifferentialDecodeNybble transitions are shimmed, while native C executes the same loops and calls both real C ports; the immutable table lookup is represented by its exhaustively checked equivalent Boolean transform"
+
+[[function]]
+assembly_symbol = "TextCommand_BCD"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_bcd"
+c_source = "verification/ports/text_command_bcd.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the three text-stream operand bytes",
+    "the complete PrintBCDNumber call-input register state and exact one-call count",
+]
+proof_domain = "all entry register/canonical-flag inputs and all 24-bit source-pointer/flags-length operands at a concrete representative text-stream location; this includes every gameplay flags/length configuration, and the independently proven PrintBCDNumber receives an arbitrary matching complete transition after its full register input state is proved equal"
+decoder = "the exact complete 18-byte linked handler executes under angr through all three LD [HL+] operands, the saved text-pointer stack round trip, register marshaling, the proved PrintBCDNumber boundary, both post-call cursor copies, and the relative continuation jump; native C calls the real port_print_bcd_number and preserves its complete transition before restoring the text pointer"
+
+[[function]]
+assembly_symbol = "XorSpriteChunks"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_xor_sprite_chunks"
+c_source = "verification/ports/xor_sprite_chunks.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteCurPosX, wSpriteCurPosY, wSpriteWidth, wSpriteHeight, wSpriteLoadFlags, wSpriteFlipped, wSpriteOutputPtr, wSpriteOutputPtrCached, and both decode-table pointers",
+    "the complete 392-byte regions of both possible sprite buffers",
+    "the complete SpriteDifferentialDecode call-input register/global/buffer state",
+    "exact ResetSpriteBufferPointers, SpriteDifferentialDecode, and ReverseNybble call counts, plus every ReverseNybble fetched byte",
+]
+proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs; arbitrary matching complete post-state from the independently proven SpriteDifferentialDecode; both gameplay buffer selections; all three statically linked square gameplay dimensions (40, 48, and 56 pixels); and both symbolic flip paths"
+decoder = "the exact complete 112-byte linked body and 16-byte NybbleReverseTable execute under angr through both flip paths and the real nested row/column loops (200/288/392 XOR writes); only individual SM83 instructions and the independently proven complete ResetSpriteBufferPointers, SpriteDifferentialDecode, and ReverseNybble transitions are shimmed; native C executes both real pointer resets, the real differential decode, every loop iteration, and zero or 400/576/784 real nybble-reversal calls"
+
+[[function]]
+assembly_symbol = "UnpackSpriteMode2"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_unpack_sprite_mode2"
+c_source = "verification/ports/unpack_sprite_mode2.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteCurPosX, wSpriteCurPosY, wSpriteWidth, wSpriteHeight, wSpriteLoadFlags, wSpriteFlipped, wSpriteOutputPtr, wSpriteOutputPtrCached, and both decode-table pointers",
+    "the complete 392-byte regions of both possible sprite buffers and the 16-byte NybbleReverseTable",
+    "the complete SpriteDifferentialDecode and XorSpriteChunks call-input register/global/buffer state",
+    "exact ResetSpriteBufferPointers, SpriteDifferentialDecode, and XorSpriteChunks call counts",
+]
+proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs, including both gameplay buffer selections and every initial flip value; arbitrary matching complete post-states from the independently proven SpriteDifferentialDecode and XorSpriteChunks bodies after their full call inputs are proved equal"
+decoder = "the exact complete 32-byte linked body executes under angr through both real pointer resets, saved-AF flip suppression/restoration, cached-output-pointer load, decode call, and XorSpriteChunks tail jump; only individual unsupported SM83 instructions and the independently proven complete ResetSpriteBufferPointers, SpriteDifferentialDecode, and XorSpriteChunks transitions are shimmed, while native C calls all three real ports in the exact order and preserves the tail-call result"
+
+[[function]]
+assembly_symbol = "UnpackSprite"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_unpack_sprite"
+c_source = "verification/ports/unpack_sprite.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wSpriteCurPosX, wSpriteCurPosY, wSpriteWidth, wSpriteHeight, wSpriteUnpackMode/wSpriteLoadFlags, wSpriteFlipped, wSpriteOutputPtr, wSpriteOutputPtrCached, and both decode-table pointers",
+    "the complete 392-byte regions of both possible sprite buffers and the 16-byte NybbleReverseTable",
+    "the complete ordered call-input register/global/buffer states for both SpriteDifferentialDecode calls and the XorSpriteChunks or UnpackSpriteMode2 tail",
+    "exact SpriteDifferentialDecode, XorSpriteChunks, and UnpackSpriteMode2 call counts",
+]
+proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs over every 8-bit unpack mode: mode 0, mode 2, and all 254 nonzero/non-2 values; arbitrary matching complete post-states from the independently proven callees after every full ordered call input is proved equal"
+decoder = "the exact complete 21-byte linked dispatcher executes under angr through all three terminal paths: two ordered SpriteDifferentialDecode calls for mode 0, the XorSpriteChunks tail for every other non-2 mode, and the UnpackSpriteMode2 tail for mode 2; only individual SM83 load/compare/AND/branch instructions and the independently proven complete callee transitions are shimmed, while native C executes the same dispatch and calls the real ports"
+
+[[function]]
+assembly_symbol = "InitPlayerData2"
+assembly_source = "engine/movie/oak_speech/init_player_data.asm"
+c_symbol = "port_init_player_data2"
+c_source = "verification/ports/init_player_data2.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "all four independent rDIV samples, hRandomAdd, hRandomSub, hLoadedROMBank, and rROMB",
+    "both wPlayerID bytes, wUnusedPlayerDataByte, all four initialized two-byte list heads, all three wPlayerMoney bytes, wMonDataLocation, both badge bytes, and both coin bytes",
+    "the complete 200-byte wGameProgressFlags region",
+    "the complete 32-byte wToggleableObjectFlags region and wToggleableObjectCounter",
+    "the complete ordered input states and exact call counts for two Random calls, four InitializeEmptyList calls, FillMemory, and the InitializeToggleableObjectsFlags tail",
+]
+proof_domain = "all initial register/canonical-flag, RNG/hardware-bank, initialized-field, complete game-progress, and complete toggleable-object inputs; all four divider reads are independent, the first three proven callees use their complete exact transitions, and the independently proven toggleable-object tail receives an arbitrary matching complete post-state after its full call input is proved equal"
+decoder = "the exact complete 80-byte linked body executes under angr through both RNG samples, every scalar/list/money/badge/coin write, the full 200-byte clear, and the final tail jump; only individual unsupported SM83 high-memory, absolute-store, HLI/HLD, and XOR instructions plus the independently proven complete Random, InitializeEmptyList, FillMemory, and InitializeToggleableObjectsFlags boundaries are shimmed, while native C calls every real port in the exact order"
+
+[[function]]
+assembly_symbol = "TextCommand_BOX"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_box"
+c_source = "verification/ports/text_command_box.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the four text-stream operand bytes and restored advanced text pointer",
+    "the complete 360-byte wTileMap region",
+    "the complete TextBoxBorder call-input register/tilemap state and exact one-call count",
+]
+proof_domain = "all entry register/canonical-flag and complete tilemap inputs with a concrete representative text-stream pointer; all symbolic gameplay box operands whose positive 1..18 height/width and upper-left address keep the complete border inside wTileMap; the independently proven TextBoxBorder receives an arbitrary matching complete post-state after its full call input is proved equal"
+decoder = "the exact complete 18-byte linked handler executes under angr through the dispatcher pop, all four HLI operand reads, saved text-pointer stack round trip, register marshaling, proved TextBoxBorder boundary, and relative continuation jump; native C calls the real port_text_box_border and restores the advanced text pointer exactly"
+
+[[function]]
+assembly_symbol = "GetCryData"
+assembly_source = "home/pokemon.asm"
+c_symbol = "port_get_cry_data"
+c_source = "verification/ports/get_cry_data.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wBankswitchHomeTemp, hLoadedROMBank, wBankswitchHomeSavedROMBank, rROMB, wFrequencyModifier, and wTempoModifier",
+    "the complete immutable 570-byte CryData table",
+    "the complete ordered BankswitchHome and BankswitchBack call-input register/bank state and exact one-call counts",
+]
+proof_domain = "all entry register/canonical-flag, bank-control, and cry-modifier inputs for every valid internal Pokemon index 1..190; the exact linked CryData table is fixed by symbol location, length, and SHA-256, and both independently proven bank-switch callees receive their complete exact transitions"
+decoder = "the exact complete 35-byte linked body executes under angr through the species-index decrement, three 16-bit table-offset additions, all three banked CryData reads, both modifier writes, restored bank, and final cry-SFX arithmetic; only individual unsupported or mis-modeled SM83 instructions and the independently proven complete BankswitchHome and BankswitchBack transitions are shimmed, while native C calls both real bank-switch ports in order"
+
+[[function]]
+assembly_symbol = "PlayCry"
+assembly_source = "home/pokemon.asm"
+c_symbol = "port_play_cry"
+c_source = "verification/ports/play_cry.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete PlaySound audio state, bank-control bytes, cry modifiers, and immutable 570-byte CryData table",
+    "the complete ordered GetCryData, PlaySound, and WaitForSoundToFinish call-input states and exact one-call counts",
+]
+proof_domain = "all entry register/canonical-flag, complete audio, bank-control, and cry-modifier inputs with unified hLoadedROMBank/rROMB aliases; arbitrary matching complete post-states from the independently proven GetCryData and WaitForSoundToFinish bodies and the proven PlaySound observable transition after every complete call input is proved equal"
+decoder = "the exact complete 9-byte linked body executes under angr through the GetCryData call, PlaySound call, and WaitForSoundToFinish tail jump; native C calls all three real ports in exact order, synchronizes the shared audio bank globals across their portable state adapters, and preserves the tail result"
+
+[[function]]
+assembly_symbol = "TextCommand_SOUND"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_sound"
+c_source = "verification/ports/text_command_sound.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags plus the restored advanced text pointer and command byte",
+    "the complete PlaySound audio state, bank-control bytes, cry modifiers, and immutable 570-byte CryData table",
+    "the exact immutable 20-byte TextCommandSounds table",
+    "the complete ordered PlaySound/WaitForSoundToFinish or PlayCry call-input states and exact per-path call counts",
+]
+proof_domain = "all entry register/canonical-flag, complete audio, bank-control, and cry-modifier inputs at a concrete representative text-stream location for all ten legal sound commands: seven ordinary SFX commands and the Nidorina, Pidgeot, and Dewgong cry commands; independently proven callees receive arbitrary matching complete post-states after every full call input is proved equal"
+decoder = "the exact complete 51-byte linked handler executes under angr through the dispatcher pop, real linear table-search loop, all three cry comparisons, ordinary PlaySound/Wait calls, cry-path DE save/restore and PlayCry call, both stack restorations, and both continuation jumps; only individual unsupported SM83 stack/load/compare instructions and the independently proven complete callee transitions are shimmed, while native C executes the same finite table search and calls the real ports"
+
+[[function]]
+assembly_symbol = "TextCommand_NUM"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_num"
+c_source = "verification/ports/text_command_num.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the dispatcher's pushed text pointer restored into HL",
+    "hPastLeadingZeroes and the complete 3-byte hNumToPrint, hPowerOf10, and hSavedNumToPrint HRAM triple",
+    "the exact 3-byte PrintNumber source operand stream",
+    "the complete 7-byte destination write trace (values, H, L) in order",
+    "the exact ordered PrintNumber call-input state and exact call count (one per digit path)",
+]
+proof_domain = "exact NUM header (3 operand bytes at the pushed text pointer) with B/C set to the destination cursor and the full 7x11 numeric matrix; every register input is symbolic except A and the byte_count/digits which range over all 18 legal (byte_count, digits) combinations; the independently proven PrintNumber receives an arbitrary matching print_number_state after its complete call input is proved equal"
+decoder = "the exact 32-byte linked body executes under angr under one unbroken per-instruction hook chain across all 18 parametrizations; SM83-only LD A,[HL+]/INC HL/POP HL/PUSH HL/AND/swap/BIT/ADD/LD reg,reg shims plus an explicit PrintNumber compositional boundary that snapshots the complete call input — registers, HRAM, source, and destination — and applies an arbitrary matching post-state; native C performs the same operand fetch, dimension setup, and calls the real port_print_number"
+
+[[function]]
+assembly_symbol = "TextCommand_START"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_start"
+c_source = "verification/ports/text_command_start.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "text destination window (DEST..DEST+STRLEN+1)",
+    "text source pointer window (TEXTPTR..TEXTPTR+len(STRING)-1)",
+]
+proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-bit text pointer (TEXTPTR) holding the concrete 'HELLO@' string, and the destination window (DEST); the internal call to PlaceString is treated as a proved compositional boundary and replaced by an angr SimProcedure that writes the rendered tile bytes and leaves B/C, D/E, A, and F at the documented post-call values"
+decoder = "exact 14-byte linked body e1545d6069cd5519626b2318be verified; the post-call tail (ld h,d; ld l,e; inc hl) and the PlaceString call are each shimmed with an angr SimProcedure; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
+
+[[function]]
+assembly_symbol = "TextCommand_RAM"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_ram"
+c_source = "verification/ports/text_command_ram.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "text destination window (DEST..DEST+STRLEN+1)",
+    "text source string window (SRC..SRC+len(STRING)-1)",
+]
+proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-bit text pointer (TEXTPTR) holding a concrete 2-byte little-endian pointer to a RAM source (SRC) that holds the concrete 'HELLO@' string, and the destination window (DEST); the internal call to PlaceString is treated as a proved compositional boundary and replaced by an angr SimProcedure that writes the rendered tile bytes and leaves B/C, D/E, A, and F at the documented post-call values"
+decoder = "exact 14-byte linked body e12a5f2a57e56069cd5519e118b0 verified; the ld a,[hli] post-increment loads (0x2A) are shimmed with an angr SimProcedure because the generic z80 p-code arch mis-decodes them as LD HL,(nn), and the PlaceString call is shimmed; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
