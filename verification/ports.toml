@@ -14973,6 +14973,22 @@ decoder = "exact 112-byte body checked; five saved stack words, bag/PC capacity 
 
 
 [[function]]
+assembly_symbol = "LoadTilesetHeader"
+assembly_source = "engine/overworld/tilesets.asm"
+c_symbol = "port_load_tileset_header"
+c_source = "verification/ports/load_tileset_header.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "the complete 11-byte wTilesetBank header",
+    "hTileAnimations and hMovingBGTilesCounter1",
+    "wYBlockCoord and wXBlockCoord",
+    "the four-byte wCurrentTileBlockMapViewPointer destination",
+]
+proof_domain = "tilesets 0 and 1 with equal and unequal previous tilesets, destination warp $ff and a real warp 0, linked Tilesets/DungeonTilesets tables, and complete predef register restoration"
+decoder = "exact 94-byte body checked; GetPredefRegisters, IsInArray, LoadDestinationWarpPosition, fixed header copy, dungeon/previous-tile branches, and Y/X block-coordinate updates are composed with instruction-level SM83 load/store/branch shims"
+
+[[function]]
 assembly_symbol = "LoadDestinationWarpPosition"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_load_destination_warp_position"
