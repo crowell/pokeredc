@@ -14989,6 +14989,20 @@ proof_domain = "tilesets 0 and 1 with equal and unequal previous tilesets, desti
 decoder = "exact 94-byte body checked; GetPredefRegisters, IsInArray, LoadDestinationWarpPosition, fixed header copy, dungeon/previous-tile branches, and Y/X block-coordinate updates are composed with instruction-level SM83 load/store/branch shims"
 
 [[function]]
+assembly_symbol = "LoadWildData"
+assembly_source = "engine/overworld/wild_mons.asm"
+c_symbol = "port_load_wild_data"
+c_source = "verification/ports/load_wild_data.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wGrassRate and wWaterRate",
+    "the complete wGrassMons and wWaterMons arrays",
+]
+proof_domain = "map-0 linked wild-data pointer setup covering grass and water rates absent/present, complete 20-byte grass/water copies, pointer/BC/DE/HL state, and rate writes"
+decoder = "exact 51-byte body checked; fixed pointer-table lookup and CopyData call/tail boundaries plus individual SM83 HLI, AND, branch, pair setup, ADD HL,BC, and absolute-store shims are composed with the real port_copy_data loop"
+
+[[function]]
 assembly_symbol = "LoadDestinationWarpPosition"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_load_destination_warp_position"
