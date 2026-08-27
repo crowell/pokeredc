@@ -28832,3 +28832,23 @@ observables = [
 ]
 proof_domain = "exact NUM header (3 operand bytes at the pushed text pointer) with B/C set to the destination cursor and the full 7x11 numeric matrix; every register input is symbolic except A and the byte_count/digits which range over all 18 legal (byte_count, digits) combinations; the independently proven PrintNumber receives an arbitrary matching print_number_state after its complete call input is proved equal"
 decoder = "the exact 32-byte linked body executes under angr under one unbroken per-instruction hook chain across all 18 parametrizations; SM83-only LD A,[HL+]/INC HL/POP HL/PUSH HL/AND/swap/BIT/ADD/LD reg,reg shims plus an explicit PrintNumber compositional boundary that snapshots the complete call input — registers, HRAM, source, and destination — and applies an arbitrary matching post-state; native C performs the same operand fetch, dimension setup, and calls the real port_print_number"
+
+[[function]]
+assembly_symbol = "TextCommand_START"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_start"
+c_source = "verification/ports/text_command_start.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "text destination window (DEST..DEST+STRLEN+1)",
+    "text source pointer window (TEXTPTR..TEXTPTR+len(STRING)-1)",
+]
+proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-bit text pointer (TEXTPTR) holding the concrete 'HELLO@' string, and the destination window (DEST); the internal call to PlaceString is treated as a proved compositional boundary and replaced by an angr SimProcedure that writes the rendered tile bytes and leaves B/C, D/E, A, and F at the documented post-call values"
+decoder = "exact 10-byte linked body e1545d6069cd5519626b2318be verified; the post-call tail (ld h,d; ld l,e; inc hl) and the PlaceString call are each shimmed with an angr SimProcedure; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
