@@ -29169,3 +29169,18 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, matching and checksum-failure paths, deterministic SRAM contents, and every byte in the fixed box-data transfer; CalcCheckSum and CopyData compose through their independently proven transitions"
 decoder = "the exact 45-byte linked body is checked byte-for-byte; hardware stores, CalcCheckSum, checksum comparison, CopyData, and GoodCheckSum/CheckSumFailed effects are shimmed at audited boundaries, while production C performs the complete checksum gate and box-data transfer"
+
+[[function]]
+assembly_symbol = "LoadPartyAndDexData"
+assembly_source = "engine/menus/save.asm"
+c_symbol = "port_load_party_and_dex_data"
+c_source = "verification/ports/load_party_and_dex_data.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "rRAMG, rRAMB, and rBMODE",
+    "the saved checksum byte",
+    "the complete party-data and Pokédex destination regions",
+]
+proof_domain = "all general-register and canonical-flag inputs, matching and checksum-failure paths, deterministic SRAM contents, and every byte in the fixed party-data and Pokédex transfers; CalcCheckSum and CopyData compose through their independently proven transitions"
+decoder = "the exact 58-byte linked body is checked byte-for-byte; hardware stores, CalcCheckSum, checksum comparison, both CopyData calls, and GoodCheckSum/CheckSumFailed effects are shimmed at audited boundaries, while production C performs the complete checksum gate and party/Pokédex transfers"
