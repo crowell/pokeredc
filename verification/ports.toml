@@ -29057,3 +29057,20 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, every 8-bit badge mask, arbitrary initial count/number/HRAM/trace/tile state, and both actual callers' fixed HL destinations (17,11 and 17,4); CountSetBits uses its complete bit-count transition and PrintNumber uses an arbitrary matching complete proven transition constrained to its one real badge-count write"
 decoder = "the exact complete 19-byte linked body executes under angr; only individual PUSH/POP and immediate register-load instructions plus the two independently proven callee boundaries are shimmed, while production C calls real port_count_set_bits and port_print_number, transfers every memory-backed PrintNumber field, and applies the real ordered write trace"
+
+[[function]]
+assembly_symbol = "PrintNumOwnedMons"
+assembly_source = "engine/menus/main_menu.asm"
+c_symbol = "port_print_num_owned_mons"
+c_source = "verification/ports/print_num_owned_mons.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "all 19 wPokedexOwned bytes and the complete wNumSetBits source region",
+    "hPastLeadingZeroes, hNumToPrint, hPowerOf10, and hSavedNumToPrint",
+    "complete PrintNumber state and ordered one/two/three-tile write traces",
+    "complete possible tile destinations with adjacent guards at both real call sites",
+    "complete ordered CountSetBits and PrintNumber call inputs",
+]
+proof_domain = "all general-register and canonical-flag inputs, all 2^152 Pokedex-owned bitfields, arbitrary initial count/number/HRAM/trace/tile state, both actual callers' fixed HL destinations (16,13 and 16,6), and every one-, two-, and three-digit terminal path; both callees compose through complete proven transitions"
+decoder = "the exact complete 19-byte linked body executes under angr; only individual PUSH/POP and immediate register-load instructions plus the two independently proven callee boundaries are shimmed, while production C calls real port_count_set_bits across all 19 bytes and real port_print_number, transfers every memory-backed field, and applies each feasible ordered write trace"
