@@ -100,5 +100,5 @@ Post-merge (upstream `ds4`), now **proven** and ready to compose:
 Remaining blockers: `BattleCore` (whole file); partial entries for
 `MainInBattleLoop`, `ExecutePlayerMove/EnemyMove`, `CalculateDamage`,
 `CriticalHitTest`, `MoveHitTest`, `DisplayBattleMenu`,
-`MoveSelectionMenu`; faint/end-of-battle handlers; the dialogue chain
-(`TextCommandProcessor`) above; and the audio engine.
+`MoveSelectionMenu`; faint/end-of-battle handlers; full message-box setup,
+naming/intro continuation, and the audio engine.
