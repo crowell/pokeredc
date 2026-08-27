@@ -29040,3 +29040,20 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all initial sprite-buffer/tilemap/global states, both C=0 centered and C!=0 upper-right paths, and both zero/nonzero wSpriteFlipped layouts; UncompressSpriteFromDE uses its proven sprite-source seam, CopyData and InterlaceMergeSpriteBuffers use arbitrary matching complete proven transitions, and the fixed predef pointer plus CopyUncompressedPicToTilemap use their complete proven transitions"
 decoder = "the exact complete 42-byte linked body and exact complete 39-byte Predef dispatcher execute under angr; the bank-13 CopyUncompressedPicToTilemap pointer entry is byte-verified as 0f:c670, only individual SM83 stack/load/ALU/store/jump instructions and the five independently proven callee boundaries are shimmed, while production C calls every real C port, performs the fixed predef bank restoration, and applies all real 7x7 tile writes"
+
+[[function]]
+assembly_symbol = "PrintNumBadges"
+assembly_source = "engine/menus/main_menu.asm"
+c_symbol = "port_print_num_badges"
+c_source = "verification/ports/print_num_badges.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wObtainedBadges and the complete wNumSetBits source region",
+    "hPastLeadingZeroes, hNumToPrint, hPowerOf10, and hSavedNumToPrint",
+    "complete PrintNumber state and ordered tile-write trace",
+    "tile destinations with adjacent guards at both real call sites",
+    "complete ordered CountSetBits and PrintNumber call inputs",
+]
+proof_domain = "all general-register and canonical-flag inputs, every 8-bit badge mask, arbitrary initial count/number/HRAM/trace/tile state, and both actual callers' fixed HL destinations (17,11 and 17,4); CountSetBits uses its complete bit-count transition and PrintNumber uses an arbitrary matching complete proven transition constrained to its one real badge-count write"
+decoder = "the exact complete 19-byte linked body executes under angr; only individual PUSH/POP and immediate register-load instructions plus the two independently proven callee boundaries are shimmed, while production C calls real port_count_set_bits and port_print_number, transfers every memory-backed PrintNumber field, and applies the real ordered write trace"
