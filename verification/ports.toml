@@ -28815,3 +28815,20 @@ observables = [
 ]
 proof_domain = "all entry register/canonical-flag, complete audio, bank-control, and cry-modifier inputs at a concrete representative text-stream location for all ten legal sound commands: seven ordinary SFX commands and the Nidorina, Pidgeot, and Dewgong cry commands; independently proven callees receive arbitrary matching complete post-states after every full call input is proved equal"
 decoder = "the exact complete 51-byte linked handler executes under angr through the dispatcher pop, real linear table-search loop, all three cry comparisons, ordinary PlaySound/Wait calls, cry-path DE save/restore and PlayCry call, both stack restorations, and both continuation jumps; only individual unsupported SM83 stack/load/compare instructions and the independently proven complete callee transitions are shimmed, while native C executes the same finite table search and calls the real ports"
+
+[[function]]
+assembly_symbol = "TextCommand_NUM"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_num"
+c_source = "verification/ports/text_command_num.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the dispatcher's pushed text pointer restored into HL",
+    "hPastLeadingZeroes and the complete 3-byte hNumToPrint, hPowerOf10, and hSavedNumToPrint HRAM triple",
+    "the exact 3-byte PrintNumber source operand stream",
+    "the complete 7-byte destination write trace (values, H, L) in order",
+    "the exact ordered PrintNumber call-input state and exact call count (one per digit path)",
+]
+proof_domain = "exact NUM header (3 operand bytes at the pushed text pointer) with B/C set to the destination cursor and the full 7x11 numeric matrix; every register input is symbolic except A and the byte_count/digits which range over all 18 legal (byte_count, digits) combinations; the independently proven PrintNumber receives an arbitrary matching print_number_state after its complete call input is proved equal"
+decoder = "the exact 32-byte linked body executes under angr under one unbroken per-instruction hook chain across all 18 parametrizations; SM83-only LD A,[HL+]/INC HL/POP HL/PUSH HL/AND/swap/BIT/ADD/LD reg,reg shims plus an explicit PrintNumber compositional boundary that snapshots the complete call input — registers, HRAM, source, and destination — and applies an arbitrary matching post-state; native C performs the same operand fetch, dimension setup, and calls the real port_print_number"
