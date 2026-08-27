@@ -196,6 +196,8 @@ finish:
 	port_load_tileset_header(r, memory);
 	port_load_wild_data(r, memory);
 	set_hl(r, saved_hl);
+	memory[0xd524u] = (port_u8)(memory[W_CUR_MAP_HEADER + 1u] << 1);
+	memory[0xd525u] = (port_u8)(memory[W_CUR_MAP_HEADER + 2u] << 1);
 	r->a = memory[W_CUR_MAP]; r->c = r->a; r->b = 0;
 	port_u8 saved_bank = memory[H_LOADED_ROM_BANK]; memory[H_LOADED_ROM_BANK] = 3; memory[R_ROMB] = 3;
 	set_hl(r, (port_u16)(MAP_SONG_BANKS + (port_u16)map * 2u)); add_hl(r, pair(r->b, r->c)); add_hl(r, pair(r->b, r->c));

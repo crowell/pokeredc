@@ -15028,8 +15028,8 @@ observables = [
     "loaded ROM bank and mapper state",
     "town-visited and toggleable-object writes",
 ]
-proof_domain = "no-previous-map early-return path with map 0, sentinel toggle-object data, and linked bank state; full header, connection, object, sprite, tileset, wild-data, and music paths are implemented but not yet covered by the focused proof"
-decoder = "exact 444-byte body checked; MarkTown and SwitchToMapRomBank boundaries plus early tile-set/bit-test instructions are shimmed while production C contains the complete header, connection, warp, sign, sprite, tileset, wild-data, and music sequencing"
+proof_domain = "map 0 no-previous-map early return plus a normal empty-object map with zero connections/warps/signs/sprites, linked fixed-header/object data, tileset and wild-data calls, dimensions, music, and bank state; nonzero connection/warp/sign/sprite branches remain"
+decoder = "exact 444-byte body checked; MarkTown and SwitchToMapRomBank boundaries, fixed-header/connection/object zero-case segments, status branch, proven tileset/wild callees, and finish tail are shimmed compositionally while production C contains the complete variable-length loops"
 
 [[function]]
 assembly_symbol = "LoadTileBlockMap"
