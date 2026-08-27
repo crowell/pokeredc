@@ -15017,6 +15017,21 @@ proof_domain = "warp IDs 0, 1, and 3 with arbitrary entry registers, a four-byte
 decoder = "exact 35-byte body checked; individual SM83 LDH/absolute loads/stores, pair setup, pointer arithmetic, AF save/restore, and the proven CopyData transition are composed under angr"
 
 [[function]]
+assembly_symbol = "LoadMapHeader"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_load_map_header"
+c_source = "verification/ports/load_map_header.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "map tile-set/previous-tile-set state",
+    "loaded ROM bank and mapper state",
+    "town-visited and toggleable-object writes",
+]
+proof_domain = "no-previous-map early-return path with map 0, sentinel toggle-object data, and linked bank state; full header, connection, object, sprite, tileset, wild-data, and music paths are implemented but not yet covered by the focused proof"
+decoder = "exact 444-byte body checked; MarkTown and SwitchToMapRomBank boundaries plus early tile-set/bit-test instructions are shimmed while production C contains the complete header, connection, warp, sign, sprite, tileset, wild-data, and music sequencing"
+
+[[function]]
 assembly_symbol = "LoadTileBlockMap"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_load_tile_block_map"
