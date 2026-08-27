@@ -28988,3 +28988,17 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, all 256 wOptions values, all initial cursor globals, and symbolic 18-byte windows for each option-menu row; the four IsInArray outcomes and both option-bit shifts cover every feasible path"
 decoder = "exact 74-byte linked body 219760fa55d34fe63fc5110200cdab3dc12b7eea3dcd21dcc3cd8f60cb213e0130023e0aea3ecd2140c4cd8f60cb213e0130023e0aea3fcd21a4c4cd8f6021e0c43e015f16001936ecc9 verified; SM83 AND/SLA/HL arithmetic and the three local arrow writes are shimmed, while IsInArray composes through its complete proven transition"
+
+[[function]]
+assembly_symbol = "GetTextBoxIDText"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_get_text_box_id_text"
+c_source = "verification/ports/get_text_box_id_text.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "text pointer in D:E",
+    "text-box table bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs, arbitrary text-pointer bytes, and every legal screen coordinate (row 0..17, column 0..19); GetAddressOfScreenCoords composes through its complete proven coordinate transition"
+decoder = "exact 14-byte linked body 2a5f2a57d52a5f7e57cd7573d1c9 verified; all HL+ loads and stack pointer restoration are shimmed, while the coordinate call is replaced by its proven symbolic transition"
