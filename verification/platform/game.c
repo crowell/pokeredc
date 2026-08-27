@@ -113,6 +113,7 @@ void port_main_menu_private(struct main_menu_private_mirror *state);
 void port_start_new_game(struct reset_strength_state *state);
 void port_handle_menu_input_(struct handle_menu_input_mirror *state);
 void port_start_new_game_debug(struct start_new_game_debug_mirror *state);
+void port_init_player_data2(struct init_player_data2_state *state, port_u8 *memory);
 
 /* ---- ROM symbols --------------------------------------------------- */
 #define BANK_LOGOS 4u /* NintendoCopyright/GameFreak/Pokemon logo gfx */
@@ -393,7 +394,6 @@ static void
 game_enter_menu(struct mac_kernel *kernel, uint8_t *memory,
 	const struct mac_rom *rom, struct mac_game *game)
 {
-	struct cpu_register_state regs = { 0 };
 	game->phase = MAC_PHASE_MENU;
 	game->frames_in_phase = 0;
 	game->menu_item = 0;
@@ -471,8 +471,7 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	memset(&start, 0, sizeof(start));
 	port_start_new_game_debug(&start);
 
-	/* REQUIRED: InitPlayerData2 - party/inventory setup for a new file.
-	 * StartNewGame's status-flag reset via its ported head: */
+	/* StartNewGame's status-flag reset via its ported head. */
 	{
 		struct reset_strength_state sng;
 
@@ -491,12 +490,6 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	regs.b = 0;
 	regs.c = 11;
 	port_copy_data(&regs, memory);
-#ifdef GAME_DEBUG
-	fprintf(stderr, "dbg: post-player name:");
-	for (unsigned i = 0; i < 7; i++)
-		fprintf(stderr, " %02x", memory[W_PLAYER_NAME + i]);
-	fprintf(stderr, "\n");
-#endif
 
 	regs.h = (port_u8)(SRC_DEBUG_RIVAL_NAME >> 8);
 	regs.l = (port_u8)(SRC_DEBUG_RIVAL_NAME & 0xFFu);
@@ -509,12 +502,32 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	port_clear_screen(&regs, memory);
 
 	/* PrepareOakSpeech through its port (fills intro buffers, models
-	 * InitOptions and the name CopyData internally). */
+	 * InitOptions and the name CopyData internally). This port also
+	 * performs the InitPlayerData full-region reset, so InitPlayerData2
+	 * below must run AFTER it for the new-file state to persist. */
 	port_prepare_oak_speech(&regs, memory);
 
 	/* GetMonHeader for Nidorino ($A7), feeding later picture loads. */
 	regs.a = 0xA7;
 	port_get_mon_header(&regs, memory);
+
+	/* InitPlayerData2 through its port: seeds RNG from TIMA/DIV samples
+	 * (captured here as host values), then fills player ID, the party/
+	 * box/bag empty lists, money, badges, and the progress-flag block.
+	 * Runs after PrepareOakSpeech because that port bundles the
+	 * InitPlayerData reset. */
+	{
+		struct init_player_data2_state ipd2;
+
+		memset(&ipd2, 0, sizeof(ipd2));
+		ipd2.div_samples[0] = 0x3Cu;
+		ipd2.div_samples[1] = 0x9Fu;
+		ipd2.div_samples[2] = 0x21u;
+		ipd2.div_samples[3] = 0x7Eu;
+		ipd2.loaded_bank = memory[H_LOADED_ROM_BANK];
+		ipd2.rom_bank = memory[0x2000u];
+		port_init_player_data2(&ipd2, memory);
+	}
 
 	/* LoadTextBoxTilePatterns (LCD-off synchronous branch). */
 	{
@@ -549,11 +562,12 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	 * display routine itself is still REQUIRED below. */
 	port_fade_in_intro_pic(&regs, memory);
 
-	/* REQUIRED: InitPlayerData2, PlayMusic,
-	 * IntroDisplayPicCenteredOrUpperRight, FadeInIntroPic,
-	 * GetMonHeader, LoadFlippedFrontSpriteByMonIndex, MovePicLeft +
-	 * oak_speech_slide pair, ChoosePlayerName/ChooseRivalName,
-	 * PrintText->TextCommandProcessor dialogue chain. */
+	/* Still REQUIRED to finish the Oak intro: PlayMusic,
+	 * IntroDisplayPicCenteredOrUpperRight, the picture pipeline
+	 * (LoadFlippedFrontSpriteByMonIndex is still a stub, so the mon
+	 * does not actually render), MovePicLeft + oak_speech_slide pair,
+	 * ChoosePlayerName/ChooseRivalName, and the
+	 * PrintText->TextCommandProcessor dialogue chain (dispatcher open). */
 }
 
 /* ------------------------------------------------------------------ */

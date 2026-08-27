@@ -52,12 +52,12 @@ Ported and available for deeper composition: `port_scroll_title_screen_game_vers
 
 
 | asm label | defined at | gates |
-| `TextCommandProcessor` | home/text.asm | **all real dialogue rendering**. Dispatcher + BOX/START/RAM/BCD/START_ASM/NUM/DOTS/SOUND/FAR still open; six handlers are ported and proven (`TextCommand_{SCROLL,PAUSE,MOVE,LOW,WAIT_BUTTON,PROMPT_BUTTON}`) plus `PrintLetterDelay`/`ScrollTextUpOneLine`/`PrintBCDDigit`/`PrintBCDNumber`. Driver falls back to raw `PlaceString` of ROM strings |
+| `TextCommandProcessor` | home/text.asm | **all real dialogue rendering**. **All 13 handlers now proven** (`SCROLL,PAUSE,MOVE,LOW,WAIT_BUTTON,PROMPT_BUTTON,BCD,BOX,SOUND,NUM,START,RAM` + the simple ones); only the dispatcher loop itself remains unported. Driver still falls back to raw `PlaceString` of ROM strings until the dispatcher lands |
 | `DisplayTextBoxID_` / MESSAGE_BOX template | home/textbox.asm + engine/text_box.asm | standard message-box layout (driver draws border+text manually). Composable pieces exist: `port_search_text_box_table`, `port_get_text_box_id_coords`, two-option-menu tile savers |
-| `InitPlayerData2` | oak_speech/init_player_data.asm | party/inventory for a new file |
-| ~~`GetMonHeader`~~ / ~~`FadeInIntroPic`~~ | home/pokemon.asm, engine/movie/intro.asm | **PORTED & composed** (`port_get_mon_header` with A=Nidorino/$A7; `port_fade_in_intro_pic` six-step BGP fade) |
-| `IntroDisplayPicCenteredOrUpperRight`, `FadeInIntroPic`, `GBFadeOutToWhite`, `GBFadeInFromWhite` | engine/movie/intro.asm, home/fade.asm | Oak/Nidorino pictures and fades |
-| `GetMonHeader`, `LoadFlippedFrontSpriteByMonIndex` | home/pokemon.asm, home/pics.asm | Nidorino battle pic |
+| ~~`InitPlayerData2`~~ | oak_speech/init_player_data.asm | **PORTED & composed** - seeds RNG from host DIV samples, fills player ID / party / box / bag empty lists, money (¥300), badges, progress flags. Runs after `port_prepare_oak_speech` because that port bundles the `InitPlayerData` full-region reset |
+| ~~`FadeInIntroPic`~~ | engine/movie/intro.asm | **PORTED & composed** (`port_fade_in_intro_pic` six-step BGP fade); the intro picture itself still waits on the `LoadFlippedFrontSpriteByMonIndex` stub |
+| `IntroDisplayPicCenteredOrUpperRight`, `GBFadeOutToWhite`, `GBFadeInFromWhite` | engine/movie/intro.asm, home/fade.asm | Oak/Nidorino picture placement and the white fades (the pic display still blocked by the `LoadFlippedFrontSpriteByMonIndex` stub) |
+| ~~`GetMonHeader`~~ (`port_get_mon_header` composed) / `LoadFlippedFrontSpriteByMonIndex` | home/pokemon.asm, home/pics.asm | GetMonHeader done; `LoadFlippedFrontSpriteByMonIndex` is **proven in the ledger but a stub** - front-pic bytes never transfer, so the Nidorino / Oak pictures still don't render |
 | `ChoosePlayerName` / `ChooseRivalName` / naming screen | engine/menus/naming_screen.asm | naming screens (`port_choose_player_name_done`, `port_ask_name_declined_nickname`, `port_calc_string_length`, `port_load_ed_tile` are ported tails) |
 | `PlayMusic` (Music_OakSpeech) | audio/ | intro theme |
 
