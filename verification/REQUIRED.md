@@ -52,7 +52,7 @@ Ported and available for deeper composition: `port_scroll_title_screen_game_vers
 
 
 | asm label | defined at | gates |
-| `TextCommandProcessor` | home/text.asm | **all real dialogue rendering**. **All 13 handlers now proven** (`SCROLL,PAUSE,MOVE,LOW,WAIT_BUTTON,PROMPT_BUTTON,BCD,BOX,SOUND,NUM,START,RAM` + the simple ones); only the dispatcher loop itself remains unported. Driver still falls back to raw `PlaceString` of ROM strings until the dispatcher lands |
+| ~~`TextCommandProcessor`~~ | home/text.asm | **PORTED & composed** - driver now runs the real dispatcher for Oak's bank-1 `TX_FAR` pointer into bank-22 dialogue. All command handlers and FAR bank switching are proven; other message-box setup remains open |
 | `DisplayTextBoxID_` / MESSAGE_BOX template | home/textbox.asm + engine/text_box.asm | standard message-box layout (driver draws border+text manually). Composable pieces exist: `port_search_text_box_table`, `port_get_text_box_id_coords`, two-option-menu tile savers |
 | ~~`InitPlayerData2`~~ | oak_speech/init_player_data.asm | **PORTED & composed** - seeds RNG from host DIV samples, fills player ID / party / box / bag empty lists, money (¥300), badges, progress flags. Runs after `port_prepare_oak_speech` because that port bundles the `InitPlayerData` full-region reset |
 | ~~`FadeInIntroPic`~~ | engine/movie/intro.asm | **PORTED & composed** (`port_fade_in_intro_pic` six-step BGP fade); the intro picture itself still waits on the `LoadFlippedFrontSpriteByMonIndex` stub |
@@ -61,10 +61,10 @@ Ported and available for deeper composition: `port_scroll_title_screen_game_vers
 | `ChoosePlayerName` / `ChooseRivalName` / naming screen | engine/menus/naming_screen.asm | naming screens (`port_choose_player_name_done`, `port_ask_name_declined_nickname`, `port_calc_string_length`, `port_load_ed_tile` are ported tails) |
 | `PlayMusic` (Music_OakSpeech) | audio/ | intro theme |
 
-Text-engine progress toward `TextCommandProcessor`: `TextCommand_PAUSE`,
-`TextCommand_SCROLL`, `PrintLetterDelay`, `ScrollTextUpOneLine`,
-`PrintBCDDigit`/`PrintBCDNumber`, and the `Joypad` homecall wrapper are
-now ported.
+Text-engine progress: `TextCommandProcessor` and all command handlers are
+now ported and the Oak driver composes the dispatcher, including its
+bank-1-to-bank-22 `TX_FAR` text stream. `DisplayTextBoxID_` / message-box
+setup, naming flow, and picture transfer remain separate gaps.
 
 Ported fragments ready to compose once the drivers above exist:
 `port_move_pic_left`, `port_oak_speech_slide_pic_right`,

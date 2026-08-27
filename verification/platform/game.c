@@ -27,6 +27,8 @@ void port_copy_data(struct cpu_register_state *state, port_u8 *memory);
 void port_clear_both_bg_maps(struct fill_memory_state *state,
 	port_u8 *memory);
 void port_place_string(struct cpu_register_state *state, port_u8 *memory);
+void port_text_command_processor(struct cpu_register_state *state,
+	port_u8 *memory);
 void port_text_box_border(struct text_box_border_state *state,
 	port_u8 *memory);
 void port_load_text_box_tile_patterns(
@@ -123,6 +125,7 @@ void port_init_player_data2(struct init_player_data2_state *state, port_u8 *memo
 #define BANK_VERSION_GFX 26u /* $1A */
 #define SRC_VERSION_GFX 0x402Fu /* $50 1bpp bytes */
 #define BANK_TEXT 1u
+#define TX_FAR 0x17u
 #define SRC_NEW_GAME_TEXT 0x5D87u /* "NEW GAME@" */
 #define SRC_VERSION_ON_TITLE_TEXT 0x45A1u
 #define SRC_OAK_SPEECH_TEXT1 0x6253u
@@ -212,6 +215,42 @@ place_rom_string(struct mac_kernel *kernel, uint8_t *memory,
 	regs.d = (port_u8)(src_addr >> 8);
 	regs.e = (port_u8)(src_addr & 0xFFu);
 	port_place_string(&regs, memory);
+}
+
+/* Runs the real TextCommandProcessor for a ROM text stream. The GB mapper
+ * exposes only one switchable bank at $4000-$7fff; FAR text therefore needs
+ * its root command staged after the target bank is mapped. */
+static void
+process_rom_text(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom, unsigned x, unsigned y, unsigned src_addr)
+{
+	struct cpu_register_state regs = { 0 };
+	port_u8 saved_bank = memory[H_LOADED_ROM_BANK];
+	port_u8 root[5];
+	unsigned i;
+
+	memory[H_LOADED_ROM_BANK] = BANK_TEXT;
+	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
+	hlcoord(&regs, x, y);
+	regs.b = regs.h;
+	regs.c = regs.l;
+	regs.h = (port_u8)(src_addr >> 8);
+	regs.l = (port_u8)(src_addr & 0xFFu);
+
+	if (memory[src_addr] == TX_FAR) {
+		for (i = 0; i < sizeof(root); i++)
+			root[i] = memory[src_addr + i];
+
+		memory[H_LOADED_ROM_BANK] = root[3];
+		rom_sync_window(memory, rom, &kernel->cached_rom_bank);
+		for (i = 0; i < sizeof(root); i++)
+			memory[src_addr + i] = root[i];
+	}
+
+	port_text_command_processor(&regs, memory);
+
+	memory[H_LOADED_ROM_BANK] = saved_bank;
+	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
 }
 
 /* ------------------------------------------------------------------ */
@@ -543,9 +582,9 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 		rom_sync_window(memory, rom, &kernel->cached_rom_bank);
 	}
 
-	/* Message box + first Oak line. The asm reaches this through
-	 * PrintText -> TextCommandProcessor; TextCommandProcessor is not
-	 * ported (see REQUIRED.md), so the raw string is placed directly. */
+	/* Message box + first Oak line. TextCommandProcessor is now ported;
+	 * process the bank-1 FAR pointer and its bank-22 text payload through
+	 * the real dispatcher and handlers. */
 	{
 		struct text_box_border_state border;
 
@@ -555,7 +594,7 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 		border.registers.c = 18;
 		port_text_box_border(&border, memory);
 	}
-	place_rom_string(kernel, memory, rom, 2, 14, SRC_OAK_SPEECH_TEXT1);
+	process_rom_text(kernel, memory, rom, 2, 14, SRC_OAK_SPEECH_TEXT1);
 
 	/* FadeInIntroPic through its port: the six-step background-palette
 	 * fade (DelayFrames consumed per proof observation). The picture
@@ -566,8 +605,7 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	 * IntroDisplayPicCenteredOrUpperRight, the picture pipeline
 	 * (LoadFlippedFrontSpriteByMonIndex is still a stub, so the mon
 	 * does not actually render), MovePicLeft + oak_speech_slide pair,
-	 * ChoosePlayerName/ChooseRivalName, and the
-	 * PrintText->TextCommandProcessor dialogue chain (dispatcher open). */
+	 * and ChoosePlayerName/ChooseRivalName. */
 }
 
 /* ------------------------------------------------------------------ */
