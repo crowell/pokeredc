@@ -29112,7 +29112,7 @@ assembly_symbol = "UpdateSprites"
 assembly_source = "home/update_sprites.asm"
 c_symbol = "port_update_sprites"
 c_source = "verification/ports/update_sprites.c"
-status = "proven"
+status = "partial"
 observables = [
     "A/F/B/C/D/E/H/L",
     "wUpdateSpritesEnabled",
@@ -29120,5 +29120,5 @@ observables = [
     "complete ordered _UpdateSprites call input",
     "complete post-state from the banked _UpdateSprites seam",
 ]
-proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites seam; DEC flags and homecall bank/A/F restoration are preserved exactly"
-decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed, while production C models the DEC flags and calls the explicit port_update_sprites_private seam with the real bank-register save/restore contract"
+proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites seam; DEC flags and homecall bank/A/F restoration are preserved exactly, while the _UpdateSprites sprite iteration remains an explicit boundary"
+decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed, while production C models the DEC flags and calls the explicit port_update_sprites_private seam with the real bank-register save/restore contract; the bank-1 sprite body is not yet ported"
