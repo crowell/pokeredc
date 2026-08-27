@@ -29021,3 +29021,22 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs plus symbolic status, map, event, coordinate, coordinate-index, and text-box bytes; forced-bike, non-Seafoam, both-boulders-down, stair-miss, and stair-match terminal paths are all exercised, with ArePlayerCoordsInArray and PrintText composed through their proven transitions"
 decoder = "exact 53-byte linked body 2128d7cbcefa32d7cb6f2020fa5ed3fea2c0fa81d8e603fe03c821f74dcdbf34d02128d7cb8e21fa4dc3493c2128d7cb8e21ff4dc3493c verified; SM83 bit/set/reset, absolute loads, AND/CP, conditional returns, and bank-3 JP PrintText tails are shimmed, while the coordinate and text callees use complete proven boundaries"
+
+[[function]]
+assembly_symbol = "IntroDisplayPicCenteredOrUpperRight"
+assembly_source = "engine/movie/oak_speech/oak_speech.asm"
+c_symbol = "port_intro_display_pic_centered_or_upper_right"
+c_source = "verification/ports/intro_display_pic_centered_or_upper_right.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "all three 392-byte sprite buffers",
+    "the complete possible tilemap destination region with adjacent guards",
+    "wSpriteFlipped, sprite-source temporaries, and hStartTileID",
+    "wPredefID, wPredefHL/DE/BC, wPredefParentBank, and wPredefBank",
+    "hLoadedROMBank, rROMB, and all InterlaceMergeSpriteBuffers video-copy state",
+    "all 49 ordered tile writes",
+    "complete ordered input states for all five composed callees",
+]
+proof_domain = "all general-register and canonical-flag inputs, all initial sprite-buffer/tilemap/global states, both C=0 centered and C!=0 upper-right paths, and both zero/nonzero wSpriteFlipped layouts; UncompressSpriteFromDE uses its proven sprite-source seam, CopyData and InterlaceMergeSpriteBuffers use arbitrary matching complete proven transitions, and the fixed predef pointer plus CopyUncompressedPicToTilemap use their complete proven transitions"
+decoder = "the exact complete 42-byte linked body and exact complete 39-byte Predef dispatcher execute under angr; the bank-13 CopyUncompressedPicToTilemap pointer entry is byte-verified as 0f:c670, only individual SM83 stack/load/ALU/store/jump instructions and the five independently proven callee boundaries are shimmed, while production C calls every real C port, performs the fixed predef bank restoration, and applies all real 7x7 tile writes"
