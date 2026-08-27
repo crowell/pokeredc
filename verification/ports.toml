@@ -14991,6 +14991,23 @@ decoder = "exact 226-byte body checked; fixed background-fill and disabled-conne
 
 
 [[function]]
+assembly_symbol = "MarkTownVisitedAndLoadToggleableObjects"
+assembly_source = "engine/overworld/toggleable_objects.asm"
+c_symbol = "port_mark_town_visited_and_load_toggleable_objects"
+c_source = "verification/ports/mark_town_visited_and_load_toggleable_objects.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wTownVisitedFlag",
+    "the complete wToggleableObjectList destination",
+]
+proof_domain = "known town-map setup with an empty toggleable-object list; town-visited bit setting, pointer-table lookup, empty-list sentinel write, and final register state are compared pathwise"
+decoder = "exact 98-byte body checked; FlagActionPredef and Divide are composed at audited boundaries, while the empty-list map scan executes under angr; non-empty toggle records and route-map flag cases remain to be expanded"
+
+
+
+
+[[function]]
 assembly_symbol = "LoadNorthSouthConnectionsTileMap"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_load_north_south_connections_tile_map"
