@@ -28970,3 +28970,21 @@ observables = [
 ]
 proof_domain = "all general-register, canonical-flag, RAM, and bank inputs for each of the 16 Red TitleMons species; GetMonHeader and the valid-dex LoadFrontSpriteByMonIndex transitions compose through their real proven C ports, with the title coordinate fixed by hlcoord 5,10"
 decoder = "exact 15-byte linked body ea91cfeab5d0216dc4cd3715c38913 verified; the three entry stores and HL immediate execute under SM83 shims, while the GetMonHeader and LoadFrontSpriteByMonIndex call/tail transitions are checked against complete proven compositional boundaries"
+
+[[function]]
+assembly_symbol = "SetCursorPositionsFromOptions"
+assembly_source = "engine/menus/main_menu.asm"
+c_symbol = "port_set_cursor_positions_from_options"
+c_source = "verification/ports/set_cursor_positions_from_options.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wOptions",
+    "wOptionsTextSpeedCursorX",
+    "wOptionsBattleAnimCursorX",
+    "wOptionsBattleStyleCursorX",
+    "wOptionsCancelCursorX",
+    "option-menu tilemap rows (all 18-byte indexed arrow destinations)",
+]
+proof_domain = "all general-register and canonical-flag inputs, all 256 wOptions values, all initial cursor globals, and symbolic 18-byte windows for each option-menu row; the four IsInArray outcomes and both option-bit shifts cover every feasible path"
+decoder = "exact 74-byte linked body 219760fa55d34fe63fc5110200cdab3dc12b7eea3dcd21dcc3cd8f60cb213e0130023e0aea3ecd2140c4cd8f60cb213e0130023e0aea3fcd21a4c4cd8f6021e0c43e015f16001936ecc9 verified; SM83 AND/SLA/HL arithmetic and the three local arrow writes are shimmed, while IsInArray composes through its complete proven transition"
