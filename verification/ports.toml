@@ -14973,6 +14973,20 @@ decoder = "exact 112-byte body checked; five saved stack words, bag/PC capacity 
 
 
 [[function]]
+assembly_symbol = "LoadDestinationWarpPosition"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_load_destination_warp_position"
+c_source = "verification/ports/load_destination_warp_position.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "the four-byte wCurrentTileBlockMapViewPointer destination",
+    "hLoadedROMBank and mapper register writes",
+]
+proof_domain = "warp IDs 0, 1, and 3 with arbitrary entry registers, a four-byte source record at HL plus the indexed warp offset, and parent/current bank restoration"
+decoder = "exact 35-byte body checked; individual SM83 LDH/absolute loads/stores, pair setup, pointer arithmetic, AF save/restore, and the proven CopyData transition are composed under angr"
+
+[[function]]
 assembly_symbol = "LoadTileBlockMap"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_load_tile_block_map"
