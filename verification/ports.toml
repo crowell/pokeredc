@@ -14938,6 +14938,24 @@ decoder = "exact 112-byte body checked; five saved stack words, bag/PC capacity 
 
 
 [[function]]
+assembly_symbol = "LoadTileBlockMap"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_load_tile_block_map"
+c_source = "verification/ports/load_tile_block_map.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hMapStride and hMapWidth",
+    "the complete wOverworldMap tilemap buffer",
+    "the current map data pointer and connection globals",
+]
+proof_domain = "initialized current-map tile data with all four connection slots disabled; the fixed background fill, bordered row copy, stride/width state, source pointer advance, and final register state are compared byte-for-byte"
+decoder = "exact 226-byte body checked; fixed background-fill and disabled-connection branch boundaries plus individual SM83 LDH/HL+/DE-copy backend gaps are shimmed, while production C performs the complete current-map copy and retains connection composition for the next proof"
+
+
+
+
+[[function]]
 assembly_symbol = "LoadNorthSouthConnectionsTileMap"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_load_north_south_connections_tile_map"
