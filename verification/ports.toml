@@ -29154,3 +29154,18 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, both matching and double-mismatch checksum paths, deterministic SRAM contents, and every copied byte in the fixed player-name, main-data, sprite-data, and box-data ranges; checksum and CopyData transitions compose through their independently proven ports"
 decoder = "the exact 109-byte linked body is checked byte-for-byte; hardware stores, both CalcCheckSum calls, both checksum branches, four CopyData calls, the map-tileset bit set, tile-animation transfer, and GoodCheckSum/CheckSumFailed terminal effects are shimmed at audited boundaries, while production C performs the complete checksum/retry and memory transfers"
+
+[[function]]
+assembly_symbol = "LoadCurrentBoxData"
+assembly_source = "engine/menus/save.asm"
+c_symbol = "port_load_current_box_data"
+c_source = "verification/ports/load_current_box_data.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "rRAMG, rRAMB, and rBMODE",
+    "the saved checksum byte",
+    "the complete box-data destination region",
+]
+proof_domain = "all general-register and canonical-flag inputs, matching and checksum-failure paths, deterministic SRAM contents, and every byte in the fixed box-data transfer; CalcCheckSum and CopyData compose through their independently proven transitions"
+decoder = "the exact 45-byte linked body is checked byte-for-byte; hardware stores, CalcCheckSum, checksum comparison, CopyData, and GoodCheckSum/CheckSumFailed effects are shimmed at audited boundaries, while production C performs the complete checksum gate and box-data transfer"
