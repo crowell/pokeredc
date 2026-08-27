@@ -42,6 +42,9 @@ port_text_command_far(struct cpu_register_state *state, port_u8 *memory)
 	memory[H_LOADED_ROM_BANK] = bank;
 	memory[R_ROMB] = bank;
 
+	state->e = ptr_low;
+	state->d = ptr_high;
+	state->a = bank;
 	port_u16 far_ptr =
 		(port_u16)((port_u16)(ptr_high << 8) | ptr_low);
 	state->h = (port_u8)(far_ptr >> 8);
@@ -52,6 +55,7 @@ port_text_command_far(struct cpu_register_state *state, port_u8 *memory)
 	port_u16 after = (port_u16)(ptr + 3u);
 	state->h = (port_u8)(after >> 8);
 	state->l = (port_u8)after;
+	state->a = old_bank;
 
 	memory[H_LOADED_ROM_BANK] = old_bank;
 	memory[R_ROMB] = old_bank;

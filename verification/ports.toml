@@ -28930,3 +28930,24 @@ observables = [
 ]
 proof_domain = "all canonical flag, clear-delay-flag, and B:C destination inputs; each TX_END, TX_FAR, TX_SOUND_POKEDEX_RATING, and all 14 jump-table command values exercised; every dispatch target is treated as a compositional terminal boundary, while TX_END restores the saved delay flags"
 decoder = "exact 56-byte linked body fa58d3f5cbcf5ff0f4abea58d379ea3acc78ea3bcc2afe502005f1ea58d3c9e5fe17caa31cfe0ed2311c21c11cc58706004f09c12a666fe9 verified; SM83-only absolute/HL+ loads, arithmetic, stack operations, conditional jumps, and JP (HL) are shimmed; the jump-table target is captured from the actual ROM table and compared with the native handler boundary"
+
+[[function]]
+assembly_symbol = "TextCommand_FAR"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_far"
+c_source = "verification/ports/text_command_far.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "hLoadedROMBank",
+    "rROMB",
+    "far-command argument bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs, an arbitrary 3-byte far-command argument at a fixed text pointer, and arbitrary initial hLoadedROMBank/rROMB values; the recursive TextCommandProcessor call is treated as a no-op compositional boundary, while the bank switch, D:E far pointer load, HL restoration, and bank restoration are exercised"
+decoder = "exact 30-byte linked body e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b verified; SM83 HL+ loads and LDH stores are shimmed, the recursive processor call is replaced by a returning boundary, and the final jp NextTextCommand is the terminal sentinel"

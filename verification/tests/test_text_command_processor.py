@@ -10,7 +10,6 @@ from archinfo import ArchPcode
 
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
-    native_registers,
     set_assembly_registers,
     store_native_registers,
     symbolic_registers,
@@ -123,8 +122,6 @@ def _setup(
 
 def _endpoint(state: angr.SimState, native: bool) -> Endpoint:
     base = NATIVE_MEMORY if native else 0
-    registers = native_registers(state, NATIVE_STATE) if native else None
-    del registers
     return Endpoint(
         dispatch_target=state.globals["dispatch_target"],
         ldf=state.memory.load(base + W_LETTER_PRINTING_DELAY_FLAGS, 1),
