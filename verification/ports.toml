@@ -28951,3 +28951,22 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, an arbitrary 3-byte far-command argument at a fixed text pointer, and arbitrary initial hLoadedROMBank/rROMB values; the recursive TextCommandProcessor call is treated as a no-op compositional boundary, while the bank switch, D:E far pointer load, HL restoration, and bank restoration are exercised"
 decoder = "exact 30-byte linked body e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b verified; SM83 HL+ loads and LDH stores are shimmed, the recursive processor call is replaced by a returning boundary, and the final jp NextTextCommand is the terminal sentinel"
+
+[[function]]
+assembly_symbol = "LoadTitleMonSprite"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_load_title_mon_sprite"
+c_source = "verification/ports/load_title_mon_sprite.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wCurPartySpecies",
+    "wCurSpecies",
+    "wPokedexNum",
+    "wMonHeader (28 bytes)",
+    "hStartTileID",
+    "wSpriteFlipped",
+    "hLoadedROMBank / rROMB",
+]
+proof_domain = "all general-register, canonical-flag, RAM, and bank inputs for each of the 16 Red TitleMons species; GetMonHeader and the valid-dex LoadFrontSpriteByMonIndex transitions compose through their real proven C ports, with the title coordinate fixed by hlcoord 5,10"
+decoder = "exact 15-byte linked body ea91cfeab5d0216dc4cd3715c38913 verified; the three entry stores and HL immediate execute under SM83 shims, while the GetMonHeader and LoadFrontSpriteByMonIndex call/tail transitions are checked against complete proven compositional boundaries"
