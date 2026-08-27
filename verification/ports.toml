@@ -28854,6 +28854,29 @@ proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-
 decoder = "exact 14-byte linked body e1545d6069cd5519626b2318be verified; the post-call tail (ld h,d; ld l,e; inc hl) and the PlaceString call are each shimmed with an angr SimProcedure; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
 
 [[function]]
+assembly_symbol = "TextCommand_DOTS"
+assembly_source = "home/text.asm"
+c_symbol = "port_text_command_dots"
+c_source = "verification/ports/text_command_dots.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "HL",
+    "text destination window (TEXT_DEST..TEXT_DEST+count-1), the rendered ellipsis tiles",
+    "H_JOYINPUT, H_JOYLAST, H_JOYHELD, H_JOYPRESSED, H_JOYRELEASED",
+    "W_STATUSFLAGS5, W_JOYIGNORE",
+    "delay_frame_calls",
+]
+proof_domain = "all general-register and canonical-flag inputs, all joy input/ignore/status inputs, and the text pointer and destination fixed at concrete RAM addresses (the handler treats both opaquely); counts 1-4 exercised; every feasible terminal path composed through the proved port_joypad_homecall and port_delay_frames boundaries"
+decoder = "exact 34-byte linked body e12a57e560693e7522d5cd9a01d1f0b4e60320050e0acd39371520ea444de1c3551b verified; the per-instruction hook chain reconstructs HL from (regs.h << 8) | regs.l so the rewritten LDH/store paths map to the pcode high/low bytes, and the AND $03 / DEC D flag semantics are corrected via Sm83AndImmediateCorrect and Sm83DecRegister; the Joypad and DelayFrames calls compose through the proved port_joypad_homecall and port_delay_frames transitions"
+
+
+[[function]]
 assembly_symbol = "TextCommand_RAM"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_ram"
