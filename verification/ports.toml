@@ -29139,3 +29139,18 @@ observables = [
 ]
 proof_domain = "the complete setup plus one host-driven cancel iteration with TEXT SPEED initialized from wOptions=5 and hJoy5=PAD_B; option cursor setup, persistent option decoding, and the cancel sound return are compared, while the internal polling loop and display-only drawing calls remain host continuations"
 decoder = "the exact 101-byte linked setup body executes under angr; individual SM83 absolute/HRAM stores and the proven setup/call boundaries are shimmed, then the real linked loop is entered through an explicit cancel-input continuation; native C preserves the setup and one-iteration option state machine, with full interactive-loop composition still pending"
+
+[[function]]
+assembly_symbol = "LoadMainData"
+assembly_source = "engine/menus/save.asm"
+c_symbol = "port_load_main_data"
+c_source = "verification/ports/load_main_data.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "rRAMG, rRAMB, and rBMODE",
+    "the saved checksum byte",
+    "the player-name, main-data, sprite-data, tile-animation, box-data, and map-tileset regions",
+]
+proof_domain = "all general-register and canonical-flag inputs, both matching and double-mismatch checksum paths, deterministic SRAM contents, and every copied byte in the fixed player-name, main-data, sprite-data, and box-data ranges; checksum and CopyData transitions compose through their independently proven ports"
+decoder = "the exact 109-byte linked body is checked byte-for-byte; hardware stores, both CalcCheckSum calls, both checksum branches, four CopyData calls, the map-tileset bit set, tile-animation transfer, and GoodCheckSum/CheckSumFailed terminal effects are shimmed at audited boundaries, while production C performs the complete checksum/retry and memory transfers"
