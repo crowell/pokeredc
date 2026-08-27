@@ -78,7 +78,8 @@ port_load_main_data(struct cpu_register_state *registers, port_u8 *memory)
 		checksum = load_checksum(registers, memory);
 		if (memory[S_MAIN_DATA_CHECKSUM] != checksum) {
 			registers->a = 0;
-			registers->f = (port_u8)((registers->f & PORT_FLAG_Z) | PORT_FLAG_C);
+			/* CP mismatch clears Z; CheckSumFailed then SCF leaves carry only. */
+			registers->f = PORT_FLAG_C;
 			memory[R_BMODE] = BMODE_SIMPLE;
 			memory[R_RAMG] = RAMG_SRAM_DISABLE;
 			return;
