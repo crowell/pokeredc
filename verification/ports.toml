@@ -10617,6 +10617,20 @@ decoder = "exact 19-byte body checked; XOR, all three SRL/RR carry transfers, bo
 
 
 [[function]]
+assembly_symbol = "MoveSprite"
+assembly_source = "home/pathfinding.asm"
+c_symbol = "port_move_sprite"
+c_source = "verification/ports/move_sprite.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "complete wNPCMovementDirections destination region",
+    "wNPCNumScriptedSteps, movement-status, simulated-state, and joy-ignore globals",
+]
+proof_domain = "one-command and two-command movement streams with the full destination region compared; SetSpriteMovementBytesToFF and GetSpriteMovementByte1Pointer compose at complete boundaries, while arbitrary stream lengths and downstream scripted movement remain"
+decoder = "exact 49-byte linked MoveSprite/MoveSprite_ body checked; the actual copy loop, sentinel-inclusive count, register restoration, status-bit set, and final mask writes execute under angr"
+
+[[function]]
 assembly_symbol = "DivideBytes"
 assembly_source = "home/pathfinding.asm"
 c_symbol = "port_divide_bytes"
