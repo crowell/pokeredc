@@ -3,6 +3,7 @@
 #define TEXT_CURSOR 0xc4e1u
 
 void port_scroll_text_up_one_line(struct cpu_register_state *, port_u8 *);
+void port_next_char(struct cpu_register_state *);
 
 /* Port of _ContTextNoPause in home/text.asm:
  *
@@ -14,8 +15,7 @@ void port_scroll_text_up_one_line(struct cpu_register_state *, port_u8 *);
  *   jp NextChar
  *
  * The two scroll calls are the complete proven C transition.  The jump to
- * NextChar is the text engine's continuation boundary, so DE is restored but
- * not incremented here. */
+ * NextChar composes its proven one-byte DE increment. */
 __attribute__((noinline, used)) void
 port_cont_text_no_pause(struct cont_text_no_pause_state *state,
 	port_u8 *memory)
@@ -26,4 +26,5 @@ port_cont_text_no_pause(struct cont_text_no_pause_state *state,
 	state->registers.l = (port_u8)TEXT_CURSOR;
 	state->registers.d = state->saved_d;
 	state->registers.e = state->saved_e;
+	port_next_char(&state->registers);
 }

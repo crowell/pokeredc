@@ -90,6 +90,9 @@ class PushDE(angr.SimProcedure):
 
 class ContinuationBoundary(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
+        de = claripy.Concat(self.state.regs.d, self.state.regs.e) + 1
+        self.state.regs.d = de[15:8]
+        self.state.regs.e = de[7:0]
         self.inhibit_autoret = True
         self.jump(RETURN)
 
