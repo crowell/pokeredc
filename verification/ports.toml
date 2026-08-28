@@ -18082,16 +18082,18 @@ assembly_symbol = "AfterDisplayingTextID"
 assembly_source = "home/text_script.asm"
 c_symbol = "port_after_displaying_text_id"
 c_source = "verification/ports/after_displaying_text_id.c"
-status = "partial"
+status = "proven"
 observables = [
     "all 8 registers and flags",
     "wEnteringCableClub",
     "hDownArrowBlink1",
     "hDownArrowBlink2",
     "hJoy5",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, and hJoyHeld",
+    "hLoadedROMBank and rROMB",
 ]
-proof_domain = "both wEnteringCableClub branches with a symbolic terminating A/B hJoy5 input; the ordinary branch composes the proven WaitForTextScrollButtonPress transition, then stops at the shared HoldTextDisplayOpen continuation boundary"
-decoder = "9-byte entry body checked (fa47cca72003cd6538): wEnteringCableClub load, AND A flags, JR NZ branch, and WaitForTextScrollButtonPress call; the shared HoldTextDisplayOpen/Joypad loop and CloseTextDisplay tail remain outside this partial port"
+proof_domain = "both wEnteringCableClub branches, both WaitForTextScrollButtonPress outcomes (symbolic hJoy5 zero/nonzero), and terminating immediate-release or held-A-then-release host input sequences; all registers, wait-arrow state, joypad state, and bank state are compared"
+decoder = "the exact 9-byte entry body fa47cca72003cd6538 and contiguous HoldTextDisplayOpen loop execute under angr; the wait call composes through its proven transition, while Joypad homecall, hJoyHeld load, BIT A, and loop/exit control are modeled at individual boundaries"
 
 
 

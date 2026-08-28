@@ -72,6 +72,13 @@ struct hold_text_display_open_state {
 	port_u8 joy_input_count;
 };
 
+/* State for the AfterDisplayingTextID continuation into HoldTextDisplayOpen. */
+struct after_displaying_text_id_state {
+	struct cpu_register_state registers;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
 /* Output observable of ManualTextScroll; wait/play/delay callees are explicit. */
 struct manual_text_scroll_state {
 	struct cpu_register_state registers;
