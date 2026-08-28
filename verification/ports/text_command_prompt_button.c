@@ -40,10 +40,14 @@ port_text_command_prompt_button(struct cpu_register_state *state,
 		return;
 	}
 
-	/* The `cp LINK_STATE_BATTLING` flags: with the non-link domain's
-	 * wLinkState (zero in the established normal-text path) the compare
-	 * borrows (H|N|C set, Z clear). */
-	state->f = (port_u8)(PORT_FLAG_H | PORT_FLAG_N | PORT_FLAG_C);
+	/* The `cp LINK_STATE_BATTLING` flags for every non-battle link-state
+	 * value: subtraction always sets N, with H/C reflecting the nibble and
+	 * full-byte borrows. Z is clear because the equal value returned above. */
+	state->f = PORT_FLAG_N;
+	if ((memory[W_LINKSTATE] & 0x0fu) < LINK_STATE_BATTLING)
+		state->f |= PORT_FLAG_H;
+	if (memory[W_LINKSTATE] < LINK_STATE_BATTLING)
+		state->f |= PORT_FLAG_C;
 
 	memory[ARROW_SLOT] = TILE_DOWN_ARROW;
 

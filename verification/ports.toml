@@ -29076,8 +29076,8 @@ observables = [
     "all registers and canonical flags",
     "wLinkState",
 ]
-proof_domain = "both concrete wLinkState paths (normal dialogue and LINK_STATE_BATTLING) with the entry A symbolic, the entry F concrete-clear (the raw-vs-canonical representation of the non-SM83 flag bits is out of scope for this pass-through handler), and the entry BC/DE symbolic; the ManualTextScroll call composes through its proved normal A/B or link-battle delay transition; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
-decoder = "exact 12-byte linked body executes under angr on both concrete link-state paths; SM83-only PUSH/POP BC and POP HL shims (the pop written through the p-code's byte-swapped HL pair view); the ManualTextScroll call-site boundary carries the matching proved normal or link transition; the native C calls the real port_manual_text_scroll with the entry state mapped to its typed inputs"
+proof_domain = "representative concrete values from both wLinkState classes (normal dialogue values 0, 1, 3, 5, and 255 plus LINK_STATE_BATTLING) with the entry A symbolic, the entry F concrete-clear (the raw-vs-canonical representation of the non-SM83 flag bits is out of scope for this pass-through handler), and the entry BC/DE symbolic; the ManualTextScroll call composes through its proved normal A/B or link-battle delay transition; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 12-byte linked body executes under angr on six concrete link-state paths; SM83-only PUSH/POP BC and POP HL shims (the pop written through the p-code's byte-swapped HL pair view); the ManualTextScroll call-site boundary carries the matching proved normal or link transition; the native C calls the real port_manual_text_scroll with the entry state mapped to its typed inputs"
 
 [[function]]
 assembly_symbol = "TextCommand_PROMPT_BUTTON"
