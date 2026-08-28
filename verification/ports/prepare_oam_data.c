@@ -180,7 +180,6 @@ port_prepare_oam_data(struct cpu_register_state *r, port_u8 *memory)
 	while (r->l != clear_end) {
 		memory[W_SHADOW_OAM + r->l] = 0xa0u;
 		r->l = (port_u8)(r->l + 4u);
-		r->b--;
 	}
 	cp8(r, r->l);
 }

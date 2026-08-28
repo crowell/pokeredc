@@ -29733,8 +29733,8 @@ observables = [
     "wUpdateSpritesEnabled, sprite adjusted-coordinate state, and all 160 wShadowOAM bytes",
     "hOAMBufferOffset, hSpriteOffset2, hSpriteScreenX, hSpriteScreenY, and hSpritePriority",
 ]
-proof_domain = "the complete hide-sprites path with arbitrary register inputs and arbitrary OAM bytes; the full sprite iteration, facing/animation table traversal, priority handling, and unused-OAM clearing are implemented, while their broad multi-sprite composition remains to be exercised"
-decoder = "the exact 194-byte linked body is checked inside the functional test; instruction-level absolute-load/store/DEC/CP shims and the HideSprites boundary drive the real linked hide path, while native C calls the real port_hide_sprites and contains the complete 16-sprite/tile/OAM loops"
+proof_domain = "the complete hide-sprites path with arbitrary register inputs and arbitrary OAM bytes, plus the update-enabled path with all 16 sprite slots explicitly unused, zero movement flags, arbitrary register inputs, and arbitrary initial OAM bytes; the latter exercises the real 16-entry sprite scan and unused-OAM clearing, while visible-sprite table traversal, facing/animation selection, priority handling, and ledge/fishing OAM preservation remain outside this proof domain"
+decoder = "the exact 194-byte linked body is checked inside the functional test; individual SM83 high-memory load/store, LD A,[DE], AND, CP, BIT, branch, ADD HL,DE, and LD [HL],B seams plus the HideSprites boundary drive both the complete hide path and the 16-iteration no-visible-sprite scan/clear path, while native C calls the real port_hide_sprites and executes the complete sprite/tile/OAM loops"
 
 [[function]]
 assembly_symbol = "LoadSmokeTileFourTimes"
