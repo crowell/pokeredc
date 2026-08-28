@@ -29625,3 +29625,17 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, matching and checksum-failure paths, deterministic SRAM contents, and every byte in the fixed party-data and Pokédex transfers; CalcCheckSum and CopyData compose through their independently proven transitions"
 decoder = "the exact 58-byte linked body is checked byte-for-byte; hardware stores, CalcCheckSum, checksum comparison, both CopyData calls, and GoodCheckSum/CheckSumFailed effects are shimmed at audited boundaries, while production C performs the complete checksum gate and party/Pokédex transfers"
+
+[[function]]
+assembly_symbol = "TryPushingBoulder"
+assembly_source = "engine/overworld/push_boulder.asm"
+c_symbol = "port_try_pushing_boulder"
+c_source = "verification/ports/try_pushing_boulder.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "hSpriteIndex, wBoulderSpriteIndex, wMiscFlags, and wTileInFrontOfBoulderAndBoulderCollisionResult",
+    "the complete sprite movement destination region and PlaySound state on a push",
+]
+proof_domain = "all early strength/dust exits, sprite-not-found and movement-byte rejection paths, the two-attempt gate, directional held-input exits, and complete push-side effects under the independently ported sprite lookup, collision, movement, reset, and sound seams; arbitrary sprite-table and helper post-states remain compositional boundaries"
+decoder = "the exact complete 136-byte linked body is checked through the DoBoulderDustAnimation boundary; native C preserves the bit-test flags, sprite-index selection, movement-status face-bit clear, two-attempt gate, directional checks, real MoveSprite/PlaySound calls, collision-result reset, and dust flag, while helper internals are composed through their existing ports"
