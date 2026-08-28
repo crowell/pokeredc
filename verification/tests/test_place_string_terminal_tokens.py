@@ -75,7 +75,7 @@ class IncrementDE(angr.SimProcedure):
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
     return claripy.Concat(
-        state.memory.load(base + DESTINATION, 1),
+        state.memory.load(base + DESTINATION, 16),
         state.memory.load(base + SOURCE, 1),
         state.memory.load(base + PLAYER_NAME, 3),
         state.memory.load(base + RIVAL_NAME, 3),
@@ -104,6 +104,8 @@ def _assembly(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     state.memory.store(DESTINATION, values["destination_byte"])
+    for offset in range(1, 16):
+        state.memory.store(DESTINATION + offset, claripy.BVV(0, 8))
     state.memory.store(SOURCE, claripy.BVV(token, 8))
     state.memory.store(SOURCE + 1, claripy.BVV(0x50, 8))
     for address, values_for_name in (
@@ -126,6 +128,8 @@ def _native(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_MEMORY + DESTINATION, values["destination_byte"])
+    for offset in range(1, 16):
+        state.memory.store(NATIVE_MEMORY + DESTINATION + offset, claripy.BVV(0, 8))
     state.memory.store(NATIVE_MEMORY + SOURCE, claripy.BVV(token, 8))
     state.memory.store(NATIVE_MEMORY + SOURCE + 1, claripy.BVV(0x50, 8))
     for address, values_for_name in (
@@ -147,7 +151,7 @@ def _native(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     ]
 
 
-@pytest.mark.parametrize("token", (0x00, 0x52, 0x53, 0x57, 0x5F))
+@pytest.mark.parametrize("token", (0x00, 0x52, 0x53, 0x54, 0x56, 0x57, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F))
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_place_string_terminal_tokens_pathwise_equivalence(token: int) -> None:
