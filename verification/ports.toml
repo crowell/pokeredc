@@ -29054,6 +29054,25 @@ decoder = "exact 6-byte body checked (e111b31a1bc9); POP HL, LD DE,.stop, DEC DE
 
 
 [[function]]
+assembly_symbol = "NullChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_null_char"
+c_source = "verification/ports/null_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "BC copied from the entry cursor",
+    "the restored caller HL",
+    "DE pointing one byte before TextIDErrorText",
+]
+proof_domain = "all symbolic register/flag inputs and a symbolic caller-saved HL, with the entry cursor fixed to the tested tilemap slot; the handler has no memory writes"
+decoder = "exact 8-byte body checked (444de111f4191bc9); LD B,H/LD C,L, POP HL, LD DE,TextIDErrorText, DEC DE, and RET are modeled instruction-by-instruction"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"
