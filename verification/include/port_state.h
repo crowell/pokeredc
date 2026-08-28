@@ -201,6 +201,13 @@ struct print_rival_name_state {
 	port_u8 saved_e;
 };
 
+/* State for the TrainerChar dictionary-token wrapper. */
+struct trainer_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
 /* State for the _ContTextNoPause dictionary-token handler. */
 struct cont_text_no_pause_state {
 	struct cpu_register_state registers;
