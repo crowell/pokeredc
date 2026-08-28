@@ -18078,6 +18078,21 @@ decoder = "20-byte body checked (fa2bd1fe042808cd65383e90c3b1230e41c33937: load 
 
 
 [[function]]
+assembly_symbol = "DisplayPokemonFaintedText"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_pokemon_fainted_text"
+c_source = "verification/ports/display_pokemon_fainted_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextBoxID and the PrintText cursor setup",
+    "the complete PrintText and AfterDisplayingTextID call-input transitions",
+]
+proof_domain = "all symbolic register/flag inputs and arbitrary initial wTextBoxID; the fixed PokemonFaintedText pointer, proven PrintText transition, and shared AfterDisplayingTextID tail boundary are composed exactly"
+decoder = "exact 9-byte linked body 21a42acd493cc3d629 checked inside the functional test; the LD HL immediate is executed by the linked body, while PrintText and AfterDisplayingTextID are complete proven compositional boundaries"
+
+
+[[function]]
 assembly_symbol = "AfterDisplayingTextID"
 assembly_source = "home/text_script.asm"
 c_symbol = "port_after_displaying_text_id"
