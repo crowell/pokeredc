@@ -29215,6 +29215,22 @@ proof_domain = "all register/flag inputs and menu-state bytes for the complete h
 decoder = "the complete 111-byte linked body executes under angr; individual SM83 absolute loads/stores, LD-immediate/XOR flag seams, and the three call boundaries are shimmed, while native C performs the full setup, menu-input bridge, cursor placement, selection/cancellation branches, compare flags, and carry return"
 
 [[function]]
+assembly_symbol = "DisplayFieldMoveMonMenu"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_display_field_move_mon_menu"
+c_source = "verification/ports/display_field_move_mon_menu.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wFieldMoves, wNumFieldMoves, wFieldMovesLeftmostXCoord, and wLastFieldMoveID",
+    "hFieldMoveMonMenuTopMenuItemX",
+    "all affected tilemap bytes",
+    "party move source bytes and the field-name/menu data used by the handler",
+]
+proof_domain = "all general-register and canonical-flag inputs over the no-field-move path and every 1..4 field-move count, with concrete party moves and the complete FieldMoveDisplayData/FieldMoveNames/PokemonMenuEntries tables; TextBoxBorder, UpdateSprites, GetMonFieldMoves, and PlaceString are composed at their proven transitions, with UpdateSprites restricted to its early-return path"
+decoder = "the complete 245-byte linked body executes under angr; unsupported indexed/absolute/high-memory instructions and the four callee boundaries are shimmed individually, while native C performs the initialization, geometry loops, border/update calls, field-name scan, per-row placement, menu placement, and terminal state"
+
+[[function]]
 assembly_symbol = "IsSurfingAllowed"
 assembly_source = "engine/overworld/field_move_messages.asm"
 c_symbol = "port_is_surfing_allowed"

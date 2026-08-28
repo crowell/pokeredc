@@ -135,7 +135,7 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 			if (memory[H_UI_LAYOUT_FLAGS] &
 				(1u << BIT_SINGLE_SPACED_LINES))
 				adv = SCREEN_WIDTH;
-			dest = (port_u16)(dest + adv);
+			dest = (port_u16)(saved_hl + adv);
 			saved_hl = dest;
 			src = (port_u16)(src + 1);
 			continue;
