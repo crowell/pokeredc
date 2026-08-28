@@ -113,6 +113,13 @@ struct paragraph_state {
 	port_u8 saved_e;
 };
 
+/* State for the PlaceMoveUsersName dictionary-token handler. */
+struct place_move_users_name_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;
