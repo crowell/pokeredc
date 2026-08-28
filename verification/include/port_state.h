@@ -229,6 +229,13 @@ struct rocket_char_state {
 	port_u8 saved_e;
 };
 
+/* State for the PlacePOKe dictionary-token wrapper. */
+struct place_poke_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
 /* State for the _ContTextNoPause dictionary-token handler. */
 struct cont_text_no_pause_state {
 	struct cpu_register_state registers;
