@@ -10091,6 +10091,25 @@ decoder = "exact 10-byte body checked; four symbolic HLI reads, DE/BC register a
 
 
 [[function]]
+assembly_symbol = "LoadMapSpriteTilePatterns"
+assembly_source = "engine/overworld/map_sprites.asm"
+c_symbol = "port_load_map_sprite_tile_patterns"
+c_source = "verification/ports/load_map_sprite_tile_patterns.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "all sixteen sprite-state image-base offsets and temporary picture IDs",
+    "hVRAMSlot and hFourTileSpriteCount",
+    "the loaded sprite-pattern VRAM regions and transfer hardware state",
+]
+proof_domain = "the no-sprite terminal path (wNumSprites = 0), with all registers, flags, and relevant memory symbolic; the complete nonzero loader is implemented and awaits its multi-sprite transfer proof"
+decoder = "exact 7-byte linked no-sprite entry path executes under angr with only the SM83 absolute load, AND, and conditional-return instruction boundaries shimmed; nonzero duplicate/new-sprite paths and their real transfer compositions remain outside this proof domain"
+
+
+
+
+
+[[function]]
 assembly_symbol = "CopyVideoData"
 assembly_source = "home/copy2.asm"
 c_symbol = "port_copy_video_data"
