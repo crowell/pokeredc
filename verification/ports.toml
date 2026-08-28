@@ -18425,6 +18425,22 @@ decoder = "angr pathwise equivalence proven (verification/tests/test_print_text_
 
 
 [[function]]
+assembly_symbol = "PrintText_NoCreatingTextBox"
+assembly_source = "home/window.asm"
+c_symbol = "port_print_text_no_creating_text_box"
+c_source = "verification/ports/print_text_no_creating_text_box.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "BC cursor destination (1,14) = 0xc4b9",
+]
+proof_domain = "all register/flag inputs and every text-pointer/register value; the routine only establishes the fixed dialogue cursor and tail-jumps to the proven TextCommandProcessor"
+decoder = "exact 6-byte linked body 01b9c4c3401b checked inside the functional proof; LD BC,nn executes natively and the JP TextCommandProcessor tail is an explicit continuation boundary"
+
+
+
+
+[[function]]
 assembly_symbol = "PrintType_"
 assembly_source = "engine/battle/print_type.asm"
 c_symbol = "port_print_type_"
