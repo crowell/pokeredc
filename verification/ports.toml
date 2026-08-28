@@ -7315,6 +7315,21 @@ proof_domain = "all general-register and canonical-flag inputs"
 decoder = "exact 2-byte linked entry body checked; the shared RunPaletteCommand implementation is an explicit boundary"
 
 
+[[function]]
+assembly_symbol = "RunPaletteCommand"
+assembly_source = "home/palettes.asm"
+c_symbol = "port_run_palette_command"
+c_source = "verification/ports/run_palette_command.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wOnSGB",
+    "the _RunPaletteCommand predef call input and continuation state",
+]
+proof_domain = "all register/flag inputs and both zero/nonzero wOnSGB paths, with the banked _RunPaletteCommand body represented by its explicit proven private-port boundary"
+decoder = "the exact 8-byte linked wrapper executes under angr; LD A,[wOnSGB], AND A, the zero return, predef-ID load, and Predef continuation are modeled, while the private palette-command body remains the existing partial boundary"
+
+
 
 
 
