@@ -97,7 +97,7 @@ def native(v):
   out.append(E(**{**{k:v for k,v in nr.items() if k not in ('h','l')},'hl':claripy.Concat(nr['h'],nr['l'])},link=x.memory.load(NM+WLINKSTATE,1),constraints=tuple(x.solver.constraints)))
  return out
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMS.exists(),reason='build')
-@pytest.mark.parametrize('link_state',(0,4))
+@pytest.mark.parametrize('link_state',(0,1,3,4,5,255))
 def test_text_command_wait_button_pathwise_equivalence(link_state):
  v=inputs(f'twtb_{link_state}');v['link']=claripy.BVV(link_state,8)
  assert_pathwise_equivalent(assembly(v),native(v),('a','f','b','c','d','e','hl','link'))
