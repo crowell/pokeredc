@@ -18078,6 +18078,26 @@ decoder = "20-byte body checked (fa2bd1fe042808cd65383e90c3b1230e41c33937: load 
 
 
 [[function]]
+assembly_symbol = "AfterDisplayingTextID"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_after_displaying_text_id"
+c_source = "verification/ports/after_displaying_text_id.c"
+status = "partial"
+observables = [
+    "all 8 registers and flags",
+    "wEnteringCableClub",
+    "hDownArrowBlink1",
+    "hDownArrowBlink2",
+    "hJoy5",
+]
+proof_domain = "both wEnteringCableClub branches with a symbolic terminating A/B hJoy5 input; the ordinary branch composes the proven WaitForTextScrollButtonPress transition, then stops at the shared HoldTextDisplayOpen continuation boundary"
+decoder = "9-byte entry body checked (fa47cca72003cd6538): wEnteringCableClub load, AND A flags, JR NZ branch, and WaitForTextScrollButtonPress call; the shared HoldTextDisplayOpen/Joypad loop and CloseTextDisplay tail remain outside this partial port"
+
+
+
+
+
+[[function]]
 assembly_symbol = "WaitForTextScrollButtonPress"
 assembly_source = "home/joypad2.asm"
 c_symbol = "port_wait_for_text_scroll_button_press"
