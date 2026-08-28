@@ -29149,6 +29149,26 @@ decoder = "exact 32-byte body checked (3eeeeaf2c4cd3a1bd5cd9838d13e7feaf2c4d5cd1
 
 
 [[function]]
+assembly_symbol = "PageChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_page_char"
+c_source = "verification/ports/page_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wLinkState",
+    "the prompt arrow and complete seven-row clear region",
+    "the restored caller DE",
+    "the installed row-11 text cursor HL = 0xc47d",
+]
+proof_domain = "both link-state paths, all symbolic register/flag, arrow, clear-region, and saved-DE inputs; ProtectedDelay3, ManualTextScroll, ClearScreenArea, and the complete 20-frame DelayFrames transition compose through proven ports"
+decoder = "exact 35-byte body checked (d53eeeeaf2c4cd3a1bcd98382169c4011207cdc4180e14cd3937d1e1217dc4e5c3e819); stack balancing, arrow setup, proven delay/manual-scroll/clear/delay callees, row-11 cursor installation, and NextChar continuation are modeled under angr"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"
