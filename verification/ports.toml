@@ -29180,8 +29180,8 @@ observables = [
     "text destination and source pointer state",
     "tilemap bytes affected by PlaceString",
 ]
-proof_domain = "all register/flag inputs and table bytes for the no-match, coordinate-only, and text-and-coordinate entries, MONEY_BOX and BUY_SELL_QUIT_MENU dispatch with their complete handler orchestrations, and TWO_OPTION_MENU dispatch for menu IDs 0 through 7 with fixed B=1/C=1 and HL=0xc420; the remaining interactive function-table handlers remain explicit boundaries"
-decoder = "native port composes through the proven SearchTextBoxTable, GetTextBoxIDCoords, GetAddressOfScreenCoords, TextBoxBorder, GetTextBoxIDText, PlaceString, UpdateSprites, DisplayMoneyBox, DoBuySellQuitMenu, and DisplayTwoOptionMenu ports; dispatcher proofs execute the real function-table branches and the real 229-byte two-option body, with only their documented instruction and callee boundaries shimmed"
+proof_domain = "all register/flag inputs and table bytes for the no-match, coordinate-only, and text-and-coordinate entries, plus MONEY_BOX, BUY_SELL_QUIT_MENU, and FIELD_MOVE_MON_MENU dispatch with complete handler orchestrations, and TWO_OPTION_MENU dispatch for menu IDs 0 through 7 with fixed B=1/C=1 and HL=0xc420"
+decoder = "native port composes through the proven SearchTextBoxTable, GetTextBoxIDCoords, GetAddressOfScreenCoords, TextBoxBorder, GetTextBoxIDText, PlaceString, UpdateSprites, DisplayMoneyBox, DoBuySellQuitMenu, DisplayFieldMoveMonMenu, and DisplayTwoOptionMenu ports; dispatcher proofs execute the real function-table branches and the real 229-byte two-option body, with only their documented instruction and callee boundaries shimmed"
 
 [[function]]
 assembly_symbol = "DisplayMoneyBox"

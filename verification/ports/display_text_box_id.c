@@ -2,11 +2,10 @@
 
 /* Port of DisplayTextBoxID_ in engine/menus/text_box.asm.
  *
- * The money-box and two-option function-table entries compose through their
- * real ports; the remaining interactive menu entries remain explicit
- * boundaries.  The coordinate-only and text-and-coordinate entries execute
- * their real table lookup, coordinate arithmetic, border drawing, text
- * placement, and sprite-update callees here.
+ * All known function-table entries compose through their real ports.  The
+ * coordinate-only and text-and-coordinate entries execute their real table
+ * lookup, coordinate arithmetic, border drawing, text placement, and
+ * sprite-update callees here.
  */
 
 #define W_TEXT_BOX_ID 0xd125u
@@ -14,6 +13,7 @@
 #define H_UI_LAYOUT_FLAGS 0xfff6u
 #define MONEY_BOX 0x13u
 #define BUY_SELL_QUIT_MENU 0x15u
+#define FIELD_MOVE_MON_MENU 0x04u
 #define TWO_OPTION_MENU 0x14u
 #define PORT_FLAG_C 0x10u
 #define TEXT_BOX_FUNCTION_TABLE 0x7387u
@@ -32,6 +32,7 @@ void port_get_address_of_screen_coords(struct screen_coords_state *);
 void port_display_two_option_menu(struct cpu_register_state *, port_u8 *);
 void port_display_money_box(struct cpu_register_state *, port_u8 *);
 void port_do_buy_sell_quit_menu(struct cpu_register_state *, port_u8 *);
+void port_display_field_move_mon_menu(struct cpu_register_state *, port_u8 *);
 
 static port_u16
 pair(port_u8 high, port_u8 low)
@@ -115,6 +116,14 @@ port_display_text_box_id_impl(struct cpu_register_state *registers,
 		registers->e = 3;
 		registers->f = PORT_FLAG_C;
 		port_do_buy_sell_quit_menu(registers, memory);
+		return;
+	}
+	if (id == FIELD_MOVE_MON_MENU) {
+		registers->c = id;
+		registers->d = 0;
+		registers->e = 3;
+		registers->f = PORT_FLAG_C;
+		port_display_field_move_mon_menu(registers, memory);
 		return;
 	}
 	registers->c = id;
