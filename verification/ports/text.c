@@ -1,4 +1,5 @@
 #include "port_state.h"
+#include "joypad_port.h"
 
 /*
  * Port of PlaceString in home/text.asm.
@@ -16,9 +17,8 @@
  *     TRAINER, ROCKET, the six-dots, TARGET, USER) emit their expansion inline
  *   - the screen-command tokens (PARA, PAGE, _CONT, SCROLL, CONT, PROMPT,
  *     DEXEND, DONE, NULL) advance/terminate the destination as the engine does;
- *     the associated screen clears/scrolls are out of scope for the flat model
- *     and are approximated by the destination-pointer movement (the only
- *     observable effect needed by the text-placement contract).
+ *     _CONT and SCROLL compose the real delay/manual-scroll and text-scroll
+ *     ports, while the remaining screen handlers are still staged separately.
  */
 
 #define SCREEN_WIDTH 20
@@ -62,6 +62,8 @@
 #define TEXT_CURSOR        0xc4e1
 
 void port_scroll_text_up_one_line(struct cpu_register_state *, port_u8 *);
+void port_protected_delay3(struct cpu_register_state *, port_u8 *);
+void port_manual_text_scroll(struct manual_text_scroll_state *);
 
 static void
 ps_emit(port_u8 *memory, port_u16 *dest, port_u8 b)
@@ -153,8 +155,42 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 			continue;
 		}
 		if (c == TX__CONT) {
-			memory[ps_coord(18, 16)] = 0xee;
-			dest = ps_coord(1, 16);
+			port_u16 entry_de;
+			struct manual_text_scroll_state mts;
+
+			/* _ContText first pauses with the down arrow visible.  The
+			 * protected delay preserves BC, but its real Delay3 transition
+			 * is still part of the caller-visible register state. */
+			memory[ARROW_SLOT] = 0xee;
+			port_protected_delay3(state, memory);
+
+			/* ManualTextScroll is wrapped in push/pop DE in the assembly;
+			 * map the post-delay registers into its typed wait contract and
+			 * restore the source pointer after the call. */
+			entry_de = src;
+			mts.link_state = memory[W_LINKSTATE];
+			mts.wait_a = state->a;
+			mts.wait_f = state->f;
+			mts.wait_b = state->b;
+			mts.wait_c = state->c;
+			mts.wait_d = state->d;
+			mts.wait_e = state->e;
+			mts.wait_h = state->h;
+			mts.wait_l = state->l;
+			port_manual_text_scroll(&mts);
+			*state = mts.registers;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
+
+			memory[ARROW_SLOT] = 0x7f;
+
+			/* Fall through to _ContTextNoPause: the two real scroll loops
+			 * move the text box and consume their five DelayFrame waits. */
+			port_scroll_text_up_one_line(state, memory);
+			port_scroll_text_up_one_line(state, memory);
+			dest = TEXT_CURSOR;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
 			continue;
 		}
