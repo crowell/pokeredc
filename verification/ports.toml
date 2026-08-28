@@ -14401,6 +14401,26 @@ decoder = "exact 24-byte linked body checked; the two proven callee transitions 
 
 
 [[function]]
+assembly_symbol = "HandleLedges"
+assembly_source = "engine/overworld/ledges.asm"
+c_symbol = "port_handle_ledges"
+c_source = "verification/ports/handle_ledges.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "movement, ledge, joy-ignore, and simulated-joypad state",
+    "front/standing tile lookup and complete LedgeTiles traversal",
+    "hopping-shadow transfer/OAM and PlaySound state on a ledge match",
+]
+proof_domain = "all documented early-return, table-miss, matching-table/no-input, and matching-table/input paths; all eight LedgeTiles entries, four facing directions, collision-table and tilemap effects, complete StartSimulatingJoypadStates and LoadHoppingShadowOAM transitions, and all four PlaySound branches are compared"
+decoder = "exact 93-byte linked body checked; individual SM83 BIT/AND/CP/HLI/LDH seams are shimmed, while the real GetTileAndCoordsInFrontOfPlayer, StartSimulatingJoypadStates, LoadHoppingShadowOAM, and PlaySound C ports execute compositionally"
+
+
+
+
+
+
+[[function]]
 assembly_symbol = "UpdateSpriteMovementDelay"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_update_sprite_movement_delay"
