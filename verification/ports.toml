@@ -29180,8 +29180,8 @@ observables = [
     "text destination and source pointer state",
     "tilemap bytes affected by PlaceString",
 ]
-proof_domain = "all register/flag inputs and table bytes for the no-match, coordinate-only, and text-and-coordinate entries, plus TWO_OPTION_MENU dispatch for menu IDs 0 through 7 with fixed B=1/C=1 and HL=0xc420; money/list function-table handlers remain explicit boundaries"
-decoder = "native port composes through the proven SearchTextBoxTable, GetTextBoxIDCoords, GetAddressOfScreenCoords, TextBoxBorder, GetTextBoxIDText, PlaceString, UpdateSprites, and DisplayTwoOptionMenu ports; the dispatcher proof executes the real 229-byte two-option body after the real JP Z branch, with only its documented instruction and callee boundaries shimmed"
+proof_domain = "all register/flag inputs and table bytes for the no-match, coordinate-only, and text-and-coordinate entries, MONEY_BOX dispatch with the complete money-box orchestration, and TWO_OPTION_MENU dispatch for menu IDs 0 through 7 with fixed B=1/C=1 and HL=0xc420; the remaining interactive function-table handlers remain explicit boundaries"
+decoder = "native port composes through the proven SearchTextBoxTable, GetTextBoxIDCoords, GetAddressOfScreenCoords, TextBoxBorder, GetTextBoxIDText, PlaceString, UpdateSprites, DisplayMoneyBox, and DisplayTwoOptionMenu ports; dispatcher proofs execute the real function-table branch and the real 229-byte two-option body, with only their documented instruction and callee boundaries shimmed"
 
 [[function]]
 assembly_symbol = "DisplayMoneyBox"
