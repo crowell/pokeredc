@@ -18098,6 +18098,21 @@ decoder = "9-byte entry body checked (fa47cca72003cd6538): wEnteringCableClub lo
 
 
 [[function]]
+assembly_symbol = "HoldTextDisplayOpen"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_hold_text_display_open"
+c_source = "verification/ports/hold_text_display_open.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, and hJoyHeld",
+    "hLoadedROMBank and rROMB",
+]
+proof_domain = "three terminating host-input sequences covering immediate release, one held-A poll followed by release, and held-A plus a direction followed by release; all live registers and initial joypad/bank state are symbolic, and the real Joypad homecall transition is executed natively"
+decoder = "exact 10-byte linked loop body cd611bf0b4cb6720f9 checked functionally; the Joypad call, hJoyHeld load, BIT A flag semantics, and both loop/exit paths are modeled with individual instruction/callee boundaries"
+
+
+[[function]]
 assembly_symbol = "WaitForTextScrollButtonPress"
 assembly_source = "home/joypad2.asm"
 c_symbol = "port_wait_for_text_scroll_button_press"

@@ -65,6 +65,13 @@ struct wait_for_text_scroll_state {
 	port_u8 wait_l;
 };
 
+/* Host-polled input sequence for HoldTextDisplayOpen. */
+struct hold_text_display_open_state {
+	struct cpu_register_state registers;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
 /* Output observable of ManualTextScroll; wait/play/delay callees are explicit. */
 struct manual_text_scroll_state {
 	struct cpu_register_state registers;
