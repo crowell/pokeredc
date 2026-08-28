@@ -12510,6 +12510,26 @@ decoder = "exact 35-byte body checked; IsInArray composes through its complete p
 
 
 [[function]]
+assembly_symbol = "IsPlayerStandingOnDoorTileOrWarpTile"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_is_player_standing_on_door_tile_or_warp_tile"
+c_source = "verification/ports/door_warp.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wMovementFlags bit 2",
+    "DoorTileIDPointers and WarpTileIDPointers records",
+    "standing door/warp tile lists",
+]
+proof_domain = "all symbolic register and flag inputs with concrete tileset, door-list, and warp-list records covering door match, door miss with warp match, both list misses, and tileset miss; complete HL/DE/BC restoration and movement-flag RES path"
+decoder = "exact 47-byte body checked; the banked IsPlayerStandingOnDoorTile and IsInArray callees compose through complete transition boundaries, while ADD A, pointer loads, HLI loads, and RES bit 2 are instruction-level shims; native C executes both lookup paths and the flag-clear branch"
+
+
+
+
+
+
+[[function]]
 assembly_symbol = "IsPlayerStandingOnWarp"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_is_player_standing_on_warp"
