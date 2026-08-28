@@ -29610,6 +29610,21 @@ proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-
 decoder = "exact 14-byte linked body e12a5f2a57e56069cd5519e118b0 verified; the ld a,[hli] post-increment loads (0x2A) are shimmed with an angr SimProcedure because the generic z80 p-code arch mis-decodes them as LD HL,(nn), and the PlaceString call is shimmed; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
 
 [[function]]
+assembly_symbol = "NextTextCommand"
+assembly_source = "home/text.asm"
+c_symbol = "port_next_text_command"
+c_source = "verification/ports/text_command_processor.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the advanced command-stream HL pointer",
+    "wLetterPrintingDelayFlags",
+]
+proof_domain = "direct NextTextCommand entry with arbitrary registers, saved AF, and command-stream memory; the TX_END restore/return path is proved directly, while the complete nonterminal command-dispatch loop is shared with TextCommandProcessor and its all-command path-equivalence suite"
+decoder = "native C carries the assembly caller's saved AF explicitly and executes the complete command-fetch loop; the focused direct-entry test checks HLI, AF restoration, delay-flag restoration, and return, while the existing TextCommandProcessor suite covers TX_FAR, TX_SOUND, and every jump-table handler"
+
+
+[[function]]
 assembly_symbol = "TextCommandProcessor"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_processor"

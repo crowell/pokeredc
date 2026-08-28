@@ -47,17 +47,10 @@ void port_text_command_dots(struct cpu_register_state *, port_u8 *);
 void port_text_command_wait_button(struct cpu_register_state *, port_u8 *);
 void port_text_command_far(struct cpu_register_state *, port_u8 *);
 
-__attribute__((noinline, used)) void
-port_text_command_processor(struct cpu_register_state *state, port_u8 *memory)
+static void
+next_text_command_loop(struct cpu_register_state *state, port_u8 *memory,
+	port_u8 orig_a, port_u8 orig_f)
 {
-	port_u8 orig = memory[W_LETTER_PRINTING_DELAY_FLAGS];
-	port_u8 clear = memory[H_CLEAR_LETTER_PRINTING_DELAY_FLAGS];
-	port_u8 newflags =
-		(port_u8)((orig | (1u << BIT_TEXT_DELAY)) ^ clear);
-	memory[W_LETTER_PRINTING_DELAY_FLAGS] = newflags;
-	memory[W_TEXT_DEST] = state->c;
-	memory[W_TEXT_DEST + 1u] = state->b;
-
 	for (;;) {
 		port_u16 ptr =
 			(port_u16)((port_u16)(state->h << 8) | state->l);
@@ -67,7 +60,9 @@ port_text_command_processor(struct cpu_register_state *state, port_u8 *memory)
 		state->l = (port_u8)next;
 
 		if (cmd == TX_END) {
-			memory[W_LETTER_PRINTING_DELAY_FLAGS] = orig;
+			memory[W_LETTER_PRINTING_DELAY_FLAGS] = orig_a;
+			state->a = orig_a;
+			state->f = orig_f;
 			return;
 		}
 		if (cmd == TX_FAR) {
@@ -125,4 +120,28 @@ port_text_command_processor(struct cpu_register_state *state, port_u8 *memory)
 			break;
 		}
 	}
+}
+
+__attribute__((noinline, used)) void
+port_text_command_processor(struct cpu_register_state *state, port_u8 *memory)
+{
+	port_u8 orig = memory[W_LETTER_PRINTING_DELAY_FLAGS];
+	port_u8 saved_f = state->f;
+	port_u8 clear = memory[H_CLEAR_LETTER_PRINTING_DELAY_FLAGS];
+	port_u8 newflags =
+		(port_u8)((orig | (1u << BIT_TEXT_DELAY)) ^ clear);
+	memory[W_LETTER_PRINTING_DELAY_FLAGS] = newflags;
+	memory[W_TEXT_DEST] = state->c;
+	memory[W_TEXT_DEST + 1u] = state->b;
+	next_text_command_loop(state, memory, orig, saved_f);
+}
+
+/* Port of the NextTextCommand entry in home/text.asm.  This is the shared
+ * command-fetch/dispatch loop reached after TextCommandProcessor setup; its
+ * saved delay-flags byte is explicit in the native state contract. */
+__attribute__((noinline, used)) void
+port_next_text_command(struct next_text_command_state *state, port_u8 *memory)
+{
+	next_text_command_loop(&state->registers, memory,
+	    state->saved_a, state->saved_f);
 }

@@ -130,6 +130,15 @@ struct place_next_char_state {
 	port_u8 saved_l;
 };
 
+/* State for the NextTextCommand dispatcher entry.  TextCommandProcessor
+ * saves AF on the SM83 stack before entering this label; the native contract
+ * carries both saved bytes explicitly. */
+struct next_text_command_state {
+	struct cpu_register_state registers;
+	port_u8 saved_a;
+	port_u8 saved_f;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;
