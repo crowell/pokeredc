@@ -29268,14 +29268,14 @@ assembly_symbol = "PlaceCommandCharacter"
 assembly_source = "home/text.asm"
 c_symbol = "port_place_command_character"
 c_source = "verification/ports/place_command_character.c"
-status = "partial"
+status = "proven"
 observables = [
     "all 8 registers and flags",
     "the rendered replacement-text destination window",
     "the advanced caller text pointer in DE",
 ]
-proof_domain = "symbolic registers, flags, destination bytes, and saved DE with replacement strings ending in TX_END; the linked PlaceNextChar continuation is exercised for TX_END, an ordinary character, and TX_LINE, and the proven PlaceString and PlaceNextChar transitions compose exactly; dictionary continuation paths remain outside this focused domain"
-decoder = "exact 10-byte body checked (cd55196069d113c35619); PlaceString entry, cursor moves, stack save/restore, and the linked PlaceNextChar ordinary-character, TX_END, and TX_LINE paths are modeled under angr with individual shims only for unsupported call/return and memory instructions"
+proof_domain = "all symbolic registers, flags, destination bytes, and saved DE over literal and every PlaceCommandCharacter replacement dictionary token (PLAYER, RIVAL, POUND, PKMN, SIXDOTS, PC, TM, TRAINER, and ROCKET), with the linked PlaceNextChar continuation exercised for TX_END, an ordinary character, and TX_LINE; the proven PlaceString and PlaceNextChar transitions compose exactly"
+decoder = "exact 10-byte body checked (cd55196069d113c35619); PlaceString entry, cursor moves, stack save/restore, all nine replacement dictionary expansions, and the linked PlaceNextChar ordinary-character, TX_END, and TX_LINE paths are modeled under angr with individual shims only for unsupported call/return and memory instructions; the focused suite covers 30 path-equivalence cases"
 
 [[function]]
 assembly_symbol = "PrintPlayerName"
