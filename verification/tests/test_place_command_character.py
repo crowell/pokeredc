@@ -111,8 +111,17 @@ class ReturnToken(angr.SimProcedure):
 class PopOuterHL(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
         sp = self.state.regs.sp
-        self.state.regs.h = self.state.memory.load(sp, 1)
-        self.state.regs.l = self.state.memory.load(sp + 1, 1)
+        # The TX_LINE path has just PUSHed the replacement cursor using the
+        # SM83's little-endian stack layout; the direct terminal path reaches
+        # this shim with the caller cursor seeded by the boundary setup.
+        # Preserve both call-boundary layouts while exercising the real
+        # PlaceNextChar branch.
+        if self.state.solver.eval(self.state.regs.hl) == 0xC4E1:
+            self.state.regs.l = self.state.memory.load(sp, 1)
+            self.state.regs.h = self.state.memory.load(sp + 1, 1)
+        else:
+            self.state.regs.h = self.state.memory.load(sp, 1)
+            self.state.regs.l = self.state.memory.load(sp + 1, 1)
         self.state.regs.sp = sp + 2
         self.jump(self.state.addr + 1)
 
@@ -228,7 +237,7 @@ def _native(values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
 
 @pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-@pytest.mark.parametrize("continuation", (0x50, 0x41))
+@pytest.mark.parametrize("continuation", (0x50, 0x41, 0x4F))
 def test_place_command_character_pathwise_equivalence(continuation: int) -> None:
     values = symbolic_registers("place_command_character")
     for offset in range(WINDOW):

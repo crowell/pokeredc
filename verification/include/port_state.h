@@ -187,6 +187,13 @@ struct place_command_character_state {
 	port_u8 saved_e;
 };
 
+/* State for the PrintPlayerName dictionary-token wrapper. */
+struct print_player_name_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
 /* State for the _ContTextNoPause dictionary-token handler. */
 struct cont_text_no_pause_state {
 	struct cpu_register_state registers;

@@ -29274,8 +29274,22 @@ observables = [
     "the rendered replacement-text destination window",
     "the advanced caller text pointer in DE",
 ]
-proof_domain = "symbolic registers, flags, destination bytes, and saved DE with replacement strings ending in TX_END; the linked PlaceNextChar continuation is exercised for TX_END and an ordinary character, and the proven PlaceString and PlaceNextChar transitions compose exactly; dictionary and TX_LINE continuation paths remain outside this focused domain"
-decoder = "exact 10-byte body checked (cd55196069d113c35619); PlaceString entry, cursor moves, stack save/restore, and the linked PlaceNextChar ordinary-character and TX_END paths are modeled under angr with individual shims only for unsupported call/return and memory instructions"
+proof_domain = "symbolic registers, flags, destination bytes, and saved DE with replacement strings ending in TX_END; the linked PlaceNextChar continuation is exercised for TX_END, an ordinary character, and TX_LINE, and the proven PlaceString and PlaceNextChar transitions compose exactly; dictionary continuation paths remain outside this focused domain"
+decoder = "exact 10-byte body checked (cd55196069d113c35619); PlaceString entry, cursor moves, stack save/restore, and the linked PlaceNextChar ordinary-character, TX_END, and TX_LINE paths are modeled under angr with individual shims only for unsupported call/return and memory instructions"
+
+[[function]]
+assembly_symbol = "PrintPlayerName"
+assembly_source = "home/text.asm"
+c_symbol = "port_print_player_name"
+c_source = "verification/ports/print_player_name.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, wPlayerName replacement pointer, and jump into the independently tested PlaceCommandCharacter transition are proven, while replacement rendering remains at that callee's documented partial boundary"
+decoder = "exact 6-byte linked body d51158d1184c asserted inside verification/tests/test_print_player_name.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
 
 
 
