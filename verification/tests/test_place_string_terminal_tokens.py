@@ -28,6 +28,8 @@ RETURN = 0xEFFF
 STACK = 0xD000
 SOURCE = 0xC500
 DESTINATION = 0xC400
+PLAYER_NAME = 0xD158
+RIVAL_NAME = 0xD34A
 
 
 @dataclass(frozen=True)
@@ -51,10 +53,32 @@ class ReturnToken(angr.SimProcedure):
         self.jump(ret)
 
 
+class StoreHLIA(angr.SimProcedure):
+    def run(self) -> None:
+        hl = self.state.regs.hl
+        self.state.memory.store(hl, self.state.regs.a)
+        self.state.regs.hl = hl + 1
+        self.jump(self.state.addr + 1)
+
+
+class PrintLetterDelay(angr.SimProcedure):
+    def run(self) -> None:
+        self.state.regs.sp = self.state.regs.sp + 2
+        self.jump(0x19E8)
+
+
+class IncrementDE(angr.SimProcedure):
+    def run(self) -> None:
+        self.state.regs.de = self.state.regs.de + 1
+        self.jump(0x19E9)
+
+
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
     return claripy.Concat(
         state.memory.load(base + DESTINATION, 1),
         state.memory.load(base + SOURCE, 1),
+        state.memory.load(base + PLAYER_NAME, 3),
+        state.memory.load(base + RIVAL_NAME, 3),
     )
 
 
@@ -72,12 +96,22 @@ def _assembly(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
         },
     )
     project.hook(0x195E, ReturnToken(), length=1)
+    project.hook(0x19E4, StoreHLIA(), length=1)
+    project.hook(0x38D3, PrintLetterDelay(), length=3)
+    project.hook(0x19E8, IncrementDE(), length=1)
     state = project.factory.blank_state(addr=location.address)
     set_assembly_registers(state, values)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     state.memory.store(DESTINATION, values["destination_byte"])
     state.memory.store(SOURCE, claripy.BVV(token, 8))
+    state.memory.store(SOURCE + 1, claripy.BVV(0x50, 8))
+    for address, values_for_name in (
+        (PLAYER_NAME, (0x41, 0x42, 0x50)),
+        (RIVAL_NAME, (0x43, 0x44, 0x50)),
+    ):
+        for offset, value in enumerate(values_for_name):
+            state.memory.store(address + offset, claripy.BVV(value, 8))
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     return [
         Endpoint(**assembly_registers(end), memory=_memory(end, 0), constraints=tuple(end.solver.constraints))
@@ -93,6 +127,13 @@ def _native(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_MEMORY + DESTINATION, values["destination_byte"])
     state.memory.store(NATIVE_MEMORY + SOURCE, claripy.BVV(token, 8))
+    state.memory.store(NATIVE_MEMORY + SOURCE + 1, claripy.BVV(0x50, 8))
+    for address, values_for_name in (
+        (PLAYER_NAME, (0x41, 0x42, 0x50)),
+        (RIVAL_NAME, (0x43, 0x44, 0x50)),
+    ):
+        for offset, value in enumerate(values_for_name):
+            state.memory.store(NATIVE_MEMORY + address + offset, claripy.BVV(value, 8))
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and len(manager.deadended) == 1
@@ -106,7 +147,7 @@ def _native(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     ]
 
 
-@pytest.mark.parametrize("token", (0x00, 0x57, 0x5F))
+@pytest.mark.parametrize("token", (0x00, 0x52, 0x53, 0x57, 0x5F))
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_place_string_terminal_tokens_pathwise_equivalence(token: int) -> None:
