@@ -18093,6 +18093,21 @@ decoder = "exact 12-byte linked body 21ed690607cdd635c3d629 checked inside the f
 
 
 [[function]]
+assembly_symbol = "DisplayPokemonCenterDialogue"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_pokemon_center_dialogue"
+c_source = "verification/ports/display_pokemon_center_dialogue.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "hItemPrice, hLoadedROMBank, and rROMB",
+    "the complete homecall and AfterDisplayingTextID call-input transitions",
+]
+proof_domain = "all symbolic register/flag, scratch-price, and bank inputs through the existing DisplayPokemonCenterDialogue_ welcome-text setup boundary, followed by the shared AfterDisplayingTextID tail boundary"
+decoder = "exact 30-byte linked body afe08be08ce08d23f0b8f53e01e0b8ea0020cde66ff1e0b8ea0020c3d629 checked functionally; the three scratch clears, HL increment, bank-preserving homecall, saved-AF restoration, and tail call are modeled exactly, while healing/menu/farewell paths remain in the partial callee"
+
+
+[[function]]
 assembly_symbol = "DisplayRepelWoreOffText"
 assembly_source = "home/text_script.asm"
 c_symbol = "port_display_repel_wore_off_text"
