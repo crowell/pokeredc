@@ -113,7 +113,24 @@ class BranchZ(angr.SimProcedure):
                                       claripy.Not(condition), "Ijk_Boring")
 
 
-def _setup(state: angr.SimState, base: int, *, tile: int) -> None:
+class CompareCollisionTile(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        tile = self.state.memory.load(W_TILE_FRONT, 1)
+        self.state.regs.c = tile
+        self.state.regs.f = claripy.If(
+            self.state.regs.a == tile,
+            claripy.BVV(0x40, 8),
+            claripy.BVV(0x02, 8),
+        )
+        self.jump(self.next_address)
+
+
+def _setup(state: angr.SimState, base: int, *, tile: int,
+           collision_entry: int) -> None:
     for address, value in ((W_Y, 0), (W_X, 0), (W_FACING, 0),
                            (W_TILE_FRONT, tile), (W_TILE_RESULT, 0)):
         state.memory.store(base + address, claripy.BVV(value, 8))
@@ -121,7 +138,8 @@ def _setup(state: angr.SimState, base: int, *, tile: int) -> None:
                        claripy.BVV(0x0700, 16), endness="Iend_LE")
     state.memory.store(base + W_TILEMAP + 13 * 20 + 8,
                        claripy.BVV(tile, 8))
-    state.memory.store(base + 0x0700, claripy.BVV(0xFF, 8))
+    state.memory.store(base + 0x0700, claripy.BVV(collision_entry, 8))
+    state.memory.store(base + 0x0701, claripy.BVV(0xFF, 8))
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
@@ -137,7 +155,8 @@ def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
     )
 
 
-def _assembly(values: dict[str, claripy.ast.BV], *, tile: int) -> list[Endpoint]:
+def _assembly(values: dict[str, claripy.ast.BV], *, tile: int,
+              collision_entry: int) -> list[Endpoint]:
     loc = symbol_location(SYMBOLS, "CheckForCollisionWhenPushingBoulder")
     end = symbol_location(SYMBOLS, "CheckForBoulderCollisionWithSprites")
     assert linked_bytes(ROM, loc, end.address - loc.address) == bytes.fromhex(
@@ -157,11 +176,14 @@ def _assembly(values: dict[str, claripy.ast.BV], *, tile: int) -> list[Endpoint]
     project.hook(q + 0x0A, Sm83CpImmediate(0xFF, q + 0x0C), length=2)
     project.hook(q + 0x0C, BranchZ(q + 0x27, q + 0x0E), length=2)
     project.hook(q + 0x27, Sm83StoreAImmediate(W_TILE_RESULT, q + 0x2A), length=3)
+    if collision_entry != 0xFF:
+        project.hook(q + 0x0E, CompareCollisionTile(q + 0x0F), length=1)
+        project.hook(q + 0x0F, BranchZ(q + 0x11, q + 0x09), length=2)
     state = project.factory.blank_state(addr=loc.address)
     set_assembly_registers(state, values)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
-    _setup(state, 0, tile=tile)
+    _setup(state, 0, tile=tile, collision_entry=collision_entry)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     manager = project.factory.simulation_manager(state)
     manager.explore(find=RETURN, num_find=8)
@@ -169,13 +191,14 @@ def _assembly(values: dict[str, claripy.ast.BV], *, tile: int) -> list[Endpoint]
     return [_endpoint(end_state, native=False, base=0) for end_state in manager.found]
 
 
-def _native(values: dict[str, claripy.ast.BV], *, tile: int) -> list[Endpoint]:
+def _native(values: dict[str, claripy.ast.BV], *, tile: int,
+            collision_entry: int) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_check_for_collision_when_pushing_boulder")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
-    _setup(state, NATIVE_MEMORY, tile=tile)
+    _setup(state, NATIVE_MEMORY, tile=tile, collision_entry=collision_entry)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
@@ -185,9 +208,13 @@ def _native(values: dict[str, claripy.ast.BV], *, tile: int) -> list[Endpoint]:
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
                     reason="build artifacts missing")
-def test_check_for_collision_when_pushing_boulder_pathwise_equivalence() -> None:
+@pytest.mark.parametrize("collision_entry", (0xFF, 0x00))
+def test_check_for_collision_when_pushing_boulder_pathwise_equivalence(
+    collision_entry: int,
+) -> None:
     values = {register: claripy.BVV(0, 8) for register in REGISTERS}
     assert_pathwise_equivalent(
-        _assembly(values, tile=0x37), _native(values, tile=0x37),
+        _assembly(values, tile=0x37, collision_entry=collision_entry),
+        _native(values, tile=0x37, collision_entry=collision_entry),
         (*REGISTERS, "memory"),
     )

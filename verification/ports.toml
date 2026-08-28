@@ -15390,8 +15390,8 @@ observables = [
     "two-step tile and boulder collision result globals",
     "collision-table pointer traversal and tile-pair state",
 ]
-proof_domain = "two-steps-ahead tile lookup followed by the first collision-table sentinel return; passable-tile, elevation/stairs, and sprite-collision branches are implemented with their real ports but remain to be exhaustively composed"
-decoder = "exact 43-byte linked body checked; the complete two-step lookup and sentinel scan path execute under angr, while downstream tile-pair and boulder-sprite transitions remain documented follow-up paths"
+proof_domain = "two-steps-ahead tile lookup followed by both a first-entry collision-table sentinel and a nonmatching entry followed by the sentinel; passable-tile, elevation/stairs, and sprite-collision branches are implemented with their real ports but remain to be exhaustively composed"
+decoder = "exact 43-byte linked body checked; the complete two-step lookup, collision-table pointer traversal, CP/branch back-edge, and sentinel terminal path execute under angr, while downstream tile-pair and boulder-sprite transitions remain documented follow-up paths"
 
 [[function]]
 assembly_symbol = "CheckForBoulderCollisionWithSprites"
