@@ -73,6 +73,19 @@ static void copy_connection(struct cpu_register_state *registers, port_u8 *memor
 	state.north_south_width = connected_width;
 	state.east_west_width = connected_width;
 	state.map_width = memory[W_CUR_MAP_WIDTH];
+	/* LoadEastWestConnectionsTileMap consumes the strip length from B;
+	 * north/south initializes its row count internally instead. */
+	if (!north_south)
+		state.registers.b = strip_width;
+	/* The assembly stores both connection widths in HRAM locations that alias
+	 * hMapStride/hMapWidth.  Preserve those writes so the final observable
+	 * HRAM state matches the last connection processed. */
+	if (north_south) {
+		memory[H_MAP_STRIDE] = strip_width;
+		memory[H_MAP_WIDTH] = connected_width;
+	} else {
+		memory[H_MAP_STRIDE] = connected_width;
+	}
 	if (north_south)
 		port_load_north_south_connections_tile_map(&state, memory);
 	else
