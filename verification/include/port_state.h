@@ -139,6 +139,18 @@ struct next_text_command_state {
 	port_u8 saved_f;
 };
 
+/* State for CloseTextDisplay.  The caller's saved AF and the host-provided
+ * palette/frame observations are explicit because native C has no SM83
+ * stack or ROM bus. */
+struct close_text_display_state {
+	struct cpu_register_state registers;
+	port_u8 saved_a;
+	port_u8 saved_f;
+	port_u8 map_pal_offset;
+	port_u8 palette[3];
+	port_u8 observed_vblank;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;

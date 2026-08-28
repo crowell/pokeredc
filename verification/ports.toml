@@ -29123,6 +29123,24 @@ decoder = "exact 16-byte linked body d5444d218c1acd401b6069d1 checked; native C 
 
 
 [[function]]
+assembly_symbol = "CloseTextDisplay"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_close_text_display"
+c_source = "verification/ports/close_text_display.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "hWY, hAutoBGTransferEnabled, hLoadedROMBank, and rROMB",
+    "rBGP, rOBP0, and rOBP1",
+    "wFontLoaded",
+    "all 15 restored sprite-facing bytes",
+    "ordered SwitchToMapRomBank, DelayFrame, LoadGBPal, InitMapSprites, LoadPlayerSpriteGraphics, LoadCurrentMapView, and UpdateSprites transitions",
+]
+proof_domain = "both BIT_FLY_WARP branches, all symbolic live registers and saved AF, map palette/hardware bytes, font and 15-entry sprite-facing/original regions, and the complete 15-entry restore loop; proven helper calls are exercised compositionally at explicit boundaries"
+decoder = "exact 70-byte linked body fa5ed3cdbc123e90e0b0cdaf20cdba20afe0ba2119c20e0f1110007e257724190d20f83e05e0b8ea0020cd5b7821c4cfcb86fa32d7cb5fcc9709cdaa0cf1e0b8ea0020c32924 checked functionally; unsupported SM83 load/store/bit boundaries are individually shimmed, the restore loop executes natively, and the jp UpdateSprites tail is a real linked target boundary"
+
+
+[[function]]
 assembly_symbol = "_ContTextNoPause"
 assembly_source = "home/text.asm"
 c_symbol = "port_cont_text_no_pause"
