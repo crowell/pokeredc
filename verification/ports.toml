@@ -18497,6 +18497,23 @@ decoder = "25-byte body checked (d5e5010c05cd4818e1d13ec0835f300114cbdc010c05c34
 
 
 [[function]]
+assembly_symbol = "LoadPlayerSpriteGraphics"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_load_player_sprite_graphics"
+c_source = "verification/ports/load_player_sprite_graphics.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wWalkBikeSurfState and wWalkBikeSurfStateCopy",
+    "hLoadedROMBank, hROMBankTemp, rROMB, and VBlank copy state",
+    "the ordered two-pass player-sprite graphics transfer state",
+    "BikeRidingTilesets lookup state",
+]
+proof_domain = "all symbolic register and flag inputs, every walk/bike/surf state selection including zero, one, two, and other values, both tile-animation outcomes, direct Route 23/Indigo Plateau bike permission, bike-list match, and bike-list denial; complete loader dispatch, pointer adjustment, carry increment, and both real CopyVideoData transitions"
+decoder = "exact 46-byte linked body checked; absolute/HRAM loads and stores, SM83 DEC/AND/XOR/ADD/INC flag seams, proven IsBikeRidingAllowed, and both CopyVideoData call/JP transitions are composed; native C executes the complete selection logic and two transfer passes"
+
+
+[[function]]
 assembly_symbol = "NotYetMoving"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_not_yet_moving"
