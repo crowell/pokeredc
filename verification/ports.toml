@@ -29199,6 +29199,22 @@ proof_domain = "all register/flag inputs and the complete money-box orchestratio
 decoder = "the complete DisplayMoneyBox body executes under angr with only the three proven callee boundaries shimmed; native C preserves the no-text-delay bit, MONEY_BOX_TEMPLATE selection, coordinate/register setup, money source pointer, and final bit clear"
 
 [[function]]
+assembly_symbol = "DoBuySellQuitMenu"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_do_buy_sell_quit_menu"
+c_source = "verification/ports/do_buy_sell_quit_menu.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wStatusFlags5 and wTextBoxID",
+    "menu configuration and selection bytes",
+    "wMenuExitMethod and wChosenMenuItem",
+    "wMenuCursorLocation and the selected cursor destination byte",
+]
+proof_domain = "all register/flag inputs and menu-state bytes for the complete handler, with DisplayTextBoxID, HandleMenuInput, and PlaceUnfilledArrowMenuCursor represented by their independently proven call transitions"
+decoder = "the complete 111-byte linked body executes under angr; individual SM83 absolute loads/stores, LD-immediate/XOR flag seams, and the three call boundaries are shimmed, while native C performs the full setup, menu-input bridge, cursor placement, selection/cancellation branches, compare flags, and carry return"
+
+[[function]]
 assembly_symbol = "IsSurfingAllowed"
 assembly_source = "engine/overworld/field_move_messages.asm"
 c_symbol = "port_is_surfing_allowed"
