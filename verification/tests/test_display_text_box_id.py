@@ -65,8 +65,9 @@ class LoadTextBoxID(angr.SimProcedure):
 class SearchTextBoxTable(angr.SimProcedure):
     def run(self) -> None:
         hl = self.state.solver.eval(self.state.regs.hl)
-        stride = self.state.solver.eval(self.state.regs.de)
+        stride = (self.state.solver.eval(self.state.regs.de) - 1) & 0xFFFF
         wanted = self.state.solver.eval(self.state.regs.c)
+        self.state.regs.de = claripy.BVV(stride, 16)
         value = 0
         found = False
         for _ in range(256):
@@ -76,11 +77,11 @@ class SearchTextBoxTable(angr.SimProcedure):
             if value == wanted:
                 found = True
                 break
-            hl = (hl + stride) & 0xFFFF
+            hl = (hl + 1 + stride) & 0xFFFF
         self.state.regs.a = claripy.BVV(value, 8)
         self.state.regs.hl = claripy.BVV((hl + 1) & 0xFFFF, 16)
         self.state.regs.f = sm83_flags_to_z80(
-            claripy.BVV(0x10 if found else 0x80, 8)
+            claripy.BVV(0x10 if found else 0xC0, 8)
         )
         ret = self.state.memory.load(self.state.regs.sp, 2, endness="Iend_LE")
         self.state.regs.sp = self.state.regs.sp + 2
@@ -223,8 +224,10 @@ class UpdateSprites(angr.SimProcedure):
         self.jump(ret)
 
 
-def _setup(state: angr.SimState, base: int, text: bool = False) -> None:
-    state.memory.store(base + W_TEXT_BOX_ID, claripy.BVV(0x20 if text else 1, 8))
+def _setup(state: angr.SimState, base: int, text: bool = False, text_box_id: int | None = None) -> None:
+    if text_box_id is None:
+        text_box_id = 0x20 if text else 1
+    state.memory.store(base + W_TEXT_BOX_ID, claripy.BVV(text_box_id, 8))
     state.memory.store(base + W_STATUS_FLAGS5, claripy.BVV(0, 8))
     state.memory.store(base + W_UPDATE_SPRITES_ENABLED, claripy.BVV(0, 8))
     state.memory.store(base + FUNCTION_TABLE, claripy.BVV(0xFF, 8))
@@ -254,7 +257,7 @@ def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
     )
 
 
-def _assembly(values: dict[str, claripy.ast.BV], text: bool = False) -> list[Endpoint]:
+def _assembly(values: dict[str, claripy.ast.BV], text: bool = False, text_box_id: int | None = None) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "DisplayTextBoxID_")
     project = angr.Project(
         rom_window(ROM, location.bank),
@@ -287,7 +290,7 @@ def _assembly(values: dict[str, claripy.ast.BV], text: bool = False) -> list[End
     set_assembly_registers(state, values)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
-    _setup(state, 0, text)
+    _setup(state, 0, text, text_box_id)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     return [
         Endpoint(**assembly_registers(end), memory=_memory(end, 0), constraints=tuple(end.solver.constraints))
@@ -295,13 +298,13 @@ def _assembly(values: dict[str, claripy.ast.BV], text: bool = False) -> list[End
     ]
 
 
-def _native(values: dict[str, claripy.ast.BV], text: bool = False) -> list[Endpoint]:
+def _native(values: dict[str, claripy.ast.BV], text: bool = False, text_box_id: int | None = None) -> list[Endpoint]:
     project = angr.Project(NATIVE_ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_display_text_box_id")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
-    _setup(state, NATIVE_MEMORY, text)
+    _setup(state, NATIVE_MEMORY, text, text_box_id)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and len(manager.deadended) == 1
@@ -329,3 +332,11 @@ def test_display_text_box_id_text_pathwise_equivalence() -> None:
     values = {register: claripy.BVV(0, 8) for register in REGISTERS}
     values["f"] = claripy.BVV(0, 8)
     assert_pathwise_equivalent(_assembly(values, text=True), _native(values, text=True), (*REGISTERS, "memory"))
+
+
+@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_display_text_box_id_no_match_pathwise_equivalence() -> None:
+    values = {register: claripy.BVV(0, 8) for register in REGISTERS}
+    values["f"] = claripy.BVV(0, 8)
+    assert_pathwise_equivalent(_assembly(values, text_box_id=0xFE), _native(values, text_box_id=0xFE), (*REGISTERS, "memory"))
