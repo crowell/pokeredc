@@ -9,6 +9,13 @@
 void port_protected_delay3(struct cpu_register_state *, port_u8 *);
 void port_manual_text_scroll(struct manual_text_scroll_state *);
 void port_cont_text_no_pause(struct cont_text_no_pause_state *, port_u8 *);
+void port_text_command_processor(struct cpu_register_state *, port_u8 *);
+
+#define CONT_CHAR_TEXT 0x1a8cu
+
+static const port_u8 cont_char_text[] = {
+	0x17, 0xa3, 0x66, 0x22, 0x50,
+};
 
 /* Port of ContText in home/text.asm.  It displays the prompt arrow, waits
  * through the real protected/manual-scroll ports, clears the arrow, and then
@@ -40,4 +47,31 @@ port_cont_text(struct cont_text_state *state, port_u8 *memory)
 	no_pause.saved_e = state->saved_e;
 	port_cont_text_no_pause(&no_pause, memory);
 	state->registers = no_pause.registers;
+}
+
+/* Port of ContText in home/text.asm.  This handler differs from _ContText:
+ * it runs the immutable far-text stream used for the continuation prompt,
+ * restores the caller's destination/source registers, and resumes through
+ * the PlaceNextChar continuation. */
+__attribute__((noinline, used)) void
+port_cont_text_handler(struct cont_text_state *state, port_u8 *memory)
+{
+	port_u16 destination = (port_u16)(((port_u16)state->registers.h << 8) |
+	    state->registers.l);
+	port_u16 saved_de = (port_u16)(((port_u16)state->saved_d << 8) |
+	    state->saved_e);
+
+	for (port_u8 i = 0; i < (port_u8)sizeof(cont_char_text); ++i)
+		memory[CONT_CHAR_TEXT + i] = cont_char_text[i];
+	state->registers.b = (port_u8)(destination >> 8);
+	state->registers.c = (port_u8)destination;
+	state->registers.h = (port_u8)(CONT_CHAR_TEXT >> 8);
+	state->registers.l = (port_u8)CONT_CHAR_TEXT;
+	port_text_command_processor(&state->registers, memory);
+	destination = (port_u16)(((port_u16)state->registers.b << 8) |
+	    state->registers.c);
+	state->registers.h = (port_u8)(destination >> 8);
+	state->registers.l = (port_u8)destination;
+	state->registers.d = (port_u8)((saved_de + 1u) >> 8);
+	state->registers.e = (port_u8)(saved_de + 1u);
 }

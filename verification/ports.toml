@@ -29107,6 +29107,22 @@ decoder = "exact 10-byte body checked (cd55196069d113c35619); the PlaceString ca
 
 
 [[function]]
+assembly_symbol = "ContText"
+assembly_source = "home/text.asm"
+c_symbol = "port_cont_text_handler"
+c_source = "verification/ports/cont_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "the complete ContCharText far-command template",
+    "the restored caller destination in HL and advanced source DE",
+    "wLetterPrintingDelayFlags and nested text-processor effects",
+]
+proof_domain = "all symbolic register/flag, destination, saved-DE, and delay-flag inputs through the complete ContText handler; the nested TextCommandProcessor far-stream transition composes through its proven dispatcher while the linked test covers the saved-DE push/pop, destination handoff, and PlaceNextChar continuation"
+decoder = "exact 16-byte linked body d5444d218c1acd401b6069d1 checked; native C writes the exact five-byte ContCharText far wrapper, calls the real port_text_command_processor, restores BC-derived HL, advances the saved DE, and the focused proof models the nested terminal stream and continuation boundary"
+
+
+[[function]]
 assembly_symbol = "_ContTextNoPause"
 assembly_source = "home/text.asm"
 c_symbol = "port_cont_text_no_pause"
