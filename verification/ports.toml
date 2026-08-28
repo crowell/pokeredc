@@ -12641,6 +12641,23 @@ proof_domain = "all register/flag/global/record inputs and every counted finite 
 decoder = "exact 44-byte body and all linked addresses checked; initializer composes with exhaustive Y mismatch, X mismatch, match/store/set-bit, and DEC-C continuation/termination transitions"
 
 
+[[function]]
+assembly_symbol = "CheckForceBikeOrSurf"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_check_force_bike_or_surf"
+c_source = "verification/ports/check_force_bike_or_surf.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wStatusFlags6",
+    "wSeafoamIslandsB3FCurScript and wSeafoamIslandsB4FCurScript",
+    "wWalkBikeSurfState and wWalkBikeSurfStateCopy",
+    "complete ForcedBikeOrSurfMaps scan state",
+]
+proof_domain = "all symbolic register/flag inputs, early always-on-bike return, complete finite forced-bike/surf table scan, coordinate/map mismatch paths, Route 16/18 bike setup, Seafoam B3F/B4F surfing setup, and terminal ForceBikeOrSurf transition"
+decoder = "exact 91-byte linked body checked; native C models the full table scan and all state/script writes, while the ForceBikeOrSurf graphics/music tail is an explicit terminal boundary"
+
+
 
 
 
