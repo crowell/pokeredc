@@ -56,6 +56,8 @@
 #define W_RIVAL_NAME       0xd34a
 #define W_BATTLE_MON_NICK  0xd009
 #define W_ENEMY_MON_NICK   0xcfda
+#define TEXT_ID_ERROR_PREV 0x19f3
+#define DONE_TEXT_PREV     0x1ab2
 
 static void
 ps_emit(port_u8 *memory, port_u16 *dest, port_u8 b)
@@ -96,6 +98,7 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 
 	for (;;) {
 		c = memory[src];
+		state->a = c;
 		if (c == TX_END) {
 			state->a = c;
 			state->b = (port_u8)(dest >> 8);
@@ -154,16 +157,37 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 		}
 		if (c == TX_PROMPT) {
 			memory[ps_coord(18, 16)] = 0xee;
+			memory[ps_coord(18, 16)] = 0x7f;
+			state->a = 0x7f;
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
+			state->d = (port_u8)(DONE_TEXT_PREV >> 8);
+			state->e = (port_u8)DONE_TEXT_PREV;
 			break; /* falls through into DoneText (terminate) */
 		}
 		if (c == TX_DONE) {
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
+			state->d = (port_u8)(DONE_TEXT_PREV >> 8);
+			state->e = (port_u8)DONE_TEXT_PREV;
+			state->f = PORT_FLAG_N | PORT_FLAG_Z;
 			break;
 		}
 		if (c == TX_DEXEND) {
-			ps_emit(memory, &dest, 0xe8); /* '.' */
+			memory[dest] = 0xe8; /* '.'; PlaceDexEnd does not advance HL */
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
+			state->f = PORT_FLAG_N | PORT_FLAG_Z;
 			break;
 		}
 		if (c == TX_NULL) {
+			state->b = (port_u8)(dest >> 8);
+			state->c = (port_u8)dest;
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
+			state->d = (port_u8)(TEXT_ID_ERROR_PREV >> 8);
+			state->e = (port_u8)TEXT_ID_ERROR_PREV;
+			state->f = PORT_FLAG_H | PORT_FLAG_Z;
 			break; /* debug leftover: original prints an error */
 		}
 		if (c == TX_PLAYER) {
