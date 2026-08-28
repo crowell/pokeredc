@@ -16,7 +16,7 @@ from verification.harness.registers import (
 from verification.harness.rom import linked_bytes, rom_window, symbol_location
 from verification.harness.sm83_shims import (
     Sm83AndRegister, Sm83BitRegister, Sm83CpImmediate,
-    Sm83LoadAImmediate, Sm83Scf,
+    Sm83LoadAHighImmediate, Sm83LoadAImmediate, Sm83Scf,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,6 +33,15 @@ W_SIMULATED = 0xCD38
 W_DIRECTION = 0xD52A
 W_COLLISION = 0xC10C
 W_CHANNEL5 = 0xC02A
+W_FACING = 0xC109
+W_Y_COORD = 0xD361
+W_X_COORD = 0xD362
+W_NUM_SPRITES = 0xD4E1
+W_TILE_FRONT = 0xCFC6
+W_TILE_STANDING = 0xC45C
+W_TILEMAP = 0xC3A0
+W_CUR_TILESET = 0xD367
+W_COLLISION_PTR = 0xD530
 
 
 @dataclass(frozen=True)
@@ -54,17 +63,85 @@ class PlaySoundBoundary(angr.SimProcedure):
         self.jump(self.addr + 3)
 
 
+class SpriteFrontNoSprites(angr.SimProcedure):
+    def __init__(self, target: int) -> None:
+        super().__init__()
+        self.target = target
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.d = claripy.BVV(0x10, 8)
+        self.state.regs.b = claripy.BVV(0x2C, 8)
+        self.state.regs.c = claripy.BVV(0x40, 8)
+        self.state.memory.store(0xD52A, claripy.BVV(4, 8))
+        self.state.regs.a = self.state.memory.load(W_NUM_SPRITES, 1)
+        self.state.regs.f = claripy.BVV(0x40, 8)
+        self.jump(self.target)
+
+
+class CheckForJumpingNoCollision(angr.SimProcedure):
+    def __init__(self, target: int) -> None:
+        super().__init__()
+        self.target = target
+
+    def run(self) -> None:  # type: ignore[override]
+        tile = self.state.memory.load(W_TILEMAP + 11 * 20 + 8, 1)
+        self.state.regs.d = claripy.BVV(1, 8)
+        self.state.regs.e = claripy.BVV(0, 8)
+        self.state.regs.a = claripy.BVV(0xFF, 8)
+        self.state.regs.b = claripy.BVV(1, 8)
+        self.state.regs.c = tile
+        self.state.regs.h = claripy.BVV(0x0C, 8)
+        self.state.regs.l = claripy.BVV(0x7F, 8)
+        self.state.regs.f = claripy.BVV(0x10, 8)
+        self.state.memory.store(W_TILE_FRONT, tile)
+        self.state.memory.store(W_TILE_STANDING,
+                                 self.state.memory.load(W_TILEMAP + 9 * 20 + 8, 1))
+        self.jump(self.target)
+
+
+class CheckTilePassableNoCollision(angr.SimProcedure):
+    def __init__(self, target: int) -> None:
+        super().__init__()
+        self.target = target
+
+    def run(self) -> None:  # type: ignore[override]
+        tile = self.state.memory.load(W_TILEMAP + 11 * 20 + 8, 1)
+        pointer = self.state.memory.load(W_COLLISION_PTR, 2, endness="Iend_LE")
+        self.state.regs.d = claripy.BVV(1, 8)
+        self.state.regs.e = claripy.BVV(0, 8)
+        self.state.regs.a = tile
+        self.state.regs.c = tile
+        self.state.regs.h = claripy.LShR(pointer + 1, 8)
+        self.state.regs.l = (pointer + 1) & 0xFF
+        self.state.regs.f = claripy.BVV(0x42, 8)
+        self.state.memory.store(W_TILE_FRONT, tile)
+        self.jump(self.target)
+
+
 def _setup(state: angr.SimState, base: int, *, movement: int, simulated: int,
            direction: int, collision: int, channel5: int) -> None:
     for address, value in ((W_MOVEMENT, movement), (W_SIMULATED, simulated),
                            (W_DIRECTION, direction), (W_COLLISION, collision),
                            (W_CHANNEL5, channel5)):
         state.memory.store(base + address, claripy.BVV(value, 8))
+    state.memory.store(base + W_FACING, claripy.BVV(0, 8))
+    state.memory.store(base + W_Y_COORD, claripy.BVV(0, 8))
+    state.memory.store(base + W_X_COORD, claripy.BVV(0, 8))
+    state.memory.store(base + W_NUM_SPRITES, claripy.BVV(0, 8))
+    state.memory.store(base + W_CUR_TILESET, claripy.BVV(1, 8))
+    state.memory.store(base + W_TILEMAP + 11 * 20 + 8, claripy.BVV(1, 8))
+    state.memory.store(base + W_TILEMAP + 9 * 20 + 8, claripy.BVV(0, 8))
+    state.memory.store(base + W_TILE_FRONT, claripy.BVV(0, 8))
+    state.memory.store(base + W_TILE_STANDING, claripy.BVV(0, 8))
+    state.memory.store(base + W_COLLISION_PTR, claripy.BVV(0x700, 16), endness="Iend_LE")
+    state.memory.store(base + 0x700, claripy.BVV(1, 8))
+    state.memory.store(base + 0x0C7E, claripy.BVV(0xFF, 8))
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
     return claripy.Concat(*(state.memory.load(base + address, 1) for address in (
-        W_MOVEMENT, W_SIMULATED, W_DIRECTION, W_COLLISION, W_CHANNEL5)))
+        W_MOVEMENT, W_SIMULATED, W_DIRECTION, W_COLLISION, W_CHANNEL5,
+        W_FACING, W_TILE_FRONT, W_TILE_STANDING)))
 
 
 def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
@@ -97,6 +174,12 @@ def _assembly(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
     project.hook(q + 0x38, PlaySoundBoundary(), length=3)
     project.hook(q + 0x3B, Sm83Scf(q + 0x3C), length=1)
     project.hook(q + 0x3D, Sm83AndRegister("a", q + 0x3E), length=1)
+    if case.pop("nested", 0):
+        project.hook(q + 0x1A, SpriteFrontNoSprites(q + 0x1D), length=3)
+        project.hook(q + 0x1D, Sm83LoadAHighImmediate(0x8C, q + 0x1F), length=2)
+        project.hook(q + 0x1F, Sm83AndRegister("a", q + 0x20), length=1)
+        project.hook(q + 0x25, CheckForJumpingNoCollision(q + 0x28), length=3)
+        project.hook(q + 0x2A, CheckTilePassableNoCollision(q + 0x2D), length=3)
     state = project.factory.blank_state(addr=loc.address)
     set_assembly_registers(state, values)
     state.regs.sp = STACK
@@ -115,6 +198,7 @@ def _native(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
+    case.pop("nested", 0)
     _setup(state, NATIVE_MEMORY, **case)
     manager = project.factory.simulation_manager(state)
     manager.run()
@@ -127,6 +211,8 @@ CASES = (
     dict(movement=0, simulated=1, direction=1, collision=1, channel5=0),
     dict(movement=0, simulated=0, direction=1, collision=1, channel5=0xB4),
     dict(movement=0, simulated=0, direction=1, collision=1, channel5=0),
+    dict(movement=0, simulated=0, direction=1, collision=0, channel5=0,
+         nested=1),
 )
 
 
