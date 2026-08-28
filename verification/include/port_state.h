@@ -48,6 +48,15 @@ struct cpu_register_state {
 	port_u8 l;
 };
 
+/* State for the PlaceDexEnd dictionary-token handler.  The assembly caller
+ * has the output cursor in HL and its saved cursor on the stack; the native
+ * contract carries that popped HL explicitly. */
+struct place_dex_end_state {
+	struct cpu_register_state registers;
+	port_u8 saved_h;
+	port_u8 saved_l;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;

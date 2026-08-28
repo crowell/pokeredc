@@ -29018,6 +29018,24 @@ proof_domain = "the plain single-byte BCD configuration (C=1: no money sign, no 
 decoder = "exact 55-byte linked body and the exact proved 35-byte PrintBCDDigit callee execute under angr as one unbroken per-instruction hook chain; SM83 AND/SWAP/BIT/RES/ADD/LD shims plus fork shims for the SLEIGH conditional-branch defect; each digit's jp PrintLetterDelay tail is an identity boundary on this function's observable state (A/F dead on return inside the loop, register saves balanced) and the native C calls the real port_print_bcd_digit_full per digit"
 
 [[function]]
+assembly_symbol = "PlaceDexEnd"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_dex_end"
+c_source = "verification/ports/place_dex_end.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "the period write at the entry HL cursor",
+    "the restored caller HL",
+]
+proof_domain = "all symbolic register/flag inputs, a symbolic caller-saved HL, and every initial byte in the destination window; the entry cursor is fixed to the tested tilemap slot so the indexed write is fully observable"
+decoder = "exact 4-byte body checked (36e8e1c9); LD [HL], '.' writes the complete destination byte, POP HL restores the symbolic caller cursor, and RET is modeled only as the terminal boundary"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"
