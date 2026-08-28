@@ -29347,6 +29347,20 @@ observables = [
 proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, TMCharText replacement pointer, and jump into the independently tested PlaceCommandCharacter transition are proven, while replacement rendering remains at that callee's documented partial boundary"
 decoder = "exact 6-byte linked body d511551a183a asserted inside verification/tests/test_tm_char.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
 
+[[function]]
+assembly_symbol = "RocketChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_rocket_char"
+c_source = "verification/ports/rocket_char.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, RocketCharText replacement pointer, and jump into the independently tested PlaceCommandCharacter transition are proven, while replacement rendering remains at that callee's documented partial boundary"
+decoder = "exact 6-byte linked body d511631a182e asserted inside verification/tests/test_rocket_char.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
 
 
 
