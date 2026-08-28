@@ -29209,6 +29209,26 @@ decoder = "the exact 30-byte linked body through the PlaceCommandCharacter conti
 
 
 [[function]]
+assembly_symbol = "PlaceMoveTargetsName"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_move_targets_name"
+c_source = "verification/ports/place_move_users_name.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wWhoseTurn (read without mutation)",
+    "the complete replacement-text destination window",
+    "the battle and enemy nickname source buffers",
+    "the restored-and-advanced caller DE",
+]
+proof_domain = "both symbolic wWhoseTurn inputs (opposite-side selection), with symbolic registers, flags, destination bytes, and saved DE; the XOR wrapper composes with the complete proven PlaceMoveUsersName body"
+decoder = "exact 36-byte linked body checked (f0f3ee011802f0f3d5a720051109d0180b11721acd5519606911dacfcd55196069d113c3); XOR/relative entry and the shared user-name body are modeled under angr"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"

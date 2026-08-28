@@ -12,17 +12,16 @@ void port_place_command_character(struct place_command_character_state *, port_u
 
 static const port_u8 enemy_text[] = { 0x84, 0xad, 0xa4, 0xac, 0xb8, 0x7f, TEXT_END };
 
-/* Port of PlaceMoveUsersName in home/text.asm.  The enemy branch first
- * renders the literal EnemyText, then renders the enemy nickname; the player
- * branch renders the battle nickname directly. */
-__attribute__((noinline, used)) void
-port_place_move_users_name(struct place_move_users_name_state *state,
-	port_u8 *memory)
+/* Shared body entered by PlaceMoveUsersName and PlaceMoveTargetsName after
+ * their respective turn selection. */
+static void
+place_move_users_name_for_turn(struct place_move_users_name_state *state,
+	port_u8 *memory, port_u8 whose_turn)
 {
 	port_u16 destination;
 	port_u16 saved_de;
 
-	if (memory[H_WHOSE_TURN] == 0u)
+	if (whose_turn == 0u)
 	{
 		state->registers.d = (port_u8)(W_BATTLE_MON_NICK >> 8);
 		state->registers.e = (port_u8)W_BATTLE_MON_NICK;
@@ -50,5 +49,23 @@ port_place_move_users_name(struct place_move_users_name_state *state,
 	saved_de = (port_u16)((port_u16)(state->saved_d << 8) | state->saved_e);
 	saved_de = (port_u16)(saved_de + 1u);
 	state->registers.d = (port_u8)(saved_de >> 8);
-	state->registers.e = (port_u8)saved_de;
+		state->registers.e = (port_u8)saved_de;
+}
+
+/* Port of PlaceMoveUsersName in home/text.asm. */
+__attribute__((noinline, used)) void
+port_place_move_users_name(struct place_move_users_name_state *state,
+	port_u8 *memory)
+{
+	place_move_users_name_for_turn(state, memory, memory[H_WHOSE_TURN]);
+}
+
+/* Port of PlaceMoveTargetsName in home/text.asm: select the opposing side,
+ * then enter PlaceMoveUsersName's shared `.place` body. */
+__attribute__((noinline, used)) void
+port_place_move_targets_name(struct place_move_users_name_state *state,
+	port_u8 *memory)
+{
+	place_move_users_name_for_turn(state, memory,
+	    (port_u8)(memory[H_WHOSE_TURN] ^ 1u));
 }
