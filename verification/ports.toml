@@ -29380,13 +29380,13 @@ assembly_symbol = "SixDotsChar"
 assembly_source = "home/text.asm"
 c_symbol = "port_six_dots_char"
 c_source = "verification/ports/six_dots_char.c"
-status = "partial"
+status = "proven"
 observables = [
     "all 8 registers and canonical flags",
     "PlaceCommandCharacter call-input registers",
     "the saved caller DE passed through the dictionary wrapper",
 ]
-proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, SixDotsCharText replacement pointer, and jump into the independently tested PlaceCommandCharacter transition are proven, while replacement rendering remains at that callee's documented partial boundary"
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, SixDotsCharText replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
 decoder = "exact 6-byte linked body d5116f1a1822 asserted inside verification/tests/test_six_dots_char.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
 
 [[function]]
