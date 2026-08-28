@@ -21,7 +21,6 @@ from verification.harness.rom import (
     collect_returns,
     linked_bytes,
     rom_window,
-    sm83_flags_to_z80,
     symbol_location,
 )
 
@@ -36,6 +35,7 @@ RETURN = 0xEFFF
 SOURCE = 0xC500
 NEXT_SOURCE = 0xC600
 DESTINATION = 0xC400
+H_LAYOUT = 0xFFF6
 STRING = bytes((0x41, 0x42, 0x43, 0x50))
 WINDOW = 6
 
@@ -101,31 +101,64 @@ class IncDE(angr.SimProcedure):
         self.jump(self.state.addr + 1)
 
 
-class ContinuationBoundary(angr.SimProcedure):
+class ReturnToken(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
-        self.state.regs.b = self.state.regs.h
-        self.state.regs.c = self.state.regs.l
-        self.state.regs.h = self.state.memory.load(STACK + 2, 1)
-        self.state.regs.l = self.state.memory.load(STACK + 3, 1)
-        self.state.regs.a = claripy.BVV(0x50, 8)
-        self.state.regs.f = sm83_flags_to_z80(claripy.BVV(0xC0, 8))
-        self.inhibit_autoret = True
-        self.jump(RETURN)
+        ret = self.state.memory.load(self.state.regs.sp, 2, endness="Iend_LE")
+        self.state.regs.sp = self.state.regs.sp + 2
+        self.jump(ret)
+
+
+class PopOuterHL(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        sp = self.state.regs.sp
+        self.state.regs.h = self.state.memory.load(sp, 1)
+        self.state.regs.l = self.state.memory.load(sp + 1, 1)
+        self.state.regs.sp = sp + 2
+        self.jump(self.state.addr + 1)
+
+
+class StoreHLIA(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        hl = self.state.regs.hl
+        self.state.memory.store(hl, self.state.regs.a)
+        self.state.regs.hl = hl + 1
+        self.jump(self.state.addr + 1)
+
+
+class PrintLetterDelay(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.sp = self.state.regs.sp + 2
+        self.jump(0x19E8)
+
+
+class IncrementDE(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.de = self.state.regs.de + 1
+        self.jump(0x1956)
+
+
+class LoadLayoutFlags(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = self.state.memory.load(H_LAYOUT, 1)
+        self.jump(self.state.addr + 2)
 
 
 def _setup(state: angr.SimState, base: int,
            values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
-           saved_e: claripy.ast.BV) -> None:
+           saved_e: claripy.ast.BV, continuation: int) -> None:
     for offset in range(WINDOW):
         state.memory.store(base + DESTINATION + offset,
                            values[f"window{offset}"])
     for offset, character in enumerate(STRING):
         state.memory.store(base + SOURCE + offset, claripy.BVV(character, 8))
-    state.memory.store(base + NEXT_SOURCE, claripy.BVV(0x50, 8))
+    state.memory.store(base + NEXT_SOURCE, claripy.BVV(continuation, 8))
+    state.memory.store(base + NEXT_SOURCE + 1, claripy.BVV(0x50, 8))
     state.memory.store(base + STACK, saved_e, endness="Iend_LE")
     state.memory.store(base + STACK + 1, saved_d, endness="Iend_LE")
     state.memory.store(base + STACK + 2, claripy.BVV(DESTINATION >> 8, 8))
     state.memory.store(base + STACK + 3, claripy.BVV(DESTINATION & 0xFF, 8))
+    state.memory.store(base + STACK + 4, claripy.BVV(RETURN, 16), endness="Iend_LE")
+    state.memory.store(base + H_LAYOUT, claripy.BVV(0, 8))
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
@@ -134,7 +167,7 @@ def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
 
 
 def _assembly(values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
-              saved_e: claripy.ast.BV) -> list[Endpoint]:
+              saved_e: claripy.ast.BV, continuation: int) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "PlaceCommandCharacter")
     assert linked_bytes(ROM, location, 10) == bytes.fromhex("cd55196069d113c35619")
     project = angr.Project(
@@ -149,7 +182,15 @@ def _assembly(values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
     project.hook(q + 4, LdLFromC(), length=1)
     project.hook(q + 5, PopDE(), length=1)
     project.hook(q + 6, IncDE(), length=1)
-    project.hook(q + 7, ContinuationBoundary(), length=3)
+    next_char = symbol_location(SYMBOLS, "PlaceNextChar").address
+    project.hook(next_char + 7, PopOuterHL(), length=1)
+    project.hook(next_char + 8, ReturnToken(), length=1)
+    project.hook(next_char + 0x8e, StoreHLIA(), length=1)
+    project.hook(symbol_location(SYMBOLS, "PrintLetterDelay").address,
+                 PrintLetterDelay(), length=3)
+    project.hook(symbol_location(SYMBOLS, "NextChar").address,
+                 IncrementDE(), length=1)
+    project.hook(next_char + 0x10, LoadLayoutFlags(), length=2)
     state = project.factory.blank_state(addr=q)
     set_assembly_registers(state, values)
     state.regs.h = claripy.BVV(DESTINATION >> 8, 8)
@@ -157,7 +198,7 @@ def _assembly(values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
     state.regs.d = claripy.BVV(SOURCE >> 8, 8)
     state.regs.e = claripy.BVV(SOURCE & 0xFF, 8)
     state.regs.sp = STACK
-    _setup(state, 0, values, saved_d, saved_e)
+    _setup(state, 0, values, saved_d, saved_e, continuation)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     endpoints = collect_returns(project, state, RETURN)
     return [Endpoint(**assembly_registers(end), memory=_memory(end, 0),
@@ -165,7 +206,7 @@ def _assembly(values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
 
 
 def _native(values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
-            saved_e: claripy.ast.BV) -> list[Endpoint]:
+            saved_e: claripy.ast.BV, continuation: int) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_place_command_character")
     assert function is not None
@@ -175,7 +216,7 @@ def _native(values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
     state.memory.store(NATIVE_STATE + 8, saved_d)
     state.memory.store(NATIVE_STATE + 9, saved_e)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
-    _setup(state, NATIVE_MEMORY, values, saved_d, saved_e)
+    _setup(state, NATIVE_MEMORY, values, saved_d, saved_e, continuation)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and len(manager.deadended) == 1
@@ -187,7 +228,8 @@ def _native(values: dict[str, claripy.ast.BV], saved_d: claripy.ast.BV,
 
 @pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_place_command_character_pathwise_equivalence() -> None:
+@pytest.mark.parametrize("continuation", (0x50, 0x41))
+def test_place_command_character_pathwise_equivalence(continuation: int) -> None:
     values = symbolic_registers("place_command_character")
     for offset in range(WINDOW):
         values[f"window{offset}"] = claripy.BVS(
@@ -200,7 +242,7 @@ def test_place_command_character_pathwise_equivalence() -> None:
     saved_d = claripy.BVV(saved_pointer >> 8, 8)
     saved_e = claripy.BVV(saved_pointer & 0xFF, 8)
     assert_pathwise_equivalent(
-        _assembly(values, saved_d, saved_e),
-        _native(values, saved_d, saved_e),
+        _assembly(values, saved_d, saved_e, continuation),
+        _native(values, saved_d, saved_e, continuation),
         (*REGISTERS, "memory"),
     )
