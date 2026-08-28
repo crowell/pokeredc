@@ -124,7 +124,7 @@ port_prepare_oam_data(struct cpu_register_state *r, port_u8 *memory)
 					table_index = (port_u8)(table_index + 0x10u);
 				r->l = table_index;
 				memory[H_PRIORITY] =
-					(port_u8)(memory[W_SPRITE_STATE_DATA2 + offset + 5u] & 0x80u);
+					(port_u8)(memory[W_SPRITE_STATE_DATA2 + offset + 7u] & 0x80u);
 				entry = (port_u16)(SPRITE_TABLE + (port_u16)table_index * 4u);
 				pattern = (port_u16)(memory[entry] |
 					((port_u16)memory[entry + 1u] << 8));
