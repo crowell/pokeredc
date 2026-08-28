@@ -12945,6 +12945,21 @@ observables = [
 proof_domain = "all register/flag/memory inputs; fixed initializer composes with 30 exhaustive byte transitions and five exhaustive row transitions, including overlap and 16-bit pointer wraparound"
 decoder = "exact 24-byte body checked; 5x6 HLI/DE copy, DEC-C inner loop, saved BC around ADD-HL 14, C reset, DEC-B outer loop, and final return modeled compositionally"
 
+[[function]]
+assembly_symbol = "TwoOptionMenu_RestoreScreenTiles"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_two_option_menu_restore_screen_tiles"
+c_source = "verification/ports/menu_save_tiles.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "every strided wBuffer read",
+    "all 30 contiguous tilemap writes",
+    "the complete UpdateSprites call input and post-state",
+]
+proof_domain = "all register/flag inputs, every source and destination byte, and the early-return UpdateSprites path (wUpdateSpritesEnabled=2); the restore loop is complete, while the sprite-update path for wUpdateSpritesEnabled=1 remains an explicit boundary until _UpdateSprites is ported"
+decoder = "exact 27-byte body checked; 5x6 DE/HLI copy, DEC-C inner loop, saved BC around ADD-HL 14, C reset, DEC-B outer loop, and the UpdateSprites early-return transition execute under angr; native C executes the complete restore loops and calls the real port_update_sprites"
+
 
 
 
