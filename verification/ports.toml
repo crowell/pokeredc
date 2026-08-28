@@ -10680,7 +10680,7 @@ observables = [
     "complete wNPCMovementDirections destination region",
     "wNPCNumScriptedSteps, movement-status, simulated-state, and joy-ignore globals",
 ]
-proof_domain = "one-command and two-command movement streams with the full destination region compared; SetSpriteMovementBytesToFF and GetSpriteMovementByte1Pointer compose at complete boundaries, while arbitrary stream lengths and downstream scripted movement remain"
+proof_domain = "one- through five-command movement streams with the full destination region compared; SetSpriteMovementBytesToFF and GetSpriteMovementByte1Pointer compose at complete boundaries, while arbitrary stream lengths and downstream scripted movement remain"
 decoder = "exact 49-byte linked MoveSprite/MoveSprite_ body checked; the actual copy loop, sentinel-inclusive count, register restoration, status-bit set, and final mask writes execute under angr"
 
 [[function]]

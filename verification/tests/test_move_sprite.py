@@ -234,7 +234,12 @@ def _native(values: dict[str, claripy.ast.BV], sequence: tuple[int, ...]) -> lis
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
                     reason="build artifacts missing")
-@pytest.mark.parametrize("sequence", ((0xFF,), (0x01, 0x02, 0xFF)))
+@pytest.mark.parametrize("sequence", (
+    (0xFF,),
+    (0x01, 0x02, 0xFF),
+    (0x00, 0x01, 0x02, 0x03, 0xFF),
+    (0x80, 0x7F, 0x40, 0x20, 0x10, 0xFF),
+))
 def test_move_sprite_pathwise_equivalence(sequence: tuple[int, ...]) -> None:
     values = {
         "a": claripy.BVV(0x9A, 8), "f": claripy.BVV(0x90, 8),
