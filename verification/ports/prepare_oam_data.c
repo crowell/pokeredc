@@ -55,7 +55,7 @@ screen_xy(struct cpu_register_state *r, port_u8 *memory, port_u8 offset)
 	e = (port_u8)(e + 2u);
 	x = memory[(port_u16)(W_SPRITE_STATE_DATA1 + e)];
 	memory[W_SPRITE_STATE_DATA1 + offset + 10u] = (port_u8)((y + 4u) & 0xf0u);
-	memory[W_SPRITE_STATE_DATA1 + offset + 11u] = (port_u8)((x + 4u) & 0xf0u);
+	memory[W_SPRITE_STATE_DATA1 + offset + 11u] = (port_u8)(x & 0xf0u);
 	memory[H_SCREEN_Y] = y;
 	memory[H_SCREEN_X] = x;
 	r->e = (port_u8)(offset + 11u);
