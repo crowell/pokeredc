@@ -29582,6 +29582,20 @@ proof_domain = "the complete setup plus one host-driven cancel iteration with TE
 decoder = "the exact 101-byte linked setup body executes under angr; individual SM83 absolute/HRAM stores and the proven setup/call boundaries are shimmed, then the real linked loop is entered through an explicit cancel-input continuation; native C preserves the setup and one-iteration option state machine, with full interactive-loop composition still pending"
 
 [[function]]
+assembly_symbol = "TryLoadSaveFile"
+assembly_source = "engine/menus/save.asm"
+c_symbol = "port_try_load_save_file"
+c_source = "verification/ports/try_load_save_file.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wSaveFileStatus and wStatusFlags5",
+    "the ordered ClearScreen, font/text-box tile-pattern, save-loader, PrintText, and DelayFrames transitions",
+]
+proof_domain = "all register/flag inputs over the successful load and each of the three checksum-failure exits; the focused proof composes the six existing save/text/timing callees at complete matching transitions and exercises the bad-sum warning state, while their internal effects remain covered by their own proofs"
+decoder = "exact 54-byte linked body cd0f19cd8036cda036cd2376380ecd90763809cdbd7638043e0218162130d7e5cbf6211e76cd493c0e64cd3937e1cbb63e01ea verified inside the functional test; real call ordering, all three carry-guarded loader branches, warning flag set/clear, PrintText, fixed 100-frame delay, and final status store execute pathwise with individual callee boundaries"
+
+[[function]]
 assembly_symbol = "LoadMainData"
 assembly_source = "engine/menus/save.asm"
 c_symbol = "port_load_main_data"
