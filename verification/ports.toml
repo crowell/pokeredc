@@ -29169,6 +29169,26 @@ decoder = "exact 35-byte body checked (d53eeeeaf2c4cd3a1bcd98382169c4011207cdc41
 
 
 [[function]]
+assembly_symbol = "Paragraph"
+assembly_source = "home/text.asm"
+c_symbol = "port_paragraph"
+c_source = "verification/ports/paragraph.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wLinkState",
+    "the prompt arrow and complete four-row clear region",
+    "the restored caller DE",
+    "the installed row-14 text cursor HL = 0xc4b9",
+]
+proof_domain = "both link-state paths, all symbolic register/flag, arrow, clear-region, and saved-DE inputs; ProtectedDelay3, ManualTextScroll, ClearScreenArea, and the complete 20-frame DelayFrames transition compose through proven ports"
+decoder = "exact 33-byte body checked (d53eeeeaf2c4cd3a1bcd983821a5c4011204cdc4180e14cd3937d121b9c4c3e819); stack balancing, arrow setup, proven delay/manual-scroll/clear/delay callees, row-14 cursor installation, and NextChar continuation are modeled under angr"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"

@@ -106,6 +106,13 @@ struct page_char_state {
 	port_u8 saved_e;
 };
 
+/* State for the Paragraph dictionary-token handler. */
+struct paragraph_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;
