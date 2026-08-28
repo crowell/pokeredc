@@ -12530,6 +12530,20 @@ decoder = "exact 47-byte body checked; the banked IsPlayerStandingOnDoorTile and
 
 
 [[function]]
+assembly_symbol = "IsWarpTileInFrontOfPlayer"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_is_warp_tile_in_front_of_player"
+c_source = "verification/ports/overworld_warp.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wTileInFrontOfPlayer and the four directional tile-map cells",
+    "WarpTileListPointers and selected warp-carpet list",
+]
+proof_domain = "all symbolic register and flag inputs with valid sprite-facing directions, arbitrary coordinates and tile-map cells, every normal warp-list match/miss position, and both SS Anne Bow tile outcomes; complete HL/DE/BC restoration and GetTileAndCoordsInFrontOfPlayer/IsInArray composition"
+decoder = "exact 41-byte body checked; the proven GetTileAndCoordsInFrontOfPlayer and IsInArray transitions compose at call boundaries, while absolute loads, SRL, ADD HL,BC, HLI pointer loads, CP, SCF, and AND paths are shimmed; native C executes normal and SS Anne lookup paths"
+
+[[function]]
 assembly_symbol = "IsPlayerStandingOnWarp"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_is_player_standing_on_warp"
