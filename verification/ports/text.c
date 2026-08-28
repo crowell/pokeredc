@@ -58,6 +58,10 @@
 #define W_ENEMY_MON_NICK   0xcfda
 #define TEXT_ID_ERROR_PREV 0x19f3
 #define DONE_TEXT_PREV     0x1ab2
+#define ARROW_SLOT         0xc4f2
+#define TEXT_CURSOR        0xc4e1
+
+void port_scroll_text_up_one_line(struct cpu_register_state *, port_u8 *);
 
 static void
 ps_emit(port_u8 *memory, port_u16 *dest, port_u8 b)
@@ -155,7 +159,12 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 			continue;
 		}
 		if (c == TX_SCROLL) {
-			dest = ps_coord(1, 16);
+			port_u16 entry_de = src;
+			port_scroll_text_up_one_line(state, memory);
+			port_scroll_text_up_one_line(state, memory);
+			dest = TEXT_CURSOR;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
 			continue;
 		}
