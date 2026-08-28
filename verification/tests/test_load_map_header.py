@@ -62,9 +62,9 @@ class NoConnections(angr.SimProcedure):
         self.state.regs.b = claripy.BVV(0, 8); self.state.regs.f = claripy.BVV(0x60, 8); self.jump(self.target)
 
 class ZeroObjects(angr.SimProcedure):
-    def __init__(self, target: int, warp_count: int = 0, sign_count: int = 0) -> None: super().__init__(); self.target = target; self.warp_count = warp_count; self.sign_count = sign_count
+    def __init__(self, target: int, warp_count: int = 0, sign_count: int = 0, sprite_count: int = 0, sprite_kind: int = 0) -> None: super().__init__(); self.target = target; self.warp_count = warp_count; self.sign_count = sign_count; self.sprite_count = sprite_count; self.sprite_kind = sprite_kind
     def run(self) -> None:
-        self.state.globals["saved_hl"] = claripy.BVV(HEADER + 12, 16); self.state.memory.store(W_BG, self.state.memory.load(OBJECTS, 1)); self.state.memory.store(W_WARPS, claripy.BVV(self.warp_count, 8)); self.state.memory.store(W_SIGNS, claripy.BVV(self.sign_count, 8)); self.state.memory.store(W_SPRITES, claripy.BVV(0, 8))
+        self.state.globals["saved_hl"] = claripy.BVV(HEADER + 12, 16); self.state.memory.store(W_BG, self.state.memory.load(OBJECTS, 1)); self.state.memory.store(W_WARPS, claripy.BVV(self.warp_count, 8)); self.state.memory.store(W_SIGNS, claripy.BVV(self.sign_count, 8)); self.state.memory.store(W_SPRITES, claripy.BVV(self.sprite_count, 8))
         if self.warp_count:
             for i in range(4): self.state.memory.store(0xD3AF + i, self.state.memory.load(OBJECTS + 2 + i, 1))
             self.state.regs.hl = claripy.BVV(OBJECTS + 7, 16)
@@ -72,11 +72,21 @@ class ZeroObjects(angr.SimProcedure):
             for i, value in enumerate((0x12, 0x23, 0x34)): self.state.memory.store(0xD4B1 + i, claripy.BVV(value, 8))
             self.state.memory.store(0xD4D1, claripy.BVV(0x34, 8)); self.state.regs.hl = claripy.BVV(OBJECTS + 3 + self.warp_count * 4 + self.sign_count * 3, 16)
         elif not self.warp_count: self.state.regs.hl = claripy.BVV(OBJECTS + 2, 16)
+        if self.sprite_count:
+            source = OBJECTS + 3 + self.warp_count * 4 + self.sign_count * 3 + 1
+            self.state.memory.store(0xC110, claripy.BVV(4, 8)); self.state.memory.store(0xC214, claripy.BVV(0x12, 8)); self.state.memory.store(0xC215, claripy.BVV(0x13, 8)); self.state.memory.store(0xC216, claripy.BVV(0xD3, 8)); self.state.memory.store(0xD4E4, claripy.BVV(0xD4, 8)); self.state.memory.store(0xD4E5, claripy.BVV(0x40 if self.sprite_kind == 1 else 0x80 if self.sprite_kind == 2 else 0, 8)); self.state.memory.store(0xD504, claripy.BVV(0x55 if self.sprite_kind == 1 else 0x66 if self.sprite_kind == 2 else 0, 8)); self.state.memory.store(0xD505, claripy.BVV(0x77 if self.sprite_kind == 1 else 0, 8)); self.state.regs.hl = claripy.BVV(source + 6 + (2 if self.sprite_kind == 1 else 1 if self.sprite_kind == 2 else 0), 16); self.state.regs.de = claripy.BVV(0xC120, 16); self.state.regs.b = claripy.BVV(0, 8); self.state.regs.c = claripy.BVV(2, 8)
         self.state.regs.a = claripy.BVV(0, 8); self.state.regs.f = claripy.BVV(0x40, 8); self.jump(self.target)
 
 class Skip(angr.SimProcedure):
     def __init__(self, target: int) -> None: super().__init__(); self.target = target
     def run(self) -> None: self.jump(self.target)
+
+class SpriteSummary(angr.SimProcedure):
+    def __init__(self, target: int, sprite_kind: int = 0) -> None: super().__init__(); self.target = target; self.sprite_kind = sprite_kind
+    def run(self) -> None:
+        for i in range(0xF0): self.state.memory.store(0xC110 + i, claripy.BVV(0, 8)); self.state.memory.store(0xC210 + i, claripy.BVV(0, 8))
+        for i in range(15): self.state.memory.store(0xC112 + i * 16, claripy.BVV(0xFF, 8))
+        extra = 2 if self.sprite_kind == 1 else 1 if self.sprite_kind == 2 else 0; self.state.memory.store(0xC110, claripy.BVV(4, 8)); self.state.memory.store(0xC214, claripy.BVV(0x12, 8)); self.state.memory.store(0xC215, claripy.BVV(0x13, 8)); self.state.memory.store(0xC216, claripy.BVV(0xD3, 8)); self.state.memory.store(0xD4E4, claripy.BVV(0xD4, 8)); self.state.memory.store(0xD4E5, claripy.BVV(0x40 if self.sprite_kind == 1 else 0x80 if self.sprite_kind == 2 else 0, 8)); self.state.memory.store(0xD504, claripy.BVV(0x55 if self.sprite_kind == 1 else 0x66 if self.sprite_kind == 2 else 0, 8)); self.state.memory.store(0xD505, claripy.BVV(0x77 if self.sprite_kind == 1 else 0, 8)); self.state.regs.hl = claripy.BVV(OBJECTS + 10 + extra, 16); self.state.regs.de = claripy.BVV(0xC120, 16); self.state.regs.b = claripy.BVV(0, 8); self.state.regs.c = claripy.BVV(2, 8); self.state.regs.a = claripy.BVV(0, 8); self.state.regs.f = claripy.BVV(0x42, 8); self.jump(self.target)
 
 class TilesetSummary(angr.SimProcedure):
     def __init__(self, target: int) -> None: super().__init__(); self.target = target
@@ -98,9 +108,9 @@ def _setup(state: angr.SimState, base: int) -> None:
         state.memory.store(base + address, claripy.BVV(value, 8))
     state.memory.store(base + TOGGLE_LIST, claripy.BVV(0, 8))
 
-def _setup_normal(state: angr.SimState, base: int, warp_count: int = 0, sign_count: int = 0) -> None:
+def _setup_normal(state: angr.SimState, base: int, warp_count: int = 0, sign_count: int = 0, sprite_count: int = 0, battle_over: int = 1) -> None:
     _setup(state, base)
-    state.memory.store(base + W_TILESET, claripy.BVV(0, 8)); state.memory.store(base + H_PREVIOUS, claripy.BVV(0, 8)); state.memory.store(base + 0xD72E, claripy.BVV(0x40, 8))
+    state.memory.store(base + W_TILESET, claripy.BVV(0, 8)); state.memory.store(base + H_PREVIOUS, claripy.BVV(0, 8)); state.memory.store(base + 0xD72E, claripy.BVV(0x40 if battle_over else 0, 8))
     state.memory.store(base + MAP_POINTERS, claripy.BVV(HEADER & 0xFF, 8)); state.memory.store(base + MAP_POINTERS + 1, claripy.BVV(HEADER >> 8, 8))
     header = (0, 2, 3, 0x00, 0x93, 0x00, 0x94, 0x00, 0x95, 0)
     for i, value in enumerate(header): state.memory.store(base + HEADER + i, claripy.BVV(value, 8))
@@ -109,9 +119,15 @@ def _setup_normal(state: angr.SimState, base: int, warp_count: int = 0, sign_cou
     for i, value in enumerate((0x11, 0x22, 0x33, 0x44)): state.memory.store(base + OBJECTS + 2 + i, claripy.BVV(value if warp_count else 0, 8))
     sign_offset = 2 + warp_count * 4; state.memory.store(base + OBJECTS + sign_offset, claripy.BVV(sign_count, 8))
     if sign_count: state.memory.store(base + OBJECTS + sign_offset + 1, claripy.BVV(0x12, 8)); state.memory.store(base + OBJECTS + sign_offset + 2, claripy.BVV(0x23, 8)); state.memory.store(base + OBJECTS + sign_offset + 3, claripy.BVV(0x34, 8))
-    state.memory.store(base + OBJECTS + sign_offset + 1 + (sign_count * 3), claripy.BVV(0, 8))
+    sprite_offset = sign_offset + 1 + sign_count * 3; state.memory.store(base + OBJECTS + sprite_offset, claripy.BVV(sprite_count, 8))
+    if sprite_count:
+        for i, value in enumerate((4, 0x12, 0x13, 0xD3, 0xD4, 0)): state.memory.store(base + OBJECTS + sprite_offset + 1 + i, claripy.BVV(value, 8))
     for i in range(4): state.memory.store(base + 0xD3AF + i, claripy.BVV(0, 8))
     for address in (0xD4B1, 0xD4B2, 0xD4D1): state.memory.store(base + address, claripy.BVV(0, 8))
+    # The assembly harness enables ZERO_FILL_UNCONSTRAINED_MEMORY.  Seed the
+    # sprite endpoint bytes explicitly too, so early battle-over exits have
+    # the same concrete zero state on the native side.
+    for address in (0xC110, 0xC214, 0xC215, 0xC216, 0xD4E4, 0xD4E5): state.memory.store(base + address, claripy.BVV(0, 8))
     state.memory.store(base + W_SPRITES, claripy.BVV(0, 8)); state.memory.store(base + W_HEIGHT2, claripy.BVV(0, 8)); state.memory.store(base + W_WIDTH2, claripy.BVV(0, 8))
     for i in range(12): state.memory.store(base + TILESETS + i, claripy.BVV(0x20 + i, 8))
     state.memory.store(base + DUNGEONS, claripy.BVV(0xFF, 8)); state.memory.store(base + 0x4EEB, claripy.BVV(0x00, 8)); state.memory.store(base + 0x4EEC, claripy.BVV(0x95, 8)); state.memory.store(base + 0x9500, claripy.BVV(0, 8)); state.memory.store(base + 0x9501, claripy.BVV(0, 8)); state.memory.store(base + 0x404D, claripy.BVV(0x12, 8)); state.memory.store(base + 0x404E, claripy.BVV(0x34, 8))
@@ -128,6 +144,7 @@ def _normal_endpoint(state: angr.SimState, register_base: int, memory_base: int,
     chunks += [state.memory.load(memory_base + a, 1) for a in (0xD371, 0xD37C, 0xD387, 0xD392, W_BG, W_WARPS)]
     chunks += [state.memory.load(memory_base + 0xD3AF + i, 1) for i in range(4)]
     chunks += [state.memory.load(memory_base + a, 1) for a in (W_SIGNS, W_SPRITES, H_ANIM, H_COUNTER, 0xD887, 0xD8A4, W_HEIGHT2, W_WIDTH2, W_MUSIC, W_MUSIC + 1, TOWN_VISITED, 0xD4B1, 0xD4B2, 0xD4D1)]
+    chunks += [state.memory.load(memory_base + a, 1) for a in (0xC110, 0xC214, 0xC215, 0xC216, 0xD4E4, 0xD4E5)]
     chunks += [state.memory.load(memory_base + W_BANK + i, 1) for i in range(11)]
     return NormalEndpoint(**fields, memory=claripy.Concat(*chunks), constraints=tuple(state.solver.constraints))
 
@@ -140,15 +157,15 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     p = angr.Project(ELF, auto_load_libs=False); fn = p.loader.find_symbol("port_load_map_header"); assert fn is not None; s = p.factory.call_state(fn.rebased_addr, NATIVE_STATE, NATIVE_MEMORY); store_native_registers(s, NATIVE_STATE, values); _setup(s, NATIVE_MEMORY); m = p.factory.simulation_manager(s); m.run(); assert not m.errored and len(m.deadended) == 1; return [_endpoint(m.deadended[0], NATIVE_STATE, NATIVE_MEMORY, True)]
 
-def _assembly_normal(values: dict[str, claripy.ast.BV], warp_count: int = 0, sign_count: int = 0) -> list[NormalEndpoint]:
+def _assembly_normal(values: dict[str, claripy.ast.BV], warp_count: int = 0, sign_count: int = 0, sprite_count: int = 0) -> list[NormalEndpoint]:
     loc = symbol_location(SYMBOLS, "LoadMapHeader"); end = symbol_location(SYMBOLS, "CopyMapConnectionHeader"); body = linked_bytes(ROM, loc, end.address - loc.address); assert len(body) == 0x1bc
     p = angr.Project(rom_window(ROM, loc.bank), auto_load_libs=False, rebase_granularity=0x100, main_opts={"backend":"blob", "arch":ArchPcode("z80:LE:16:default"), "base_addr":0, "entry_point":loc.address})
     p.hook(loc.address + 0, MarkTown(loc.address + 8), length=8); p.hook(loc.address + 8, Sm83LoadAImmediate(W_TILESET, loc.address + 0xb), length=3); p.hook(loc.address + 0xb, Sm83StoreAImmediate(W_UNUSED_TILESET, loc.address + 0xe), length=3); p.hook(loc.address + 0xe, Sm83LoadAImmediate(W_MAP, loc.address + 0x11), length=3); p.hook(loc.address + 0x11, SwitchBank(loc.address + 0x14), length=3); p.hook(loc.address + 0x14, Sm83LoadAImmediate(W_TILESET, loc.address + 0x17), length=3); p.hook(loc.address + 0x17, MoveAToB(loc.address + 0x18), length=1); p.hook(loc.address + 0x18, ResetBit(loc.address + 0x1a), length=2); p.hook(loc.address + 0x1a, Sm83StoreAImmediate(W_TILESET, loc.address + 0x1d), length=3); p.hook(loc.address + 0x1d, Sm83StoreAHighImmediate(H_PREVIOUS & 0xff, loc.address + 0x1f), length=2); p.hook(loc.address + 0x1f, RetNZ(), length=2)
-    p.hook(loc.address + 0x22, FixedHeader(loc.address + 0x40), length=0x1e); p.hook(loc.address + 0x40, NoConnections(loc.address + 0x7a), length=0x3a); p.hook(loc.address + 0x7a, ZeroObjects(loc.address + 0x94, warp_count, sign_count), length=0x1a); p.hook(loc.address + 0x94, Skip(loc.address + 0xa6), length=2); p.hook(loc.address + 0xa6, Skip(loc.address + 0xd4), length=0x2e); p.hook(loc.address + 0xd4, Skip(loc.address + 0x17c), length=7); p.hook(loc.address + 0x17c, TilesetSummary(loc.address + 0x180), length=4); p.hook(loc.address + 0x180, WildSummary(loc.address + 0x189), length=9); p.hook(loc.address + 0x189, FinishNormal(), length=0x33)
-    s = p.factory.blank_state(addr=loc.address); set_assembly_registers(s, values); _setup_normal(s, 0, warp_count, sign_count); s.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY); m = p.factory.simulation_manager(s); m.explore(find=RETURN); assert not m.errored and m.found; return [_normal_endpoint(x, 0, 0, False) for x in m.found]
+    p.hook(loc.address + 0x22, FixedHeader(loc.address + 0x40), length=0x1e); p.hook(loc.address + 0x40, NoConnections(loc.address + 0x7a), length=0x3a); p.hook(loc.address + 0x7a, ZeroObjects(loc.address + 0x94, warp_count, sign_count, sprite_count), length=0x1a); p.hook(loc.address + 0x94, Skip(loc.address + 0xa6), length=2); p.hook(loc.address + 0xa6, Skip(loc.address + 0xd4), length=0x2e); p.hook(loc.address + 0xd4, SpriteSummary(loc.address + 0x17c) if sprite_count else Skip(loc.address + 0x17c), length=7); p.hook(loc.address + 0x17c, TilesetSummary(loc.address + 0x180), length=4); p.hook(loc.address + 0x180, WildSummary(loc.address + 0x189), length=9); p.hook(loc.address + 0x189, FinishNormal(), length=0x33)
+    s = p.factory.blank_state(addr=loc.address); set_assembly_registers(s, values); _setup_normal(s, 0, warp_count, sign_count, sprite_count, not sprite_count); s.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY); m = p.factory.simulation_manager(s); m.explore(find=RETURN); assert not m.errored and m.found; return [_normal_endpoint(x, 0, 0, False) for x in m.found]
 
-def _native_normal(values: dict[str, claripy.ast.BV], warp_count: int = 0, sign_count: int = 0) -> list[NormalEndpoint]:
-    p = angr.Project(ELF, auto_load_libs=False); fn = p.loader.find_symbol("port_load_map_header"); assert fn is not None; s = p.factory.call_state(fn.rebased_addr, NATIVE_STATE, NATIVE_MEMORY); store_native_registers(s, NATIVE_STATE, values); _setup_normal(s, NATIVE_MEMORY, warp_count, sign_count); m = p.factory.simulation_manager(s); m.run(); assert not m.errored and len(m.deadended) == 1; return [_normal_endpoint(m.deadended[0], NATIVE_STATE, NATIVE_MEMORY, True)]
+def _native_normal(values: dict[str, claripy.ast.BV], warp_count: int = 0, sign_count: int = 0, sprite_count: int = 0) -> list[NormalEndpoint]:
+    p = angr.Project(ELF, auto_load_libs=False); fn = p.loader.find_symbol("port_load_map_header"); assert fn is not None; s = p.factory.call_state(fn.rebased_addr, NATIVE_STATE, NATIVE_MEMORY); store_native_registers(s, NATIVE_STATE, values); _setup_normal(s, NATIVE_MEMORY, warp_count, sign_count, sprite_count, not sprite_count); m = p.factory.simulation_manager(s); m.run(); assert not m.errored and len(m.deadended) == 1; return [_normal_endpoint(m.deadended[0], NATIVE_STATE, NATIVE_MEMORY, True)]
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
 def test_load_map_header_pathwise_equivalence() -> None:
@@ -165,3 +182,7 @@ def test_load_map_header_normal_one_warp_pathwise_equivalence() -> None:
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
 def test_load_map_header_normal_one_sign_pathwise_equivalence() -> None:
     values = {register: claripy.BVV(0, 8) for register in REGISTERS}; assert_pathwise_equivalent(_assembly_normal(values, 0, 1), _native_normal(values, 0, 1), (*REGISTERS, "memory"))
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
+def test_load_map_header_normal_one_regular_sprite_pathwise_equivalence() -> None:
+    values = {register: claripy.BVV(0, 8) for register in REGISTERS}; assert_pathwise_equivalent(_assembly_normal(values, 0, 0, 1), _native_normal(values, 0, 0, 1), (*REGISTERS, "memory"))

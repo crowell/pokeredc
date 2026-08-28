@@ -183,7 +183,8 @@ port_load_map_header(struct cpu_register_state *r, port_u8 *memory)
 		port_u16 source = pair(r->h, r->l), state1 = W_SPRITE01_STATE_DATA1;
 		for (port_u8 i = 0; i < sprites; ++i) {
 			port_u16 entry = (port_u16)(W_MAP_SPRITE_DATA + (port_u16)i * 2u), extra = (port_u16)(W_MAP_SPRITE_EXTRA_DATA + (port_u16)i * 2u);
-			memory[state1] = memory[source++]; memory[(port_u16)(state1 + 4u)] = memory[source++]; memory[(port_u16)(state1 + 5u)] = memory[source++]; memory[(port_u16)(state1 + 6u)] = memory[source++];
+			port_u16 state2 = (port_u16)(W_SPRITE01_STATE_DATA2 + (port_u16)i * SPRITE_STATE1_LENGTH);
+			memory[state1] = memory[source++]; memory[(port_u16)(state2 + 4u)] = memory[source++]; memory[(port_u16)(state2 + 5u)] = memory[source++]; memory[(port_u16)(state2 + 6u)] = memory[source++];
 			port_u8 movement2 = memory[source++], text_flags = memory[source++]; memory[entry] = movement2; memory[entry + 1u] = (port_u8)(text_flags & 0x3f);
 			if (text_flags & (1u << TRAINER_BIT)) { memory[extra] = memory[source++]; memory[extra + 1u] = memory[source++]; }
 			else if (text_flags & (1u << ITEM_BIT)) { memory[extra] = memory[source++]; memory[extra + 1u] = 0; }
