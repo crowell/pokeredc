@@ -64,6 +64,8 @@
 void port_scroll_text_up_one_line(struct cpu_register_state *, port_u8 *);
 void port_protected_delay3(struct cpu_register_state *, port_u8 *);
 void port_manual_text_scroll(struct manual_text_scroll_state *);
+void port_clear_screen_area(struct clear_screen_area_state *, port_u8 *);
+void port_delay_frames(struct delay_frame_state *, const port_u8 *);
 
 static void
 ps_emit(port_u8 *memory, port_u16 *dest, port_u8 b)
@@ -143,7 +145,42 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 			continue;
 		}
 		if (c == TX_PARA) {
-			memory[ps_coord(18, 16)] = 0xee; /* '▼' */
+			port_u16 entry_de = src;
+			struct manual_text_scroll_state mts;
+			struct clear_screen_area_state clear;
+			struct delay_frame_state delay;
+			static const port_u8 acknowledged_vblank[] = { 0 };
+
+			memory[ARROW_SLOT] = 0xee;
+			port_protected_delay3(state, memory);
+			mts.registers = *state;
+			mts.link_state = memory[W_LINKSTATE];
+			mts.wait_a = state->a;
+			mts.wait_f = state->f;
+			mts.wait_b = state->b;
+			mts.wait_c = state->c;
+			mts.wait_d = state->d;
+			mts.wait_e = state->e;
+			mts.wait_h = state->h;
+			mts.wait_l = state->l;
+			port_manual_text_scroll(&mts);
+			*state = mts.registers;
+
+			clear.registers = *state;
+			clear.registers.h = (port_u8)(ps_coord(1, 13) >> 8);
+			clear.registers.l = (port_u8)ps_coord(1, 13);
+			clear.registers.b = 4;
+			clear.registers.c = 18;
+			port_clear_screen_area(&clear, memory);
+			*state = clear.registers;
+			state->c = 20;
+			delay.registers = *state;
+			delay.vblank_occurred = 0;
+			delay.observed_vblank = 0;
+			port_delay_frames(&delay, acknowledged_vblank);
+			*state = delay.registers;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
 			dest = ps_coord(1, 14);
 			src = (port_u16)(src + 1);
 			continue;
