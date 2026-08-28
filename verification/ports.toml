@@ -18159,6 +18159,23 @@ decoder = "exact 12-byte linked body 21ed690607cdd635c3d629 checked inside the f
 
 
 [[function]]
+assembly_symbol = "DisplayPokemartDialogue"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_pokemart_dialogue"
+c_source = "verification/ports/display_pokemart_dialogue.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextBoxID, wListMenuID, wUpdateSpritesEnabled, wItemListPointer, and wItemList",
+    "Pokemart list/menu state globals",
+    "hLoadedROMBank and rROMB",
+    "the complete PrintText, LoadItemList, DisplayPokemartDialogue_, and AfterDisplayingTextID call-input transitions",
+]
+proof_domain = "all symbolic register/flag, text/list, item-list, mart-state, and bank inputs through the existing DisplayPokemartDialogue_ money-box setup boundary; the buy/sell menu, payment, inventory, and continuation paths remain in the partial callee"
+decoder = "exact 39-byte linked body e521552acd493ce123cd5a2a3e02ea94cff0b8f53e01e0b8ea0020cd206cf1e0b8ea0020c3d629 checked functionally; HL save/restore, greeting PrintText, proven LoadItemList composition, priced-menu selection, bank-preserving homecall, and AfterDisplayingTextID tail are modeled exactly"
+
+
+[[function]]
 assembly_symbol = "DisplayPokemonCenterDialogue"
 assembly_source = "home/text_script.asm"
 c_symbol = "port_display_pokemon_center_dialogue"

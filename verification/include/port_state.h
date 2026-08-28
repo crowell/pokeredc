@@ -140,6 +140,23 @@ struct text_script_item_storage_pc_state {
 	port_u8 joy_input_count;
 };
 
+/* State for the DisplayPokemartDialogue text-flow wrapper. */
+struct display_pokemart_dialogue_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 romb;
+	port_u8 list_menu_id;
+	port_u8 private_list_scroll;
+	port_u8 private_saved_scroll;
+	port_u8 private_bought_sold;
+	port_u8 private_current_menu;
+	port_u8 private_player_number;
+	port_u8 private_print_prices;
+	port_u8 private_textbox_id;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
 /* State for the PlaceDexEnd dictionary-token handler.  The assembly caller
  * has the output cursor in HL and its saved cursor on the stack; the native
  * contract carries that popped HL explicitly. */
@@ -3346,6 +3363,8 @@ _Static_assert(sizeof(struct text_script_pokemon_center_pc_state) == 39,
 _Static_assert(sizeof(struct text_script_bills_pc_state) == 39,
 	"unexpected ABI padding");
 _Static_assert(sizeof(struct text_script_item_storage_pc_state) == 39,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct display_pokemart_dialogue_state) == 27,
 	"unexpected ABI padding");
 _Static_assert(sizeof(struct auto_text_box_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct init_options_state) == 10, "unexpected ABI padding");
