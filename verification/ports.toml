@@ -18409,6 +18409,22 @@ decoder = "19-byte body checked (e5c5cd7d3a116dcdd5010b00cdb500d1c1e1c9: save re
 
 
 [[function]]
+assembly_symbol = "PlaceNextChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_next_char"
+c_source = "verification/ports/text.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete destination/source text-pointer transition",
+    "the caller's saved HL cursor restored on terminal handlers",
+    "all text-token memory effects",
+]
+proof_domain = "direct PlaceNextChar entry with arbitrary live registers and an arbitrary saved HL cursor, covering the ordinary-character continuation and TX_END terminal paths directly; the shared complete dispatch loop is the same implementation exercised by the full PlaceString token suite, including every dictionary and scrolling handler path"
+decoder = "native C carries the assembly caller's saved HL explicitly and executes the complete PlaceString dispatch loop from the PlaceNextChar entry; the focused direct-entry test proves ordinary and terminal control flow, while the existing PlaceString path-equivalence suite covers all remaining token branches against the linked body"
+
+
+[[function]]
 assembly_symbol = "PlaceString"
 assembly_source = "home/text.asm"
 c_symbol = "port_place_string"

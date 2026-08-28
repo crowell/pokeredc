@@ -120,6 +120,16 @@ struct place_move_users_name_state {
 	port_u8 saved_e;
 };
 
+/* State for the PlaceNextChar entry inside PlaceString.  The assembly
+ * caller keeps the original destination cursor on the stack; native C
+ * carries that saved cursor explicitly while the live cursor remains in
+ * registers.HL. */
+struct place_next_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_h;
+	port_u8 saved_l;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;
