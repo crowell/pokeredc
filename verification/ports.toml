@@ -29952,6 +29952,22 @@ proof_domain = "all register/flag inputs and the complete money-box orchestratio
 decoder = "the complete DisplayMoneyBox body executes under angr with only the three proven callee boundaries shimmed; native C preserves the no-text-delay bit, MONEY_BOX_TEMPLATE selection, coordinate/register setup, money source pointer, and final bit clear"
 
 [[function]]
+assembly_symbol = "DisplayYesNoChoice"
+assembly_source = "home/yes_no.asm"
+c_symbol = "port_display_yes_no_choice"
+c_source = "verification/ports/display_yes_no_choice.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wTextBoxID",
+    "hAutoBGTransferEnabled",
+    "complete 360-byte tilemap and backup regions",
+    "DisplayTextBoxID and LoadScreenTilesFromBuffer1 call-input registers",
+]
+proof_domain = "all symbolic register/flag inputs, arbitrary screen-buffer bytes, and the complete wrapper orchestration; DisplayTextBoxID remains an independently tested partial boundary while LoadScreenTilesFromBuffer1 composes through its complete proven transition"
+decoder = "exact 11-byte linked body 3e14ea25d1cde830c32537 asserted inside verification/tests/test_display_yes_no_choice.py; the absolute wTextBoxID store is shimmed individually, DisplayTextBoxID is a symbolic compositional boundary, and the complete 360-byte buffer restore plus auto-BG state transition is modeled at the proven LoadScreenTilesFromBuffer1 boundary"
+
+[[function]]
 assembly_symbol = "DoBuySellQuitMenu"
 assembly_source = "engine/menus/text_box.asm"
 c_symbol = "port_do_buy_sell_quit_menu"
