@@ -82,7 +82,7 @@ def _setup(state: angr.SimState, base: int, *, text_id: int,
     state.memory.store(base + W_MISC_FLAGS,
                        claripy.BVV(0x10 if no_sprite_updates else 0, 8))
     state.memory.store(base + W_UPDATE_SPRITES_ENABLED, claripy.BVV(2, 8))
-    state.memory.store(base + W_EVENT_FLAGS + 2,
+    state.memory.store(base + W_EVENT_FLAGS + 4,
                        claripy.BVV(1 << 5 if pokedex else 0, 8))
     state.memory.store(base + H_WY, claripy.BVV(0x77, 8))
     state.memory.store(base + H_AUTO, claripy.BVV(0x66, 8))
@@ -113,7 +113,7 @@ def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
         state.memory.load(base + a, 1)
         for a in (W_LIST_MENU_ID, W_AUTO_TEXT_BOX_DRAWING_CONTROL, H_TEXT_ID,
                   W_FONT_LOADED, W_MISC_FLAGS, W_UPDATE_SPRITES_ENABLED,
-                  W_EVENT_FLAGS + 2, H_WY, H_AUTO, H_LOADED_BANK, R_ROMB, *H_VBLANK)
+                  W_EVENT_FLAGS + 4, H_WY, H_AUTO, H_LOADED_BANK, R_ROMB, *H_VBLANK)
     ]
     pieces.append(state.memory.load(base + TILEMAP, 0x240))
     pieces.append(state.memory.load(base + FONT_DEST, 0x800))
@@ -231,7 +231,7 @@ def _assembly(values: dict[str, claripy.ast.BV], *, text_id: int,
     p.hook(b + 0x01, Sm83StoreAImmediate(W_LIST_MENU_ID, b + 4), length=3)
     p.hook(b + 0x04, Sm83LoadAImmediate(W_AUTO_TEXT_BOX_DRAWING_CONTROL, b + 7), length=3)
     p.hook(b + 0x0B, Sm83LoadAHighImmediate(0x8C, b + 0x0D), length=2)
-    p.hook(b + 0x10, Sm83LoadAImmediate(W_EVENT_FLAGS + 2, b + 0x13), length=3)
+    p.hook(b + 0x10, Sm83LoadAImmediate(W_EVENT_FLAGS + 4, b + 0x13), length=3)
     p.hook(b + 0x2E, Border(b + 0x31), length=3)
     p.hook(b + 0x3F, UpdateSprites(b + 0x42), length=3)
     p.hook(b + 0x67, CopyScreen(b + 0x6A), length=3)

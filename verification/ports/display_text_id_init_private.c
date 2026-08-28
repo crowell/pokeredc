@@ -11,7 +11,7 @@
 #define H_WY 0xffb0u
 #define H_AUTO_BG_TRANSFER_ENABLED 0xffbau
 #define W_EVENT_FLAGS 0xd747u
-#define EVENT_GOT_POKEDEX 21u
+#define EVENT_GOT_POKEDEX 37u
 #define BIT_NO_AUTO_TEXT_BOX 0u
 #define BIT_NO_SPRITE_UPDATES 4u
 #define BIT_FONT_LOADED 0u
