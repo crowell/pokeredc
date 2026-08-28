@@ -201,11 +201,12 @@ class BranchFlag(angr.SimProcedure):
             self.successors.add_successor(self.state.copy(), self.fallthrough, claripy.Not(condition), "Ijk_Boring")
 
 
-def _seed(state: angr.SimState, base: int) -> None:
+def _seed(state: angr.SimState, base: int, *, status_flags6: int = 0x08,
+          status_flags7: int = 0) -> None:
     state.memory.store(base + H_LOADED_ROM_BANK, claripy.BVV(2, 8))
     state.memory.store(base + R_ROMB, claripy.BVV(2, 8))
-    state.memory.store(base + W_STATUS_FLAGS6, claripy.BVV(0x08, 8))
-    state.memory.store(base + W_STATUS_FLAGS7, claripy.BVV(0, 8))
+    state.memory.store(base + W_STATUS_FLAGS6, claripy.BVV(status_flags6, 8))
+    state.memory.store(base + W_STATUS_FLAGS7, claripy.BVV(status_flags7, 8))
     for offset in range(VRAM_BYTES):
         state.memory.store(
             base + W_CURRENT_MAP_VIEW + offset,
@@ -238,7 +239,7 @@ def _endpoint(state: angr.SimState, native: bool) -> Endpoint:
     )
 
 
-def _assembly() -> list[Endpoint]:
+def _assembly(*, status_flags6: int, status_flags7: int) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "LoadMapData")
     end = symbol_location(SYMBOLS, "SwitchToMapRomBank")
     assert linked_bytes(ROM, location, end.address - location.address) == bytes.fromhex(
@@ -292,6 +293,8 @@ def _assembly() -> list[Endpoint]:
     project.hook(base + 0x60, Sm83LoadAImmediate(W_STATUS_FLAGS6, base + 0x63), length=3)
     project.hook(base + 0x63, Sm83AndImmediate(0x18, base + 0x65), length=2)
     project.hook(base + 0x6A, Sm83BitRegister(1, "a", base + 0x6C), length=2)
+    project.hook(base + 0x6E, Skip(base + 0x71), length=3)
+    project.hook(base + 0x71, Skip(base + 0x74), length=3)
     project.hook(base + 0x5D, Skip(base + 0x60), length=3)
     # Summarize the fixed 18x20 transfer in one concrete adapter.  The
     # orchestration before and after it remains the linked body; this keeps
@@ -300,7 +303,7 @@ def _assembly() -> list[Endpoint]:
     state = project.factory.blank_state(addr=base)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     set_assembly_registers(state, {register: claripy.BVV(0, 8) for register in REGISTERS})
-    _seed(state, 0)
+    _seed(state, 0, status_flags6=status_flags6, status_flags7=status_flags7)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
@@ -310,7 +313,7 @@ def _assembly() -> list[Endpoint]:
     return [_endpoint(manager.found[0], native=False)]
 
 
-def _native() -> list[Endpoint]:
+def _native(*, status_flags6: int, status_flags7: int) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_load_map_data")
     assert function is not None
@@ -329,6 +332,8 @@ def _native() -> list[Endpoint]:
         "port_enable_lcd",
         "port_run_palette_command",
         "port_load_player_sprite_graphics",
+        "port_update_music_6_times",
+        "port_play_default_music_fade_out_current",
     ):
         symbol = project.loader.find_symbol(name)
         assert symbol is not None
@@ -343,7 +348,8 @@ def _native() -> list[Endpoint]:
         {register: claripy.BVV(0, 8) for register in REGISTERS},
     )
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(0, 31 * 8))
-    _seed(state, NATIVE_MEMORY)
+    _seed(state, NATIVE_MEMORY, status_flags6=status_flags6,
+          status_flags7=status_flags7)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
@@ -353,9 +359,10 @@ def _native() -> list[Endpoint]:
 
 @pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_load_map_data_pathwise_equivalence() -> None:
+@pytest.mark.parametrize("status_flags6,status_flags7", ((0x08, 0), (0, 0x02), (0, 0)))
+def test_load_map_data_pathwise_equivalence(status_flags6: int, status_flags7: int) -> None:
     assert_pathwise_equivalent(
-        _assembly(),
-        _native(),
+        _assembly(status_flags6=status_flags6, status_flags7=status_flags7),
+        _native(status_flags6=status_flags6, status_flags7=status_flags7),
         (*REGISTERS, "memory"),
     )

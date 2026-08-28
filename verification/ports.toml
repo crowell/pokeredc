@@ -15308,8 +15308,8 @@ observables = [
     "hLoadedROMBank and rROMB",
     "the complete wCurrentMapView and vBGMap0 18x20 transfer regions",
 ]
-proof_domain = "the skip-music orchestration path with hLoadedROMBank/rROMB initialized to 2 and wStatusFlags6 carrying an unrelated bit; LCD, text-pattern, map-header, sprite, tile-block, tileset, map-view, palette, and player-graphics helpers are explicit audited boundaries, while the fixed 18x20 map-view transfer, update-sprite enable, bank restoration, and return sequencing are compared"
-decoder = "exact 123-byte linked body checked; individual SM83 absolute/high-memory load-store, flag, stack, and farcall setup instructions are shimmed, and the fixed transfer is summarized by a concrete 18x20 adapter because the generic p-code backend makes the bounded loop path-explode; nonzero sprite transfer and both music-update/fade branches remain outside this proof domain"
+proof_domain = "all three music-gating branches (wStatusFlags6 masked nonzero, wStatusFlags6 clear with wStatusFlags7 bit 1 set, and both clear) with hLoadedROMBank/rROMB initialized to 2; LCD, text-pattern, map-header, sprite, tile-block, tileset, map-view, palette, player-graphics, UpdateMusic6Times, and PlayDefaultMusicFadeOutCurrent helpers are explicit audited boundaries, while the fixed 18x20 map-view transfer, update-sprite enable, bank restoration, and return sequencing are compared"
+decoder = "exact 123-byte linked body checked; individual SM83 absolute/high-memory load-store, flag, stack, and farcall setup instructions are shimmed, the fixed transfer is summarized by a concrete 18x20 adapter because the generic p-code backend makes the bounded loop path-explode, and both music-call sites execute through individual proven callee boundaries"
 
 
 
