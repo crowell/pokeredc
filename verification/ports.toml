@@ -13583,6 +13583,22 @@ decoder = "exact 22-byte body and linked HRAM/mapper addresses checked; LDH, PUS
 
 
 [[function]]
+assembly_symbol = "TextScript_GameCornerPrizeMenu"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_text_script_game_corner_prize_menu"
+c_source = "verification/ports/text_script_game_corner_prize_menu.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "hLoadedROMBank and rROMB",
+    "the CeladonPrizeMenu callback-input transition",
+    "the complete HoldTextDisplayOpen call-input transition",
+]
+proof_domain = "all symbolic register/flag/bank inputs, arbitrary CeladonPrizeMenu post-state and callback-bank outputs, and the shared host-input hold-open tail; the prize-menu body itself remains an explicit unported callback boundary"
+decoder = "exact 11-byte linked body 0614211b67cdd635c3df29 checked functionally; menu-bank/pointer setup, proven Bankswitch restoration, indirect callback-entry trace, and proven HoldTextDisplayOpen composition are modeled exactly"
+
+
+[[function]]
 assembly_symbol = "CopyData"
 assembly_source = "home/copy.asm"
 c_symbol = "port_copy_data"
