@@ -29231,6 +29231,22 @@ proof_domain = "all general-register and canonical-flag inputs over the no-field
 decoder = "the complete 245-byte linked body executes under angr; unsupported indexed/absolute/high-memory instructions and the four callee boundaries are shimmed individually, while native C performs the initialization, geometry loops, border/update calls, field-name scan, per-row placement, menu placement, and terminal state"
 
 [[function]]
+assembly_symbol = "DisplayTwoOptionMenu"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_display_two_option_menu"
+c_source = "verification/ports/display_two_option_menu.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "menu configuration, selection, and exit-method bytes",
+    "wStatusFlags5, wTwoOptionMenuID, and wMiscFlags",
+    "wBuffer save/restore bytes",
+    "all affected tilemap bytes",
+]
+proof_domain = "menu IDs 0 through 7, fixed B=1/C=1 and HL=0xc420, and deterministic HandleMenuInput/UpdateSprites/DelayFrames/PlaySound transitions; TextBoxBorder, CableClub_TextBoxBorder, PlaceString, and the two screen-tile save/restore callees are represented by complete transition boundaries, so interactive input alternatives and arbitrary border coordinates remain outside this proof domain"
+decoder = "the complete 229-byte linked body executes under angr; individual SM83 absolute loads/stores, LD-immediate/register-transfer, LD [HL+], XOR, and the two border call targets are shimmed at instruction boundaries, while native C performs menu-table lookup, both border variants, text placement, input branches, delay, sound, screen restoration, and final return flags"
+
+[[function]]
 assembly_symbol = "IsSurfingAllowed"
 assembly_source = "engine/overworld/field_move_messages.asm"
 c_symbol = "port_is_surfing_allowed"
