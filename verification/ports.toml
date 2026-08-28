@@ -29129,6 +29129,26 @@ decoder = "exact 24-byte PromptText body checked (fa2bd1fe04caa21a3eeeeaf2c4cd3a
 
 
 [[function]]
+assembly_symbol = "_ContText"
+assembly_source = "home/text.asm"
+c_symbol = "port_cont_text"
+c_source = "verification/ports/cont_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wLinkState",
+    "the prompt arrow tile at $c4f2",
+    "the complete 80-byte text scroll region",
+    "the restored caller DE and fixed text cursor HL",
+]
+proof_domain = "both link-state paths (LINK_STATE_BATTLING and a non-battle state), all symbolic register/flag, arrow, text-region, and saved-DE inputs; ProtectedDelay3, ManualTextScroll, and the complete _ContTextNoPause transition compose through proven ports"
+decoder = "exact 32-byte body checked (3eeeeaf2c4cd3a1bd5cd9838d13e7feaf2c4d5cd181bcd181b21e1c4d1c3e819); arrow writes, proven delay/manual-scroll callees, both scroll calls, cursor setup, and the NextChar continuation boundary are modeled under angr"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"

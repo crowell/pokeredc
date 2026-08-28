@@ -92,6 +92,13 @@ struct prompt_text_state {
 	port_u8 saved_l;
 };
 
+/* State for the ContText dictionary-token handler. */
+struct cont_text_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;
