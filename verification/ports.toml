@@ -29184,6 +29184,21 @@ proof_domain = "all register/flag inputs and table bytes for the no-match, coord
 decoder = "native port composes through the proven SearchTextBoxTable, GetTextBoxIDCoords, GetAddressOfScreenCoords, TextBoxBorder, GetTextBoxIDText, PlaceString, and UpdateSprites ports; interactive menu handlers are intentionally deferred"
 
 [[function]]
+assembly_symbol = "DisplayMoneyBox"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_display_money_box"
+c_source = "verification/ports/display_money_box.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wStatusFlags5 and wTextBoxID",
+    "the three-byte wPlayerMoney source",
+    "the observed tilemap region",
+]
+proof_domain = "all register/flag inputs and the complete money-box orchestration, with DisplayTextBoxID, ClearScreenArea, and PrintBCDNumber represented by their independently proven call boundaries"
+decoder = "the complete DisplayMoneyBox body executes under angr with only the three proven callee boundaries shimmed; native C preserves the no-text-delay bit, MONEY_BOX_TEMPLATE selection, coordinate/register setup, money source pointer, and final bit clear"
+
+[[function]]
 assembly_symbol = "IsSurfingAllowed"
 assembly_source = "engine/overworld/field_move_messages.asm"
 c_symbol = "port_is_surfing_allowed"
