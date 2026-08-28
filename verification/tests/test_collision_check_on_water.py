@@ -15,7 +15,8 @@ from verification.harness.registers import (
 )
 from verification.harness.rom import linked_bytes, rom_window, symbol_location
 from verification.harness.sm83_shims import (
-    Sm83AndRegister, Sm83BitRegister, Sm83LoadAImmediate,
+    Sm83AndRegister, Sm83BitRegister, Sm83CpImmediate, Sm83LoadAImmediate,
+    Sm83Scf, Sm83StoreAImmediate,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -68,6 +69,41 @@ class Boundary(angr.SimProcedure):
         self.jump(self.next_address)
 
 
+class Jump(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__(); self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.jump(self.next_address)
+
+
+class NativeNoop(angr.SimProcedure):
+    def run(self, *args, **kwargs) -> None:  # type: ignore[override]
+        return
+
+
+class XorASetB(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__(); self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(0, 8)
+        self.state.regs.b = self.state.memory.load(W_CUR_TILESET, 1)
+        self.state.regs.f = claripy.BVV(0x40, 8)
+        self.jump(self.next_address)
+
+
+class BranchZ(angr.SimProcedure):
+    def __init__(self, taken: int, fallthrough: int) -> None:
+        super().__init__(); self.taken = taken; self.fallthrough = fallthrough
+
+    def run(self) -> None:  # type: ignore[override]
+        self.inhibit_autoret = True
+        condition = (self.state.regs.f & 0x40) != 0
+        self.successors.add_successor(self.state.copy(), self.taken, condition, "Ijk_Boring")
+        self.successors.add_successor(self.state.copy(), self.fallthrough, ~condition, "Ijk_Boring")
+
+
 class GetTileBoundary(angr.SimProcedure):
     def __init__(self, next_address: int, tile_address: int) -> None:
         super().__init__()
@@ -116,9 +152,40 @@ class GetTileWaterBoundary(angr.SimProcedure):
         self.jump(self.next_address)
 
 
+class LoadCollisionPointer(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__(); self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        pointer = self.state.memory.load(W_COLLISION_PTR, 2, endness="Iend_LE")
+        self.state.regs.hl = pointer
+        self.jump(self.next_address)
+
+
+class ScanPassable(angr.SimProcedure):
+    def __init__(self, collision: int, stop_surfing: int) -> None:
+        super().__init__(); self.collision = collision; self.stop_surfing = stop_surfing
+
+    def run(self) -> None:  # type: ignore[override]
+        pointer = self.state.regs.hl
+        value = self.state.memory.load(pointer, 1)
+        self.state.regs.a = value
+        self.state.regs.hl = pointer + 1
+        self.inhibit_autoret = True
+        is_end = value == 0xFF
+        is_match = value == self.state.regs.c
+        collision = self.state.copy(); collision.solver.add(is_end)
+        stop = self.state.copy(); stop.solver.add(claripy.And(~is_end, is_match))
+        again = self.state.copy(); again.solver.add(claripy.And(~is_end, ~is_match))
+        self.successors.add_successor(collision, self.collision, is_end, "Ijk_Boring")
+        self.successors.add_successor(stop, self.stop_surfing,
+                                      claripy.And(~is_end, is_match), "Ijk_Boring")
+        self.successors.add_successor(again, self.state.addr, claripy.And(~is_end, ~is_match), "Ijk_Boring")
+
+
 def _setup(state: angr.SimState, base: int, *, status: int, direction: int,
            collision: int, tile: int, tileset: int, channel5: int,
-           collision_ptr: int) -> None:
+           collision_ptr: int, passable: bool = False) -> None:
     for address, value in (
         (W_STATUS, status), (W_MOVEMENT, 0), (W_DIRECTION, direction),
         (W_COLLISION, collision), (W_TILE_FRONT, tile),
@@ -135,7 +202,9 @@ def _setup(state: angr.SimState, base: int, *, status: int, direction: int,
                        claripy.BVV(tile, 8))
     # A $ff first entry makes the tile-pair scan a no-collision path.
     state.memory.store(base + 0x0CA0, claripy.BVV(0xFF, 8))
-    state.memory.store(base + collision_ptr, claripy.BVV(0xFF, 8))
+    state.memory.store(base + collision_ptr, claripy.BVV(tile if passable else 0xFF, 8))
+    if passable:
+        state.memory.store(base + collision_ptr + 1, claripy.BVV(0xFF, 8))
     state.memory.store(base + W_FACING, claripy.BVV(0, 8))
     state.memory.store(base + W_Y_COORD, claripy.BVV(0, 8))
     state.memory.store(base + W_X_COORD, claripy.BVV(0, 8))
@@ -176,6 +245,24 @@ def _assembly(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
                             if nested else Boundary(q + 0x18)), length=3)
     project.hook(q + 0x1C, (GetTileWaterBoundary(q + 0x1F)
                             if nested else GetTileBoundary(q + 0x1F, W_TILE_FRONT)), length=3)
+    if nested and case.get("tile") not in (0x14, 0x32, 0x48):
+        project.hook(q + 0x2E, LoadCollisionPointer(q + 0x34), length=3)
+        project.hook(q + 0x34, ScanPassable(q + 0x3E, q + 0x4F), length=1)
+    if nested and case.get("tile") not in (0x14, 0x48):
+        project.hook(q + 0x50, Sm83StoreAImmediate(W_WALK_SURF, q + 0x53), length=3)
+        project.hook(q + 0x53, Boundary(q + 0x56), length=3)
+        project.hook(q + 0x56, Boundary(q + 0x59), length=3)
+        project.hook(q + 0x59, Jump(q + 0x4D), length=2)
+    if nested and case.get("tile") == 0x32:
+        project.hook(q + 0x5B, Sm83LoadAImmediate(W_CUR_TILESET, q + 0x5E), length=3)
+        project.hook(q + 0x5E, Sm83CpImmediate(0x0E, q + 0x60), length=2)
+        project.hook(q + 0x60, BranchZ(q + 0x62, q + 0x4D), length=2)
+        project.hook(q + 0x62, Jump(q + 0x4F), length=2)
+        project.hook(q + 0x4F, XorASetB(q + 0x50), length=1)
+    project.hook(q + 0x3E, Sm83LoadAImmediate(W_CHANNEL5, q + 0x41), length=3)
+    project.hook(q + 0x41, Sm83CpImmediate(0xB4, q + 0x43), length=2)
+    project.hook(q + 0x43, BranchZ(q + 0x4A, q + 0x45), length=2)
+    project.hook(q + 0x4A, Sm83Scf(q + 0x4E), length=1)
     project.hook(q + 0x47, Boundary(q + 0x4A), length=3)
     project.hook(q + 0x4D, Sm83AndRegister("a", q + 0x4E), length=1)
     state = project.factory.blank_state(addr=loc.address)
@@ -194,6 +281,11 @@ def _native(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_collision_check_on_water")
     assert function is not None
+    player_graphics = project.loader.find_symbol("port_load_player_sprite_graphics")
+    default_music = project.loader.find_symbol("port_play_default_music")
+    assert player_graphics is not None and default_music is not None
+    project.hook(player_graphics.rebased_addr, NativeNoop())
+    project.hook(default_music.rebased_addr, NativeNoop())
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     case.pop("nested", 0)
@@ -214,6 +306,14 @@ CASES = (
          tileset=1, channel5=0, collision_ptr=0x700, nested=1),
     dict(status=0, direction=1, collision=0, tile=0x32,
          tileset=1, channel5=0, collision_ptr=0x700, nested=1),
+    dict(status=0, direction=1, collision=0, tile=0x32,
+         tileset=0x0E, channel5=0, collision_ptr=0x700, nested=1),
+    dict(status=0, direction=1, collision=0, tile=1,
+         tileset=1, channel5=0, collision_ptr=0x700, nested=1, passable=True),
+    dict(status=0, direction=1, collision=0, tile=0x55,
+         tileset=1, channel5=0xB4, collision_ptr=0x700, nested=1),
+    dict(status=0, direction=1, collision=1, tile=0x55,
+         tileset=1, channel5=0xB4, collision_ptr=0x700, nested=1),
 )
 
 

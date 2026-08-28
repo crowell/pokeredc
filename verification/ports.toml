@@ -14547,14 +14547,14 @@ assembly_symbol = "CollisionCheckOnWater"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_collision_check_on_water"
 c_source = "verification/ports/collision_check_on_water.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
     "front-tile, surf-state, and collision-table state",
     "collision sound channel and PlaySound state",
 ]
-proof_domain = "scripted-movement early return plus all three concrete no-collision surfing paths for front tiles $14, $48, and $32 on a non-ship-port tileset, through the tile-pair terminator, front-tile lookup, and water-tile return; shore/boarding, passability, stop-surfing, collision-sound, sprite-graphics, and default-music variants remain"
-decoder = "exact 100-byte linked body checked; status-bit/load seams and all four focused terminal paths are compared pathwise, with the no-collision paths composing the independently proven jumping/tile-pair and front-tile transitions at complete matching boundaries; remaining water-transition variants stay documented"
+proof_domain = "scripted-movement early return, sprite-collision and tile-pair gates, water and Safari shoreline no-collision paths, Vermilion dock stop-surfing versus non-port fallthrough, passable-land stop-surfing, collision-table sentinel collision, and already-playing collision-sound paths; all general-register inputs, front-tile/surf-state memory, and relevant helper transitions are compared"
+decoder = "exact 100-byte linked body checked; individual SM83 status/load/compare/branch/store/SCF seams and bounded passability scan execute in the linked body, while jumping/tile-pair, front-tile, sprite-graphics, music, and sound calls compose through audited matching boundaries"
 
 [[function]]
 assembly_symbol = "CheckForJumpingAndTilePairCollisions"

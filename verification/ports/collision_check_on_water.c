@@ -143,10 +143,17 @@ port_collision_check_on_water(struct cpu_register_state *r, port_u8 *memory)
 			and_a(r);
 			return;
 		}
-		if (r->a == 0x32u && memory[W_CUR_MAP_TILESET] != SHIP_PORT) {
-			and_a(r);
-			return;
-		}
+        if (r->a == 0x32u) {
+            /* The dock check loads wCurMapTileset into A before CP; preserve
+             * that observable A value on the non-ship-port fallthrough. */
+            r->a = memory[W_CUR_MAP_TILESET];
+            if (r->a != SHIP_PORT) {
+                and_a(r);
+                return;
+            }
+            stop_surfing(r, memory);
+            return;
+        }
 	}
 
 	port_u16 pointer = (port_u16)(memory[W_COLLISION_PTR] |
