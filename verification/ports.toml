@@ -13632,6 +13632,23 @@ decoder = "exact 10-byte linked entry cdf436060821c2541805 checked functionally;
 
 
 [[function]]
+assembly_symbol = "TextScript_ItemStoragePC"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_text_script_item_storage_pc"
+c_source = "verification/ports/text_script_item_storage_pc.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "the complete SaveScreenTilesToBuffer2 screen-buffer transfer",
+    "hLoadedROMBank and rROMB",
+    "the PlayerPC callback-input transition",
+    "the complete HoldTextDisplayOpen call-input transition",
+]
+proof_domain = "all symbolic register/flag/bank inputs and visible tilemap bytes, arbitrary PlayerPC post-state and callback-bank outputs, and the shared host-input hold-open tail; the PlayerPC body remains an explicit unported callback boundary"
+decoder = "exact 10-byte linked entry cdf436060121e678180f checked functionally; the real SaveScreenTilesToBuffer2 transfer composes before the shared BankswitchAndContinue path, with proven Bankswitch and HoldTextDisplayOpen transitions"
+
+
+[[function]]
 assembly_symbol = "CopyData"
 assembly_source = "home/copy.asm"
 c_symbol = "port_copy_data"
