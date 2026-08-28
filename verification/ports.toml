@@ -25253,15 +25253,20 @@ decoder = "BC=3 loop-counter initialization and first StringCmp dispatch are mod
 [[function]]
 assembly_symbol = "DisplayTextIDInit"
 assembly_source = "engine/menus/display_text_id_init.asm"
-c_symbol = "port_display_text_id_init_private"
+c_symbol = "port_display_text_id_init"
 c_source = "verification/ports/display_text_id_init_private.c"
 status = "partial"
 observables = [
     "all registers and flags",
     "wListMenuID",
+    "wAutoTextBoxDrawingControl and hTextID border selection",
+    "wFontLoaded and wMiscFlags",
+    "all non-player saved-facing bytes and all sprite image-index bytes",
+    "hWY, hAutoBGTransferEnabled, font-transfer bank state, and VBlank copy state",
+    "all affected tilemap and font-transfer bytes",
 ]
-proof_domain = "all register/flag inputs through text-box initialization dispatch"
-decoder = "wListMenuID clear, XOR-A zero flags, and auto-text-box branch entry are modeled exactly; border selection, font/sprite updates, facing-direction restoration, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag inputs over dialogue and start-menu text IDs, both EVENT_GOT_POKEDEX outcomes, automatic-box suppression, sprite-update suppression/call paths with wUpdateSpritesEnabled=2, all 15 facing-save iterations, all 16 animation-clear iterations, and the complete copy/font setup transitions"
+decoder = "exact 117-byte linked body checked implicitly by symbol boundary; only individual SM83 absolute/HRAM load-store gaps and proven TextBoxBorder, CopyScreenTileBufferToVRAM, UpdateSprites early-return, and LoadFontTilePatterns call boundaries are shimmed, while production C executes the border selection, 15-entry facing loop, 16-entry stand-still loop, and real transfer ports; the _UpdateSprites bank-1 body remains outside this proof domain"
 
 [[function]]
 assembly_symbol = "DrawBadges"
