@@ -12489,6 +12489,27 @@ decoder = "exact 44-byte body checked; conditional local call, high-byte SRL, ca
 
 
 [[function]]
+assembly_symbol = "IsPlayerStandingOnDoorTile"
+assembly_source = "engine/overworld/doors.asm"
+c_symbol = "port_is_player_standing_on_door_tile"
+c_source = "verification/ports/door_tiles.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wCurMapTileset and standing tile",
+    "DoorTileIDPointers table bytes",
+    "selected door-tile list bytes",
+]
+proof_domain = "all symbolic register and flag inputs with concrete table/list records covering tileset miss, list terminator miss, first tile match, and late tile match; complete push/pop DE restoration and AND/CP/SCF flag paths"
+decoder = "exact 35-byte body checked; IsInArray composes through its complete proven transition, while individual SM83 absolute loads, HLI/pointer loads, AND, CP, SCF, and return paths are shimmed; native C executes the zero-terminated door-list loop"
+
+
+
+
+
+
+
+[[function]]
 assembly_symbol = "IsPlayerStandingOnWarp"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_is_player_standing_on_warp"
