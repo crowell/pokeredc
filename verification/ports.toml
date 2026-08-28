@@ -29099,8 +29099,8 @@ observables = [
     "the rendered replacement-text destination window",
     "the advanced caller text pointer in DE",
 ]
-proof_domain = "plain replacement strings ending in TX_END with symbolic initial registers, destination bytes, and the dispatcher's saved DE; the proven PlaceString transition composes exactly, and the jp PlaceNextChar continuation is an explicit boundary"
-decoder = "exact 10-byte body checked (cd55196069d113c35619); the PlaceString call is composed through its proven plain-string transition, cursor/pointer register moves are modeled individually, and the shared PlaceNextChar loop remains outside this partial handler port"
+proof_domain = "plain replacement strings ending in TX_END with symbolic initial registers and destination bytes, plus a fixed dispatcher continuation pointer whose next byte is TX_END; the proven PlaceString and PlaceNextChar transitions compose exactly, while arbitrary continuation-token integration remains partial"
+decoder = "exact 10-byte body checked (cd55196069d113c35619); the PlaceString call and real PlaceNextChar continuation are composed through proven ports, cursor/pointer register moves and the outer saved-HL stack slot are modeled individually, and the focused proof covers the terminal continuation domain"
 
 
 

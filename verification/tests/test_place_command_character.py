@@ -17,7 +17,13 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import collect_returns, linked_bytes, rom_window, symbol_location
+from verification.harness.rom import (
+    collect_returns,
+    linked_bytes,
+    rom_window,
+    sm83_flags_to_z80,
+    symbol_location,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 ELF = ROOT / "verification/build/ports.elf"
@@ -28,6 +34,7 @@ NATIVE_MEMORY = 0x200000
 STACK = 0xD000
 RETURN = 0xEFFF
 SOURCE = 0xC500
+NEXT_SOURCE = 0xC600
 DESTINATION = 0xC400
 STRING = bytes((0x41, 0x42, 0x43, 0x50))
 WINDOW = 6
@@ -96,6 +103,12 @@ class IncDE(angr.SimProcedure):
 
 class ContinuationBoundary(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
+        self.state.regs.b = self.state.regs.h
+        self.state.regs.c = self.state.regs.l
+        self.state.regs.h = self.state.memory.load(STACK + 2, 1)
+        self.state.regs.l = self.state.memory.load(STACK + 3, 1)
+        self.state.regs.a = claripy.BVV(0x50, 8)
+        self.state.regs.f = sm83_flags_to_z80(claripy.BVV(0xC0, 8))
         self.inhibit_autoret = True
         self.jump(RETURN)
 
@@ -108,8 +121,11 @@ def _setup(state: angr.SimState, base: int,
                            values[f"window{offset}"])
     for offset, character in enumerate(STRING):
         state.memory.store(base + SOURCE + offset, claripy.BVV(character, 8))
+    state.memory.store(base + NEXT_SOURCE, claripy.BVV(0x50, 8))
     state.memory.store(base + STACK, saved_e, endness="Iend_LE")
     state.memory.store(base + STACK + 1, saved_d, endness="Iend_LE")
+    state.memory.store(base + STACK + 2, claripy.BVV(DESTINATION >> 8, 8))
+    state.memory.store(base + STACK + 3, claripy.BVV(DESTINATION & 0xFF, 8))
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
@@ -180,8 +196,9 @@ def test_place_command_character_pathwise_equivalence() -> None:
     values["l"] = claripy.BVV(DESTINATION & 0xFF, 8)
     values["d"] = claripy.BVV(SOURCE >> 8, 8)
     values["e"] = claripy.BVV(SOURCE & 0xFF, 8)
-    saved_d = claripy.BVS("place_command_saved_d", 8)
-    saved_e = claripy.BVS("place_command_saved_e", 8)
+    saved_pointer = NEXT_SOURCE - 1
+    saved_d = claripy.BVV(saved_pointer >> 8, 8)
+    saved_e = claripy.BVV(saved_pointer & 0xFF, 8)
     assert_pathwise_equivalent(
         _assembly(values, saved_d, saved_e),
         _native(values, saved_d, saved_e),
