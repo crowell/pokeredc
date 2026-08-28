@@ -210,6 +210,10 @@ CASES = (
          tileset=1, channel5=0, collision_ptr=0x700),
     dict(status=0, direction=1, collision=0, tile=0x14,
          tileset=1, channel5=0, collision_ptr=0x700, nested=1),
+    dict(status=0, direction=1, collision=0, tile=0x48,
+         tileset=1, channel5=0, collision_ptr=0x700, nested=1),
+    dict(status=0, direction=1, collision=0, tile=0x32,
+         tileset=1, channel5=0, collision_ptr=0x700, nested=1),
 )
 
 

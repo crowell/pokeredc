@@ -14473,8 +14473,8 @@ observables = [
     "front-tile, surf-state, and collision-table state",
     "collision sound channel and PlaySound state",
 ]
-proof_domain = "scripted-movement early return plus a concrete no-collision surfing path through the tile-pair terminator, front-tile lookup, and water-tile return; shore/boarding, passability, stop-surfing, collision-sound, sprite-graphics, and default-music variants remain"
-decoder = "exact 100-byte linked body checked; status-bit/load seams and both focused terminal paths are compared pathwise, with the no-collision path composing the independently proven jumping/tile-pair and front-tile transitions at complete matching boundaries; remaining water-transition variants stay documented"
+proof_domain = "scripted-movement early return plus all three concrete no-collision surfing paths for front tiles $14, $48, and $32 on a non-ship-port tileset, through the tile-pair terminator, front-tile lookup, and water-tile return; shore/boarding, passability, stop-surfing, collision-sound, sprite-graphics, and default-music variants remain"
+decoder = "exact 100-byte linked body checked; status-bit/load seams and all four focused terminal paths are compared pathwise, with the no-collision paths composing the independently proven jumping/tile-pair and front-tile transitions at complete matching boundaries; remaining water-transition variants stay documented"
 
 [[function]]
 assembly_symbol = "CheckForJumpingAndTilePairCollisions"
