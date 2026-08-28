@@ -18122,7 +18122,7 @@ observables = [
     "wPlayerName, wRivalName, wBattleMonNick, wEnemyMonNick (read, for name substitutions)",
 ]
 proof_domain = "all source/destination pointer inputs, all 256 source bytes, hUILayoutFlags and hWhoseTurn values, and arbitrary name-buffer contents"
-decoder = "C port copies bytes from [DE] into the destination at [HL] until the text-end marker ('@' = $50). It honors TX_NEXT (both normal and single-spaced row advances) and TX_LINE (bottom text row), emits the inline name-substitution tokens (PLAYER, RIVAL, #->POKé, PKMN, PC, TM, TRAINER, ROCKET, six-dots, TARGET, USER), and terminates/advances for the screen-command tokens (PARA, PAGE, _CONT, SCROLL, CONT, PROMPT, DEXEND, DONE, NULL); the associated screen clears/scrolls are approximated by the destination-pointer movement only. The ordinary-character and TX_NEXT paths execute the complete linked body under angr with only audited instruction shims; broader token-path equivalence remains open."
+decoder = "C port copies bytes from [DE] into the destination at [HL] until the text-end marker ('@' = $50). It honors TX_NEXT (both normal and single-spaced row advances) and TX_LINE (bottom text row), emits the inline name-substitution tokens (PLAYER, RIVAL, #->POKé, PKMN, PC, TM, TRAINER, ROCKET, six-dots, TARGET, USER), and terminates/advances for the screen-command tokens (PARA, PAGE, _CONT, SCROLL, CONT, PROMPT, DEXEND, DONE, NULL); the associated screen clears/scrolls are approximated by the destination-pointer movement only. The ordinary-character, TX_NEXT, and TX_LINE paths execute the complete linked body under angr with only audited instruction shims; broader token-path equivalence remains open."
 
 
 
