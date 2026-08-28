@@ -38,6 +38,8 @@ void port_title_screen_copy_tilemap_to_vram(struct cpu_register_state *state,
 void port_prepare_oak_speech(struct cpu_register_state *state,
 	port_u8 *memory);
 void port_get_mon_header(struct cpu_register_state *state, port_u8 *memory);
+void port_load_title_mon_sprite(struct cpu_register_state *state,
+	port_u8 *memory);
 void port_print_game_version_on_title_screen(
 	struct cpu_register_state *state, port_u8 *memory);
 void port_fade_in_intro_pic(struct cpu_register_state *state,
@@ -398,16 +400,15 @@ game_enter_title(struct mac_kernel *kernel, uint8_t *memory,
 	memory[R_OBP0] = 0xE4;
 	memory[R_OBP1] = 0xE4;
 
-	/* LoadTitleMonSprite head: starter species into wCurPartySpecies/
-	 * wCurSpecies + GetMonHeader. The front-pic transfer half is still
-	 * REQUIRED (port_load_front_sprite_by_mon_index is a boundary). */
-	memory[W_CUR_PARTY_SPECIES] = SPECIES_CHARMANDER;
-	memory[W_CUR_SPECIES] = SPECIES_CHARMANDER;
+	/* LoadTitleMonSprite: starter species into wCurPartySpecies/
+	 * wCurSpecies + GetMonHeader + LoadFrontSpriteByMonIndex. Proven
+	 * port composes both callees; front-pic bytes now transfer into
+	 * the sprite buffers / VRAM staging via CopyVideoData. */
 	{
 		struct cpu_register_state regs = { 0 };
 
 		regs.a = SPECIES_CHARMANDER;
-		port_get_mon_header(&regs, memory);
+		port_load_title_mon_sprite(&regs, memory);
 	}
 
 	/* REQUIRED: TitleScreenAnimateBallIfStarterOut,

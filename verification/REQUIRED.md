@@ -26,7 +26,7 @@ with the real call.
 | `SaveScreenTilesToBuffer2` | home/window.asm | screen buffer swap before logo draw *(inlined memcpy wTileMap↔wTileMapBackup $C508)* |
 | `LoadScreenTilesFromBuffer1/2` | home/window.asm | same swap-back *(inlined memcpy)* |
 | ~~`DrawPlayerCharacter`~~ | engine/movie/title.asm | **PORTED & composed** (`port_draw_player_character`; host mirrors `state->sprites.oam[]` into wShadowOAM) |
-| `LoadTitleMonSprite` | engine/movie/title.asm | starter mon picture shown on logo |
+| ~~`LoadTitleMonSprite`~~ | engine/movie/title.asm | **PORTED & composed** (`port_load_title_mon_sprite` via `port_get_mon_header` + `port_load_front_sprite_by_mon_index`; front-pic bytes now transfer) |
 | ~~`ScrollTitleScreenPokemonLogo`~~ | engine/movie/title.asm | **PORTED** (`port_scroll_title_screen_pokemon_logo`) - consumes all DelayFrames in one call; driver keeps frame-paced hSCY until pacing is host-driven |
 | ~~`ScrollTitleScreenGameVersion`~~ | engine/movie/title2.asm | **PORTED** (`port_scroll_title_screen_game_version`, takes observed LY/SCX arrays) - not yet wired into the driver |
 | `TitleScreenScrollInMon` | engine/movie/title2.asm | mon slide-in after scroll |
