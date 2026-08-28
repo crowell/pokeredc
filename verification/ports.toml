@@ -14381,6 +14381,21 @@ decoder = "exact 39-byte body checked; SWAP/ADD flags, four call/fallthrough ent
 
 
 [[function]]
+assembly_symbol = "CheckForJumpingAndTilePairCollisions"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_for_jumping_and_tile_pair_collisions"
+c_source = "verification/ports/check_for_jumping_and_tile_pair_collisions.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "front and standing tile globals",
+    "movement ledge/fishing early return",
+    "tile-pair collision scan state",
+]
+proof_domain = "collision-table match and miss paths plus pre-existing ledge/fishing and non-overworld early returns; GetTileAndCoordsInFrontOfPlayer, HandleLedges, CheckForTilePairCollisions2, and CheckForTilePairCollisions compose at complete transition boundaries"
+decoder = "exact 26-byte prefix checked; push/pop caller context, predef/farcall seams, BIT ledge test, standing-tile store, and full tile-pair scan transition are compared pathwise"
+
+[[function]]
 assembly_symbol = "IsPlayerFacingEdgeOfMap"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_is_player_facing_edge_of_map"
