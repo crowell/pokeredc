@@ -14396,6 +14396,20 @@ proof_domain = "movement-bit and simulated-input early returns plus direct sprit
 decoder = "exact 63-byte linked body checked; direct absolute-load/branch/sound seams are compared pathwise, with the nested sprite-front, jumping/tile-pair, and passability path retained as a documented follow-up"
 
 [[function]]
+assembly_symbol = "CollisionCheckOnWater"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_collision_check_on_water"
+c_source = "verification/ports/collision_check_on_water.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "front-tile, surf-state, and collision-table state",
+    "collision sound channel and PlaySound state",
+]
+proof_domain = "scripted-movement early return path; the complete tile-pair, water/shore tile, passability, stop-surfing, collision-sound, sprite-graphics, and default-music paths are implemented but remain to be exhaustively composed"
+decoder = "exact 100-byte linked body checked; status-bit/load seams and the scripted no-collision return are compared pathwise, while nested helper and loop paths remain a documented follow-up"
+
+[[function]]
 assembly_symbol = "CheckForJumpingAndTilePairCollisions"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_check_for_jumping_and_tile_pair_collisions"
