@@ -29133,6 +29133,22 @@ proof_domain = "all general-register and canonical-flag inputs, arbitrary text-p
 decoder = "exact 14-byte linked body 2a5f2a57d52a5f7e57cd7573d1c9 verified; all HL+ loads and stack pointer restoration are shimmed, while the coordinate call is replaced by its proven symbolic transition"
 
 [[function]]
+assembly_symbol = "DisplayTextBoxID_"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_display_text_box_id"
+c_source = "verification/ports/display_text_box_id.c"
+status = "partial"
+observables = [
+    "all registers and flags on coordinate-only and text-and-coordinate paths",
+    "wTextBoxID and wStatusFlags5",
+    "all text-box border writes",
+    "text destination and source pointer state",
+    "tilemap bytes affected by PlaceString",
+]
+proof_domain = "all register/flag inputs and table bytes for coordinate-only and text-and-coordinate entries; interactive TWO_OPTION_MENU and function-table handlers remain explicit boundaries"
+decoder = "native port composes through the proven SearchTextBoxTable, GetTextBoxIDCoords, GetAddressOfScreenCoords, TextBoxBorder, GetTextBoxIDText, PlaceString, and UpdateSprites ports; interactive menu handlers are intentionally deferred"
+
+[[function]]
 assembly_symbol = "IsSurfingAllowed"
 assembly_source = "engine/overworld/field_move_messages.asm"
 c_symbol = "port_is_surfing_allowed"
