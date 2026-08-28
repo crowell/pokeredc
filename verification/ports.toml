@@ -14459,8 +14459,8 @@ observables = [
     "hTextID and player direction",
     "collision sound channel and PlaySound state",
 ]
-proof_domain = "movement-bit and simulated-input early returns, direct sprite-collision and collision-sound suppression/trigger branches, plus concrete no-NPC paths through the sprite-front scan, tile-pair terminator, passability-table match, and passability-table sentinel; nested collision variants remain"
-decoder = "exact 63-byte linked body checked; direct absolute-load/branch/sound seams are compared pathwise, and the focused no-NPC paths compose the independently proven sprite-front, jumping/tile-pair, and passability transitions at complete matching boundaries; nonzero-NPC and tile-pair-collision variants remain documented"
+proof_domain = "movement-bit and simulated-input early returns, direct sprite-collision and collision-sound suppression/trigger branches, plus no-NPC and nonzero-NPC no-match paths through the sprite-front scan, tile-pair terminator, passability-table match, and passability-table sentinel; nested collision variants remain"
+decoder = "exact 63-byte linked body checked; direct absolute-load/branch/sound seams are compared pathwise, and the focused no-match paths compose the independently proven sprite-front, jumping/tile-pair, and passability transitions at complete matching boundaries; tile-pair-collision variants remain documented"
 
 [[function]]
 assembly_symbol = "CollisionCheckOnWater"

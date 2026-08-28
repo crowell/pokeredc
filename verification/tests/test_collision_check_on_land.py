@@ -120,7 +120,10 @@ class CheckTilePassableNoCollision(angr.SimProcedure):
 
 
 def _setup(state: angr.SimState, base: int, *, movement: int, simulated: int,
-           direction: int, collision: int, channel5: int) -> None:
+           direction: int, collision: int, channel5: int,
+           num_sprites: int = 0) -> None:
+    for offset in range(0x100):
+        state.memory.store(base + 0xC100 + offset, claripy.BVV(0, 8))
     for address, value in ((W_MOVEMENT, movement), (W_SIMULATED, simulated),
                            (W_DIRECTION, direction), (W_COLLISION, collision),
                            (W_CHANNEL5, channel5)):
@@ -128,7 +131,7 @@ def _setup(state: angr.SimState, base: int, *, movement: int, simulated: int,
     state.memory.store(base + W_FACING, claripy.BVV(0, 8))
     state.memory.store(base + W_Y_COORD, claripy.BVV(0, 8))
     state.memory.store(base + W_X_COORD, claripy.BVV(0, 8))
-    state.memory.store(base + W_NUM_SPRITES, claripy.BVV(0, 8))
+    state.memory.store(base + W_NUM_SPRITES, claripy.BVV(num_sprites, 8))
     state.memory.store(base + W_CUR_TILESET, claripy.BVV(1, 8))
     state.memory.store(base + W_TILEMAP + 11 * 20 + 8, claripy.BVV(1, 8))
     state.memory.store(base + W_TILEMAP + 9 * 20 + 8, claripy.BVV(0, 8))
@@ -142,7 +145,7 @@ def _setup(state: angr.SimState, base: int, *, movement: int, simulated: int,
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
     return claripy.Concat(*(state.memory.load(base + address, 1) for address in (
         W_MOVEMENT, W_SIMULATED, W_DIRECTION, W_COLLISION, W_CHANNEL5,
-        W_FACING, W_TILE_FRONT, W_TILE_STANDING)))
+        W_FACING, W_TILE_FRONT, W_TILE_STANDING, W_NUM_SPRITES)))
 
 
 def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
@@ -220,6 +223,8 @@ CASES = (
          nested=1),
     dict(movement=0, simulated=0, direction=1, collision=0, channel5=0,
          nested=1, passable_carry=1),
+    dict(movement=0, simulated=0, direction=1, collision=0, channel5=0,
+         nested=1, num_sprites=1),
 )
 
 
