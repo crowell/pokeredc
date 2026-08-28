@@ -79,20 +79,21 @@ class SpriteFrontNoSprites(angr.SimProcedure):
 
 
 class CheckForJumpingNoCollision(angr.SimProcedure):
-    def __init__(self, target: int) -> None:
+    def __init__(self, target: int, carry: bool = False) -> None:
         super().__init__()
         self.target = target
+        self.carry = carry
 
     def run(self) -> None:  # type: ignore[override]
         tile = self.state.memory.load(W_TILEMAP + 11 * 20 + 8, 1)
         self.state.regs.d = claripy.BVV(1, 8)
         self.state.regs.e = claripy.BVV(0, 8)
         self.state.regs.a = claripy.BVV(0xFF, 8)
-        self.state.regs.b = claripy.BVV(1, 8)
+        self.state.regs.b = claripy.BVV(0 if self.carry else 1, 8)
         self.state.regs.c = tile
         self.state.regs.h = claripy.BVV(0x0C, 8)
-        self.state.regs.l = claripy.BVV(0x7F, 8)
-        self.state.regs.f = claripy.BVV(0x10, 8)
+        self.state.regs.l = claripy.BVV(0x80 if self.carry else 0x7F, 8)
+        self.state.regs.f = claripy.BVV(0x01 if self.carry else 0x10, 8)
         self.state.memory.store(W_TILE_FRONT, tile)
         self.state.memory.store(W_TILE_STANDING,
                                  self.state.memory.load(W_TILEMAP + 9 * 20 + 8, 1))
@@ -121,7 +122,7 @@ class CheckTilePassableNoCollision(angr.SimProcedure):
 
 def _setup(state: angr.SimState, base: int, *, movement: int, simulated: int,
            direction: int, collision: int, channel5: int,
-           num_sprites: int = 0) -> None:
+           num_sprites: int = 0, tile_pair_collision: bool = False) -> None:
     for offset in range(0x100):
         state.memory.store(base + 0xC100 + offset, claripy.BVV(0, 8))
     for address, value in ((W_MOVEMENT, movement), (W_SIMULATED, simulated),
@@ -139,7 +140,12 @@ def _setup(state: angr.SimState, base: int, *, movement: int, simulated: int,
     state.memory.store(base + W_TILE_STANDING, claripy.BVV(0, 8))
     state.memory.store(base + W_COLLISION_PTR, claripy.BVV(0x700, 16), endness="Iend_LE")
     state.memory.store(base + 0x700, claripy.BVV(1, 8))
-    state.memory.store(base + 0x0C7E, claripy.BVV(0xFF, 8))
+    if tile_pair_collision:
+        for offset, value in enumerate((1, 0, 1, 0xFF)):
+            state.memory.store(base + 0x0C7E + offset,
+                               claripy.BVV(value, 8))
+    else:
+        state.memory.store(base + 0x0C7E, claripy.BVV(0xFF, 8))
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
@@ -178,11 +184,14 @@ def _assembly(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
     project.hook(q + 0x38, PlaySoundBoundary(), length=3)
     project.hook(q + 0x3B, Sm83Scf(q + 0x3C), length=1)
     project.hook(q + 0x3D, Sm83AndRegister("a", q + 0x3E), length=1)
-    if case.pop("nested", 0):
+    nested = case.pop("nested", 0)
+    pair_collision = bool(case.get("tile_pair_collision", 0))
+    if nested:
         project.hook(q + 0x1A, SpriteFrontNoSprites(q + 0x1D), length=3)
         project.hook(q + 0x1D, Sm83LoadAHighImmediate(0x8C, q + 0x1F), length=2)
         project.hook(q + 0x1F, Sm83AndRegister("a", q + 0x20), length=1)
-        project.hook(q + 0x25, CheckForJumpingNoCollision(q + 0x28), length=3)
+        project.hook(q + 0x25, CheckForJumpingNoCollision(
+            q + 0x28, pair_collision), length=3)
         project.hook(q + 0x2A, CheckTilePassableNoCollision(
             q + 0x2D, bool(case.pop("passable_carry", 0))), length=3)
     state = project.factory.blank_state(addr=loc.address)
@@ -225,6 +234,8 @@ CASES = (
          nested=1, passable_carry=1),
     dict(movement=0, simulated=0, direction=1, collision=0, channel5=0,
          nested=1, num_sprites=1),
+    dict(movement=0, simulated=0, direction=1, collision=0, channel5=0,
+         nested=1, tile_pair_collision=1),
 )
 
 
