@@ -131,7 +131,7 @@ port_collision_check_on_water(struct cpu_register_state *r, port_u8 *memory)
 	and_a(r);
 	if (r->a == 0u) {
 		r->h = 0x0cu;
-		r->l = 0x8au;
+		r->l = 0xa0u;
 		port_check_for_jumping_and_tile_pair_collisions(r, memory);
 		if ((r->f & PORT_FLAG_C) != 0u) {
 			collision(r, memory);

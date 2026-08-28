@@ -94,7 +94,7 @@ def _setup(state: angr.SimState, base: int, *, status: int, direction: int,
     state.memory.store(base + W_TILEMAP + 11 * 20 + 8,
                        claripy.BVV(tile, 8))
     # A $ff first entry makes the tile-pair scan a no-collision path.
-    state.memory.store(base + 0x0C8A, claripy.BVV(0xFF, 8))
+    state.memory.store(base + 0x0CA0, claripy.BVV(0xFF, 8))
     state.memory.store(base + collision_ptr, claripy.BVV(0xFF, 8))
 
 
