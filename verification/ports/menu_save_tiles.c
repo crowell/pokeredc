@@ -1,5 +1,7 @@
 #include "port_state.h"
 
+void port_update_sprites(struct cpu_register_state *, port_u8 *);
+
 static void
 menu_dec(struct cpu_register_state *registers, port_u8 *value)
 {
@@ -89,4 +91,49 @@ port_two_option_menu_save_screen_tiles(struct menu_save_tiles_state *state,
 		if (port_two_option_menu_save_screen_tiles_row(state))
 			return;
 	}
+}
+
+/* Port of TwoOptionMenu_RestoreScreenTiles in engine/menus/text_box.asm. */
+__attribute__((noinline, used)) void
+port_two_option_menu_restore_screen_tiles(struct menu_save_tiles_state *state,
+	port_u8 memory[65536])
+{
+	port_u16 hl;
+	port_u16 de;
+
+	/* The restore routine has the same 5x6 traversal as the save routine,
+	 * with the source and destination pointers exchanged. */
+	state->registers.d = 0xce;
+	state->registers.e = 0xe9;
+	state->registers.b = 5;
+	state->registers.c = 6;
+	for (;;) {
+		hl = (port_u16)(((port_u16)state->registers.h << 8) |
+			state->registers.l);
+		de = (port_u16)(((port_u16)state->registers.d << 8) |
+			state->registers.e);
+		state->fetched = memory[de];
+		state->registers.a = state->fetched;
+		de++;
+		state->registers.d = (port_u8)(de >> 8);
+		state->registers.e = (port_u8)de;
+		memory[hl] = state->registers.a;
+		state->written = state->registers.a;
+		hl++;
+		state->registers.h = (port_u8)(hl >> 8);
+		state->registers.l = (port_u8)hl;
+		menu_dec(&state->registers, &state->registers.c);
+		if (state->registers.c != 0)
+			continue;
+
+		/* push bc / ld bc,SCREEN_WIDTH-6 / add hl,bc / pop bc */
+		menu_add_hl(&state->registers, 14);
+		state->registers.c = 6;
+		menu_dec(&state->registers, &state->registers.b);
+		if (state->registers.b == 0)
+			break;
+	}
+
+	/* The assembly tail calls the public sprite-update wrapper. */
+	port_update_sprites(&state->registers, memory);
 }

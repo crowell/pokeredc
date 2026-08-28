@@ -1,4 +1,5 @@
 #include "port_state.h"
+#include "joypad_port.h"
 
 /*
  * Port of PlaceString in home/text.asm.
@@ -16,9 +17,8 @@
  *     TRAINER, ROCKET, the six-dots, TARGET, USER) emit their expansion inline
  *   - the screen-command tokens (PARA, PAGE, _CONT, SCROLL, CONT, PROMPT,
  *     DEXEND, DONE, NULL) advance/terminate the destination as the engine does;
- *     the associated screen clears/scrolls are out of scope for the flat model
- *     and are approximated by the destination-pointer movement (the only
- *     observable effect needed by the text-placement contract).
+ *     _CONT and SCROLL compose the real delay/manual-scroll and text-scroll
+ *     ports, while the remaining screen handlers are still staged separately.
  */
 
 #define SCREEN_WIDTH 20
@@ -56,6 +56,18 @@
 #define W_RIVAL_NAME       0xd34a
 #define W_BATTLE_MON_NICK  0xd009
 #define W_ENEMY_MON_NICK   0xcfda
+#define TEXT_ID_ERROR_PREV 0x19f3
+#define DONE_TEXT_PREV     0x1ab2
+#define CONT_CHAR_TEXT     0x1a8c
+#define ARROW_SLOT         0xc4f2
+#define TEXT_CURSOR        0xc4e1
+
+void port_scroll_text_up_one_line(struct cpu_register_state *, port_u8 *);
+void port_protected_delay3(struct cpu_register_state *, port_u8 *);
+void port_manual_text_scroll(struct manual_text_scroll_state *);
+void port_clear_screen_area(struct clear_screen_area_state *, port_u8 *);
+void port_delay_frames(struct delay_frame_state *, const port_u8 *);
+void port_text_command_processor(struct cpu_register_state *, port_u8 *);
 
 static void
 ps_emit(port_u8 *memory, port_u16 *dest, port_u8 b)
@@ -80,6 +92,15 @@ ps_copy_name(port_u8 *memory, port_u16 *dest, port_u16 src_buf)
 	}
 }
 
+static void
+ps_copy_enemy_name(port_u8 *memory, port_u16 *dest)
+{
+	static const port_u8 enemy[] = {0x84, 0xad, 0xa4, 0xac, 0xb8, 0x7f};
+	for (unsigned int i = 0; i < sizeof(enemy); ++i)
+		ps_emit(memory, dest, enemy[i]);
+	ps_copy_name(memory, dest, W_ENEMY_MON_NICK);
+}
+
 static port_u16
 ps_coord(port_u8 x, port_u8 y)
 {
@@ -90,75 +111,248 @@ __attribute__((noinline, used)) void
 port_place_string(struct cpu_register_state *state, port_u8 *memory)
 {
 	port_u16 dest = (port_u16)(((port_u16)state->h << 8) | state->l);
+	port_u16 saved_hl = dest;
 	port_u16 src = (port_u16)(((port_u16)state->d << 8) | state->e);
 	port_u8 c;
 
 	for (;;) {
 		c = memory[src];
+		state->a = c;
 		if (c == TX_END) {
 			state->a = c;
 			state->b = (port_u8)(dest >> 8);
 			state->c = (port_u8)dest;
 			state->d = (port_u8)(src >> 8);
 			state->e = (port_u8)src;
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
 			state->f = PORT_FLAG_N | PORT_FLAG_Z;
 			break;
 		}
 
 		if (c == TX_NEXT) {
 			port_u16 adv = (port_u16)(2 * SCREEN_WIDTH);
-			if (!(memory[H_UI_LAYOUT_FLAGS] &
-				(1u << BIT_SINGLE_SPACED_LINES)))
+			if (memory[H_UI_LAYOUT_FLAGS] &
+				(1u << BIT_SINGLE_SPACED_LINES))
 				adv = SCREEN_WIDTH;
-			dest = (port_u16)(dest + adv);
+			dest = (port_u16)(saved_hl + adv);
+			saved_hl = dest;
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_LINE) {
 			dest = ps_coord(1, 16);
+			saved_hl = dest;
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_PARA) {
-			memory[ps_coord(18, 16)] = 0xee; /* '▼' */
+			port_u16 entry_de = src;
+			struct manual_text_scroll_state mts;
+			struct clear_screen_area_state clear;
+			struct delay_frame_state delay;
+			static const port_u8 acknowledged_vblank[] = { 0 };
+
+			memory[ARROW_SLOT] = 0xee;
+			port_protected_delay3(state, memory);
+			mts.registers = *state;
+			mts.link_state = memory[W_LINKSTATE];
+			mts.wait_a = state->a;
+			mts.wait_f = state->f;
+			mts.wait_b = state->b;
+			mts.wait_c = state->c;
+			mts.wait_d = state->d;
+			mts.wait_e = state->e;
+			mts.wait_h = state->h;
+			mts.wait_l = state->l;
+			port_manual_text_scroll(&mts);
+			*state = mts.registers;
+
+			clear.registers = *state;
+			clear.registers.h = (port_u8)(ps_coord(1, 13) >> 8);
+			clear.registers.l = (port_u8)ps_coord(1, 13);
+			clear.registers.b = 4;
+			clear.registers.c = 18;
+			port_clear_screen_area(&clear, memory);
+			*state = clear.registers;
+			state->c = 20;
+			delay.registers = *state;
+			delay.vblank_occurred = 0;
+			delay.observed_vblank = 0;
+			port_delay_frames(&delay, acknowledged_vblank);
+			*state = delay.registers;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
 			dest = ps_coord(1, 14);
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_PAGE) {
-			memory[ps_coord(18, 16)] = 0xee;
-			dest = ps_coord(1, 11);
+			port_u16 entry_de = src;
+			struct manual_text_scroll_state mts;
+			struct clear_screen_area_state clear;
+			struct delay_frame_state delay;
+			static const port_u8 acknowledged_vblank[] = { 0 };
+
+			memory[ARROW_SLOT] = 0xee;
+			port_protected_delay3(state, memory);
+			mts.registers = *state;
+			mts.link_state = memory[W_LINKSTATE];
+			mts.wait_a = state->a;
+			mts.wait_f = state->f;
+			mts.wait_b = state->b;
+			mts.wait_c = state->c;
+			mts.wait_d = state->d;
+			mts.wait_e = state->e;
+			mts.wait_h = state->h;
+			mts.wait_l = state->l;
+			port_manual_text_scroll(&mts);
+			*state = mts.registers;
+
+			clear.registers = *state;
+			clear.registers.h = (port_u8)(ps_coord(1, 10) >> 8);
+			clear.registers.l = (port_u8)ps_coord(1, 10);
+			clear.registers.b = 7;
+			clear.registers.c = 18;
+			port_clear_screen_area(&clear, memory);
+			*state = clear.registers;
+			state->c = 20;
+			delay.registers = *state;
+			delay.vblank_occurred = 0;
+			delay.observed_vblank = 0;
+			port_delay_frames(&delay, acknowledged_vblank);
+			*state = delay.registers;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
+			/* PageChar pops the dispatcher's saved HL, installs row 11,
+			 * pushes it again, then resumes through NextChar. */
+			saved_hl = ps_coord(1, 11);
+			dest = saved_hl;
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX__CONT) {
-			memory[ps_coord(18, 16)] = 0xee;
-			dest = ps_coord(1, 16);
+			port_u16 entry_de;
+			struct manual_text_scroll_state mts;
+
+			/* _ContText first pauses with the down arrow visible.  The
+			 * protected delay preserves BC, but its real Delay3 transition
+			 * is still part of the caller-visible register state. */
+			memory[ARROW_SLOT] = 0xee;
+			port_protected_delay3(state, memory);
+
+			/* ManualTextScroll is wrapped in push/pop DE in the assembly;
+			 * map the post-delay registers into its typed wait contract and
+			 * restore the source pointer after the call. */
+			entry_de = src;
+			mts.registers = *state;
+			mts.link_state = memory[W_LINKSTATE];
+			mts.wait_a = state->a;
+			mts.wait_f = state->f;
+			mts.wait_b = state->b;
+			mts.wait_c = state->c;
+			mts.wait_d = state->d;
+			mts.wait_e = state->e;
+			mts.wait_h = state->h;
+			mts.wait_l = state->l;
+			port_manual_text_scroll(&mts);
+			*state = mts.registers;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
+
+			memory[ARROW_SLOT] = 0x7f;
+
+			/* Fall through to _ContTextNoPause: the two real scroll loops
+			 * move the text box and consume their five DelayFrame waits. */
+			port_scroll_text_up_one_line(state, memory);
+			port_scroll_text_up_one_line(state, memory);
+			dest = TEXT_CURSOR;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_SCROLL) {
-			dest = ps_coord(1, 16);
+			port_u16 entry_de = src;
+			port_scroll_text_up_one_line(state, memory);
+			port_scroll_text_up_one_line(state, memory);
+			dest = TEXT_CURSOR;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_CONT) {
-			dest = ps_coord(1, 16);
+			port_u16 entry_de = src;
+
+			/* ContText dispatches the immutable ContCharText far stream;
+			 * that stream starts a nested PlaceString on <_CONT>, which
+			 * performs the same complete pause-and-scroll transition. */
+			state->b = (port_u8)(dest >> 8);
+			state->c = (port_u8)dest;
+			state->h = (port_u8)(CONT_CHAR_TEXT >> 8);
+			state->l = (port_u8)CONT_CHAR_TEXT;
+			port_text_command_processor(state, memory);
+			dest = (port_u16)(((port_u16)state->b << 8) | state->c);
+			state->h = (port_u8)(dest >> 8);
+			state->l = (port_u8)dest;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_PROMPT) {
-			memory[ps_coord(18, 16)] = 0xee;
+			struct manual_text_scroll_state mts;
+
+			/* PromptText suppresses the arrow only for a link battle, then
+			 * performs the same protected delay and manual A/B wait before
+			 * falling through to DoneText. */
+			if (memory[W_LINKSTATE] != 0x04)
+				memory[ARROW_SLOT] = 0xee;
+			port_protected_delay3(state, memory);
+			mts.registers = *state;
+			mts.link_state = memory[W_LINKSTATE];
+			mts.wait_a = state->a;
+			mts.wait_f = state->f;
+			mts.wait_b = state->b;
+			mts.wait_c = state->c;
+			mts.wait_d = state->d;
+			mts.wait_e = state->e;
+			mts.wait_h = state->h;
+			mts.wait_l = state->l;
+			port_manual_text_scroll(&mts);
+			*state = mts.registers;
+			memory[ARROW_SLOT] = 0x7f;
+			state->a = 0x7f;
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
+			state->d = (port_u8)(DONE_TEXT_PREV >> 8);
+			state->e = (port_u8)DONE_TEXT_PREV;
 			break; /* falls through into DoneText (terminate) */
 		}
 		if (c == TX_DONE) {
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
+			state->d = (port_u8)(DONE_TEXT_PREV >> 8);
+			state->e = (port_u8)DONE_TEXT_PREV;
+			state->f = PORT_FLAG_N | PORT_FLAG_Z;
 			break;
 		}
 		if (c == TX_DEXEND) {
-			ps_emit(memory, &dest, 0xe8); /* '.' */
+			memory[dest] = 0xe8; /* '.'; PlaceDexEnd does not advance HL */
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
+			state->f = PORT_FLAG_N | PORT_FLAG_Z;
 			break;
 		}
 		if (c == TX_NULL) {
+			state->b = (port_u8)(dest >> 8);
+			state->c = (port_u8)dest;
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
+			state->d = (port_u8)(TEXT_ID_ERROR_PREV >> 8);
+			state->e = (port_u8)TEXT_ID_ERROR_PREV;
+			state->f = PORT_FLAG_H | PORT_FLAG_Z;
 			break; /* debug leftover: original prints an error */
 		}
 		if (c == TX_PLAYER) {
@@ -226,15 +420,19 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 		}
 		if (c == TX_TARGET) {
 			port_u8 t = (port_u8)(memory[H_WHOSE_TURN] ^ 1);
-			ps_copy_name(memory, &dest,
-				(t == 0) ? W_BATTLE_MON_NICK : W_ENEMY_MON_NICK);
+			if (t == 0)
+				ps_copy_name(memory, &dest, W_BATTLE_MON_NICK);
+			else
+				ps_copy_enemy_name(memory, &dest);
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_USER) {
 			port_u8 t = memory[H_WHOSE_TURN];
-			ps_copy_name(memory, &dest,
-				(t == 0) ? W_BATTLE_MON_NICK : W_ENEMY_MON_NICK);
+			if (t == 0)
+				ps_copy_name(memory, &dest, W_BATTLE_MON_NICK);
+			else
+				ps_copy_enemy_name(memory, &dest);
 			src = (port_u16)(src + 1);
 			continue;
 		}

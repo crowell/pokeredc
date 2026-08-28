@@ -17,7 +17,7 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import rom_window, sm83_flags_to_z80, symbol_location
+from verification.harness.rom import collect_returns, rom_window, sm83_flags_to_z80, symbol_location
 
 ROOT = Path(__file__).resolve().parents[2]
 NATIVE_ELF = ROOT / "verification/build/ports.elf"
@@ -48,17 +48,11 @@ class Endpoint:
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class LineSummary(angr.SimProcedure):
+class ReturnPlaceString(angr.SimProcedure):
     def run(self) -> None:
-        destination = W_TILE_MAP + 16 * SCREEN_WIDTH + 1
-        source = SOURCE + 1
-        self.state.regs.a = claripy.BVV(TX_END, 8)
-        self.state.regs.b = claripy.BVV(destination >> 8, 8)
-        self.state.regs.c = claripy.BVV(destination & 0xFF, 8)
-        self.state.regs.d = claripy.BVV(source >> 8, 8)
-        self.state.regs.e = claripy.BVV(source & 0xFF, 8)
-        self.state.regs.f = sm83_flags_to_z80(claripy.BVV(0xC0, 8))
-        self.jump(DONE)
+        ret = self.state.memory.load(self.state.regs.sp, 2, endness="Iend_LE")
+        self.state.regs.sp = self.state.regs.sp + 2
+        self.jump(ret)
 
 
 def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
@@ -88,18 +82,18 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
             "entry_point": location.address,
         },
     )
-    project.hook(location.address, LineSummary(), length=1)
+    project.hook(location.address + 0x09, ReturnPlaceString(), length=1)
     state = project.factory.blank_state(addr=location.address)
     set_assembly_registers(state, values)
+    state.regs.sp = 0xD000
+    state.memory.store(0xD000, claripy.BVV(DONE, 16), endness="Iend_LE")
     state.memory.store(DESTINATION, values["destination_byte"])
     state.memory.store(SOURCE, claripy.BVV(TX_LINE, 8))
     state.memory.store(SOURCE + 1, claripy.BVV(TX_END, 8))
-    manager = project.factory.simulation_manager(state)
-    manager.explore(find=DONE, num_find=1)
-    assert not manager.errored
+    ends = collect_returns(project, state, DONE)
     return [
         Endpoint(**assembly_registers(end), memory=_memory_endpoint(end, 0), constraints=tuple(end.solver.constraints))
-        for end in manager.found
+        for end in ends
     ]
 
 
