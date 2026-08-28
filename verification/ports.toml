@@ -29653,3 +29653,17 @@ observables = [
 ]
 proof_domain = "the complete hide-sprites path with arbitrary register inputs and arbitrary OAM bytes; the full sprite iteration, facing/animation table traversal, priority handling, and unused-OAM clearing are implemented, while their broad multi-sprite composition remains to be exercised"
 decoder = "the exact 194-byte linked body is checked inside the functional test; instruction-level absolute-load/store/DEC/CP shims and the HideSprites boundary drive the real linked hide path, while native C calls the real port_hide_sprites and contains the complete 16-sprite/tile/OAM loops"
+
+[[function]]
+assembly_symbol = "LoadSmokeTileFourTimes"
+assembly_source = "engine/overworld/dust_smoke.asm"
+c_symbol = "port_load_smoke_tile_four_times"
+c_source = "verification/ports/load_smoke_tile_four_times.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the four ordered LoadSmokeTile call inputs",
+    "HL tile destination progression and loop counter",
+]
+proof_domain = "all register and canonical-flag inputs with the fixed four-iteration loop and the independently proven LoadSmokeTile transition"
+decoder = "exact 20-byte body checked; the real four-iteration PUSH/POP loop, TILE_SIZE HL advancement, DEC C termination, and LoadSmokeTile call boundary execute pathwise, while native C calls the real port_load_smoke_tile on every iteration"
