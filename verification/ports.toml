@@ -29110,6 +29110,25 @@ decoder = "exact 14-byte body checked (d5cd181bcd181b21e1c4d1c3e819); balanced P
 
 
 [[function]]
+assembly_symbol = "PromptText"
+assembly_source = "home/text.asm"
+c_symbol = "port_prompt_text"
+c_source = "verification/ports/prompt_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wLinkState",
+    "the prompt arrow tile at $c4f2",
+    "the restored caller HL and DoneText DE continuation pointer",
+]
+proof_domain = "both link-state paths (LINK_STATE_BATTLING and a non-battle state), all symbolic register/flag inputs, symbolic arrow state, and symbolic caller-saved HL; ProtectedDelay3, ManualTextScroll, and DoneText compose through their proven transitions"
+decoder = "exact 24-byte PromptText body checked (fa2bd1fe04caa21a3eeeeaf2c4cd3a1bcd98383e7feaf2c4); load/compare/branch, arrow writes, proven delay/manual-scroll callees, and the proven DoneText fall-through are modeled under angr"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"
