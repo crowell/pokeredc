@@ -168,6 +168,7 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 			 * map the post-delay registers into its typed wait contract and
 			 * restore the source pointer after the call. */
 			entry_de = src;
+			mts.registers = *state;
 			mts.link_state = memory[W_LINKSTATE];
 			mts.wait_a = state->a;
 			mts.wait_f = state->f;
@@ -210,8 +211,27 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 			continue;
 		}
 		if (c == TX_PROMPT) {
-			memory[ps_coord(18, 16)] = 0xee;
-			memory[ps_coord(18, 16)] = 0x7f;
+			struct manual_text_scroll_state mts;
+
+			/* PromptText suppresses the arrow only for a link battle, then
+			 * performs the same protected delay and manual A/B wait before
+			 * falling through to DoneText. */
+			if (memory[W_LINKSTATE] != 0x04)
+				memory[ARROW_SLOT] = 0xee;
+			port_protected_delay3(state, memory);
+			mts.registers = *state;
+			mts.link_state = memory[W_LINKSTATE];
+			mts.wait_a = state->a;
+			mts.wait_f = state->f;
+			mts.wait_b = state->b;
+			mts.wait_c = state->c;
+			mts.wait_d = state->d;
+			mts.wait_e = state->e;
+			mts.wait_h = state->h;
+			mts.wait_l = state->l;
+			port_manual_text_scroll(&mts);
+			*state = mts.registers;
+			memory[ARROW_SLOT] = 0x7f;
 			state->a = 0x7f;
 			state->h = (port_u8)(saved_hl >> 8);
 			state->l = (port_u8)saved_hl;
