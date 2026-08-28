@@ -18093,6 +18093,21 @@ decoder = "exact 9-byte linked body 21c82acd493cc3d629 checked inside the functi
 
 
 [[function]]
+assembly_symbol = "DisplayPlayerBlackedOutText"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_player_blacked_out_text"
+c_source = "verification/ports/display_player_blacked_out_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextBoxID and wStatusFlags6",
+    "the complete PrintText and HoldTextDisplayOpen call-input transitions",
+]
+proof_domain = "all symbolic register/flag inputs, arbitrary initial wTextBoxID, and arbitrary wStatusFlags6; the fixed PlayerBlackedOutText pointer, bike-bit clearing, proven PrintText transition, and shared HoldTextDisplayOpen tail boundary are composed exactly"
+decoder = "exact 17-byte linked body 21ba2acd493cfa32d7cbafea32d7c3df29 checked inside the functional test; the LD HL/call/jump body executes under angr, individual absolute load/store instructions are shimmed, and PrintText and HoldTextDisplayOpen are complete proven compositional boundaries"
+
+
+[[function]]
 assembly_symbol = "DisplayPokemonFaintedText"
 assembly_source = "home/text_script.asm"
 c_symbol = "port_display_pokemon_fainted_text"
