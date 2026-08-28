@@ -100,9 +100,10 @@ class CheckForJumpingNoCollision(angr.SimProcedure):
 
 
 class CheckTilePassableNoCollision(angr.SimProcedure):
-    def __init__(self, target: int) -> None:
+    def __init__(self, target: int, carry: bool = False) -> None:
         super().__init__()
         self.target = target
+        self.carry = carry
 
     def run(self) -> None:  # type: ignore[override]
         tile = self.state.memory.load(W_TILEMAP + 11 * 20 + 8, 1)
@@ -113,7 +114,7 @@ class CheckTilePassableNoCollision(angr.SimProcedure):
         self.state.regs.c = tile
         self.state.regs.h = claripy.LShR(pointer + 1, 8)
         self.state.regs.l = (pointer + 1) & 0xFF
-        self.state.regs.f = claripy.BVV(0x42, 8)
+        self.state.regs.f = claripy.BVV(0x01 if self.carry else 0x42, 8)
         self.state.memory.store(W_TILE_FRONT, tile)
         self.jump(self.target)
 
@@ -179,7 +180,8 @@ def _assembly(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
         project.hook(q + 0x1D, Sm83LoadAHighImmediate(0x8C, q + 0x1F), length=2)
         project.hook(q + 0x1F, Sm83AndRegister("a", q + 0x20), length=1)
         project.hook(q + 0x25, CheckForJumpingNoCollision(q + 0x28), length=3)
-        project.hook(q + 0x2A, CheckTilePassableNoCollision(q + 0x2D), length=3)
+        project.hook(q + 0x2A, CheckTilePassableNoCollision(
+            q + 0x2D, bool(case.pop("passable_carry", 0))), length=3)
     state = project.factory.blank_state(addr=loc.address)
     set_assembly_registers(state, values)
     state.regs.sp = STACK
@@ -199,7 +201,10 @@ def _native(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     case.pop("nested", 0)
+    passable_carry = case.pop("passable_carry", 0)
     _setup(state, NATIVE_MEMORY, **case)
+    if passable_carry:
+        state.memory.store(NATIVE_MEMORY + 0x700, claripy.BVV(0xFF, 8))
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
@@ -213,6 +218,8 @@ CASES = (
     dict(movement=0, simulated=0, direction=1, collision=1, channel5=0),
     dict(movement=0, simulated=0, direction=1, collision=0, channel5=0,
          nested=1),
+    dict(movement=0, simulated=0, direction=1, collision=0, channel5=0,
+         nested=1, passable_carry=1),
 )
 
 
