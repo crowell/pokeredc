@@ -28,6 +28,7 @@ STACK = 0xD000
 RETURN = 0xEFFF
 
 W_STATUS = 0xD730
+W_MOVEMENT = 0xD736
 W_DIRECTION = 0xD52A
 W_COLLISION = 0xC10C
 W_TILE_FRONT = 0xCFC6
@@ -36,6 +37,10 @@ W_CUR_TILESET = 0xD367
 W_COLLISION_PTR = 0xD530
 W_WALK_SURF = 0xD700
 W_CHANNEL5 = 0xC02A
+W_FACING = 0xC109
+W_Y_COORD = 0xD361
+W_X_COORD = 0xD362
+W_TILEMAP = 0xC3A0
 
 
 @dataclass(frozen=True)
@@ -76,11 +81,46 @@ class GetTileBoundary(angr.SimProcedure):
         self.jump(self.next_address)
 
 
+class JumpingWaterNoCollision(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        tile = self.state.memory.load(W_TILEMAP + 11 * 20 + 8, 1)
+        self.state.regs.a = claripy.BVV(0xFF, 8)
+        self.state.regs.b = claripy.BVV(1, 8)
+        self.state.regs.c = tile
+        self.state.regs.d = claripy.BVV(1, 8)
+        self.state.regs.e = claripy.BVV(0, 8)
+        self.state.regs.h = claripy.BVV(0x0C, 8)
+        self.state.regs.l = claripy.BVV(0xA1, 8)
+        self.state.regs.f = claripy.BVV(0x10, 8)
+        self.state.memory.store(W_TILE_FRONT, tile)
+        self.jump(self.next_address)
+
+
+class GetTileWaterBoundary(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        tile = self.state.memory.load(W_TILEMAP + 11 * 20 + 8, 1)
+        self.state.regs.a = tile
+        self.state.regs.c = tile
+        self.state.regs.d = claripy.BVV(1, 8)
+        self.state.regs.e = claripy.BVV(0, 8)
+        self.state.regs.f = claripy.BVV(0, 8)
+        self.state.memory.store(W_TILE_FRONT, tile)
+        self.jump(self.next_address)
+
+
 def _setup(state: angr.SimState, base: int, *, status: int, direction: int,
            collision: int, tile: int, tileset: int, channel5: int,
            collision_ptr: int) -> None:
     for address, value in (
-        (W_STATUS, status), (W_DIRECTION, direction),
+        (W_STATUS, status), (W_MOVEMENT, 0), (W_DIRECTION, direction),
         (W_COLLISION, collision), (W_TILE_FRONT, tile),
         (W_CUR_TILESET, tileset), (W_CHANNEL5, channel5),
         (W_WALK_SURF, 2),
@@ -96,6 +136,9 @@ def _setup(state: angr.SimState, base: int, *, status: int, direction: int,
     # A $ff first entry makes the tile-pair scan a no-collision path.
     state.memory.store(base + 0x0CA0, claripy.BVV(0xFF, 8))
     state.memory.store(base + collision_ptr, claripy.BVV(0xFF, 8))
+    state.memory.store(base + W_FACING, claripy.BVV(0, 8))
+    state.memory.store(base + W_Y_COORD, claripy.BVV(0, 8))
+    state.memory.store(base + W_X_COORD, claripy.BVV(0, 8))
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
@@ -123,13 +166,16 @@ def _assembly(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
                            main_opts={"backend": "blob", "arch": ArchPcode("z80:LE:16:default"),
                                       "base_addr": 0, "entry_point": loc.address})
     q = loc.address
+    nested = case.pop("nested", 0)
     project.hook(q + 0x00, Sm83LoadAImmediate(W_STATUS, q + 3), length=3)
     project.hook(q + 0x03, Sm83BitRegister(7, "a", q + 5), length=2)
     project.hook(q + 0x08, Sm83LoadAImmediate(W_DIRECTION, q + 0x0B), length=3)
     project.hook(q + 0x0C, Sm83LoadAImmediate(W_COLLISION, q + 0x0F), length=3)
     project.hook(q + 0x0F, Sm83AndRegister("d", q + 0x10), length=1)
-    project.hook(q + 0x15, Boundary(q + 0x18), length=3)
-    project.hook(q + 0x1C, GetTileBoundary(q + 0x1F, W_TILE_FRONT), length=3)
+    project.hook(q + 0x15, (JumpingWaterNoCollision(q + 0x18)
+                            if nested else Boundary(q + 0x18)), length=3)
+    project.hook(q + 0x1C, (GetTileWaterBoundary(q + 0x1F)
+                            if nested else GetTileBoundary(q + 0x1F, W_TILE_FRONT)), length=3)
     project.hook(q + 0x47, Boundary(q + 0x4A), length=3)
     project.hook(q + 0x4D, Sm83AndRegister("a", q + 0x4E), length=1)
     state = project.factory.blank_state(addr=loc.address)
@@ -150,6 +196,7 @@ def _native(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
+    case.pop("nested", 0)
     _setup(state, NATIVE_MEMORY, **case)
     manager = project.factory.simulation_manager(state)
     manager.run()
@@ -161,6 +208,8 @@ def _native(values: dict[str, claripy.ast.BV], **case: int) -> list[Endpoint]:
 CASES = (
     dict(status=0x80, direction=1, collision=1, tile=0x14,
          tileset=1, channel5=0, collision_ptr=0x700),
+    dict(status=0, direction=1, collision=0, tile=0x14,
+         tileset=1, channel5=0, collision_ptr=0x700, nested=1),
 )
 
 
