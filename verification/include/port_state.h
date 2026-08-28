@@ -57,6 +57,13 @@ struct display_pokemon_fainted_text_state {
 	port_u8 joy_input_count;
 };
 
+/* State for the DisplayRepelWoreOffText text-flow handler. */
+struct display_repel_wore_off_text_state {
+	struct cpu_register_state registers;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
 /* State for the PlaceDexEnd dictionary-token handler.  The assembly caller
  * has the output cursor in HL and its saved cursor on the stack; the native
  * contract carries that popped HL explicitly. */
@@ -3247,6 +3254,8 @@ _Static_assert(sizeof(struct accumulator_state) == 2, "unexpected ABI padding");
 _Static_assert(sizeof(struct binary_accumulator_state) == 4, "unexpected ABI padding");
 _Static_assert(sizeof(struct cpu_register_state) == 8, "unexpected ABI padding");
 _Static_assert(sizeof(struct display_pokemon_fainted_text_state) == 17,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct display_repel_wore_off_text_state) == 17,
 	"unexpected ABI padding");
 _Static_assert(sizeof(struct auto_text_box_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct init_options_state) == 10, "unexpected ABI padding");
