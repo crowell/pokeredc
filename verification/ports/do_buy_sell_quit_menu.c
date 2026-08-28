@@ -29,10 +29,10 @@ void port_handle_menu_input(struct memory_predicate_state *);
 void port_place_unfilled_arrow_menu_cursor(struct menu_cursor_store_state *);
 
 static port_u8
-compare_flags(port_u8 left, port_u8 right, port_u8 old_flags)
+compare_flags(port_u8 left, port_u8 right)
 {
 	port_u8 result = (port_u8)(left - right);
-	port_u8 flags = PORT_FLAG_N | (old_flags & PORT_FLAG_C);
+	port_u8 flags = PORT_FLAG_N;
 	if (result == 0)
 		flags |= PORT_FLAG_Z;
 	if ((left & 0x0fu) < (right & 0x0fu))
@@ -91,7 +91,7 @@ port_do_buy_sell_quit_menu(struct cpu_register_state *registers,
 		memory[W_CHOSEN_MENU_ITEM] = current;
 		registers->b = current;
 		registers->a = max;
-		registers->f = compare_flags(max, current, registers->f);
+		registers->f = compare_flags(max, current);
 		if (max != current)
 			return;
 	}
