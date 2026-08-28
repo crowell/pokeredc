@@ -58,6 +58,20 @@ observables = [
 proof_domain = "all 65,536 initial A/B pairs"
 decoder = "generic Z80 encodings verified; SUB B half-carry shim required"
 
+[[function]]
+assembly_symbol = "PrepareForSpecialWarp"
+assembly_source = "engine/overworld/special_warps.asm"
+c_symbol = "port_prepare_for_special_warp"
+c_source = "verification/ports/prepare_for_special_warp.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wCurMap, wCurrentTileBlockMapViewPointer, wCurMapTileset, wLastMap",
+    "wStatusFlags3, wStatusFlags6, wYOffsetSinceLastSpecialWarp, wXOffsetSinceLastSpecialWarp, and wDestinationWarpID",
+]
+proof_domain = "all general-register and canonical-flag inputs across new-game, debug, fly/destination, and dungeon-return routing; status3 values 0, 1, and $ff; status6 combinations with debug, fly/dungeon, and dungeon bits; complete LoadSpecialWarpData, LoadTilesetHeader, and PrepareNewGameDebug compositional boundaries"
+decoder = "exact 49-byte linked body checked; individual SM83 bit/res/load/store/branch seams and the RET NZ terminal are shimmed at audited instruction boundaries, while production C preserves call ordering, status-bit clearing, destination selection, status3 override, dungeon early return, and last-map writes"
+
 
 
 
