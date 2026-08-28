@@ -90,6 +90,7 @@ __attribute__((noinline, used)) void
 port_place_string(struct cpu_register_state *state, port_u8 *memory)
 {
 	port_u16 dest = (port_u16)(((port_u16)state->h << 8) | state->l);
+	port_u16 saved_hl = dest;
 	port_u16 src = (port_u16)(((port_u16)state->d << 8) | state->e);
 	port_u8 c;
 
@@ -101,21 +102,25 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 			state->c = (port_u8)dest;
 			state->d = (port_u8)(src >> 8);
 			state->e = (port_u8)src;
+			state->h = (port_u8)(saved_hl >> 8);
+			state->l = (port_u8)saved_hl;
 			state->f = PORT_FLAG_N | PORT_FLAG_Z;
 			break;
 		}
 
 		if (c == TX_NEXT) {
 			port_u16 adv = (port_u16)(2 * SCREEN_WIDTH);
-			if (!(memory[H_UI_LAYOUT_FLAGS] &
-				(1u << BIT_SINGLE_SPACED_LINES)))
+			if (memory[H_UI_LAYOUT_FLAGS] &
+				(1u << BIT_SINGLE_SPACED_LINES))
 				adv = SCREEN_WIDTH;
 			dest = (port_u16)(dest + adv);
+			saved_hl = dest;
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_LINE) {
 			dest = ps_coord(1, 16);
+			saved_hl = dest;
 			src = (port_u16)(src + 1);
 			continue;
 		}

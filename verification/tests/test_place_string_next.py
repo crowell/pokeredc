@@ -17,7 +17,7 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import rom_window, sm83_flags_to_z80, symbol_location
+from verification.harness.rom import collect_returns, rom_window, sm83_flags_to_z80, symbol_location
 
 ROOT = Path(__file__).resolve().parents[2]
 NATIVE_ELF = ROOT / "verification/build/ports.elf"
@@ -46,19 +46,17 @@ class Endpoint:
     memory: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
-class NextSummary(angr.SimProcedure):
+class LoadLayoutFlags(angr.SimProcedure):
     def run(self) -> None:
-        layout = self.state.memory.load(H_LAYOUT, 1)
-        advance = claripy.If((layout & 4) != 0, claripy.BVV(40, 16), claripy.BVV(20, 16))
-        destination = claripy.BVV(DESTINATION, 16) + advance
-        source = claripy.BVV(SOURCE + 1, 16)
-        self.state.regs.a = claripy.BVV(TX_END, 8)
-        self.state.regs.b = destination[15:8]
-        self.state.regs.c = destination[7:0]
-        self.state.regs.d = source[15:8]
-        self.state.regs.e = source[7:0]
-        self.state.regs.f = sm83_flags_to_z80(claripy.BVV(0xC0, 8))
-        self.jump(DONE)
+        self.state.regs.a = self.state.memory.load(H_LAYOUT, 1)
+        self.jump(self.state.addr + 2)
+
+
+class ReturnPlaceString(angr.SimProcedure):
+    def run(self) -> None:
+        ret = self.state.memory.load(self.state.regs.sp, 2, endness="Iend_LE")
+        self.state.regs.sp = self.state.regs.sp + 2
+        self.jump(ret)
 
 
 def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
@@ -88,19 +86,20 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
             "entry_point": location.address,
         },
     )
-    project.hook(location.address, NextSummary(), length=1)
+    project.hook(location.address + 0x11, LoadLayoutFlags(), length=2)
+    project.hook(location.address + 0x09, ReturnPlaceString(), length=1)
     state = project.factory.blank_state(addr=location.address)
     set_assembly_registers(state, values)
+    state.regs.sp = 0xD000
+    state.memory.store(0xD000, claripy.BVV(DONE, 16), endness="Iend_LE")
     state.memory.store(H_LAYOUT, values["layout"])
     state.memory.store(DESTINATION, values["destination_byte"])
     state.memory.store(SOURCE, claripy.BVV(TX_NEXT, 8))
     state.memory.store(SOURCE + 1, claripy.BVV(TX_END, 8))
-    manager = project.factory.simulation_manager(state)
-    manager.explore(find=DONE, num_find=1)
-    assert not manager.errored
+    ends = collect_returns(project, state, DONE)
     return [
         Endpoint(**assembly_registers(end), memory=_memory_endpoint(end, 0), constraints=tuple(end.solver.constraints))
-        for end in manager.found
+        for end in ends
     ]
 
 
@@ -127,6 +126,19 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_place_string_next_pathwise_equivalence() -> None:
     values = _inputs("place_string_next")
+    values["layout"] = claripy.BVV(0, 8)
+    values["h"] = claripy.BVV(DESTINATION >> 8, 8)
+    values["l"] = claripy.BVV(DESTINATION & 0xFF, 8)
+    values["d"] = claripy.BVV(SOURCE >> 8, 8)
+    values["e"] = claripy.BVV(SOURCE & 0xFF, 8)
+    assert_pathwise_equivalent(_assembly(values), _native(values), (*REGISTERS, "memory"))
+
+
+@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_place_string_next_single_spaced_pathwise_equivalence() -> None:
+    values = _inputs("place_string_next_single_spaced")
+    values["layout"] = claripy.BVV(4, 8)
     values["h"] = claripy.BVV(DESTINATION >> 8, 8)
     values["l"] = claripy.BVV(DESTINATION & 0xFF, 8)
     values["d"] = claripy.BVV(SOURCE >> 8, 8)
