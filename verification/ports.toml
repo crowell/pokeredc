@@ -10091,6 +10091,21 @@ decoder = "exact 10-byte body checked; four symbolic HLI reads, DE/BC register a
 
 
 [[function]]
+assembly_symbol = "InitMapSprites"
+assembly_source = "engine/overworld/map_sprites.asm"
+c_symbol = "port_init_map_sprites"
+c_source = "verification/ports/init_map_sprites.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "all 16 sprite-state data1/data2 bytes",
+    "the loader's sprite-pattern and transfer state",
+]
+proof_domain = "the indoor-map path (map 0x25) with wNumSprites = 0; all general registers, the complete 16-slot picture-ID copy, and the loader's zero-sprite terminal transition are compared, while outdoor map selection and nonzero sprite-pattern transfer paths remain covered by their own restricted ports"
+decoder = "the exact 29-byte linked body is checked inside the functional test; InitOutsideMapSprites and the loader execute through their real native composition boundaries, while only individual SM83 absolute loads/stores, pair setup, arithmetic, and branch instructions are shimmed for the p-code backend"
+
+
+[[function]]
 assembly_symbol = "LoadMapSpriteTilePatterns"
 assembly_source = "engine/overworld/map_sprites.asm"
 c_symbol = "port_load_map_sprite_tile_patterns"
