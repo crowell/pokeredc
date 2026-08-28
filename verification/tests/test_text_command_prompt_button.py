@@ -5,10 +5,10 @@ import angr,claripy,pytest
 from archinfo import ArchPcode
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import assembly_registers,native_registers,set_assembly_registers,store_native_registers,symbolic_registers
-from verification.harness.rom import linked_bytes,rom_window,symbol_location
+from verification.harness.rom import linked_bytes,rom_window,sm83_flags_to_z80,symbol_location
 from verification.harness.sm83_shims import Sm83CpImmediate,Sm83LoadAImmediate,Sm83StoreAImmediate
 ROOT=Path(__file__).resolve().parents[2];ELF=ROOT/'verification/build/ports.elf';ROM=ROOT/'pokered.gbc';SYMS=ROOT/'pokered.sym';NS=0x100000;NM=0x200000;STACK=0xd000;RETURN=0xffff
-WLINKSTATE=0xd12b;ARROW=0xc4f2;CONT=0x1b55;HANDLER=0x1bcc
+WLINKSTATE=0xd12b;ARROW=0xc4f2;CONT=0x1b55;HANDLER=0x1bcc;WAIT_HANDLER=0x1c9a
 HANDLER_EXPECTED=bytes.fromhex('fa2bd1fe04ca9a1c3eeeeaf2c4c5cd9838c13e7feaf2c4e1c3551b')
 @dataclass(frozen=True)
 class E:
@@ -57,28 +57,32 @@ class Jmp(angr.SimProcedure):
   super().__init__();self._t=t
  def run(self):
   self.jump(self._t)
-class SkipLinkBranch(angr.SimProcedure):
- """The link-battling branch's boundary: wLinkState is concrete
- non-battling in this domain, so only the fall-through (the arrow and
- the scroll) continues; the jp z side loops through the dispatcher and
- is out of this domain."""
- def __init__(self,fall:int,bit:int)->None:
-  super().__init__();self._fall=fall;self._bit=bit
+class LinkBranch(angr.SimProcedure):
+ def __init__(self,taken:int,fallthrough:int)->None:
+  super().__init__();self._taken=taken;self._fallthrough=fallthrough
  def run(self):
-  f=self.state.regs.f;flag=(f>>self._bit)&1
-  fs=self.state.copy();fs.solver.add(flag==0)
-  fs.regs.ip=claripy.BVV(self._fall,16)
+  z=(self.state.regs.f>>6)&1
+  taken=self.state.copy();fallthrough=self.state.copy()
+  taken.solver.add(z==1);fallthrough.solver.add(z==0)
+  taken.regs.ip=claripy.BVV(self._taken,16)
+  fallthrough.regs.ip=claripy.BVV(self._fallthrough,16)
   self.inhibit_autoret=True
-  self.successors.add_successor(fs,self._fall,flag==0,'Ijk_Boring')
+  self.successors.add_successor(taken,self._taken,z==1,'Ijk_Boring')
+  self.successors.add_successor(fallthrough,self._fallthrough,z==0,'Ijk_Boring')
 class ManualTextScrollSite(angr.SimProcedure):
  """Proved ManualTextScroll composition boundary at the call site under
  its terminating A/B observation (the established text-poll boundary
  precedent): the saved registers pass through and A := SFX_PRESS_AB
  with F := the entry F."""
- def __init__(self,n:int)->None:
-  super().__init__();self._n=n
+ def __init__(self,n:int,link:bool=False)->None:
+  super().__init__();self._n=n;self._link=link
  def run(self):
-  self.state.regs.a=claripy.BVV(0x90,8)
+  if self._link:
+   self.state.regs.a=claripy.BVV(4,8)
+   self.state.regs.f=sm83_flags_to_z80(claripy.BVV(0xC0,8))
+   self.state.regs.c=claripy.BVV(65,8)
+  else:
+   self.state.regs.a=claripy.BVV(0x90,8)
   self.jump(self._n)
 def assembly(v):
  l=symbol_location(SYMS,'TextCommand_PROMPT_BUTTON');m=symbol_location(SYMS,'ManualTextScroll')
@@ -87,7 +91,7 @@ def assembly(v):
  p=angr.Project(rom_window(ROM,l.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={'backend':'blob','arch':ArchPcode('z80:LE:16:default'),'base_addr':0,'entry_point':l.address});b=l.address
  p.hook(b+0x00,Sm83LoadAImmediate(WLINKSTATE,b+0x03),length=3)  # ld a,[wLinkState]
  p.hook(b+0x03,Sm83BitRegister(2,'a',b+0x05) if False else __import__('verification.harness.sm83_shims',fromlist=['x']).Sm83CpImmediate(4,b+0x05),length=2)  # cp LINK_STATE_BATTLING
- p.hook(b+0x05,SkipLinkBranch(b+0x08,6),length=3)               # jp z,TextCommand_WAIT_BUTTON (domain boundary)
+ p.hook(b+0x05,LinkBranch(WAIT_HANDLER,b+0x08),length=3)       # jp z,TextCommand_WAIT_BUTTON
  p.hook(b+0x08,LoadAConst(0xee,b+0x0a),length=2)                # ld a,'▼'
  p.hook(b+0x0a,Sm83StoreAImmediate(ARROW,b+0x0d),length=3)      # ld [$c4f2],a
  p.hook(b+0x0d,PushBC(b+0x0e),length=1)                         # push bc
@@ -97,6 +101,12 @@ def assembly(v):
  p.hook(b+0x14,Sm83StoreAImmediate(ARROW,b+0x17),length=3)      # ld [$c4f2],a
  p.hook(b+0x17,PopHL(b+0x18),length=1)                          # pop hl
  p.hook(b+0x18,Jmp(CONT),length=3)                              # jp NextTextCommand (continuation)
+ w=WAIT_HANDLER
+ p.hook(w+0x00,PushBC(w+0x01),length=1)                         # WAIT_BUTTON push bc
+ p.hook(w+0x01,ManualTextScrollSite(w+0x04,link=True),length=3)
+ p.hook(w+0x04,PopBC(w+0x05),length=1)
+ p.hook(w+0x05,PopHL(w+0x06),length=1)
+ p.hook(w+0x06,Jmp(CONT),length=3)
  st=p.factory.blank_state(addr=b);set_assembly_registers(st,v);setup(st,v,False)
  sp=STACK-2
  st.regs.sp=sp;st.memory.store(sp,v['l'],endness='Iend_LE');st.memory.store(sp+1,v['h'],endness='Iend_LE');st.memory.store(STACK,claripy.BVV(RETURN,16),endness='Iend_LE')
@@ -117,5 +127,7 @@ def native(v):
   out.append(E(**{**{k:v for k,v in nr.items() if k not in ('h','l')},'hl':claripy.Concat(nr['h'],nr['l'])},arrow=x.memory.load(NM+ARROW,1),link=x.memory.load(NM+WLINKSTATE,1),constraints=tuple(x.solver.constraints)))
  return out
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMS.exists(),reason='build')
-def test_text_command_prompt_button_pathwise_equivalence():
- v=inputs('tpb');assert_pathwise_equivalent(assembly(v),native(v),('a','f','b','c','d','e','hl','arrow','link'))
+@pytest.mark.parametrize('link_state',(0,4))
+def test_text_command_prompt_button_pathwise_equivalence(link_state):
+ v=inputs(f'tpb_{link_state}');v['link']=claripy.BVV(link_state,8)
+ assert_pathwise_equivalent(assembly(v),native(v),('a','f','b','c','d','e','hl','arrow','link'))

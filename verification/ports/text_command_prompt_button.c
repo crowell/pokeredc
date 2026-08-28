@@ -14,17 +14,19 @@
  *
  * The ManualTextScroll call composes through the proved
  * port_manual_text_scroll under its terminating A/B observation (the
- * established text-poll boundary precedent); the link-battling branch
- * (wLinkState == LINK_STATE_BATTLING, which loops into
- * TextCommand_WAIT_BUTTON) is out of this domain. HL is modeled as the
- * entry HL (the caller stores the pushed text pointer there before
- * invoking this port). */
+ * established text-poll boundary precedent). In link battle the real
+ * TextCommand_WAIT_BUTTON handler is composed instead, preserving its
+ * saved BC/text-pointer stack transitions. HL is modeled as the entry HL
+ * (the caller stores the pushed text pointer there before invoking this
+ * port). */
 
 void port_manual_text_scroll(struct manual_text_scroll_state *);
+void port_text_command_wait_button(struct cpu_register_state *, port_u8 *);
 
 #define ARROW_SLOT 0xc4f2u
 #define TILE_DOWN_ARROW 0xeeu
 #define TILE_SPACE 0x7fu
+#define LINK_STATE_BATTLING 0x04u
 
 __attribute__((noinline, used)) void
 port_text_command_prompt_button(struct cpu_register_state *state,
@@ -33,8 +35,14 @@ port_text_command_prompt_button(struct cpu_register_state *state,
 	struct cpu_register_state entry = *state;
 	struct manual_text_scroll_state mts;
 
+	if (memory[W_LINKSTATE] == LINK_STATE_BATTLING) {
+		port_text_command_wait_button(state, memory);
+		return;
+	}
+
 	/* The `cp LINK_STATE_BATTLING` flags: with the non-link domain's
-	 * wLinkState the compare borrows (H|N|C set, Z clear). */
+	 * wLinkState (zero in the established normal-text path) the compare
+	 * borrows (H|N|C set, Z clear). */
 	state->f = (port_u8)(PORT_FLAG_H | PORT_FLAG_N | PORT_FLAG_C);
 
 	memory[ARROW_SLOT] = TILE_DOWN_ARROW;
