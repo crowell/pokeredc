@@ -15385,14 +15385,16 @@ assembly_symbol = "MarkTownVisitedAndLoadToggleableObjects"
 assembly_source = "engine/overworld/toggleable_objects.asm"
 c_symbol = "port_mark_town_visited_and_load_toggleable_objects"
 c_source = "verification/ports/mark_town_visited_and_load_toggleable_objects.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
     "wTownVisitedFlag",
     "the complete wToggleableObjectList destination",
+    "hDividend and hDivisor",
+    "loaded ROM bank and mapper bank",
 ]
-proof_domain = "map-0 town setup covering an empty list, two matching toggle records, and a nonmatching record; town-visited bit setting, pointer-table lookup, list writes/sentinel, map-stop behavior, and final registers/flags are compared pathwise"
-decoder = "exact 98-byte body checked; FlagActionPredef and Divide are composed at audited boundaries, while individual SM83 pointer arithmetic, HRAM, register-transfer, conditional-branch, and DE-write backend gaps are shimmed; route-map flag behavior and symbolic pointer-table domains remain"
+proof_domain = "six concrete pathwise cases cover town and non-town maps, map-indexed pointer entries with zero and nonzero state offsets, empty/matching/nonmatching records, multiple list writes, town-visited byte/bit placement, Divide quotient/remainder, bank restoration, sentinels, map-stop behavior, and final registers/flags"
+decoder = "exact 98-byte body checked; FlagActionPredef and the real Divide wrapper are composed at audited boundaries, while individual SM83 pointer arithmetic, HRAM, register-transfer, conditional-branch, and DE-write backend gaps are shimmed"
 
 
 
