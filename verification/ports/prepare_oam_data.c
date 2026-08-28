@@ -153,6 +153,8 @@ port_prepare_oam_data(struct cpu_register_state *r, port_u8 *memory)
 						(port_u8)(sprite_number * 12u);
 					memory[W_SHADOW_OAM + oam_offset + 2u] =
 						(port_u8)(tile + tile_offset);
+					r->b = (port_u8)(pattern >> 8);
+					r->c = (port_u8)pattern;
 					if ((attr & 0x02u) != 0)
 						attr |= memory[H_PRIORITY];
 					memory[W_SHADOW_OAM + oam_offset + 3u] = attr;
