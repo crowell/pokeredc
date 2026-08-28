@@ -260,7 +260,8 @@ class Bit6A(angr.SimProcedure):
 
 def _setup(state: angr.SimState, base: int, *, enabled: int,
            offscreen: bool = False, visible: bool = False,
-           priority: bool = False, unchanging: bool = False) -> None:
+           priority: bool = False, unchanging: bool = False,
+           second_sprite: bool = False) -> None:
     state.memory.store(base + W_UPDATE, claripy.BVV(enabled, 8))
     state.memory.store(base + H_MOVEMENT_FLAGS, claripy.BVV(0, 8))
     state.memory.store(base + W_SPRITE_STATE_DATA2 + 7,
@@ -296,6 +297,17 @@ def _setup(state: angr.SimState, base: int, *, enabled: int,
             state.memory.store(base + 0x4080 + offset, claripy.BVV(value, 8))
         for offset, value in enumerate((0, 0, 0, 0, 8, 0, 2, 8, 0, 8, 8, 3)):
             state.memory.store(base + 0x4098 + offset, claripy.BVV(value, 8))
+        if second_sprite:
+            state.memory.store(base + W_SPRITE_STATE_DATA1 + 0x10,
+                               claripy.BVV(1, 8))
+            state.memory.store(base + W_SPRITE_STATE_DATA1 + 0x12,
+                               claripy.BVV(0xA0 if unchanging else 0, 8))
+            state.memory.store(base + W_SPRITE_STATE_DATA1 + 0x14,
+                               claripy.BVV(0x3C, 8))
+            state.memory.store(base + W_SPRITE_STATE_DATA1 + 0x16,
+                               claripy.BVV(0x4D, 8))
+            state.memory.store(base + W_SPRITE_STATE_DATA2 + 0x17,
+                               claripy.BVV(0x80 if priority else 0, 8))
     for i in range(160):
         state.memory.store(base + W_SHADOW_OAM + i, claripy.BVV((i * 7 + 3) & 0xff, 8))
 
@@ -320,7 +332,7 @@ def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
 
 def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
               offscreen: bool, visible: bool, priority: bool,
-              unchanging: bool) -> list[Endpoint]:
+              unchanging: bool, second_sprite: bool) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "PrepareOAMData")
     tail = symbol_location(SYMBOLS, "GetSpriteScreenXY")
     assert linked_bytes(ROM, location, tail.address - location.address) == bytes.fromhex(
@@ -407,7 +419,8 @@ def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     _setup(state, 0, enabled=enabled, offscreen=offscreen, visible=visible,
-           priority=priority, unchanging=unchanging)
+           priority=priority, unchanging=unchanging,
+           second_sprite=second_sprite)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     return [_endpoint(end, native=False, base=0)
             for end in collect_returns(project, state, RETURN)]
@@ -415,14 +428,15 @@ def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
 
 def _native(values: dict[str, claripy.ast.BV], *, enabled: int,
             offscreen: bool, visible: bool, priority: bool,
-            unchanging: bool) -> list[Endpoint]:
+            unchanging: bool, second_sprite: bool) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_prepare_oam_data")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     _setup(state, NATIVE_MEMORY, enabled=enabled, offscreen=offscreen,
-           visible=visible, priority=priority, unchanging=unchanging)
+           visible=visible, priority=priority, unchanging=unchanging,
+           second_sprite=second_sprite)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
@@ -432,20 +446,23 @@ def _native(values: dict[str, claripy.ast.BV], *, enabled: int,
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
                     reason="build artifacts missing")
-@pytest.mark.parametrize("enabled,offscreen,visible,priority,unchanging", (
-    (0, False, False, False, False), (1, False, False, False, False),
-    (1, True, False, False, False), (1, False, True, False, False),
-    (1, False, True, True, False), (1, False, True, False, True),
+@pytest.mark.parametrize("enabled,offscreen,visible,priority,unchanging,second_sprite", (
+    (0, False, False, False, False, False), (1, False, False, False, False, False),
+    (1, True, False, False, False, False), (1, False, True, False, False, False),
+    (1, False, True, True, False, False), (1, False, True, False, True, False),
+    (1, False, True, False, False, True),
 ))
 def test_prepare_oam_data_pathwise_equivalence(
     enabled: int, offscreen: bool, visible: bool, priority: bool,
-    unchanging: bool,
+    unchanging: bool, second_sprite: bool,
 ) -> None:
     values = {register: claripy.BVV((index * 13 + 1) & 0xff, 8)
               for index, register in enumerate(REGISTERS)}
     assert_pathwise_equivalent(
         _assembly(values, enabled=enabled, offscreen=offscreen, visible=visible,
-                  priority=priority, unchanging=unchanging),
+                  priority=priority, unchanging=unchanging,
+                  second_sprite=second_sprite),
         _native(values, enabled=enabled, offscreen=offscreen, visible=visible,
-                priority=priority, unchanging=unchanging),
+                priority=priority, unchanging=unchanging,
+                second_sprite=second_sprite),
                                (*REGISTERS, "memory"))
