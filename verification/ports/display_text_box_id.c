@@ -4,10 +4,9 @@
  *
  * The money-box and two-option function-table entries compose through their
  * real ports; the remaining interactive menu entries remain explicit
- * boundaries.  The
- * coordinate-only and text-and-coordinate entries execute their real table
- * lookup, coordinate arithmetic, border drawing, text placement, and
- * sprite-update callees here.
+ * boundaries.  The coordinate-only and text-and-coordinate entries execute
+ * their real table lookup, coordinate arithmetic, border drawing, text
+ * placement, and sprite-update callees here.
  */
 
 #define W_TEXT_BOX_ID 0xd125u
