@@ -14381,6 +14381,20 @@ decoder = "exact 39-byte body checked; SWAP/ADD flags, four call/fallthrough ent
 
 
 [[function]]
+assembly_symbol = "IsPlayerFacingEdgeOfMap"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_is_player_facing_edge_of_map"
+c_source = "verification/ports/is_player_facing_edge_of_map.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "map-edge carry result",
+    "saved BC/DE/HL restoration",
+]
+proof_domain = "all register inputs and all valid four facing directions, with edge and non-edge coordinates and arbitrary map dimensions"
+decoder = "exact linked body and address bounds checked; directional pointer dispatch, coordinate loads, doubled map bounds, CP/AND/SCF tails, and complete BC/DE/HL restoration are compared pathwise"
+
+[[function]]
 assembly_symbol = "LoadHoppingShadowOAM"
 assembly_source = "engine/overworld/ledges.asm"
 c_symbol = "port_load_hopping_shadow_oam"
