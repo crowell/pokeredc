@@ -14381,6 +14381,26 @@ decoder = "exact 39-byte body checked; SWAP/ADD flags, four call/fallthrough ent
 
 
 [[function]]
+assembly_symbol = "LoadHoppingShadowOAM"
+assembly_source = "engine/overworld/ledges.asm"
+c_symbol = "port_load_hopping_shadow_oam"
+c_source = "verification/ports/load_hopping_shadow_oam.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "CopyVideoDataDouble bank, VBlank, and transfer state",
+    "the complete four-entry shadow OAM block at wShadowOAM + $90",
+]
+proof_domain = "all initial register/flag inputs and transfer/hardware bytes; the fixed one-tile LedgeHoppingShadow transfer, complete CopyVideoDataDouble transition, literal four-entry OAM block, and WriteOAMBlock register effects are compared"
+decoder = "exact 24-byte linked body checked; the two proven callee transitions are composed at their call boundaries, while native C executes the fixed VRAM setup, real one-tile CopyVideoDataDouble call, literal OAM source, and real WriteOAMBlock placement"
+
+
+
+
+
+
+
+[[function]]
 assembly_symbol = "UpdateSpriteMovementDelay"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_update_sprite_movement_delay"
