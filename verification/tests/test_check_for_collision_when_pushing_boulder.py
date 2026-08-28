@@ -1,0 +1,193 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+
+import angr
+import claripy
+import pytest
+from archinfo import ArchPcode
+
+from verification.harness.equivalence import assert_pathwise_equivalent
+from verification.harness.registers import (
+    REGISTERS, assembly_registers, native_registers, set_assembly_registers,
+    store_native_registers,
+)
+from verification.harness.rom import linked_bytes, rom_window, symbol_location
+from verification.harness.sm83_shims import (
+    Sm83CpImmediate, Sm83LoadAAtHlIncrement, Sm83StoreAImmediate,
+)
+
+ROOT = Path(__file__).resolve().parents[2]
+ELF = ROOT / "verification/build/ports.elf"
+ROM = ROOT / "pokered.gbc"
+SYMBOLS = ROOT / "pokered.sym"
+NATIVE_STATE = 0x100000
+NATIVE_MEMORY = 0x200000
+STACK = 0xD000
+RETURN = 0xEFFF
+
+W_Y = 0xD361
+W_X = 0xD362
+W_FACING = 0xC109
+W_TILEMAP = 0xC3A0
+W_TILE_FRONT = 0xCFC6
+W_COLLISION_PTR = 0xD530
+W_TILE_RESULT = 0xD71C
+
+
+@dataclass(frozen=True)
+class Endpoint:
+    a: claripy.ast.BV
+    f: claripy.ast.BV
+    b: claripy.ast.BV
+    c: claripy.ast.BV
+    d: claripy.ast.BV
+    e: claripy.ast.BV
+    h: claripy.ast.BV
+    l: claripy.ast.BV
+    memory: claripy.ast.BV
+    constraints: tuple[claripy.ast.Bool, ...]
+
+
+class LoadHLImmediate(angr.SimProcedure):
+    def __init__(self, value: int, next_address: int) -> None:
+        super().__init__()
+        self.value = value
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.hl = claripy.BVV(self.value, 16)
+        self.jump(self.next_address)
+
+
+class LoadHAtHL(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.h = self.state.memory.load(self.state.regs.hl, 1)
+        self.jump(self.next_address)
+
+
+class LoadLFromA(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.l = self.state.regs.a
+        self.jump(self.next_address)
+
+
+class GetTileTwoStepsBoundary(angr.SimProcedure):
+    def __init__(self, next_address: int, tile: int) -> None:
+        super().__init__()
+        self.next_address = next_address
+        self.tile = tile
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(self.tile, 8)
+        self.state.regs.c = claripy.BVV(self.tile, 8)
+        self.state.regs.d = claripy.BVV(1, 8)
+        self.state.regs.e = claripy.BVV(0, 8)
+        self.state.regs.hl = claripy.BVV(0xFFDB, 16)
+        self.state.memory.store(W_TILE_FRONT, claripy.BVV(self.tile, 8))
+        self.state.memory.store(W_TILE_RESULT, claripy.BVV(self.tile, 8))
+        self.jump(self.next_address)
+
+
+class BranchZ(angr.SimProcedure):
+    def __init__(self, taken: int, fallthrough: int) -> None:
+        super().__init__()
+        self.taken = taken
+        self.fallthrough = fallthrough
+
+    def run(self) -> None:  # type: ignore[override]
+        condition = (self.state.regs.f & 0x40) != 0
+        self.inhibit_autoret = True
+        self.successors.add_successor(self.state.copy(), self.taken,
+                                      condition, "Ijk_Boring")
+        self.successors.add_successor(self.state.copy(), self.fallthrough,
+                                      claripy.Not(condition), "Ijk_Boring")
+
+
+def _setup(state: angr.SimState, base: int, *, tile: int) -> None:
+    for address, value in ((W_Y, 0), (W_X, 0), (W_FACING, 0),
+                           (W_TILE_FRONT, tile), (W_TILE_RESULT, 0)):
+        state.memory.store(base + address, claripy.BVV(value, 8))
+    state.memory.store(base + W_COLLISION_PTR,
+                       claripy.BVV(0x0700, 16), endness="Iend_LE")
+    state.memory.store(base + W_TILEMAP + 13 * 20 + 8,
+                       claripy.BVV(tile, 8))
+    state.memory.store(base + 0x0700, claripy.BVV(0xFF, 8))
+
+
+def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
+    return claripy.Concat(*(state.memory.load(base + address, 1) for address in (
+        W_TILE_FRONT, W_TILE_RESULT,
+    )))
+
+
+def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
+    return Endpoint(
+        **(native_registers(state, NATIVE_STATE) if native else assembly_registers(state)),
+        memory=_memory(state, base), constraints=tuple(state.solver.constraints)
+    )
+
+
+def _assembly(values: dict[str, claripy.ast.BV], *, tile: int) -> list[Endpoint]:
+    loc = symbol_location(SYMBOLS, "CheckForCollisionWhenPushingBoulder")
+    end = symbol_location(SYMBOLS, "CheckForBoulderCollisionWithSprites")
+    assert linked_bytes(ROM, loc, end.address - loc.address) == bytes.fromhex(
+        "cdbe452130d52a666f2afeff2819b920f8217e0ccd440c3eff380cfa1cd7fe153eff2803cd3646ea1cd7c9"
+    )
+    project = angr.Project(rom_window(ROM, loc.bank), auto_load_libs=False,
+                           rebase_granularity=0x100,
+                           main_opts={"backend": "blob", "arch": ArchPcode("z80:LE:16:default"),
+                                      "base_addr": 0, "entry_point": loc.address})
+    q = loc.address
+    project.hook(q + 0x00, GetTileTwoStepsBoundary(q + 0x03, tile), length=3)
+    project.hook(q + 0x03, LoadHLImmediate(W_COLLISION_PTR, q + 0x06), length=3)
+    project.hook(q + 0x06, Sm83LoadAAtHlIncrement(q + 0x07), length=1)
+    project.hook(q + 0x07, LoadHAtHL(q + 0x08), length=1)
+    project.hook(q + 0x08, LoadLFromA(q + 0x09), length=1)
+    project.hook(q + 0x09, Sm83LoadAAtHlIncrement(q + 0x0A), length=1)
+    project.hook(q + 0x0A, Sm83CpImmediate(0xFF, q + 0x0C), length=2)
+    project.hook(q + 0x0C, BranchZ(q + 0x27, q + 0x0E), length=2)
+    project.hook(q + 0x27, Sm83StoreAImmediate(W_TILE_RESULT, q + 0x2A), length=3)
+    state = project.factory.blank_state(addr=loc.address)
+    set_assembly_registers(state, values)
+    state.regs.sp = STACK
+    state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
+    _setup(state, 0, tile=tile)
+    state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
+    manager = project.factory.simulation_manager(state)
+    manager.explore(find=RETURN, num_find=8)
+    assert not manager.errored and manager.found
+    return [_endpoint(end_state, native=False, base=0) for end_state in manager.found]
+
+
+def _native(values: dict[str, claripy.ast.BV], *, tile: int) -> list[Endpoint]:
+    project = angr.Project(ELF, auto_load_libs=False)
+    function = project.loader.find_symbol("port_check_for_collision_when_pushing_boulder")
+    assert function is not None
+    state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
+    store_native_registers(state, NATIVE_STATE, values)
+    _setup(state, NATIVE_MEMORY, tile=tile)
+    manager = project.factory.simulation_manager(state)
+    manager.run()
+    assert not manager.errored and manager.deadended
+    return [_endpoint(end_state, native=True, base=NATIVE_MEMORY)
+            for end_state in manager.deadended]
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+def test_check_for_collision_when_pushing_boulder_pathwise_equivalence() -> None:
+    values = {register: claripy.BVV(0, 8) for register in REGISTERS}
+    assert_pathwise_equivalent(
+        _assembly(values, tile=0x37), _native(values, tile=0x37),
+        (*REGISTERS, "memory"),
+    )

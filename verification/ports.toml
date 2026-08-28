@@ -15298,6 +15298,20 @@ decoder = "exact 33-byte body checked; saved pointers, fixed three-byte rows, HL
 
 
 [[function]]
+assembly_symbol = "CheckForCollisionWhenPushingBoulder"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_check_for_collision_when_pushing_boulder"
+c_source = "verification/ports/check_for_collision_when_pushing_boulder.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "two-step tile and boulder collision result globals",
+    "collision-table pointer traversal and tile-pair state",
+]
+proof_domain = "two-steps-ahead tile lookup followed by the first collision-table sentinel return; passable-tile, elevation/stairs, and sprite-collision branches are implemented with their real ports but remain to be exhaustively composed"
+decoder = "exact 43-byte linked body checked; the complete two-step lookup and sentinel scan path execute under angr, while downstream tile-pair and boulder-sprite transitions remain documented follow-up paths"
+
+[[function]]
 assembly_symbol = "CheckForBoulderCollisionWithSprites"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_check_for_boulder_collision_with_sprites"
