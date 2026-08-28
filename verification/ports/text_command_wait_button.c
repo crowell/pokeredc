@@ -11,11 +11,9 @@
  *   jp NextTextCommand   ; the dispatcher's loop (0x1b55)
  *
  * The ManualTextScroll call composes through the proved
- * port_manual_text_scroll under its terminating A/B observation (the
- * established text-poll boundary precedent); the link-battling branch
- * (wLinkState == LINK_STATE_BATTLING, which loops back through the
- * dispatcher) is out of this domain. The pops restore the dispatcher's
- * saved BC and pushed text pointer, modeled as the entry BC/HL. */
+ * port_manual_text_scroll under both its normal A/B and link-battle delay
+ * transitions. The pops restore the dispatcher's saved BC and pushed text
+ * pointer, modeled as the entry BC/HL. */
 
 void port_manual_text_scroll(struct manual_text_scroll_state *);
 
