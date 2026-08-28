@@ -29091,6 +29091,25 @@ decoder = "exact 10-byte body checked (cd55196069d113c35619); the PlaceString ca
 
 
 [[function]]
+assembly_symbol = "_ContTextNoPause"
+assembly_source = "home/text.asm"
+c_symbol = "port_cont_text_no_pause"
+c_source = "verification/ports/cont_text_no_pause.c"
+status = "partial"
+observables = [
+    "all 8 registers and flags",
+    "the complete 80-byte text scroll region",
+    "the restored caller DE",
+    "the fixed text cursor HL = 0xc4e1",
+]
+proof_domain = "all symbolic register/flag and text-region inputs with a symbolic saved DE; both complete ScrollTextUpOneLine transitions compose, and the jp NextChar continuation is an explicit boundary"
+decoder = "exact 14-byte body checked (d5cd181bcd181b21e1c4d1c3e819); balanced PUSH/POP DE, both proven scroll calls, cursor setup, and the continuation jump are modeled, while NextChar remains outside this partial handler port"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"
