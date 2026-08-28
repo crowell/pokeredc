@@ -82,6 +82,15 @@ ps_copy_name(port_u8 *memory, port_u16 *dest, port_u16 src_buf)
 	}
 }
 
+static void
+ps_copy_enemy_name(port_u8 *memory, port_u16 *dest)
+{
+	static const port_u8 enemy[] = {0x84, 0xad, 0xa4, 0xac, 0xb8, 0x7f};
+	for (unsigned int i = 0; i < sizeof(enemy); ++i)
+		ps_emit(memory, dest, enemy[i]);
+	ps_copy_name(memory, dest, W_ENEMY_MON_NICK);
+}
+
 static port_u16
 ps_coord(port_u8 x, port_u8 y)
 {
@@ -255,15 +264,19 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 		}
 		if (c == TX_TARGET) {
 			port_u8 t = (port_u8)(memory[H_WHOSE_TURN] ^ 1);
-			ps_copy_name(memory, &dest,
-				(t == 0) ? W_BATTLE_MON_NICK : W_ENEMY_MON_NICK);
+			if (t == 0)
+				ps_copy_name(memory, &dest, W_BATTLE_MON_NICK);
+			else
+				ps_copy_enemy_name(memory, &dest);
 			src = (port_u16)(src + 1);
 			continue;
 		}
 		if (c == TX_USER) {
 			port_u8 t = memory[H_WHOSE_TURN];
-			ps_copy_name(memory, &dest,
-				(t == 0) ? W_BATTLE_MON_NICK : W_ENEMY_MON_NICK);
+			if (t == 0)
+				ps_copy_name(memory, &dest, W_BATTLE_MON_NICK);
+			else
+				ps_copy_enemy_name(memory, &dest);
 			src = (port_u16)(src + 1);
 			continue;
 		}

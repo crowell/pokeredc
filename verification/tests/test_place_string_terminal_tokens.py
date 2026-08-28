@@ -30,6 +30,9 @@ SOURCE = 0xC500
 DESTINATION = 0xC400
 PLAYER_NAME = 0xD158
 RIVAL_NAME = 0xD34A
+BATTLE_NICK = 0xD009
+ENEMY_NICK = 0xCFDA
+WHOSE_TURN = 0xFFF3
 
 
 @dataclass(frozen=True)
@@ -73,16 +76,25 @@ class IncrementDE(angr.SimProcedure):
         self.jump(0x19E9)
 
 
+class LoadWhoseTurn(angr.SimProcedure):
+    def run(self) -> None:
+        self.state.regs.a = self.state.memory.load(WHOSE_TURN, 1)
+        self.jump(self.state.addr + 2)
+
+
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
     return claripy.Concat(
         state.memory.load(base + DESTINATION, 16),
         state.memory.load(base + SOURCE, 1),
         state.memory.load(base + PLAYER_NAME, 3),
         state.memory.load(base + RIVAL_NAME, 3),
+        state.memory.load(base + BATTLE_NICK, 3),
+        state.memory.load(base + ENEMY_NICK, 3),
+        state.memory.load(base + WHOSE_TURN, 1),
     )
 
 
-def _assembly(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
+def _assembly(values: dict[str, claripy.ast.BV], token: int, whose_turn: int = 0) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "PlaceString")
     project = angr.Project(
         rom_window(ROM, location.bank),
@@ -99,6 +111,8 @@ def _assembly(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     project.hook(0x19E4, StoreHLIA(), length=1)
     project.hook(0x38D3, PrintLetterDelay(), length=3)
     project.hook(0x19E8, IncrementDE(), length=1)
+    project.hook(0x1A2F, LoadWhoseTurn(), length=2)
+    project.hook(0x1A35, LoadWhoseTurn(), length=2)
     state = project.factory.blank_state(addr=location.address)
     set_assembly_registers(state, values)
     state.regs.sp = STACK
@@ -111,9 +125,12 @@ def _assembly(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     for address, values_for_name in (
         (PLAYER_NAME, (0x41, 0x42, 0x50)),
         (RIVAL_NAME, (0x43, 0x44, 0x50)),
+        (BATTLE_NICK, (0x45, 0x46, 0x50)),
+        (ENEMY_NICK, (0x47, 0x48, 0x50)),
     ):
         for offset, value in enumerate(values_for_name):
             state.memory.store(address + offset, claripy.BVV(value, 8))
+    state.memory.store(WHOSE_TURN, claripy.BVV(whose_turn, 8))
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     return [
         Endpoint(**assembly_registers(end), memory=_memory(end, 0), constraints=tuple(end.solver.constraints))
@@ -121,7 +138,7 @@ def _assembly(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     ]
 
 
-def _native(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
+def _native(values: dict[str, claripy.ast.BV], token: int, whose_turn: int = 0) -> list[Endpoint]:
     project = angr.Project(NATIVE_ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_place_string")
     assert function is not None
@@ -135,9 +152,12 @@ def _native(values: dict[str, claripy.ast.BV], token: int) -> list[Endpoint]:
     for address, values_for_name in (
         (PLAYER_NAME, (0x41, 0x42, 0x50)),
         (RIVAL_NAME, (0x43, 0x44, 0x50)),
+        (BATTLE_NICK, (0x45, 0x46, 0x50)),
+        (ENEMY_NICK, (0x47, 0x48, 0x50)),
     ):
         for offset, value in enumerate(values_for_name):
             state.memory.store(NATIVE_MEMORY + address + offset, claripy.BVV(value, 8))
+    state.memory.store(NATIVE_MEMORY + WHOSE_TURN, claripy.BVV(whose_turn, 8))
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and len(manager.deadended) == 1
@@ -162,3 +182,20 @@ def test_place_string_terminal_tokens_pathwise_equivalence(token: int) -> None:
     values["e"] = claripy.BVV(SOURCE & 0xFF, 8)
     values["destination_byte"] = claripy.BVS("place_string_terminal_destination", 8)
     assert_pathwise_equivalent(_assembly(values, token), _native(values, token), (*REGISTERS, "memory"))
+
+
+@pytest.mark.parametrize("token,whose_turn", ((0x59, 0), (0x59, 1), (0x5A, 0), (0x5A, 1)))
+@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_place_string_battle_name_tokens_pathwise_equivalence(token: int, whose_turn: int) -> None:
+    values = {register: claripy.BVV(0, 8) for register in REGISTERS}
+    values["h"] = claripy.BVV(DESTINATION >> 8, 8)
+    values["l"] = claripy.BVV(DESTINATION & 0xFF, 8)
+    values["d"] = claripy.BVV(SOURCE >> 8, 8)
+    values["e"] = claripy.BVV(SOURCE & 0xFF, 8)
+    values["destination_byte"] = claripy.BVS("place_string_battle_name_destination", 8)
+    assert_pathwise_equivalent(
+        _assembly(values, token, whose_turn),
+        _native(values, token, whose_turn),
+        (*REGISTERS, "memory"),
+    )
