@@ -58,6 +58,7 @@
 #define W_ENEMY_MON_NICK   0xcfda
 #define TEXT_ID_ERROR_PREV 0x19f3
 #define DONE_TEXT_PREV     0x1ab2
+#define CONT_CHAR_TEXT     0x1a8c
 #define ARROW_SLOT         0xc4f2
 #define TEXT_CURSOR        0xc4e1
 
@@ -66,6 +67,7 @@ void port_protected_delay3(struct cpu_register_state *, port_u8 *);
 void port_manual_text_scroll(struct manual_text_scroll_state *);
 void port_clear_screen_area(struct clear_screen_area_state *, port_u8 *);
 void port_delay_frames(struct delay_frame_state *, const port_u8 *);
+void port_text_command_processor(struct cpu_register_state *, port_u8 *);
 
 static void
 ps_emit(port_u8 *memory, port_u16 *dest, port_u8 b)
@@ -281,7 +283,21 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 			continue;
 		}
 		if (c == TX_CONT) {
-			dest = ps_coord(1, 16);
+			port_u16 entry_de = src;
+
+			/* ContText dispatches the immutable ContCharText far stream;
+			 * that stream starts a nested PlaceString on <_CONT>, which
+			 * performs the same complete pause-and-scroll transition. */
+			state->b = (port_u8)(dest >> 8);
+			state->c = (port_u8)dest;
+			state->h = (port_u8)(CONT_CHAR_TEXT >> 8);
+			state->l = (port_u8)CONT_CHAR_TEXT;
+			port_text_command_processor(state, memory);
+			dest = (port_u16)(((port_u16)state->b << 8) | state->c);
+			state->h = (port_u8)(dest >> 8);
+			state->l = (port_u8)dest;
+			state->d = (port_u8)(entry_de >> 8);
+			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
 			continue;
 		}
