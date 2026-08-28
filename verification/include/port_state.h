@@ -71,6 +71,13 @@ struct null_char_state {
 	port_u8 saved_l;
 };
 
+/* State for the PlaceCommandCharacter dictionary-token helper. */
+struct place_command_character_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;
