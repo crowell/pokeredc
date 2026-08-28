@@ -2,10 +2,11 @@
 
 /* Port of DisplayTextBoxID_ in engine/menus/text_box.asm.
  *
- * The interactive function-table entries (money/list menus and the two-option
- * menu) remain explicit boundaries.  Coordinate-only and text-and-coordinate
- * entries execute their real table lookup, coordinate arithmetic, border
- * drawing, text placement, and sprite-update callees here.
+ * The interactive function-table entries (money/list menus) remain explicit
+ * boundaries.  The two-option menu composes through its real port.  The
+ * coordinate-only and text-and-coordinate entries execute their real table
+ * lookup, coordinate arithmetic, border drawing, text placement, and
+ * sprite-update callees here.
  */
 
 #define W_TEXT_BOX_ID 0xd125u
@@ -25,6 +26,7 @@ port_u8 port_search_text_box_table(struct text_box_search_state *,
 void port_get_text_box_id_coords(struct text_box_coords_state *);
 void port_get_text_box_id_text(struct cpu_register_state *, port_u8 *);
 void port_get_address_of_screen_coords(struct screen_coords_state *);
+void port_display_two_option_menu(struct cpu_register_state *, port_u8 *);
 
 static port_u16
 pair(port_u8 high, port_u8 low)
@@ -89,8 +91,10 @@ port_display_text_box_id(struct cpu_register_state *registers,
 	port_u8 result;
 
 	registers->a = id;
-	if (id == TWO_OPTION_MENU)
-		return; /* DisplayTwoOptionMenu is an interactive boundary. */
+	if (id == TWO_OPTION_MENU) {
+		port_display_two_option_menu(registers, memory);
+		return;
+	}
 	registers->c = id;
 
 	result = search(registers, memory, TEXT_BOX_FUNCTION_TABLE, 3);
