@@ -15021,7 +15021,7 @@ assembly_symbol = "LoadMapHeader"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_load_map_header"
 c_source = "verification/ports/load_map_header.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
     "map tile-set/previous-tile-set state",
@@ -18114,15 +18114,15 @@ assembly_symbol = "PlaceString"
 assembly_source = "home/text.asm"
 c_symbol = "port_place_string"
 c_source = "verification/ports/text.c"
-status = "partial"
+status = "proven"
 observables = [
     "destination text buffer at [HL] (text box / wTileMap region)",
     "hUILayoutFlags (read, BIT_SINGLE_SPACED_LINES)",
     "hWhoseTurn (read, for <TARGET>/<USER>)",
     "wPlayerName, wRivalName, wBattleMonNick, wEnemyMonNick (read, for name substitutions)",
 ]
-proof_domain = "all source/destination pointer inputs, all 256 source bytes, hUILayoutFlags and hWhoseTurn values, and arbitrary name-buffer contents"
-decoder = "C port copies bytes from [DE] into the destination at [HL] until the text-end marker ('@' = $50). It honors TX_NEXT (both normal and single-spaced row advances) and TX_LINE (bottom text row), emits the inline name-substitution tokens (PLAYER, RIVAL, #->POKé, PKMN, PC, TM, TRAINER, ROCKET, six-dots, TARGET, USER), and terminates/advances for the screen-command tokens (PARA, PAGE, _CONT, SCROLL, CONT, PROMPT, DEXEND, DONE, NULL). PARA composes ProtectedDelay3, ManualTextScroll, ClearScreenArea, and the complete 20-frame DelayFrames loop before restoring DE and continuing at the paragraph row; PAGE composes the same real delay/manual-scroll, seven-row clear, and 20-frame delay sequence, then replaces the saved HL with the page row before continuing; _CONT composes ProtectedDelay3, ManualTextScroll, and two real ScrollTextUpOneLine transitions, preserving DE across the assembly PUSH/POP boundaries; CONT composes the real TextCommandProcessor far-text stream (including its nested <_CONT> PlaceString path), preserving the outer DE and destination continuation; PROMPT composes the link-state arrow branch, ProtectedDelay3, and ManualTextScroll before the exact DoneText termination; TX_SCROLL also uses the real scroll loop. The ordinary-character, TX_NEXT, TX_LINE, TX_END, NULL, DONE, DEXEND, PLAYER, RIVAL, #, PKMN, PC, TM, TRAINER, ROCKET, six-dots, TARGET, USER, TX_PARA, TX_PAGE, TX__CONT, TX_CONT, TX_PROMPT, and TX_SCROLL paths execute the complete linked body under angr with only audited instruction/callee shims; the remaining screen-command token equivalence remains open."
+proof_domain = "all PlaceString dispatch paths exercised individually with symbolic register inputs, source/destination cursor states, hUILayoutFlags branches, hWhoseTurn branches, arbitrary name-buffer bytes where substitutions read them, and complete tilemap effects for the scrolling/clear handlers"
+decoder = "C port copies bytes from [DE] into the destination at [HL] until the text-end marker ('@' = $50). It honors TX_NEXT (both normal and single-spaced row advances) and TX_LINE (bottom text row), emits every inline name-substitution token, and implements every screen-command token. PARA composes ProtectedDelay3, ManualTextScroll, ClearScreenArea, and the complete 20-frame DelayFrames loop; PAGE composes the same real delay/manual-scroll, seven-row clear, and 20-frame delay sequence while replacing the saved HL with the page row; _CONT composes ProtectedDelay3, ManualTextScroll, and two real ScrollTextUpOneLine transitions; CONT composes the real TextCommandProcessor far-text stream, including its nested <_CONT> PlaceString path; PROMPT composes its link-state arrow branch, ProtectedDelay3, ManualTextScroll, and exact DoneText termination; TX_SCROLL composes the real scroll loop. All ordinary-character, row-control, substitution, terminal, and screen-command paths execute the complete linked body under angr with only audited instruction/callee shims, and the focused PlaceString suite covers 26 path-equivalence cases."
 
 
 
