@@ -14,7 +14,9 @@ from verification.harness.registers import (
     store_native_registers,
 )
 from verification.harness.rom import collect_returns, linked_bytes, rom_window, symbol_location
-from verification.harness.sm83_shims import Sm83CpImmediate, Sm83DecRegister, Sm83LoadAImmediate, Sm83StoreAImmediate
+from verification.harness.sm83_shims import (
+    Sm83CpImmediate, Sm83DecRegister, Sm83LoadAImmediate, Sm83StoreAImmediate,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 ELF = ROOT / "verification/build/ports.elf"
@@ -101,9 +103,9 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     q = location.address
     project.hook(q + 0x00, Sm83LoadAImmediate(W_UPDATE, q + 0x03), length=3)
     project.hook(q + 0x03, Sm83DecRegister("a", q + 0x04), length=1)
-    project.hook(q + 0x05, Sm83CpImmediate(0xff, q + 0x07), length=2)
-    project.hook(q + 0x08, Sm83StoreAImmediate(W_UPDATE, q + 0x0b), length=3)
-    project.hook(q + 0x0b, JumpBoundary(0x008D), length=3)
+    project.hook(q + 0x06, Sm83CpImmediate(0xff, q + 0x08), length=2)
+    project.hook(q + 0x09, Sm83StoreAImmediate(W_UPDATE, q + 0x0c), length=3)
+    project.hook(q + 0x0c, JumpBoundary(0x008D), length=3)
     project.hook(0x008D, HideSpritesBoundary(), length=1)
     state = project.factory.blank_state(addr=location.address)
     set_assembly_registers(state, values)
