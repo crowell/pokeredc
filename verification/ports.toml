@@ -29667,3 +29667,17 @@ observables = [
 ]
 proof_domain = "all register and canonical-flag inputs with the fixed four-iteration loop and the independently proven LoadSmokeTile transition"
 decoder = "exact 20-byte body checked; the real four-iteration PUSH/POP loop, TILE_SIZE HL advancement, DEC C termination, and LoadSmokeTile call boundary execute pathwise, while native C calls the real port_load_smoke_tile on every iteration"
+
+[[function]]
+assembly_symbol = "WriteCutOrBoulderDustAnimationOAMBlock"
+assembly_source = "engine/overworld/cut.asm"
+c_symbol = "port_write_cut_or_boulder_dust_animation_oam_block"
+c_source = "verification/ports/write_cut_or_boulder_dust_animation_oam_block.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the four computed animation offsets",
+    "the complete 16-byte shadow-OAM block at sprite 36",
+]
+proof_domain = "all register inputs, player sprite coordinates/directions, cut-versus-boulder offset selectors, and arbitrary existing sprite-36 OAM bytes, with complete GetCutOrBoulderDustAnimationOffsets and WriteOAMBlock composition"
+decoder = "exact 19-byte body including the inline OAMBlock data checked; the real offset lookup and WriteOAMBlock transitions execute through explicit proven boundaries, and native C calls both real ports while preserving the tail-call register contract"
