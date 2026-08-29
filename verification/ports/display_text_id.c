@@ -10,6 +10,9 @@
 #define R_ROMB 0x2000u
 #define BIT_TEXT_PREDEF 0u
 #define TEXT_MON_FAINTED 0xd0u
+#define TEXT_BLACKED_OUT 0xd1u
+#define TEXT_REPEL_WORE_OFF 0xd2u
+#define TEXT_SAFARI_GAME_OVER 0xd3u
 #define PORT_FLAG_Z 0x80u
 #define PORT_FLAG_N 0x40u
 
@@ -83,6 +86,9 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 	 * CP TEXT_MON_FAINTED / JP z, DisplayPokemonFaintedText.  The handler and
 	 * shared continuation are independently proven, so this entry records the
 	 * exact compare result and leaves the callee body at its proof boundary. */
-	if (state->registers.a == TEXT_MON_FAINTED)
+	if (state->registers.a == TEXT_MON_FAINTED ||
+	    state->registers.a == TEXT_BLACKED_OUT ||
+	    state->registers.a == TEXT_REPEL_WORE_OFF ||
+	    state->registers.a == TEXT_SAFARI_GAME_OVER)
 		state->registers.f = (port_u8)(PORT_FLAG_Z | PORT_FLAG_N);
 }
