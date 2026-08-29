@@ -53,7 +53,7 @@ class NoSpriteBoundary(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
         self.state.regs.a = claripy.BVV(0, 8)
         self.state.regs.f = claripy.BVV(0x40, 8)
-        self.state.regs.b = claripy.BVV(0x3C, 8)
+        self.state.regs.b = claripy.BVV(0x4C, 8)
         self.state.regs.c = claripy.BVV(0x40, 8)
         self.state.regs.d = claripy.BVV(0x10, 8)
         self.ret()
