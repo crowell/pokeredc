@@ -7838,6 +7838,22 @@ decoder = "exact 15-byte linked body checked; all four SM83 absolute stores mode
 
 
 [[function]]
+assembly_symbol = "PrintPredefTextID"
+assembly_source = "home/predef_text.asm"
+c_symbol = "port_print_predef_text_id"
+c_source = "verification/ports/print_predef_text_id.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "hTextID, wTextPredefFlag, wCurMapTextPtr, and hSavedMapTextPtr",
+    "hFrameCounter and wSpriteIndex",
+    "hLoadedROMBank and rROMB",
+]
+proof_domain = "the complete PrintPredefTextID pointer-save, predef-flag setup, DisplayTextID initialization-prefix boundary, and pointer-restore tail; the downstream text dictionary and interactive display remain in the documented DisplayTextID partial boundary"
+decoder = "exact linked bytes through the shared RestoreMapTextPointer return are checked in verification/tests/test_print_predef_text_id.py; individual high-memory and HLI instructions are shimmed, SetMapTextPointer effects are modeled at its proven boundary, and native C calls the real DisplayTextID port before restoring the map-text pointer"
+
+
+[[function]]
 assembly_symbol = "RestoreMapTextPointer"
 assembly_source = "home/predef_text.asm"
 c_symbol = "port_restore_map_text_pointer"

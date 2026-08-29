@@ -62,6 +62,12 @@ struct display_text_id_init_private_state {
 	port_u8 list_menu_id;
 };
 
+struct print_predef_text_id_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
 /* State for the DisplayPokemonFaintedText text-flow handler.  The handler
  * tail-enters the shared AfterDisplayingTextID continuation, so its host
  * polled input sequence is carried alongside the live CPU registers. */
@@ -3428,6 +3434,8 @@ _Static_assert(sizeof(struct display_pokemon_fainted_text_state) == 17,
 _Static_assert(sizeof(struct display_text_id_state) == 10,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct display_text_id_init_private_state) == 9,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct print_predef_text_id_state) == 10,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct display_repel_wore_off_text_state) == 17,
 	"unexpected ABI padding");
