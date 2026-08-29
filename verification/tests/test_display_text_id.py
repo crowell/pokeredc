@@ -18,9 +18,12 @@ from verification.harness.registers import (
 )
 from verification.harness.rom import linked_bytes, rom_window, symbol_location
 from verification.harness.sm83_shims import (
+    Sm83AddHlRegisterPair,
+    Sm83DecRegister,
     Sm83LoadAAtHlIncrement,
     Sm83LoadAFromImmediate,
     Sm83LoadAHighImmediate,
+    Sm83SlaRegister,
     Sm83StoreAImmediate,
     Sm83StoreAHighImmediate,
 )
@@ -96,6 +99,16 @@ class FaintedDispatchBoundary(angr.SimProcedure):
         self.jump(RETURN)
 
 
+class LoadAAtHL(angr.SimProcedure):
+    def __init__(self, continuation: int) -> None:
+        super().__init__()
+        self.continuation = continuation
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = self.state.memory.load(self.state.regs.hl, 1)
+        self.jump(self.continuation)
+
+
 class MapBankBoundary(angr.SimProcedure):
     def __init__(self, continuation: int) -> None:
         super().__init__()
@@ -139,6 +152,9 @@ def _setup(state: angr.SimState, base: int, *, predef: int,
     state.memory.store(base + W_CUR_MAP_TEXT_PTR + 1, claripy.BVV(0x12, 8))
     state.memory.store(base + H_TEXT_ID, claripy.BVV(text_id, 8))
     state.memory.store(base + W_NUM_SPRITES, claripy.BVV(num_sprites, 8))
+    state.memory.store(base + 0x1236, claripy.BVV(0x78, 8))
+    state.memory.store(base + 0x1237, claripy.BVV(0x56, 8))
+    state.memory.store(base + 0x5678, claripy.BVV(0x99, 8))
     state.memory.store(base + H_LOADED_ROM_BANK, claripy.BVV(7, 8))
     state.memory.store(base + R_ROMB, claripy.BVV(5, 8))
 
@@ -169,7 +185,12 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
         project.hook(base + dispatch_offsets[text_id],
                      FaintedDispatchBoundary(), length=3)
     else:
-        project.hook(base + 0x6a, PrefixEnd(), length=1)
+        project.hook(base + 0x6a, Sm83DecRegister("a", base + 0x6b), length=1)
+        project.hook(base + 0x6c, Sm83SlaRegister("e", base + 0x6e), length=2)
+        project.hook(base + 0x6e, Sm83AddHlRegisterPair("de", base + 0x6f), length=1)
+        project.hook(base + 0x6f, Sm83LoadAAtHlIncrement(base + 0x70), length=1)
+        project.hook(base + 0x72, LoadAAtHL(base + 0x73), length=1)
+        project.hook(base + 0x73, PrefixEnd(), length=1)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
     _setup(state, 0, predef=predef, text_id=text_id,

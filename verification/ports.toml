@@ -18297,8 +18297,8 @@ observables = [
     "hLoadedROMBank and rROMB",
     "the wCurMapTextPtr-derived HL pointer",
 ]
-proof_domain = "the complete DisplayTextID initialization prefix over both text-predef and current-map-bank branches, the TEXT_START_MENU, TEXT_MON_FAINTED, TEXT_BLACKED_OUT, TEXT_REPEL_WORE_OFF, and TEXT_SAFARI_GAME_OVER dictionary compare/JP boundaries, and both strict out-of-range sprite-index cases for text ID 2 (wNumSprites = 0 and 1); the equal/in-range sprite-facing path, remaining text-ID dictionary, map-text lookup, script dispatch, and shared display continuations remain beyond this boundary"
-decoder = "the linked entry bytes through all five initial text-ID dispatches and the out-of-range sprite gate are checked in verification/tests/test_display_text_id.py; individual absolute/HRAM loads are shimmed, while the native port composes the complete DisplayTextIDInit and SwitchToMapRomBank transitions, reproduces CP flags and E loading, and records the independently proven text-handler boundaries"
+proof_domain = "the complete DisplayTextID initialization prefix over both text-predef and current-map-bank branches, the TEXT_START_MENU, TEXT_MON_FAINTED, TEXT_BLACKED_OUT, TEXT_REPEL_WORE_OFF, and TEXT_SAFARI_GAME_OVER dictionary compare/JP boundaries, both strict out-of-range sprite-index cases for text ID 2 (wNumSprites = 0 and 1), and the resulting fixed map-text pointer lookup through its first text byte; the equal/in-range sprite-facing path, remaining text-ID dictionary, script dispatch, and shared display continuations remain beyond this boundary"
+decoder = "the linked entry bytes through all five initial text-ID dispatches, the out-of-range sprite gate, and the map-text first-byte lookup are checked in verification/tests/test_display_text_id.py; individual absolute/HRAM, DEC, SLA, ADD HL, and HLI/load seams are shimmed, while the native port composes the complete DisplayTextIDInit and SwitchToMapRomBank transitions, reproduces CP/shift/add flags and pointer arithmetic, and records the independently proven text-handler boundaries"
 
 
 [[function]]

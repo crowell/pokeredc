@@ -43,9 +43,31 @@ compare_flags(port_u8 left, port_u8 right)
 	return flags;
 }
 
-/* Port of the initialization prefix of DisplayTextID in home/text_script.asm.
- * The subsequent text-ID/sprite/script dispatch remains a separate boundary;
- * this entry establishes exactly the state consumed by that dispatcher. */
+static port_u8
+shift_left_flags(port_u8 value, port_u8 *result)
+{
+	*result = (port_u8)(value << 1);
+	return (port_u8)(((value & 0x80u) != 0u ? PORT_FLAG_C : 0u) |
+		((*result == 0u) ? PORT_FLAG_Z : 0u));
+}
+
+static port_u8
+add_hl_de_flags(port_u16 left, port_u16 right, port_u16 *result,
+	port_u8 old_flags)
+{
+	port_u32 wide = (port_u32)left + (port_u32)right;
+	port_u8 flags = (port_u8)(old_flags & PORT_FLAG_Z);
+	if (((left & 0x0fffu) + (right & 0x0fffu)) > 0x0fffu)
+		flags |= PORT_FLAG_H;
+	if (wide > 0xffffu)
+		flags |= PORT_FLAG_C;
+	*result = (port_u16)wide;
+	return flags;
+}
+
+/* Port of the bounded initialization, dictionary, and out-of-range map-text
+ * prefix of DisplayTextID in home/text_script.asm.  Sprite-facing, remaining
+ * text-ID, script, and shared display continuations remain separate bounds. */
 __attribute__((noinline, used)) void
 port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 {
@@ -122,7 +144,25 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 		state->registers.e = num_sprites;
 		state->registers.f = compare_flags(state->registers.a, num_sprites);
 		if (state->registers.a >= num_sprites &&
-		    state->registers.a != num_sprites)
+		    state->registers.a != num_sprites) {
+			port_u16 hl = (port_u16)(((port_u16)state->registers.h << 8) |
+				state->registers.l);
+			port_u8 index = (port_u8)(state->registers.a - 1u);
+			port_u8 shifted;
+			port_u8 shift_flags = shift_left_flags(index, &shifted);
+			port_u16 address;
+			port_u8 low;
+			state->registers.e = shifted;
+			state->registers.f = add_hl_de_flags(hl, shifted, &address,
+				shift_flags);
+			low = memory[address];
+			state->registers.h = memory[(port_u16)(address + 1u)];
+			state->registers.l = low;
+			state->registers.a = memory[(port_u16)(((port_u16)state->registers.h << 8) |
+				state->registers.l)];
+			state->registers.f = (port_u8)(state->registers.f &
+				(PORT_FLAG_C | PORT_FLAG_H | PORT_FLAG_Z));
 			return;
+		}
 	}
 }
