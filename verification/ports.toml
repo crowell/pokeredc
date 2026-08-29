@@ -10115,8 +10115,8 @@ observables = [
     "all 16 sprite-state data1/data2 bytes",
     "the loader's sprite-pattern and transfer state",
 ]
-proof_domain = "the indoor-map path (map 0x25) with wNumSprites = 0; all general registers, the complete 16-slot picture-ID copy, and the loader's zero-sprite terminal transition are compared, while outdoor map selection and nonzero sprite-pattern transfer paths remain covered by their own restricted ports"
-decoder = "the exact 29-byte linked body is checked inside the functional test; InitOutsideMapSprites and the loader execute through their real native composition boundaries, while only individual SM83 absolute loads/stores, pair setup, arithmetic, and branch instructions are shimmed for the p-code backend"
+proof_domain = "the indoor-map path (map 0x25) with wNumSprites = 0 and the outdoor PALLET_TOWN early-return path (map 0) with an empty data1 sprite set; all general registers, the complete 16-slot picture-ID copy on indoor entry, the proven InitOutsideMapSprites outdoor transition, and the loader's zero-sprite terminal transition are compared, while nonzero sprite-pattern transfer paths remain covered by their own restricted port"
+decoder = "the exact 29-byte linked body is checked inside the functional test; InitOutsideMapSprites and the loader execute through their real native composition boundaries, while the conditional RET C, individual SM83 absolute loads/stores, pair setup, arithmetic, and branch instructions are shimmed for the p-code backend"
 
 
 [[function]]

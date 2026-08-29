@@ -34,6 +34,9 @@ STACK = 0xD000
 RETURN = 0xFFFF
 W_CUR_MAP = 0xD35E
 W_NUM_SPRITES = 0xD4E1
+W_SPRITE_SET_ID = 0xD3A8
+W_FONT_LOADED = 0xCFC4
+W_SPRITE_SET = 0xD39D
 DATA1 = 0xC100
 DATA2 = 0xC200
 DATA_BYTES = 0x100
@@ -55,16 +58,61 @@ class Endpoint:
 
 
 class OutsideBoundary(angr.SimProcedure):
-    def __init__(self, next_address: int) -> None:
+    def __init__(self, next_address: int, *, outdoor: bool) -> None:
         super().__init__()
         self.next_address = next_address
+        self.outdoor = outdoor
 
     def run(self) -> None:  # type: ignore[override]
-        # Indoor map: InitOutsideMapSprites performs CP FIRST_INDOOR_MAP and
-        # returns with carry clear.  The subsequent copy/loader path consumes
-        # A and F, so only the carry-clear control result matters here.
-        self.state.regs.f = claripy.BVV(0, 8)
+        if self.outdoor:
+            # Proven InitOutsideMapSprites map-0 transition: the matching
+            # sprite set leaves each unused slot's image index at zero,
+            # preserves B=1, and returns with carry set.
+            for index in range(1, 16):
+                self.state.memory.store(
+                    DATA2 + 0x0E + index * 0x10,
+                    claripy.BVV(0, 8),
+                )
+            self.state.regs.a = claripy.BVV(0, 8)
+            self.state.regs.f = claripy.BVV(0x41, 8)  # Z80-layout Z|carry
+            self.state.regs.b = claripy.BVV(1, 8)
+            self.state.regs.c = claripy.BVV(0, 8)
+            self.state.regs.h = claripy.BVV(0xC1, 8)
+            self.state.regs.l = claripy.BVV(0, 8)
+        else:
+            # Indoor map: InitOutsideMapSprites returns with carry clear and
+            # InitMapSprites performs the picture-ID copy below.
+            self.state.regs.f = claripy.BVV(0, 8)
         self.jump(self.next_address)
+
+
+class RetCStack(angr.SimProcedure):
+    """Model InitMapSprites' conditional return after InitOutsideMapSprites."""
+
+    def __init__(self, fallthrough: int) -> None:
+        super().__init__()
+        self.fallthrough = fallthrough
+
+    def run(self) -> None:  # type: ignore[override]
+        condition = (self.state.regs.f & 1) != 0
+        sp = self.state.solver.eval(self.state.regs.sp)
+        lo = self.state.memory.load(sp, 1)
+        hi = self.state.memory.load(sp + 1, 1)
+        taken = self.state.copy()
+        fallthrough = self.state.copy()
+        taken.solver.add(condition)
+        fallthrough.solver.add(claripy.Not(condition))
+        taken.regs.sp = claripy.BVV(sp + 2, 16)
+        taken.regs.ip = claripy.Concat(hi, lo)
+        fallthrough.regs.ip = claripy.BVV(self.fallthrough, 16)
+        self.inhibit_autoret = True
+        self.successors.add_successor(taken, taken.regs.ip, condition, "Ijk_Boring")
+        self.successors.add_successor(
+            fallthrough,
+            self.fallthrough,
+            claripy.Not(condition),
+            "Ijk_Boring",
+        )
 
 
 class Jump(angr.SimProcedure):
@@ -176,9 +224,14 @@ def _values() -> dict[str, claripy.ast.BV]:
     return values
 
 
-def _seed(state: angr.SimState, base: int, values: dict[str, claripy.ast.BV]) -> None:
-    state.memory.store(base + W_CUR_MAP, claripy.BVV(0x25, 8))
+def _seed(state: angr.SimState, base: int, values: dict[str, claripy.ast.BV],
+          cur_map: int) -> None:
+    state.memory.store(base + W_CUR_MAP, claripy.BVV(cur_map, 8))
     state.memory.store(base + W_NUM_SPRITES, claripy.BVV(0, 8))
+    state.memory.store(base + W_SPRITE_SET_ID, claripy.BVV(1, 8))
+    state.memory.store(base + W_FONT_LOADED, claripy.BVV(0, 8))
+    for index, value in enumerate((1, 1, 2, 2, 3, 4, 5, 0x0A, 1, 6, 7)):
+        state.memory.store(base + W_SPRITE_SET + index, claripy.BVV(value, 8))
     state.memory.store(base + DATA1, values["data1"])
     state.memory.store(base + DATA2, values["data2"])
 
@@ -193,7 +246,7 @@ def _endpoint(state: angr.SimState, native: bool) -> Endpoint:
     )
 
 
-def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+def _assembly(values: dict[str, claripy.ast.BV], *, cur_map: int) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "InitMapSprites")
     base = location.address
     assert linked_bytes(ROM, location, 0x1D) == bytes.fromhex(
@@ -210,8 +263,8 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
             "entry_point": base,
         },
     )
-    project.hook(base, OutsideBoundary(base + 3), length=3)
-    project.hook(base + 3, Jump(base + 4), length=1)
+    project.hook(base, OutsideBoundary(base + 3, outdoor=cur_map == 0), length=3)
+    project.hook(base + 3, RetCStack(base + 4), length=1)
     project.hook(base + 4, LoadPairConst("h", "l", 0xC100, base + 7), length=3)
     project.hook(base + 7, LoadPairConst("d", "e", 0xC20D, base + 0x0A), length=3)
     project.hook(base + 0x0A, LoadAAtHL(base + 0x0B), length=1)
@@ -229,7 +282,7 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
-    _seed(state, 0, values)
+    _seed(state, 0, values, cur_map)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
@@ -239,13 +292,13 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     return [_endpoint(manager.found[0], native=False)]
 
 
-def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+def _native(values: dict[str, claripy.ast.BV], *, cur_map: int) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_init_map_sprites")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
-    _seed(state, NATIVE_MEMORY, values)
+    _seed(state, NATIVE_MEMORY, values, cur_map)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
@@ -258,7 +311,19 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 def test_init_map_sprites_pathwise_equivalence() -> None:
     values = _values()
     assert_pathwise_equivalent(
-        _assembly(values),
-        _native(values),
+        _assembly(values, cur_map=0x25),
+        _native(values, cur_map=0x25),
+        (*REGISTERS, "data1", "data2"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_init_map_sprites_outdoor_return_pathwise_equivalence() -> None:
+    values = _values()
+    values["data1"] = claripy.BVV(0, DATA_BYTES * 8)
+    assert_pathwise_equivalent(
+        _assembly(values, cur_map=0),
+        _native(values, cur_map=0),
         (*REGISTERS, "data1", "data2"),
     )
