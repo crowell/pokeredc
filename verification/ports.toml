@@ -18269,6 +18269,23 @@ decoder = "exact 9-byte linked body 21a42acd493cc3d629 checked inside the functi
 
 
 [[function]]
+assembly_symbol = "DisplayTextID"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_text_id"
+c_source = "verification/ports/display_text_id.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextPredefFlag and wListMenuID",
+    "hFrameCounter and wSpriteIndex",
+    "hLoadedROMBank and rROMB",
+    "the wCurMapTextPtr-derived HL pointer",
+]
+proof_domain = "the complete DisplayTextID initialization prefix with the text-predef branch, proven DisplayTextIDInit composition, frame-counter setup, map-text pointer load, and sprite-index store; the text-ID dictionary, sprite-facing update, script dispatch, and shared display continuations remain beyond this boundary"
+decoder = "the linked entry bytes through the first text-ID dispatch are checked in verification/tests/test_display_text_id.py; the native port composes the complete DisplayTextIDInit and SwitchToMapRomBank transitions, then carries the exact prefix state into the pending dispatcher boundary"
+
+
+[[function]]
 assembly_symbol = "AfterDisplayingTextID"
 assembly_source = "home/text_script.asm"
 c_symbol = "port_after_displaying_text_id"

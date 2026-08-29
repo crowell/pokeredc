@@ -48,6 +48,20 @@ struct cpu_register_state {
 	port_u8 l;
 };
 
+/* State for the DisplayTextID text-script entry.  The complete dialogue
+ * dispatcher continues into many interactive handlers; this port carries
+ * the register/bank state through its shared initialization prefix. */
+struct display_text_id_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
+struct display_text_id_init_private_state {
+	struct cpu_register_state registers;
+	port_u8 list_menu_id;
+};
+
 /* State for the DisplayPokemonFaintedText text-flow handler.  The handler
  * tail-enters the shared AfterDisplayingTextID continuation, so its host
  * polled input sequence is carried alongside the live CPU registers. */
@@ -3410,7 +3424,11 @@ _Static_assert(sizeof(struct accumulator_state) == 2, "unexpected ABI padding");
 _Static_assert(sizeof(struct binary_accumulator_state) == 4, "unexpected ABI padding");
 _Static_assert(sizeof(struct cpu_register_state) == 8, "unexpected ABI padding");
 _Static_assert(sizeof(struct display_pokemon_fainted_text_state) == 17,
-	"unexpected ABI padding");
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct display_text_id_state) == 10,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct display_text_id_init_private_state) == 9,
+    "unexpected ABI padding");
 _Static_assert(sizeof(struct display_repel_wore_off_text_state) == 17,
 	"unexpected ABI padding");
 _Static_assert(sizeof(struct display_player_blacked_out_text_state) == 17,
