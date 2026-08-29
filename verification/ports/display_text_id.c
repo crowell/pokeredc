@@ -62,6 +62,8 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 		state->registers = map.registers;
 		state->loaded_rom_bank = map.loaded_rom_bank;
 		state->mapper_bank = map.mapper_bank;
+		memory[H_LOADED_ROM_BANK] = map.loaded_rom_bank;
+		memory[R_ROMB] = map.mapper_bank;
 	}
 
 	memory[H_FRAME_COUNTER] = 30u;

@@ -17,6 +17,13 @@ from verification.harness.registers import (
     store_native_registers,
 )
 from verification.harness.rom import linked_bytes, rom_window, symbol_location
+from verification.harness.sm83_shims import (
+    Sm83LoadAAtHlIncrement,
+    Sm83LoadAFromImmediate,
+    Sm83LoadAHighImmediate,
+    Sm83StoreAImmediate,
+    Sm83StoreAHighImmediate,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 ELF = ROOT / "verification/build/ports.elf"
@@ -71,19 +78,27 @@ class InitBoundary(angr.SimProcedure):
         self.state.memory.store(W_LIST_MENU_ID, claripy.BVV(0, 8))
         self.state.regs.b = old_bank
         self.state.regs.c = old_f
-        self.state.memory.store(W_TEXT_PREDEF_FLAG, claripy.BVV(0, 8))
-        self.state.memory.store(H_FRAME_COUNTER, claripy.BVV(30, 8))
-        pointer = self.state.memory.load(W_CUR_MAP_TEXT_PTR, 2, endness="Iend_LE")
-        self.state.regs.h = pointer[15:8]
-        self.state.regs.l = pointer[7:0]
-        self.state.regs.d = claripy.BVV(0, 8)
-        self.state.regs.a = self.state.memory.load(H_TEXT_ID, 1)
-        self.state.memory.store(W_SPRITE_INDEX, self.state.regs.a)
-        self.state.regs.f = claripy.If(
-            self.state.regs.a == 0, claripy.BVV(0x40, 8), claripy.BVV(0, 8)
-        )
+        self.state.regs.a = old_bank
+        self.state.regs.f = claripy.BVV(0x40, 8)  # Z80-layout Z
+        self.jump(self.continuation)
+
+
+class PrefixEnd(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
         self.inhibit_autoret = True
         self.jump(RETURN)
+
+
+class MapBankBoundary(angr.SimProcedure):
+    def __init__(self, continuation: int) -> None:
+        super().__init__()
+        self.continuation = continuation
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(6, 8)  # Pallet Town's map ROM bank
+        self.state.memory.store(H_LOADED_ROM_BANK, claripy.BVV(6, 8))
+        self.state.memory.store(R_ROMB, claripy.BVV(6, 8))
+        self.jump(self.continuation)
 
 
 def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
@@ -109,8 +124,8 @@ def _values() -> dict[str, claripy.ast.BV]:
     }
 
 
-def _setup(state: angr.SimState, base: int) -> None:
-    state.memory.store(base + W_TEXT_PREDEF_FLAG, claripy.BVV(1, 8))
+def _setup(state: angr.SimState, base: int, *, predef: int) -> None:
+    state.memory.store(base + W_TEXT_PREDEF_FLAG, claripy.BVV(predef, 8))
     state.memory.store(base + W_CUR_MAP, claripy.BVV(0, 8))
     state.memory.store(base + W_CUR_MAP_TEXT_PTR, claripy.BVV(0x34, 8))
     state.memory.store(base + W_CUR_MAP_TEXT_PTR + 1, claripy.BVV(0x12, 8))
@@ -119,7 +134,7 @@ def _setup(state: angr.SimState, base: int) -> None:
     state.memory.store(base + R_ROMB, claripy.BVV(5, 8))
 
 
-def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+def _assembly(values: dict[str, claripy.ast.BV], *, predef: int) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "DisplayTextID")
     assert linked_bytes(ROM, location, len(EXPECTED)) == EXPECTED
     project = angr.Project(
@@ -129,10 +144,18 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
                    "base_addr": 0, "entry_point": location.address},
     )
     base = location.address
-    project.hook(base, InitBoundary(RETURN), length=0x2b)
+    project.hook(base, Sm83LoadAHighImmediate(H_LOADED_ROM_BANK, base + 2), length=2)
+    project.hook(base + 8, InitBoundary(base + 11), length=3)
+    project.hook(base + 0x17, MapBankBoundary(base + 0x1a), length=3)
+    project.hook(base + 0x1a, Sm83LoadAFromImmediate(base + 0x1b, base + 0x1c), length=2)
+    project.hook(base + 0x1c, Sm83StoreAHighImmediate(H_FRAME_COUNTER, base + 0x1e), length=2)
+    project.hook(base + 0x21, Sm83LoadAAtHlIncrement(base + 0x22), length=1)
+    project.hook(base + 0x26, Sm83LoadAHighImmediate(H_TEXT_ID, base + 0x28), length=2)
+    project.hook(base + 0x28, Sm83StoreAImmediate(W_SPRITE_INDEX, base + 0x2b), length=3)
+    project.hook(base + 0x2b, PrefixEnd(), length=1)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
-    _setup(state, 0)
+    _setup(state, 0, predef=predef)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
@@ -142,7 +165,7 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     return [_endpoint(end, native=False, base=0) for end in manager.found]
 
 
-def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+def _native(values: dict[str, claripy.ast.BV], *, predef: int) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_display_text_id")
     assert function is not None
@@ -150,7 +173,7 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(7, 8))
     state.memory.store(NATIVE_STATE + 9, claripy.BVV(5, 8))
-    _setup(state, NATIVE_MEMORY)
+    _setup(state, NATIVE_MEMORY, predef=predef)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     manager = project.factory.simulation_manager(state)
     manager.run()
@@ -163,7 +186,18 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 def test_display_text_id_initialization_prefix_pathwise_equivalence() -> None:
     values = _values()
     assert_pathwise_equivalent(
-        _assembly(values), _native(values),
+        _assembly(values, predef=1), _native(values, predef=1),
+        (*REGISTERS, "text_predef", "list_menu", "frame_counter",
+         "sprite_index", "loaded_bank", "romb"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_display_text_id_map_bank_prefix_pathwise_equivalence() -> None:
+    values = _values()
+    assert_pathwise_equivalent(
+        _assembly(values, predef=0), _native(values, predef=0),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
          "sprite_index", "loaded_bank", "romb"),
     )
