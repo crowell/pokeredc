@@ -30113,6 +30113,16 @@ proof_domain = "all general-register and canonical-flag inputs, arbitrary text-p
 decoder = "exact 14-byte linked body 2a5f2a57d52a5f7e57cd7573d1c9 verified; all HL+ loads and stack pointer restoration are shimmed, while the coordinate call is replaced by its proven symbolic transition"
 
 [[function]]
+assembly_symbol = "DisplayTextBoxID"
+assembly_source = "home/textbox.asm"
+c_symbol = "port_display_text_box_id_wrapper"
+c_source = "verification/ports/display_text_box_id_wrapper.c"
+status = "partial"
+observables = ["all 8 registers and canonical flags", "hLoadedROMBank and rROMB"]
+proof_domain = "the complete homecall_sf wrapper around the independently tested DisplayTextBoxID_ boundary; bank-1 setup, saved-AF-through-BC restoration, and final bank writes are covered, while the nested DisplayTextBoxID_ dispatcher remains its documented partial boundary"
+decoder = "exact 21-byte linked body checked in verification/tests/test_display_text_box_id_wrapper.py; individual LDH/absolute-load/stack seams and the nested DisplayTextBoxID_ callee boundary are shimmed, while native C calls the real dispatcher and restores the caller bank"
+
+[[function]]
 assembly_symbol = "DisplayTextBoxID_"
 assembly_source = "engine/menus/text_box.asm"
 c_symbol = "port_display_text_box_id"
