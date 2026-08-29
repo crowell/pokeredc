@@ -15,7 +15,8 @@ from verification.harness.registers import (
 )
 from verification.harness.rom import linked_bytes, rom_window, symbol_location
 from verification.harness.sm83_shims import (
-    Sm83CpImmediate, Sm83LoadAAtHlIncrement, Sm83StoreAImmediate,
+    Sm83CpImmediate, Sm83LoadAAtHlIncrement, Sm83LoadAImmediate,
+    Sm83StoreAImmediate,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,6 +35,9 @@ W_TILEMAP = 0xC3A0
 W_TILE_FRONT = 0xCFC6
 W_COLLISION_PTR = 0xD530
 W_TILE_RESULT = 0xD71C
+W_TILESET = 0xD367
+W_STANDING = 0xC45C
+PAIR_TABLE = 0x0C7E
 
 
 @dataclass(frozen=True)
@@ -113,6 +117,55 @@ class BranchZ(angr.SimProcedure):
                                       claripy.Not(condition), "Ijk_Boring")
 
 
+class BranchCarry(angr.SimProcedure):
+    def __init__(self, taken: int, fallthrough: int) -> None:
+        super().__init__()
+        self.taken = taken
+        self.fallthrough = fallthrough
+
+    def run(self) -> None:  # type: ignore[override]
+        self.inhibit_autoret = True
+        carry = (self.state.regs.f & 0x01) != 0
+        self.successors.add_successor(self.state.copy(), self.taken,
+                                      carry, "Ijk_Boring")
+        self.successors.add_successor(self.state.copy(), self.fallthrough,
+                                      claripy.Not(carry), "Ijk_Boring")
+
+
+class TilePairBoundary(angr.SimProcedure):
+    def __init__(self, target: int) -> None:
+        super().__init__()
+        self.target = target
+
+    def run(self) -> None:  # type: ignore[override]
+        m = self.state.memory
+        pointer = self.state.solver.eval(self.state.regs.hl)
+        front = self.state.solver.eval(m.load(W_TILE_FRONT, 1))
+        tileset = self.state.solver.eval(m.load(W_TILESET, 1))
+        standing = self.state.solver.eval(m.load(W_TILEMAP + 9 * 20 + 8, 1))
+        m.store(W_STANDING, claripy.BVV(standing, 8))
+        while True:
+            entry = self.state.solver.eval(m.load(pointer, 1))
+            pointer = (pointer + 1) & 0xffff
+            if entry == 0xff:
+                self.state.regs.a = claripy.BVV(0xff, 8)
+                self.state.regs.b = claripy.BVV(tileset, 8)
+                self.state.regs.f = claripy.BVV(0x10, 8)
+                break
+            first = self.state.solver.eval(m.load(pointer, 1))
+            second = self.state.solver.eval(m.load((pointer + 1) & 0xffff, 1))
+            if entry == tileset and ((standing == first and front == second) or
+                                     (standing == second and front == first)):
+                pointer = (pointer + 1) & 0xffff
+                self.state.regs.a = claripy.BVV(front, 8)
+                self.state.regs.b = claripy.BVV(standing, 8)
+                self.state.regs.f = claripy.BVV(0x41, 8)
+                break
+            pointer = (pointer + 2) & 0xffff
+        self.state.regs.hl = claripy.BVV(pointer, 16)
+        self.jump(self.target)
+
+
 class CompareCollisionTile(angr.SimProcedure):
     def __init__(self, next_address: int) -> None:
         super().__init__()
@@ -130,7 +183,8 @@ class CompareCollisionTile(angr.SimProcedure):
 
 
 def _setup(state: angr.SimState, base: int, *, tile: int,
-           collision_entry: int) -> None:
+           collision_entry: int, tileset: int = 0,
+           standing: int = 0x20, pair_collision: bool = False) -> None:
     for address, value in ((W_Y, 0), (W_X, 0), (W_FACING, 0),
                            (W_TILE_FRONT, tile), (W_TILE_RESULT, 0)):
         state.memory.store(base + address, claripy.BVV(value, 8))
@@ -138,8 +192,17 @@ def _setup(state: angr.SimState, base: int, *, tile: int,
                        claripy.BVV(0x0700, 16), endness="Iend_LE")
     state.memory.store(base + W_TILEMAP + 13 * 20 + 8,
                        claripy.BVV(tile, 8))
+    state.memory.store(base + W_TILEMAP + 9 * 20 + 8,
+                       claripy.BVV(standing, 8))
+    state.memory.store(base + W_TILESET, claripy.BVV(tileset, 8))
     state.memory.store(base + 0x0700, claripy.BVV(collision_entry, 8))
     state.memory.store(base + 0x0701, claripy.BVV(0xFF, 8))
+    if pair_collision:
+        for offset, value in enumerate((tileset, standing, tile, 0xFF)):
+            state.memory.store(base + PAIR_TABLE + offset,
+                               claripy.BVV(value, 8))
+    else:
+        state.memory.store(base + PAIR_TABLE, claripy.BVV(0xFF, 8))
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
@@ -156,7 +219,8 @@ def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
 
 
 def _assembly(values: dict[str, claripy.ast.BV], *, tile: int,
-              collision_entry: int) -> list[Endpoint]:
+              collision_entry: int, tileset: int = 0,
+              standing: int = 0x20, pair_collision: bool = False) -> list[Endpoint]:
     loc = symbol_location(SYMBOLS, "CheckForCollisionWhenPushingBoulder")
     end = symbol_location(SYMBOLS, "CheckForBoulderCollisionWithSprites")
     assert linked_bytes(ROM, loc, end.address - loc.address) == bytes.fromhex(
@@ -179,11 +243,18 @@ def _assembly(values: dict[str, claripy.ast.BV], *, tile: int,
     if collision_entry != 0xFF:
         project.hook(q + 0x0E, CompareCollisionTile(q + 0x0F), length=1)
         project.hook(q + 0x0F, BranchZ(q + 0x11, q + 0x09), length=2)
+        project.hook(q + 0x11, LoadHLImmediate(PAIR_TABLE, q + 0x14), length=3)
+        project.hook(q + 0x14, TilePairBoundary(q + 0x17), length=3)
+        project.hook(q + 0x19, BranchCarry(q + 0x27, q + 0x1B), length=2)
+        project.hook(q + 0x1B, Sm83LoadAImmediate(W_TILE_RESULT, q + 0x1E), length=3)
+        project.hook(q + 0x1E, Sm83CpImmediate(0x15, q + 0x20), length=2)
+        project.hook(q + 0x22, BranchZ(q + 0x27, q + 0x24), length=2)
     state = project.factory.blank_state(addr=loc.address)
     set_assembly_registers(state, values)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
-    _setup(state, 0, tile=tile, collision_entry=collision_entry)
+    _setup(state, 0, tile=tile, collision_entry=collision_entry,
+           tileset=tileset, standing=standing, pair_collision=pair_collision)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     manager = project.factory.simulation_manager(state)
     manager.explore(find=RETURN, num_find=8)
@@ -192,13 +263,15 @@ def _assembly(values: dict[str, claripy.ast.BV], *, tile: int,
 
 
 def _native(values: dict[str, claripy.ast.BV], *, tile: int,
-            collision_entry: int) -> list[Endpoint]:
+            collision_entry: int, tileset: int = 0,
+            standing: int = 0x20, pair_collision: bool = False) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_check_for_collision_when_pushing_boulder")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
-    _setup(state, NATIVE_MEMORY, tile=tile, collision_entry=collision_entry)
+    _setup(state, NATIVE_MEMORY, tile=tile, collision_entry=collision_entry,
+           tileset=tileset, standing=standing, pair_collision=pair_collision)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
@@ -208,13 +281,20 @@ def _native(values: dict[str, claripy.ast.BV], *, tile: int,
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
                     reason="build artifacts missing")
-@pytest.mark.parametrize("collision_entry", (0xFF, 0x00))
+@pytest.mark.parametrize("collision_entry, tile, pair_collision", (
+    (0xFF, 0x37, False),
+    (0x00, 0x37, False),
+    (0x05, 0x05, True),
+    (0x15, 0x15, False),
+))
 def test_check_for_collision_when_pushing_boulder_pathwise_equivalence(
-    collision_entry: int,
+    collision_entry: int, tile: int, pair_collision: bool,
 ) -> None:
     values = {register: claripy.BVV(0, 8) for register in REGISTERS}
     assert_pathwise_equivalent(
-        _assembly(values, tile=0x37, collision_entry=collision_entry),
-        _native(values, tile=0x37, collision_entry=collision_entry),
+        _assembly(values, tile=tile, collision_entry=collision_entry,
+                  pair_collision=pair_collision),
+        _native(values, tile=tile, collision_entry=collision_entry,
+                pair_collision=pair_collision),
         (*REGISTERS, "memory"),
     )
