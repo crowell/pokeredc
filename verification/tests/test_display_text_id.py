@@ -160,7 +160,7 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
     project.hook(base + 0x21, Sm83LoadAAtHlIncrement(base + 0x22), length=1)
     project.hook(base + 0x26, Sm83LoadAHighImmediate(H_TEXT_ID, base + 0x28), length=2)
     project.hook(base + 0x28, Sm83StoreAImmediate(W_SPRITE_INDEX, base + 0x2b), length=3)
-    dispatch_offsets = {0xd0: 0x36, 0xd1: 0x3b, 0xd2: 0x40, 0xd3: 0x31}
+    dispatch_offsets = {0x00: 0x2c, 0xd0: 0x36, 0xd1: 0x3b, 0xd2: 0x40, 0xd3: 0x31}
     if text_id in dispatch_offsets:
         project.hook(base + dispatch_offsets[text_id],
                      FaintedDispatchBoundary(), length=3)
@@ -217,7 +217,7 @@ def test_display_text_id_map_bank_prefix_pathwise_equivalence() -> None:
     )
 
 
-@pytest.mark.parametrize("text_id", [0xd0, 0xd1, 0xd2, 0xd3])
+@pytest.mark.parametrize("text_id", [0x00, 0xd0, 0xd1, 0xd2, 0xd3])
 @pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_display_text_id_special_dispatch_pathwise_equivalence(text_id: int) -> None:

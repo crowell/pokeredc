@@ -15,6 +15,7 @@
 #define TEXT_SAFARI_GAME_OVER 0xd3u
 #define PORT_FLAG_Z 0x80u
 #define PORT_FLAG_N 0x40u
+#define PORT_FLAG_H 0x20u
 
 void port_display_text_id_init(
 	struct display_text_id_init_private_state *, port_u8 *);
@@ -81,11 +82,11 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 	state->registers.d = 0u;
 	state->registers.a = memory[H_TEXT_ID];
 	memory[W_SPRITE_INDEX] = state->registers.a;
-	state->registers.f = state->registers.a == 0u ? PORT_FLAG_Z : 0u;
-	/* The first dictionary branch is a cheap, fully bounded dispatch seam:
-	 * CP TEXT_MON_FAINTED / JP z, DisplayPokemonFaintedText.  The handler and
-	 * shared continuation are independently proven, so this entry records the
-	 * exact compare result and leaves the callee body at its proof boundary. */
+	state->registers.f = state->registers.a == 0u ?
+	    (port_u8)(PORT_FLAG_Z | PORT_FLAG_H) : 0u;
+	/* The dictionary's special IDs are bounded dispatch seams.  The handler and
+	 * shared continuation bodies are independently proven, so this entry
+	 * records each exact compare result and leaves the callee at its boundary. */
 	if (state->registers.a == TEXT_MON_FAINTED ||
 	    state->registers.a == TEXT_BLACKED_OUT ||
 	    state->registers.a == TEXT_REPEL_WORE_OFF ||
