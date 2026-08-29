@@ -23086,9 +23086,11 @@ c_source = "verification/ports/print_move_is_disabled_text.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "wPlayerBattleStatus1 and wEnemyBattleStatus1",
+    "wNamedObjectIndex",
 ]
-proof_domain = "all register/flag inputs through the player/enemy status branch"
-decoder = "selected-move/status pointer setup and high-memory AND-A flags are modeled exactly; status clearing and disabled-text rendering remain beyond the explicit boundary"
+proof_domain = "all register/flag inputs and whose-turn paths, with concrete selected-move and battle-status bytes, through charging-up clearing, selected-move capture, GetMoveName return, and MoveIsDisabledText PrintText setup"
+decoder = "exact linked body checked in verification/tests/test_print_move_is_disabled_text.py; player/enemy HL/DE selection, res CHARGING_UP, wNamedObjectIndex write, wNameBuffer DE return, and MoveIsDisabledText HL setup are modeled, while GetMoveName and PrintText bodies remain explicit callee boundaries"
 
 [[function]]
 assembly_symbol = "HandleSelfConfusionDamage"

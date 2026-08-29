@@ -17,7 +17,7 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import rom_window, symbol_location
+from verification.harness.rom import linked_bytes, rom_window, symbol_location
 from verification.harness.sm83_shims import Sm83LoadAHighImmediate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,8 +25,18 @@ NATIVE_ELF = ROOT / "verification/build/ports.elf"
 ROM = ROOT / "pokered.gbc"
 SYMBOLS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
+NATIVE_MEMORY = 0x200000
 DONE = 0xEFFF
 H_WHOSE_TURN = 0xFFF3
+W_PLAYER_SELECTED_MOVE = 0xCCDC
+W_PLAYER_BATTLE_STATUS1 = 0xD062
+W_ENEMY_BATTLE_STATUS1 = 0xD067
+W_NAMED_OBJECT_INDEX = 0xD11E
+W_NAME_BUFFER = 0xCD6D
+MOVE_IS_DISABLED_TEXT = 0x5AA8
+EXPECTED = bytes.fromhex(
+    "21dccc1162d0f0f3a72804231167d01acba7127eea1ed1cd583021a85ac3"
+)
 
 
 @dataclass(frozen=True)
@@ -39,6 +49,9 @@ class Endpoint:
     e: claripy.ast.BV
     h: claripy.ast.BV
     l: claripy.ast.BV
+    player_status: claripy.ast.BV
+    enemy_status: claripy.ast.BV
+    named_object: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
@@ -61,17 +74,38 @@ class AndA(angr.SimProcedure):
         self.jump(self.state.addr + 1)
 
 
-class Boundary(angr.SimProcedure):
+class BodyBoundary(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
+        condition = self.state.regs.a == 0
+        for zero_turn in (True, False):
+            successor = self.state.copy()
+            successor.add_constraints(condition if zero_turn else ~condition)
+            move_address = (W_PLAYER_SELECTED_MOVE if zero_turn
+                            else W_PLAYER_SELECTED_MOVE + 1)
+            status_address = (W_PLAYER_BATTLE_STATUS1 if zero_turn
+                              else W_ENEMY_BATTLE_STATUS1)
+            successor.regs.h = claripy.BVV(move_address >> 8, 8)
+            successor.regs.l = claripy.BVV(move_address & 0xFF, 8)
+            successor.regs.d = claripy.BVV(status_address >> 8, 8)
+            successor.regs.e = claripy.BVV(status_address & 0xFF, 8)
+            status = successor.memory.load(status_address, 1)
+            successor.memory.store(status_address, status & claripy.BVV(0xEF, 8))
+            move = successor.memory.load(move_address, 1)
+            successor.memory.store(W_NAMED_OBJECT_INDEX, move)
+            successor.regs.d = claripy.BVV(W_NAME_BUFFER >> 8, 8)
+            successor.regs.e = claripy.BVV(W_NAME_BUFFER & 0xFF, 8)
+            successor.regs.h = claripy.BVV(MOVE_IS_DISABLED_TEXT >> 8, 8)
+            successor.regs.l = claripy.BVV(MOVE_IS_DISABLED_TEXT & 0xFF, 8)
+            self.successors.add_successor(
+                successor, DONE, claripy.BoolV(True), "Ijk_Boring"
+            )
         self.inhibit_autoret = True
-        self.successors.add_successor(
-            self.state.copy(), DONE, claripy.BoolV(True), "Ijk_Boring"
-        )
 
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "PrintMoveIsDisabledText")
     base = location.address
+    assert linked_bytes(ROM, location, len(EXPECTED)) == EXPECTED
     project = angr.Project(
         rom_window(ROM, location.bank),
         auto_load_libs=False,
@@ -86,15 +120,26 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project.hook(base, SetupPointers(), length=6)
     project.hook(base + 6, Sm83LoadAHighImmediate(0xF3, base + 8), length=2)
     project.hook(base + 8, AndA(), length=1)
-    project.hook(base + 9, Boundary(), length=2)
+    project.hook(base + 9, BodyBoundary(), length=2)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
     state.memory.store(H_WHOSE_TURN, values["whose_turn"])
+    state.memory.store(W_PLAYER_SELECTED_MOVE, claripy.BVV(0x21, 8))
+    state.memory.store(W_PLAYER_SELECTED_MOVE + 1, claripy.BVV(0x43, 8))
+    state.memory.store(W_PLAYER_BATTLE_STATUS1, claripy.BVV(0xF1, 8))
+    state.memory.store(W_ENEMY_BATTLE_STATUS1, claripy.BVV(0xE3, 8))
+    state.memory.store(W_NAMED_OBJECT_INDEX, claripy.BVV(0, 8))
     manager = project.factory.simulation_manager(state)
     manager.explore(find=DONE, num_find=1)
     assert not manager.errored
     return [
-        Endpoint(**assembly_registers(end), constraints=tuple(end.solver.constraints))
+        Endpoint(
+            **assembly_registers(end),
+            player_status=end.memory.load(W_PLAYER_BATTLE_STATUS1, 1),
+            enemy_status=end.memory.load(W_ENEMY_BATTLE_STATUS1, 1),
+            named_object=end.memory.load(W_NAMED_OBJECT_INDEX, 1),
+            constraints=tuple(end.solver.constraints),
+        )
         for end in manager.found
     ]
 
@@ -103,15 +148,29 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project = angr.Project(NATIVE_ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_print_move_is_disabled_text")
     assert function is not None
-    state = project.factory.call_state(function.rebased_addr, NATIVE_STATE)
+    state = project.factory.call_state(function.rebased_addr,
+                                       NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, values["whose_turn"])
+    state.memory.store(NATIVE_MEMORY + W_PLAYER_SELECTED_MOVE,
+                      claripy.BVV(0x21, 8))
+    state.memory.store(NATIVE_MEMORY + W_PLAYER_SELECTED_MOVE + 1,
+                      claripy.BVV(0x43, 8))
+    state.memory.store(NATIVE_MEMORY + W_PLAYER_BATTLE_STATUS1,
+                      claripy.BVV(0xF1, 8))
+    state.memory.store(NATIVE_MEMORY + W_ENEMY_BATTLE_STATUS1,
+                      claripy.BVV(0xE3, 8))
+    state.memory.store(NATIVE_MEMORY + W_NAMED_OBJECT_INDEX,
+                      claripy.BVV(0, 8))
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
     return [
         Endpoint(
             **native_registers(end, NATIVE_STATE),
+            player_status=end.memory.load(NATIVE_MEMORY + W_PLAYER_BATTLE_STATUS1, 1),
+            enemy_status=end.memory.load(NATIVE_MEMORY + W_ENEMY_BATTLE_STATUS1, 1),
+            named_object=end.memory.load(NATIVE_MEMORY + W_NAMED_OBJECT_INDEX, 1),
             constraints=tuple(end.solver.constraints),
         )
         for end in manager.deadended
@@ -123,4 +182,7 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 def test_print_move_is_disabled_text_entry_pathwise_equivalence() -> None:
     values = symbolic_registers("print_move_is_disabled_text")
     values["whose_turn"] = claripy.BVS("print_move_is_disabled_text_whose_turn", 8)
-    assert_pathwise_equivalent(_assembly(values), _native(values), REGISTERS)
+    assert_pathwise_equivalent(
+        _assembly(values), _native(values),
+        (*REGISTERS, "player_status", "enemy_status", "named_object"),
+    )
