@@ -18297,8 +18297,8 @@ observables = [
     "hLoadedROMBank and rROMB",
     "the wCurMapTextPtr-derived HL pointer",
 ]
-proof_domain = "the complete DisplayTextID initialization prefix over both text-predef and current-map-bank branches, with proven DisplayTextIDInit and SwitchToMapRomBank composition, frame-counter setup, map-text pointer load, and sprite-index store; the text-ID dictionary, sprite-facing update, script dispatch, and shared display continuations remain beyond this boundary"
-decoder = "the linked entry bytes through the first text-ID dispatch are checked in verification/tests/test_display_text_id.py; the native port composes the complete DisplayTextIDInit and SwitchToMapRomBank transitions, then carries the exact prefix state into the pending dispatcher boundary"
+proof_domain = "the complete DisplayTextID initialization prefix over both text-predef and current-map-bank branches, plus the TEXT_MON_FAINTED dictionary compare/JP boundary, with proven DisplayTextIDInit and SwitchToMapRomBank composition, frame-counter setup, map-text pointer load, and sprite-index store; the remaining text-ID dictionary, sprite-facing update, script dispatch, and shared display continuations remain beyond this boundary"
+decoder = "the linked entry bytes through the TEXT_MON_FAINTED dispatch are checked in verification/tests/test_display_text_id.py; the native port composes the complete DisplayTextIDInit and SwitchToMapRomBank transitions, carries the exact prefix state into the CP/JP compare seam, and records the proven DisplayPokemonFaintedText callee boundary"
 
 
 [[function]]

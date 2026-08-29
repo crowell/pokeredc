@@ -89,6 +89,12 @@ class PrefixEnd(angr.SimProcedure):
         self.jump(RETURN)
 
 
+class FaintedDispatchBoundary(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        self.inhibit_autoret = True
+        self.jump(RETURN)
+
+
 class MapBankBoundary(angr.SimProcedure):
     def __init__(self, continuation: int) -> None:
         super().__init__()
@@ -124,17 +130,19 @@ def _values() -> dict[str, claripy.ast.BV]:
     }
 
 
-def _setup(state: angr.SimState, base: int, *, predef: int) -> None:
+def _setup(state: angr.SimState, base: int, *, predef: int,
+           text_id: int = 2) -> None:
     state.memory.store(base + W_TEXT_PREDEF_FLAG, claripy.BVV(predef, 8))
     state.memory.store(base + W_CUR_MAP, claripy.BVV(0, 8))
     state.memory.store(base + W_CUR_MAP_TEXT_PTR, claripy.BVV(0x34, 8))
     state.memory.store(base + W_CUR_MAP_TEXT_PTR + 1, claripy.BVV(0x12, 8))
-    state.memory.store(base + H_TEXT_ID, claripy.BVV(2, 8))
+    state.memory.store(base + H_TEXT_ID, claripy.BVV(text_id, 8))
     state.memory.store(base + H_LOADED_ROM_BANK, claripy.BVV(7, 8))
     state.memory.store(base + R_ROMB, claripy.BVV(5, 8))
 
 
-def _assembly(values: dict[str, claripy.ast.BV], *, predef: int) -> list[Endpoint]:
+def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
+              text_id: int = 2) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "DisplayTextID")
     assert linked_bytes(ROM, location, len(EXPECTED)) == EXPECTED
     project = angr.Project(
@@ -152,10 +160,13 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int) -> list[Endpoin
     project.hook(base + 0x21, Sm83LoadAAtHlIncrement(base + 0x22), length=1)
     project.hook(base + 0x26, Sm83LoadAHighImmediate(H_TEXT_ID, base + 0x28), length=2)
     project.hook(base + 0x28, Sm83StoreAImmediate(W_SPRITE_INDEX, base + 0x2b), length=3)
-    project.hook(base + 0x2b, PrefixEnd(), length=1)
+    if text_id == 0xd0:
+        project.hook(base + 0x36, FaintedDispatchBoundary(), length=3)
+    else:
+        project.hook(base + 0x2b, PrefixEnd(), length=1)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
-    _setup(state, 0, predef=predef)
+    _setup(state, 0, predef=predef, text_id=text_id)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
@@ -165,7 +176,8 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int) -> list[Endpoin
     return [_endpoint(end, native=False, base=0) for end in manager.found]
 
 
-def _native(values: dict[str, claripy.ast.BV], *, predef: int) -> list[Endpoint]:
+def _native(values: dict[str, claripy.ast.BV], *, predef: int,
+            text_id: int = 2) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_display_text_id")
     assert function is not None
@@ -173,7 +185,7 @@ def _native(values: dict[str, claripy.ast.BV], *, predef: int) -> list[Endpoint]
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(7, 8))
     state.memory.store(NATIVE_STATE + 9, claripy.BVV(5, 8))
-    _setup(state, NATIVE_MEMORY, predef=predef)
+    _setup(state, NATIVE_MEMORY, predef=predef, text_id=text_id)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     manager = project.factory.simulation_manager(state)
     manager.run()
@@ -198,6 +210,18 @@ def test_display_text_id_map_bank_prefix_pathwise_equivalence() -> None:
     values = _values()
     assert_pathwise_equivalent(
         _assembly(values, predef=0), _native(values, predef=0),
+        (*REGISTERS, "text_predef", "list_menu", "frame_counter",
+         "sprite_index", "loaded_bank", "romb"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_display_text_id_mon_fainted_dispatch_pathwise_equivalence() -> None:
+    values = _values()
+    assert_pathwise_equivalent(
+        _assembly(values, predef=0, text_id=0xd0),
+        _native(values, predef=0, text_id=0xd0),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
          "sprite_index", "loaded_bank", "romb"),
     )

@@ -9,6 +9,9 @@
 #define H_LOADED_ROM_BANK 0xffb8u
 #define R_ROMB 0x2000u
 #define BIT_TEXT_PREDEF 0u
+#define TEXT_MON_FAINTED 0xd0u
+#define PORT_FLAG_Z 0x80u
+#define PORT_FLAG_N 0x40u
 
 void port_display_text_id_init(
 	struct display_text_id_init_private_state *, port_u8 *);
@@ -76,4 +79,10 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 	state->registers.a = memory[H_TEXT_ID];
 	memory[W_SPRITE_INDEX] = state->registers.a;
 	state->registers.f = state->registers.a == 0u ? PORT_FLAG_Z : 0u;
+	/* The first dictionary branch is a cheap, fully bounded dispatch seam:
+	 * CP TEXT_MON_FAINTED / JP z, DisplayPokemonFaintedText.  The handler and
+	 * shared continuation are independently proven, so this entry records the
+	 * exact compare result and leaves the callee body at its proof boundary. */
+	if (state->registers.a == TEXT_MON_FAINTED)
+		state->registers.f = (port_u8)(PORT_FLAG_Z | PORT_FLAG_N);
 }
