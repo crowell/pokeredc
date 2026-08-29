@@ -23136,9 +23136,10 @@ c_source = "verification/ports/print_critical_ohko_text.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "wCriticalHitOrOHKO and wTextBoxID",
 ]
-proof_domain = "all register/flag and wCriticalHitOrOHKO inputs through the zero/nonzero branch"
-decoder = "wCriticalHitOrOHKO load and AND-A flags are modeled exactly; critical/OHKO text selection, clearing, and delay remain beyond the explicit boundary"
+proof_domain = "all symbolic register inputs with concrete wCriticalHitOrOHKO values 0 (no-hit), 1 (critical-hit), and 2 (OHKO); nonzero selection, PrintText setup, flag clear, and terminal DelayFrames state are covered"
+decoder = "exact 29-byte linked body checked in verification/tests/test_print_critical_ohko_text.py; the load/AND branch is executed, the two fixed text pointers compose through the PrintText call boundary, wCriticalHitOrOHKO is cleared, and the terminal 20-frame delay is represented by an explicit final-state boundary"
 
 [[function]]
 assembly_symbol = "CheckForDisobedience"
