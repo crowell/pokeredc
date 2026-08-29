@@ -25806,7 +25806,7 @@ observables = [
     "hWY, hAutoBGTransferEnabled, font-transfer bank state, and VBlank copy state",
     "all affected tilemap and font-transfer bytes",
 ]
-proof_domain = "all register/flag inputs over dialogue and start-menu text IDs, both EVENT_GOT_POKEDEX outcomes, automatic-box suppression, sprite-update suppression/call paths with wUpdateSpritesEnabled=2, all 15 facing-save iterations, all 16 animation-clear iterations, and the complete copy/font setup transitions"
+proof_domain = "all register/flag inputs over dialogue and start-menu text IDs, both EVENT_GOT_POKEDEX outcomes, automatic-box suppression, sprite-update suppression/call paths with representative wUpdateSpritesEnabled values 0, 1, and 2 (covering underflow, zero, and nonzero decrements), all 15 facing-save iterations, all 16 animation-clear iterations, and the complete copy/font setup transitions"
 decoder = "exact 117-byte linked body checked implicitly by symbol boundary; only individual SM83 absolute/HRAM load-store gaps and proven TextBoxBorder, CopyScreenTileBufferToVRAM, UpdateSprites early-return, and LoadFontTilePatterns call boundaries are shimmed, while production C executes the border selection, 15-entry facing loop, 16-entry stand-still loop, and real transfer ports; the _UpdateSprites bank-1 body remains outside this proof domain"
 
 [[function]]
