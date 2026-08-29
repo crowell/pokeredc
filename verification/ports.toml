@@ -10149,8 +10149,8 @@ observables = [
     "wSpriteSet, wSpriteSetID, wNumSprites",
     "all sprite-state data1/data2 bytes",
 ]
-proof_domain = "the complete early-return path for FIRST_INDOOR_MAP (map 0x25) plus the complete skip-loading path for PALLET_TOWN (map 0), with an already matching sprite-set ID, no font-reload flag, and all sprite data1 slots unused; all registers and the full sprite-state regions are compared"
-decoder = "the exact linked body executes through the initial RET NC map guard, map lookup, sprite-set equality branch, all fifteen real slot-stride iterations, and carry return; only individual SM83 absolute loads, arithmetic/flag instructions, conditional branches, and stack pointer shims are used, while split-map selection, sprite-set loading, and the LoadMapSpriteTilePatterns composition remain outside this proof domain"
+proof_domain = "the complete early-return path for FIRST_INDOOR_MAP (map 0x25), the complete skip-loading path for PALLET_TOWN (map 0), and the split-map selection path for map 0x0d selecting sprite set 2; the outdoor paths use an already matching sprite-set ID, no font-reload flag, and all sprite data1 slots unused, while all registers and the full sprite-state regions are compared"
+decoder = "the exact linked body executes through the initial RET NC map guard, map lookup, split-set result, sprite-set equality branch, all fifteen real slot-stride iterations, and carry return; only individual SM83 absolute loads, arithmetic/flag instructions, conditional branches, and stack pointer shims are used, while sprite-set loading and the LoadMapSpriteTilePatterns composition remain outside this proof domain"
 
 
 

@@ -128,6 +128,14 @@ class RetNCStack(angr.SimProcedure):
         )
 
 
+class SplitMapSetBoundary(angr.SimProcedure):
+    """Model the proven GetSplitMapSpriteSetID result for map 0x0d."""
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(2, 8)
+        self.jump(self.state.addr + 3)
+
+
 class Branch(angr.SimProcedure):
     def __init__(self, flag_bit: int, taken: int, fallthrough: int, invert: bool) -> None:
         super().__init__()
@@ -185,11 +193,14 @@ def _values() -> dict[str, claripy.ast.BV]:
 
 
 def _seed(state: angr.SimState, base: int, values: dict[str, claripy.ast.BV],
-          cur_map: int) -> None:
+          cur_map: int, sprite_set_id: int | None = None) -> None:
     state.memory.store(base + W_CUR_MAP, claripy.BVV(cur_map, 8))
     state.memory.store(base + W_Y_COORD, claripy.BVV(0, 8))
     state.memory.store(base + W_X_COORD, claripy.BVV(0, 8))
-    state.memory.store(base + W_SPRITE_SET_ID, values["sprite_set_id"])
+    state.memory.store(
+        base + W_SPRITE_SET_ID,
+        values["sprite_set_id"] if sprite_set_id is None else claripy.BVV(sprite_set_id, 8),
+    )
     state.memory.store(base + W_FONT_LOADED, claripy.BVV(0, 8))
     state.memory.store(base + W_NUM_SPRITES, claripy.BVV(0, 8))
     state.memory.store(base + DATA1, claripy.BVV(0, 0x100 * 8))
@@ -209,7 +220,8 @@ def _endpoint(state: angr.SimState, native: bool) -> Endpoint:
     )
 
 
-def _assembly(values: dict[str, claripy.ast.BV], cur_map: int) -> list[Endpoint]:
+def _assembly(values: dict[str, claripy.ast.BV], cur_map: int,
+              sprite_set_id: int | None = None) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "InitOutsideMapSprites")
     base = location.address
     assert linked_bytes(ROM, location, 6) == bytes.fromhex("fa5ed3fe25d0")
@@ -230,7 +242,10 @@ def _assembly(values: dict[str, claripy.ast.BV], cur_map: int) -> list[Endpoint]
     project.hook(base + 9, Sm83AddRegister("l", base + 10), length=1)
     project.hook(base + 0x0E, LoadAAtHL(base + 0x0F), length=1)
     project.hook(base + 0x0F, Sm83CpImmediate(0xF0, base + 0x11), length=2)
-    project.hook(base + 0x11, Jump(base + 0x14), length=3)
+    if cur_map == 0x0D:
+        project.hook(base + 0x11, SplitMapSetBoundary(), length=3)
+    else:
+        project.hook(base + 0x11, Jump(base + 0x14), length=3)
     project.hook(base + 0x15, Sm83LoadAImmediate(W_FONT_LOADED, base + 0x18), length=3)
     project.hook(base + 0x18, Sm83BitRegister(0, "a", base + 0x1A), length=2)
     project.hook(base + 0x1A, Jump(base + 0x1C), length=2)
@@ -248,7 +263,7 @@ def _assembly(values: dict[str, claripy.ast.BV], cur_map: int) -> list[Endpoint]
 
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
-    _seed(state, 0, values, cur_map)
+    _seed(state, 0, values, cur_map, sprite_set_id)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
@@ -258,13 +273,14 @@ def _assembly(values: dict[str, claripy.ast.BV], cur_map: int) -> list[Endpoint]
     return [_endpoint(manager.found[0], native=False)]
 
 
-def _native(values: dict[str, claripy.ast.BV], cur_map: int) -> list[Endpoint]:
+def _native(values: dict[str, claripy.ast.BV], cur_map: int,
+            sprite_set_id: int | None = None) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_init_outside_map_sprites")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
-    _seed(state, NATIVE_MEMORY, values, cur_map)
+    _seed(state, NATIVE_MEMORY, values, cur_map, sprite_set_id)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
@@ -280,5 +296,17 @@ def test_init_outside_map_sprites_pathwise_equivalence(cur_map: int) -> None:
     assert_pathwise_equivalent(
         _assembly(values, cur_map),
         _native(values, cur_map),
+        (*REGISTERS, "data1", "data2", "sprite_set", "sprite_set_id"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_init_outside_map_sprites_split_set_pathwise_equivalence() -> None:
+    values = _values()
+    values["data1"] = claripy.BVV(0, 0x100 * 8)
+    assert_pathwise_equivalent(
+        _assembly(values, 0x0D, sprite_set_id=2),
+        _native(values, 0x0D, sprite_set_id=2),
         (*REGISTERS, "data1", "data2", "sprite_set", "sprite_set_id"),
     )
