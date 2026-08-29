@@ -3,12 +3,14 @@
 #define W_TEXT_PREDEF_FLAG 0xcf11u
 #define W_CUR_MAP 0xd35eu
 #define W_CUR_MAP_TEXT_PTR 0xd36cu
+#define W_NUM_SPRITES 0xd4e1u
 #define W_SPRITE_INDEX 0xcf13u
 #define H_TEXT_ID 0xff8cu
 #define H_FRAME_COUNTER 0xffd5u
 #define H_LOADED_ROM_BANK 0xffb8u
 #define R_ROMB 0x2000u
 #define BIT_TEXT_PREDEF 0u
+#define TEXT_START_MENU 0x00u
 #define TEXT_MON_FAINTED 0xd0u
 #define TEXT_BLACKED_OUT 0xd1u
 #define TEXT_REPEL_WORE_OFF 0xd2u
@@ -26,6 +28,19 @@ read_word(const port_u8 *memory, port_u16 address)
 {
 	return (port_u16)(memory[address] |
 		((port_u16)memory[(port_u16)(address + 1u)] << 8));
+}
+
+static port_u8
+compare_flags(port_u8 left, port_u8 right)
+{
+	port_u8 flags = PORT_FLAG_N;
+	if (left == right)
+		flags |= PORT_FLAG_Z;
+	if ((left & 0x0fu) < (right & 0x0fu))
+		flags |= PORT_FLAG_H;
+	if (left < right)
+		flags |= PORT_FLAG_C;
+	return flags;
 }
 
 /* Port of the initialization prefix of DisplayTextID in home/text_script.asm.
@@ -87,9 +102,27 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 	/* The dictionary's special IDs are bounded dispatch seams.  The handler and
 	 * shared continuation bodies are independently proven, so this entry
 	 * records each exact compare result and leaves the callee at its boundary. */
+	if (state->registers.a == TEXT_START_MENU)
+		return;
 	if (state->registers.a == TEXT_MON_FAINTED ||
 	    state->registers.a == TEXT_BLACKED_OUT ||
 	    state->registers.a == TEXT_REPEL_WORE_OFF ||
 	    state->registers.a == TEXT_SAFARI_GAME_OVER)
+	{
 		state->registers.f = (port_u8)(PORT_FLAG_Z | PORT_FLAG_N);
+		return;
+	}
+
+	/* ld a,[wNumSprites]; ld e,a; ldh a,[hSpriteIndex]; cp e; jr nc,
+	 * .skipSpriteHandling.  The equal case intentionally falls through to
+	 * the sprite-facing handler, so this bounded port only consumes the strict
+	 * out-of-range path before the map-text lookup. */
+	{
+		port_u8 num_sprites = memory[W_NUM_SPRITES];
+		state->registers.e = num_sprites;
+		state->registers.f = compare_flags(state->registers.a, num_sprites);
+		if (state->registers.a >= num_sprites &&
+		    state->registers.a != num_sprites)
+			return;
+	}
 }

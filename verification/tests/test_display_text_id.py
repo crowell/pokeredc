@@ -36,6 +36,7 @@ W_TEXT_PREDEF_FLAG = 0xCF11
 W_LIST_MENU_ID = 0xCF94
 W_CUR_MAP = 0xD35E
 W_CUR_MAP_TEXT_PTR = 0xD36C
+W_NUM_SPRITES = 0xD4E1
 W_SPRITE_INDEX = 0xCF13
 H_TEXT_ID = 0xFF8C
 H_FRAME_COUNTER = 0xFFD5
@@ -131,18 +132,19 @@ def _values() -> dict[str, claripy.ast.BV]:
 
 
 def _setup(state: angr.SimState, base: int, *, predef: int,
-           text_id: int = 2) -> None:
+           text_id: int = 2, num_sprites: int = 1) -> None:
     state.memory.store(base + W_TEXT_PREDEF_FLAG, claripy.BVV(predef, 8))
     state.memory.store(base + W_CUR_MAP, claripy.BVV(0, 8))
     state.memory.store(base + W_CUR_MAP_TEXT_PTR, claripy.BVV(0x34, 8))
     state.memory.store(base + W_CUR_MAP_TEXT_PTR + 1, claripy.BVV(0x12, 8))
     state.memory.store(base + H_TEXT_ID, claripy.BVV(text_id, 8))
+    state.memory.store(base + W_NUM_SPRITES, claripy.BVV(num_sprites, 8))
     state.memory.store(base + H_LOADED_ROM_BANK, claripy.BVV(7, 8))
     state.memory.store(base + R_ROMB, claripy.BVV(5, 8))
 
 
 def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
-              text_id: int = 2) -> list[Endpoint]:
+              text_id: int = 2, num_sprites: int = 1) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "DisplayTextID")
     assert linked_bytes(ROM, location, len(EXPECTED)) == EXPECTED
     project = angr.Project(
@@ -160,15 +162,18 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
     project.hook(base + 0x21, Sm83LoadAAtHlIncrement(base + 0x22), length=1)
     project.hook(base + 0x26, Sm83LoadAHighImmediate(H_TEXT_ID, base + 0x28), length=2)
     project.hook(base + 0x28, Sm83StoreAImmediate(W_SPRITE_INDEX, base + 0x2b), length=3)
+    project.hook(base + 0x43, Sm83LoadAFromImmediate(W_NUM_SPRITES, base + 0x46), length=3)
+    project.hook(base + 0x47, Sm83LoadAHighImmediate(H_TEXT_ID, base + 0x49), length=2)
     dispatch_offsets = {0x00: 0x2c, 0xd0: 0x36, 0xd1: 0x3b, 0xd2: 0x40, 0xd3: 0x31}
     if text_id in dispatch_offsets:
         project.hook(base + dispatch_offsets[text_id],
                      FaintedDispatchBoundary(), length=3)
     else:
-        project.hook(base + 0x2b, PrefixEnd(), length=1)
+        project.hook(base + 0x6a, PrefixEnd(), length=1)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
-    _setup(state, 0, predef=predef, text_id=text_id)
+    _setup(state, 0, predef=predef, text_id=text_id,
+           num_sprites=num_sprites)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
@@ -179,7 +184,7 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
 
 
 def _native(values: dict[str, claripy.ast.BV], *, predef: int,
-            text_id: int = 2) -> list[Endpoint]:
+            text_id: int = 2, num_sprites: int = 1) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_display_text_id")
     assert function is not None
@@ -187,7 +192,8 @@ def _native(values: dict[str, claripy.ast.BV], *, predef: int,
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(7, 8))
     state.memory.store(NATIVE_STATE + 9, claripy.BVV(5, 8))
-    _setup(state, NATIVE_MEMORY, predef=predef, text_id=text_id)
+    _setup(state, NATIVE_MEMORY, predef=predef, text_id=text_id,
+           num_sprites=num_sprites)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     manager = project.factory.simulation_manager(state)
     manager.run()
@@ -225,6 +231,21 @@ def test_display_text_id_special_dispatch_pathwise_equivalence(text_id: int) -> 
     assert_pathwise_equivalent(
         _assembly(values, predef=0, text_id=text_id),
         _native(values, predef=0, text_id=text_id),
+        (*REGISTERS, "text_predef", "list_menu", "frame_counter",
+         "sprite_index", "loaded_bank", "romb"),
+    )
+
+
+@pytest.mark.parametrize("num_sprites", [0, 1])
+@pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_display_text_id_out_of_range_sprite_gate_pathwise_equivalence(
+    num_sprites: int,
+) -> None:
+    values = _values()
+    assert_pathwise_equivalent(
+        _assembly(values, predef=0, text_id=2, num_sprites=num_sprites),
+        _native(values, predef=0, text_id=2, num_sprites=num_sprites),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
          "sprite_index", "loaded_bank", "romb"),
     )
