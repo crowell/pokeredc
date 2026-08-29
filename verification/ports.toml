@@ -15489,8 +15489,8 @@ observables = [
     "two-step tile and boulder collision result globals",
     "collision-table pointer traversal and tile-pair state",
 ]
-proof_domain = "two-steps-ahead tile lookup followed by collision-table sentinel and nonmatching scans, a matching passable tile with no tile-pair collision, a tile-pair elevation collision, and stairs termination; the real tile-pair and boulder-sprite ports remain composed in C, with sprite-scan outcomes documented as follow-up proof paths"
-decoder = "exact 43-byte linked body checked; the complete two-step lookup, collision-table pointer traversal, CP/branch back-edge, tile-pair carry gate, stairs comparison, and sentinel terminal path execute under angr, while boulder-sprite collision outcomes remain outside the focused assembly composition"
+proof_domain = "two-steps-ahead tile lookup followed by collision-table sentinel and nonmatching scans, a matching passable tile with no tile-pair collision, a tile-pair elevation collision, stairs termination, and both no-collision and collision outcomes from the composed boulder-sprite scan"
+decoder = "exact 43-byte linked body checked; the complete two-step lookup, collision-table pointer traversal, CP/branch back-edge, tile-pair carry gate, stairs comparison, sentinel terminal path, and boulder-sprite call return are exercised under angr"
 
 [[function]]
 assembly_symbol = "CheckForBoulderCollisionWithSprites"
