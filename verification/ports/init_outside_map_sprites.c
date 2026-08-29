@@ -83,6 +83,8 @@ port_init_outside_map_sprites(struct cpu_register_state *r, port_u8 *memory)
 	port_u8 set_id;
 	port_u8 saved_num;
 
+	/* The assembly keeps the map byte in A while checking the indoor guard. */
+	r->a = map;
 	set_cp_flags(r, map, FIRST_INDOOR_MAP);
 	if (map >= FIRST_INDOOR_MAP)
 		return;
