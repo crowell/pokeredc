@@ -24316,10 +24316,10 @@ status = "partial"
 observables = [
     "all registers and flags",
     "wSafariBaitFactor",
-    "wSafariRockFactor",
+    "wSafariEscapeFactor (rock-factor path)",
 ]
-proof_domain = "all register/flag and bait/rock-factor inputs through safari text selection"
-decoder = "bait/rock factor decrement flags, eating/angry text pointer selection, and no-text return are modeled exactly; enemy species/catch-rate update, tile loading, text rendering, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all register/flag and bait/escape-factor inputs through the bait, zero-escape return, and angry-text selection paths"
+decoder = "exact 45-byte linked body checked in verification/tests/test_print_safari_zone_battle_text_private.py; bait/escape-factor decrements, DEC/AND flags, eating/angry text pointer selection, and the zero-escape return are modeled exactly, while enemy species/catch-rate update, tile loading, text rendering, and continuation calls remain beyond the explicit boundary"
 
 [[function]]
 assembly_symbol = "ScaleSpriteByTwo"
