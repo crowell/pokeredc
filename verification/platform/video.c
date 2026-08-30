@@ -69,6 +69,25 @@ render_layer_row(const uint8_t *memory, uint32_t *rgba, unsigned row,
 	}
 }
 
+static void
+render_window_row(const uint8_t *memory, uint32_t *rgba, unsigned screen_y,
+	unsigned window_x, unsigned window_y, unsigned map_base,
+	const uint8_t *bg_pal, int signed_tiles)
+{
+	unsigned yy = screen_y - window_y;
+
+	for (unsigned screen_x = window_x; screen_x < GB_SCREEN_W; screen_x++) {
+		unsigned xx = screen_x - window_x;
+		unsigned tile = memory[map_base + yy / 8u * 32u + xx / 8u];
+		unsigned tile_addr = signed_tiles ?
+		    (port_u16)(0x9000u + (int)(int8_t)tile * 16) :
+		    0x8000u + tile * 16u;
+
+		rgba[screen_y * GB_SCREEN_W + screen_x] = shade(bg_pal,
+		    tile_pixel(memory, tile_addr, xx % 8u, yy % 8u, 0, 0));
+	}
+}
+
 void
 video_render(const uint8_t *memory, uint32_t *rgba)
 {
@@ -99,11 +118,14 @@ video_render(const uint8_t *memory, uint32_t *rgba)
 			rgba[i] = shade(bg_pal, 0);
 	}
 
-	if ((lcdc & LCDC_WINDOW_ON) != 0 && wy < GB_SCREEN_H &&
-	    wx <= GB_SCREEN_W) {
+	/* The window's visible X origin is WX-7, not WX.  WX values below 7
+	 * produce a clipped window beginning at the left edge. */
+	if ((lcdc & LCDC_WINDOW_ON) != 0 && wy < GB_SCREEN_H && wx < 167u) {
+		unsigned window_x = wx < 7u ? 0u : wx - 7u;
+
 		for (unsigned row = wy; row < GB_SCREEN_H; row++)
-			render_layer_row(memory, rgba, row, win_map, 0, 0,
-			    bg_pal, signed_tiles);
+			render_window_row(memory, rgba, row, window_x, wy,
+			    win_map, bg_pal, signed_tiles);
 	}
 
 	if ((lcdc & LCDC_SPRITES_ON) == 0)
@@ -111,7 +133,7 @@ video_render(const uint8_t *memory, uint32_t *rgba)
 
 	/* Sprites are rendered last-to-first so lower OAM entries win. */
 	for (int s = 39; s >= 0; s--) {
-		const uint8_t *spr = memory + W_SHADOW_OAM + (unsigned)s * 4u;
+		const uint8_t *spr = memory + OAM_START + (unsigned)s * 4u;
 		unsigned y = spr[0];
 		unsigned x = spr[1];
 		unsigned tile = spr[2];
@@ -127,6 +149,9 @@ video_render(const uint8_t *memory, uint32_t *rgba)
 
 		for (unsigned py = 0; py < height; py++) {
 			int sy = (int)y - 16 + (int)py;
+			unsigned source_y = flip_y ? height - 1u - py : py;
+			unsigned source_tile = height == 16u ?
+			    (tile & 0xFEu) + source_y / 8u : tile;
 
 			if (sy < 0 || sy >= GB_SCREEN_H)
 				continue;
@@ -137,13 +162,8 @@ video_render(const uint8_t *memory, uint32_t *rgba)
 				if (sx < 0 || sx >= GB_SCREEN_W)
 					continue;
 				color = tile_pixel(memory,
-				    0x8000u +
-					(unsigned)(tile +
-					    (height == 16u ?
-						    (py >= 8u ? 1u : 0u) :
-						    0u)) *
-					16u,
-				    px, py % 8u, flip_x, flip_y);
+				    0x8000u + source_tile * 16u, px,
+				    source_y % 8u, flip_x, 0);
 				if (color == 0)
 					continue; /* sprite transparency */
 				if (behind_bg &&

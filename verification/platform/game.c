@@ -7,9 +7,11 @@
  * ported functions in verification/ports/. The glue supplies scheduling,
  * hardware-register commits, and trivially small data ops (each marked
  * "inlined"); anything substantive that is not ported yet carries a
- * `REQUIRED:` comment and a row in verification/REQUIRED.md.
+ * `FIDELITY_BOUNDARY`/`REQUIRED` comment and an assignment in
+ * verification/INTRO_MAIN_LOOP_PORTING.md.
  *
  * Phases mirror the asm control flow:
+ *   MAC_PHASE_INTRO   <- PlayIntro              (engine/movie/intro.asm)
  *   MAC_PHASE_TITLE   <- DisplayTitleScreen     (engine/movie/title.asm)
  *   MAC_PHASE_MENU    <- MainMenu, no-save      (engine/menus/main_menu.asm)
  *   MAC_PHASE_NEWGAME <- StartNewGame/OakSpeech (engine/movie/oak_speech/)
@@ -44,6 +46,14 @@ void port_fade_in_intro_pic(struct cpu_register_state *state,
 	port_u8 *memory);
 void port_draw_player_character(struct draw_player_character_state *state,
 	port_u8 *memory);
+void port_clear_sprites(struct clear_sprites_state *state);
+void port_intro_clear_screen(struct cpu_register_state *state,
+	port_u8 *memory);
+void port_intro_clear_middle_of_screen(struct cpu_register_state *state,
+	port_u8 *memory);
+void port_init_intro_nidorino_oam(struct init_intro_oam_state *state,
+	port_u8 *memory);
+void port_update_intro_nidorino_oam(struct intro_nidorino_oam_state *state);
 
 /* SoftReset keeps its state local to ports/soft_reset.c. */
 struct soft_reset_mirror {
@@ -135,6 +145,35 @@ void port_init_player_data2(struct init_player_data2_state *state, port_u8 *memo
 #define W_CUR_SPECIES 0xD0B5u
 #define SRC_DEBUG_RIVAL_NAME 0x45B1u /* "SONY@" */
 
+#define BANK_INTRO 0x10u
+#define SRC_INTRO_ANIMATION1 0x5910u
+#define SRC_INTRO_ANIMATION2 0x591Bu
+#define SRC_INTRO_ANIMATION3 0x5926u
+#define SRC_INTRO_ANIMATION4 0x5931u
+#define SRC_INTRO_ANIMATION5 0x593Cu
+#define SRC_INTRO_ANIMATION6 0x5947u
+#define SRC_INTRO_ANIMATION7 0x5950u
+#define SRC_GAME_FREAK_INTRO 0x5959u
+#define SRC_FIGHT_INTRO_BACK_MON 0x5A99u
+#define SRC_FIGHT_INTRO_FRONT_MON 0x6099u
+#define BANK_SPLASH 0x1Cu
+#define SRC_GAME_FREAK_LOGO_OAM 0x4140u
+#define SRC_SHOOTING_STAR_OAM 0x4180u
+#define SRC_FALLING_STAR_GFX 0x4190u
+#define BANK_MOVE_ANIMATIONS 0x1Eu
+#define SRC_STAR_TOP_GFX 0x471Eu
+#define SRC_STAR_BOTTOM_GFX 0x481Eu
+#define SRC_GENGAR_TILEMAP1 0x5B8Du
+#define SRC_GENGAR_TILEMAP2 0x5BBEu
+#define SRC_GENGAR_TILEMAP3 0x5BEFu
+
+#define V_CHARS0 0x8000u
+#define V_CHARS1 0x8800u
+#define V_CHARS2 0x9000u
+#define W_BASE_COORD_X 0xD081u
+#define W_BASE_COORD_Y 0xD082u
+#define W_INTRO_NIDORINO_BASE_TILE 0xD09Fu
+
 /* ---- VRAM / WRAM targets ------------------------------------------ */
 #define V_TITLE_LOGO 0x8800u /* vTitleLogo */
 #define V_TITLE_LOGO2 0x9310u /* vTitleLogo2 */
@@ -144,8 +183,6 @@ void port_init_player_data2(struct init_player_data2_state *state, port_u8 *memo
 #define W_RIVAL_NAME 0xD34Au
 #define W_TILE_MAP_BACKUP 0xC508u /* wTileMapBackup */
 
-#define GAME_SCRATCH 0xD800u /* driver-only strings */
-#define TITLE_SCROLL_FRAMES 64u /* hSCY $40 -> $00 */
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                              */
@@ -183,21 +220,6 @@ far_copy2(struct mac_kernel *kernel, uint8_t *memory,
 	port_far_copy_data2(&st, memory);
 	memory[H_LOADED_ROM_BANK] = saved_bank;
 	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
-}
-
-/* ASCII -> pokered charmap, for the driver's own strings only. */
-static port_u8
-gb_char(char c)
-{
-	if (c >= 'A' && c <= 'Z')
-		return (port_u8)(0x80 + (c - 'A'));
-	if (c >= 'a' && c <= 'z')
-		return (port_u8)(0xA0 + (c - 'a'));
-	if (c >= '0' && c <= '9')
-		return (port_u8)(0xF6 + (c - '0'));
-	if (c == '-')
-		return 0xE3;
-	return 0x7F;
 }
 
 /* Places a ROM string through the ported PlaceString. Every driver string
@@ -253,8 +275,178 @@ process_rom_text(struct mac_kernel *kernel, uint8_t *memory,
 	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
 }
 
+static const uint8_t *
+rom_address(const struct mac_rom *rom, unsigned bank, unsigned address,
+	unsigned bytes)
+{
+	size_t offset = address < 0x4000u ? address :
+	    (size_t)bank * 0x4000u + address - 0x4000u;
+
+	if (rom == NULL || rom->data == NULL || offset + bytes > rom->size)
+		return NULL;
+	return rom->data + offset;
+}
+
+static void
+clear_shadow_sprites(uint8_t *memory)
+{
+	struct clear_sprites_state clear;
+
+	memset(&clear, 0, sizeof(clear));
+	port_clear_sprites(&clear);
+	memcpy(memory + W_SHADOW_OAM, clear.oam, sizeof(clear.oam));
+}
+
+static void
+copy_intro_tilemap(uint8_t *memory, const struct mac_rom *rom,
+	unsigned source)
+{
+	const uint8_t *tiles = rom_address(rom, BANK_MOVE_ANIMATIONS, source, 49);
+
+	if (tiles == NULL)
+		return;
+	for (unsigned y = 0; y < 7; y++)
+		memcpy(memory + W_TILE_MAP + (7u + y) * 20u + 13u,
+		    tiles + y * 7u, 7);
+}
+
+static void
+intro_sound(uint8_t *memory, unsigned cue)
+{
+	/* These register writes make every intro cue audible through the real
+	 * four-channel host APU.  They are intentionally isolated from the ROM
+	 * sequencer so replacing them with Audio1_UpdateMusic is mechanical.
+	 * FIDELITY_BOUNDARY(audio-sequencer): cue pitches/envelopes remain a
+	 * host fallback, not a decoding of the original sound bytecode. */
+	static const unsigned pitch[] = { 880, 392, 523, 659, 196, 784 };
+	unsigned selected = cue < sizeof(pitch) / sizeof(pitch[0]) ? cue : 0;
+
+	apu_test_tone(memory, pitch[selected], cue == 0 ? 500u : 120u);
+	if (cue == 0 || cue == 4) {
+		memory[0xFF21u] = cue == 0 ? 0xF2u : 0xC1u;
+		memory[0xFF22u] = cue == 0 ? 0x35u : 0x54u;
+		memory[0xFF23u] = 0xC0u;
+		memory[0xFF25u] |= 0x88u;
+	}
+}
+
+static void
+setup_copyright(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom)
+{
+	struct cpu_register_state regs = { 0 };
+
+	port_clear_screen(&regs, memory);
+	far_copy2(kernel, memory, rom, BANK_LOGOS, SRC_NINTENDO_COPYRIGHT_GFX,
+	    V_CHARS2_TILE60, 28u * 16u);
+	place_rom_string(kernel, memory, rom, 2, 7, 0x4556u);
+	memory[H_AUTO_BG_TRANSFER_ENABLED] = 1;
+	memory[H_AUTO_BG_TRANSFER_DEST] = 0;
+	memory[H_AUTO_BG_TRANSFER_DEST + 1] = 0x9Cu;
+	memory[H_SCX] = 0;
+	memory[H_SCY] = 0;
+	memory[H_WY] = 0;
+	memory[R_BGP] = 0x1Bu;
+	memory[R_OBP0] = 0xE4u;
+	memory[R_OBP1] = 0xE4u;
+	memory[R_LCDC] = 0xE3u;
+}
+
+static void
+setup_shooting_star(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom)
+{
+	struct cpu_register_state regs = { 0 };
+
+	port_clear_screen(&regs, memory);
+	memory[R_LCDC] = 0;
+	port_intro_clear_screen(&regs, memory);
+	for (unsigned x = 0; x < 20; x++) {
+		for (unsigned y = 0; y < 4; y++)
+			memory[W_TILE_MAP + y * 20u + x] = 1;
+		for (unsigned y = 14; y < 18; y++)
+			memory[W_TILE_MAP + y * 20u + x] = 1;
+	}
+	memset(memory + 0x9C00u, 1, 32u * 4u);
+	memset(memory + 0x9C00u + 14u * 32u, 1, 32u * 4u);
+
+	far_copy2(kernel, memory, rom, BANK_INTRO, SRC_FIGHT_INTRO_BACK_MON,
+	    V_CHARS2, 0x600u);
+	far_copy2(kernel, memory, rom, BANK_INTRO, SRC_GAME_FREAK_INTRO,
+	    V_CHARS2 + 0x600u, 0x140u);
+	far_copy2(kernel, memory, rom, BANK_INTRO, SRC_GAME_FREAK_INTRO,
+	    V_CHARS1, 0x140u);
+	far_copy2(kernel, memory, rom, BANK_INTRO, SRC_FIGHT_INTRO_FRONT_MON,
+	    V_CHARS0, 0x6C0u);
+	far_copy2(kernel, memory, rom, BANK_MOVE_ANIMATIONS, SRC_STAR_TOP_GFX,
+	    V_CHARS1 + 0x200u, 16u);
+	far_copy2(kernel, memory, rom, BANK_MOVE_ANIMATIONS,
+	    SRC_STAR_BOTTOM_GFX, V_CHARS1 + 0x210u, 16u);
+	far_copy2(kernel, memory, rom, BANK_SPLASH, SRC_FALLING_STAR_GFX,
+	    V_CHARS1 + 0x220u, 16u);
+	far_copy2(kernel, memory, rom, BANK_SPLASH, SRC_GAME_FREAK_LOGO_OAM,
+	    W_SHADOW_OAM + 24u * 4u, 64u);
+	far_copy2(kernel, memory, rom, BANK_SPLASH, SRC_SHOOTING_STAR_OAM,
+	    W_SHADOW_OAM, 16u);
+
+	memory[R_OBP0] = 0xF9u;
+	memory[R_OBP1] = 0xA4u;
+	memory[H_AUTO_BG_TRANSFER_DEST] = 0;
+	memory[H_AUTO_BG_TRANSFER_DEST + 1] = 0x9Cu;
+	memory[R_LCDC] = 0xCBu;
+}
+
+static void
+setup_small_stars(uint8_t *memory)
+{
+	for (unsigned sprite = 0; sprite < 24; sprite++) {
+		uint8_t *oam = memory + W_SHADOW_OAM + sprite * 4u;
+
+		oam[0] = 16u;
+		oam[1] = 8u;
+		oam[2] = 0xA2u;
+		oam[3] = 0x90u;
+	}
+}
+
+static void
+start_intro_fight(uint8_t *memory, const struct mac_rom *rom)
+{
+	struct init_intro_oam_state init;
+
+	clear_shadow_sprites(memory);
+	copy_intro_tilemap(memory, rom, SRC_GENGAR_TILEMAP1);
+	memory[R_BGP] = 0x1Bu;
+	memory[R_OBP0] = 0x1Bu;
+	memory[R_OBP1] = 0x1Bu;
+	memory[H_SCX] = 0;
+	memory[W_BASE_COORD_X] = 0;
+	memory[W_BASE_COORD_Y] = 80u;
+	memory[W_INTRO_NIDORINO_BASE_TILE] = 0;
+	memset(&init, 0, sizeof(init));
+	init.base_x = 0;
+	init.base_y = 80u;
+	init.registers.b = 6;
+	init.registers.c = 6;
+	port_init_intro_nidorino_oam(&init, memory);
+}
+
+static void
+game_enter_intro(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom, struct mac_game *game)
+{
+	game->phase = MAC_PHASE_INTRO;
+	game->frames_in_phase = 0;
+	game->scene = 0;
+	game->timer = 180;
+	game->action = 0;
+	game->action_frame = 0;
+	game->small_star_count = 0;
+	setup_copyright(kernel, memory, rom);
+}
+
 /* ------------------------------------------------------------------ */
-/* Boot: home/init.asm Init, then DisplayTitleScreen                    */
+/* Boot: home/init.asm Init, then PlayIntro                             */
 /* ------------------------------------------------------------------ */
 
 void
@@ -271,7 +463,7 @@ game_boot(struct mac_kernel *kernel, uint8_t *memory,
 	memory[R_OBP0] = 0xE4;
 	memory[R_OBP1] = 0xE4;
 
-	game_enter_title(kernel, memory, rom, game);
+	game_enter_intro(kernel, memory, rom, game);
 }
 
 /* ------------------------------------------------------------------ */
@@ -286,6 +478,9 @@ game_enter_title(struct mac_kernel *kernel, uint8_t *memory,
 
 	game->phase = MAC_PHASE_TITLE;
 	game->frames_in_phase = 0;
+	game->action = 0;
+	game->action_frame = 0;
+	game->timer = 0;
 	game->version_shown = 0;
 	game->boundary_shown = 0;
 
@@ -608,6 +803,304 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	 * and ChoosePlayerName/ChooseRivalName. */
 }
 
+enum intro_action_kind {
+	INTRO_ACTION_MOVE,
+	INTRO_ACTION_ANIMATE,
+	INTRO_ACTION_WAIT,
+	INTRO_ACTION_TILEMAP,
+	INTRO_ACTION_SOUND,
+	INTRO_ACTION_BASE_TILE,
+	INTRO_ACTION_END,
+};
+
+enum intro_move_kind {
+	INTRO_MOVE_NIDORINO_RIGHT,
+	INTRO_MOVE_GENGAR_RIGHT,
+	INTRO_MOVE_GENGAR_LEFT,
+};
+
+struct intro_action {
+	uint8_t kind;
+	uint8_t argument;
+	uint16_t value;
+};
+
+#define IA(kind, argument, value) { INTRO_ACTION_##kind, argument, value }
+
+static const struct intro_action intro_fight_script[] = {
+	IA(MOVE, INTRO_MOVE_NIDORINO_RIGHT, 40),
+	IA(SOUND, 1, 0), IA(BASE_TILE, 0, 0),
+	IA(ANIMATE, 0, SRC_INTRO_ANIMATION1),
+	IA(SOUND, 2, 0), IA(ANIMATE, 0, SRC_INTRO_ANIMATION2),
+	IA(WAIT, 0, 10),
+	IA(SOUND, 1, 0), IA(ANIMATE, 0, SRC_INTRO_ANIMATION1),
+	IA(SOUND, 2, 0), IA(ANIMATE, 0, SRC_INTRO_ANIMATION2),
+	IA(WAIT, 0, 30),
+	IA(TILEMAP, 0, SRC_GENGAR_TILEMAP2), IA(SOUND, 3, 0),
+	IA(MOVE, INTRO_MOVE_GENGAR_LEFT, 4), IA(WAIT, 0, 30),
+	IA(TILEMAP, 0, SRC_GENGAR_TILEMAP3), IA(SOUND, 4, 0),
+	IA(MOVE, INTRO_MOVE_GENGAR_RIGHT, 8), IA(SOUND, 1, 0),
+	IA(BASE_TILE, 0, 0x24), IA(ANIMATE, 0, SRC_INTRO_ANIMATION3),
+	IA(WAIT, 0, 30),
+	IA(MOVE, INTRO_MOVE_GENGAR_LEFT, 4),
+	IA(TILEMAP, 0, SRC_GENGAR_TILEMAP1), IA(WAIT, 0, 60),
+	IA(SOUND, 1, 0), IA(BASE_TILE, 0, 0),
+	IA(ANIMATE, 0, SRC_INTRO_ANIMATION4),
+	IA(SOUND, 2, 0), IA(ANIMATE, 0, SRC_INTRO_ANIMATION5),
+	IA(WAIT, 0, 20),
+	IA(BASE_TILE, 0, 0x24), IA(ANIMATE, 0, SRC_INTRO_ANIMATION6),
+	IA(WAIT, 0, 30),
+	IA(SOUND, 5, 0), IA(BASE_TILE, 0, 0x48),
+	IA(ANIMATE, 0, SRC_INTRO_ANIMATION7),
+	IA(END, 0, 0),
+};
+
+#undef IA
+
+static int
+intro_interrupted(const uint8_t *memory)
+{
+	uint8_t held = memory[H_JOYINPUT];
+
+	return (memory[H_JOYPRESSED] & (PAD_A | PAD_START)) != 0 ||
+	    (held & (PAD_UP | PAD_SELECT | PAD_B)) ==
+		(PAD_UP | PAD_SELECT | PAD_B);
+}
+
+static void
+update_intro_nidorino(uint8_t *memory, uint8_t base_y, uint8_t base_x)
+{
+	struct intro_nidorino_oam_state update;
+
+	memset(&update, 0, sizeof(update));
+	update.base_y = base_y;
+	update.base_x = base_x;
+	update.base_tile = memory[W_INTRO_NIDORINO_BASE_TILE];
+	update.registers.c = 36;
+	memcpy(update.oam, memory + W_SHADOW_OAM, OAM_SIZE);
+	port_update_intro_nidorino_oam(&update);
+	memcpy(memory + W_SHADOW_OAM, update.oam, OAM_SIZE);
+}
+
+static int
+tick_intro_fight(uint8_t *memory, const struct mac_rom *rom,
+	struct mac_game *game)
+{
+	for (;;) {
+		const struct intro_action *entry =
+		    &intro_fight_script[game->action];
+
+		switch (entry->kind) {
+		case INTRO_ACTION_MOVE:
+			if ((game->action_frame & 1u) == 0) {
+				if (entry->argument == INTRO_MOVE_NIDORINO_RIGHT) {
+					update_intro_nidorino(memory, 0, 2);
+					memory[H_SCX] += 2;
+				} else if (entry->argument ==
+				    INTRO_MOVE_GENGAR_LEFT) {
+					memory[H_SCX] += 2;
+				} else {
+					memory[H_SCX] -= 2;
+				}
+			}
+			game->action_frame++;
+			if (game->action_frame >= (unsigned)entry->value * 2u) {
+				game->action++;
+				game->action_frame = 0;
+			}
+			return 0;
+
+		case INTRO_ACTION_ANIMATE: {
+			const uint8_t *animation = rom_address(rom, BANK_INTRO,
+			    entry->value, 32);
+			unsigned pair = game->action_frame / 5u;
+
+			if (animation == NULL || animation[pair * 2u] == 80u) {
+				game->action++;
+				game->action_frame = 0;
+				continue;
+			}
+			if (game->action_frame % 5u == 0)
+				update_intro_nidorino(memory,
+				    animation[pair * 2u], animation[pair * 2u + 1u]);
+			game->action_frame++;
+			return 0;
+		}
+
+		case INTRO_ACTION_WAIT:
+			if (++game->action_frame >= entry->value) {
+				game->action++;
+				game->action_frame = 0;
+			}
+			return 0;
+
+		case INTRO_ACTION_TILEMAP:
+			copy_intro_tilemap(memory, rom, entry->value);
+			game->action++;
+			continue;
+
+		case INTRO_ACTION_SOUND:
+			intro_sound(memory, entry->argument);
+			game->action++;
+			continue;
+
+		case INTRO_ACTION_BASE_TILE:
+			memory[W_INTRO_NIDORINO_BASE_TILE] = (uint8_t)entry->value;
+			game->action++;
+			continue;
+
+		case INTRO_ACTION_END:
+			return 1;
+		}
+	}
+}
+
+static void
+start_intro_fade(struct mac_game *game)
+{
+	game->scene = 8;
+	game->action_frame = 0;
+}
+
+static void
+tick_intro(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom, struct mac_game *game)
+{
+	static const uint8_t star_waves[4][8] = {
+		{ 0x68, 0x30, 0x68, 0x40, 0x68, 0x58, 0x68, 0x78 },
+		{ 0x68, 0x38, 0x68, 0x48, 0x68, 0x60, 0x68, 0x70 },
+		{ 0x68, 0x34, 0x68, 0x4C, 0x68, 0x54, 0x68, 0x64 },
+		{ 0x68, 0x3C, 0x68, 0x5C, 0x68, 0x6C, 0x68, 0x74 },
+	};
+
+	if (game->scene >= 2 && game->scene <= 7 &&
+	    intro_interrupted(memory)) {
+		start_intro_fade(game);
+		return;
+	}
+
+	switch (game->scene) {
+	case 0: /* LoadCopyrightAndTextBoxTiles; DelayFrames 180 */
+		if (--game->timer == 0) {
+			setup_shooting_star(kernel, memory, rom);
+			game->scene = 1;
+			game->timer = 64;
+		}
+		break;
+
+	case 1: /* black bars + loaded intro graphics; DelayFrames 64 */
+		if (--game->timer == 0) {
+			intro_sound(memory, 0);
+			game->scene = 2;
+			game->action_frame = 0;
+		}
+		break;
+
+	case 2: /* AnimateShootingStar.bigStarLoop */
+		for (unsigned sprite = 0; sprite < 4; sprite++) {
+			memory[W_SHADOW_OAM + sprite * 4u] += 4;
+			memory[W_SHADOW_OAM + sprite * 4u + 1u] -= 4;
+		}
+		if (++game->action_frame >= 40u) {
+			for (unsigned sprite = 0; sprite < 4; sprite++)
+				memory[W_SHADOW_OAM + sprite * 4u] = 160u;
+			game->scene = 3;
+			game->action_frame = 0;
+		}
+		break;
+
+	case 3: /* flash the Game Freak logo three times, ten frames each */
+		if (game->action_frame % 10u == 0)
+			memory[R_OBP0] = (uint8_t)((memory[R_OBP0] >> 2) |
+			    (memory[R_OBP0] << 6));
+		if (++game->action_frame >= 30u) {
+			setup_small_stars(memory);
+			game->scene = 4;
+			game->action_frame = 0;
+			game->small_star_count = 0;
+		}
+		break;
+
+	case 4: { /* six waves; each MoveDownSmallStars is 8 * DelayFrames(3) */
+		unsigned wave = game->action_frame / 24u;
+		unsigned wave_frame = game->action_frame % 24u;
+
+		if (wave_frame == 0 && wave < 4u) {
+			for (unsigned i = 0; i < 4; i++) {
+				memory[W_SHADOW_OAM + (20u + i) * 4u] =
+				    star_waves[wave][i * 2u];
+				memory[W_SHADOW_OAM + (20u + i) * 4u + 1u] =
+				    star_waves[wave][i * 2u + 1u];
+			}
+		}
+		if (wave_frame == 0 && game->small_star_count < 24u)
+			game->small_star_count += 6u;
+		if (wave_frame % 3u == 0) {
+			for (unsigned i = 0; i < game->small_star_count; i++)
+				memory[W_SHADOW_OAM + (23u - i) * 4u]++;
+			memory[R_OBP1] ^= 0xA0u;
+		}
+		game->action_frame++;
+		if (game->action_frame % 24u == 0)
+			memmove(memory + W_SHADOW_OAM,
+			    memory + W_SHADOW_OAM + 4u, 20u * 4u);
+		if (game->action_frame >= 144u) {
+			game->scene = 5;
+			game->timer = 40;
+		}
+		break;
+	}
+
+	case 5: /* localization's post-logo delay */
+		if (--game->timer == 0) {
+			struct cpu_register_state regs = { 0 };
+
+			/* SFX bytecode must eventually replace this held cue. */
+			intro_sound(memory, 3);
+			port_intro_clear_middle_of_screen(&regs, memory);
+			clear_shadow_sprites(memory);
+			game->scene = 6;
+			game->timer = 3;
+		}
+		break;
+
+	case 6:
+		if (--game->timer == 0) {
+			start_intro_fight(memory, rom);
+			game->scene = 7;
+			game->action = 0;
+			game->action_frame = 0;
+		}
+		break;
+
+	case 7:
+		if (tick_intro_fight(memory, rom, game))
+			start_intro_fade(game);
+		break;
+
+	case 8: { /* GBFadeOutToWhite: three palettes, eight frames each */
+		static const uint8_t fade[3][3] = {
+			{ 0x06, 0x02, 0x06 }, { 0x01, 0x01, 0x01 },
+			{ 0x00, 0x00, 0x00 },
+		};
+		unsigned step = game->action_frame / 8u;
+
+		if (step < 3u) {
+			memory[R_BGP] = fade[step][0];
+			memory[R_OBP0] = fade[step][1];
+			memory[R_OBP1] = fade[step][2];
+			game->action_frame++;
+		} else {
+			memory[H_SCX] = 0;
+			memory[H_AUTO_BG_TRANSFER_ENABLED] = 0;
+			clear_shadow_sprites(memory);
+			game_enter_title(kernel, memory, rom, game);
+		}
+		break;
+	}
+	}
+}
+
 /* ------------------------------------------------------------------ */
 /* Per-frame tick                                                       */
 /* ------------------------------------------------------------------ */
@@ -635,17 +1128,45 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 	}
 
 	switch (game->phase) {
-	case MAC_PHASE_TITLE:
-		/* REQUIRED: ScrollTitleScreenPokemonLogo is PORTED
-	 * (port_scroll_title_screen_pokemon_logo) but consumes all its
-	 * DelayFrames inside one call; the driver keeps frame-paced hSCY
-	 * stepping until the pacing model is host-driven. */
-		if (game->frames_in_phase <= TITLE_SCROLL_FRAMES) {
-			unsigned scy = 0x40u -
-			    game->frames_in_phase *
-				(0x40u / TITLE_SCROLL_FRAMES);
+	case MAC_PHASE_INTRO:
+		tick_intro(kernel, memory, rom, game);
+		break;
 
-			memory[H_SCY] = (port_u8)scy;
+	case MAC_PHASE_TITLE:
+		if (game->action < 7u) {
+			/* DisplayTitleScreen.TitleScreenPokemonLogoYScrolls,
+			 * one entry per real DelayFrame. */
+			static const int8_t delta[7] = {
+				-4, 3, -3, 2, -2, 1, -1
+			};
+			static const uint8_t count[7] = {
+				16, 4, 4, 2, 2, 2, 2
+			};
+
+			if (delta[game->action] == -3 && game->action_frame == 0)
+				intro_sound(memory, 4);
+			memory[H_SCY] = (uint8_t)(memory[H_SCY] +
+			    delta[game->action]);
+			if (++game->action_frame >= count[game->action]) {
+				game->action++;
+				game->action_frame = 0;
+				if (game->action == 7u)
+					game->timer = 36;
+			}
+		} else if (game->action == 7u) {
+			if (--game->timer == 0) {
+				intro_sound(memory, 5);
+				game->action = 8;
+				game->action_frame = 0;
+				memory[H_WY] = 144;
+			}
+		} else if (game->action == 8u) {
+			/* FIDELITY_BOUNDARY(scanline-title-version): the ROM changes
+			 * SCX at LY=64 and LY=d during each of these 28 frames.  The
+			 * current whole-frame PPU cannot expose two SCX values in one
+			 * frame; preserve the exact frame count and final tile state. */
+			if (++game->action_frame >= 28u)
+				game->action = 9;
 		} else if (game->version_shown == 0) {
 			/* PrintGameVersionOnTitleScreen =
 			 * hlcoord(7,8)+PlaceString(VersionOnTitleScreenText),
@@ -661,6 +1182,10 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 				port_place_string(&vregs, memory);
 			}
 			game->version_shown = 1;
+			/* FIDELITY_BOUNDARY(audio-sequencer): MUSIC_TITLE_SCREEN is
+			 * requested here in the ROM.  Use an audible register-level
+			 * cue until Audio1_UpdateMusic is ported. */
+			intro_sound(memory, 3);
 		}
 		/* REQUIRED: CheckForUserInterruption - direct edge read. */
 		if ((pressed & (PAD_A | PAD_B | PAD_START)) != 0 &&
@@ -698,24 +1223,24 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 		break;
 
 	case MAC_PHASE_NEWGAME:
-		/* End of currently-composable flow: show the boundary once,
-		 * START returns to the title screen. */
-		if (game->boundary_shown == 0) {
-			struct cpu_register_state regs;
-			const char *msg = "PORT BOUNDARY-SEE REQUIRED.MD";
-			unsigned i = 0;
+		/* FIDELITY_BOUNDARY(oak-speech): OakSpeech's first text stream is
+		 * live, but its picture/name/shrink choreography is not yet a
+		 * frame-resumable C port.  Do not invent a shortcut into the map:
+		 * SpecialEnterMap depends on the omitted initialization.  Required
+		 * functions are assigned in INTRO_MAIN_LOOP_PORTING.md. */
+		break;
 
-			for (; msg[i] != '\0'; i++)
-				memory[GAME_SCRATCH + i] = gb_char(msg[i]);
-			memory[GAME_SCRATCH + i] = TX_END;
-			hlcoord(&regs, 2, 16);
-			regs.d = (port_u8)(GAME_SCRATCH >> 8);
-			regs.e = (port_u8)(GAME_SCRATCH & 0xFFu);
-			port_place_string(&regs, memory);
-			game->boundary_shown = 1;
-		}
-		if ((pressed & PAD_START) != 0 && game->boundary_shown != 0)
-			game_enter_title(kernel, memory, rom, game);
+	case MAC_PHASE_ENTER_MAP:
+		/* FIDELITY_BOUNDARY(map-entry): compose SpecialEnterMap, EnterMap,
+		 * LoadMapData, and InitMapSprites here once their bank-aware C ports
+		 * exist.  The individual flat-memory map helpers cannot safely be
+		 * called while an internal Bankswitch is invisible to the host. */
+		break;
+
+	case MAC_PHASE_OVERWORLD:
+		/* FIDELITY_BOUNDARY(overworld-loop): OverworldLoop, JoypadOverworld,
+		 * RunMapScript, collision, text, and warp dispatch remain required.
+		 * Keep this phase explicit so those ports have one integration site. */
 		break;
 	}
 }

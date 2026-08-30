@@ -25,7 +25,7 @@ CFLAGS := \
 	-Wextra \
 	-Werror
 
-.PHONY: all native mac run-mac inventory test clean
+.PHONY: all native mac run-mac inventory backlog test clean
 
 all: native
 
@@ -57,6 +57,10 @@ $(MAC_BUILD)/pokered-mac: $(MAC_OBJECTS)
 
 inventory:
 	python3 tools/function_inventory.py --root $(ROOT)
+
+backlog:
+	python3 tools/function_inventory.py --root $(ROOT) --backlog \
+		--output verification/PORTING_BACKLOG.md
 
 $(BUILD):
 	mkdir -p $@

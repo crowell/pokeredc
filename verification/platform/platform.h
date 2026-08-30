@@ -11,7 +11,7 @@
  *
  *   rom.c    - ROM image loading and MBC bank-window mapping (0x4000-0x7FFF)
  *   video.c  - DMG PPU renderer: VRAM/OAM/IO registers -> RGBA framebuffer
- *   apu.c    - minimal APU synth: FF10-FF3F register file -> S16 samples
+ *   apu.c    - four-channel DMG APU: FF10-FF3F register file -> S16 samples
  *   kernel.c - per-frame VBlank service, composed of ported routines
  *
  * main_sdl.c drives one frame every 59.7275 Hz:
@@ -144,19 +144,28 @@ void video_render(const uint8_t *memory, uint32_t *rgba);
 /* ------------------------------------------------------------------ */
 
 struct mac_apu {
-	double phase[2]; /* per-channel square-wave phase, [0,1) */
-	int length_counter[2]; /* 256 Hz sound-length countdown */
-	int volume[2]; /* current envelope volume, 0-15 */
-	int env_timer[2]; /* envelope period ticks remaining */
+	double pulse_phase[2];
+	double wave_phase;
+	double noise_phase;
+	int length_counter[4];
+	int volume[4];
+	int env_timer[4];
+	uint8_t enabled[4];
+	uint16_t noise_lfsr;
+	uint16_t sweep_shadow;
+	int sweep_timer;
+	uint8_t sweep_enabled;
+	uint8_t sweep_negate_used;
 	double seq_accum; /* 512 Hz frame-sequencer accumulator */
 	unsigned seq_step;
-	uint8_t last_nr14[2]; /* previous NRx4 bytes, for trigger edges */
+	uint8_t last_trigger[4];
 };
 
 void apu_init(struct mac_apu *apu);
-/* Renders `frames` S16 mono samples at 44100 Hz from the current register
- * file. Advances length counters/envelopes across the rendered span. */
-void apu_render(struct mac_apu *apu, const uint8_t *memory, int16_t *out,
+/* Renders pulse 1/2, programmable wave, and LFSR noise as S16 mono at
+ * 44100 Hz. Length, envelope, and channel-1 sweep use the DMG 512 Hz frame
+ * sequencer; NR50/NR51 routing and volume are honored. */
+void apu_render(struct mac_apu *apu, uint8_t *memory, int16_t *out,
 	size_t frames);
 
 /* Programs channel 1 as a short test tone (hardware-style: duty, envelope,
@@ -203,14 +212,26 @@ void kernel_copy_video_data_double(struct mac_kernel *k, uint8_t *memory,
 	unsigned tiles);
 /* ------------------------------------------------------------------ */
 enum mac_game_phase {
+	MAC_PHASE_INTRO,
 	MAC_PHASE_TITLE,
 	MAC_PHASE_MENU,
 	MAC_PHASE_NEWGAME,
+	MAC_PHASE_ENTER_MAP,
+	MAC_PHASE_OVERWORLD,
 };
 
 struct mac_game {
 	enum mac_game_phase phase;
 	unsigned frames_in_phase;
+	unsigned scene;
+	unsigned timer;
+	unsigned action;
+	unsigned action_frame;
+	unsigned animation_addr;
+	unsigned small_star_count;
+	port_u8 intro_base_x;
+	port_u8 intro_base_y;
+	port_u8 intro_base_tile;
 	port_u8 menu_item;
 	unsigned version_shown;
 	unsigned boundary_shown;
@@ -221,7 +242,7 @@ struct mac_game {
 
 struct mac_game;
 
-/* Runs Init-equivalent boot and enters DisplayTitleScreen. */
+/* Runs Init-equivalent boot and enters PlayIntro. */
 void game_boot(struct mac_kernel *kernel, uint8_t *memory,
 	const struct mac_rom *rom, struct mac_game *game);
 /* Re-enters the title screen (B on the main menu). */
