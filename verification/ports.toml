@@ -24056,9 +24056,10 @@ c_source = "verification/ports/display_link_battle_versus_text_box.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "all tilemap bytes written by TextBoxBorder",
 ]
-proof_domain = "all register/flag inputs through TextBoxBorder"
-decoder = "LoadTextBoxTilePatterns call boundary, link-versus textbox coordinate setup, and BC dimensions are modeled exactly; text placement, tile graphics, pokeball setup, delay, and rendering remain beyond the explicit boundary"
+proof_domain = "all register/flag inputs and the complete 20x12 tilemap window through the LoadTextBoxTilePatterns boundary and TextBoxBorder transition"
+decoder = "exact 13-byte linked prefix checked in verification/tests/test_display_link_battle_versus_text_box.py; the graphics call is an explicit boundary, coordinate and dimension instructions execute, and native C composes the complete proven TextBoxBorder transition while text placement, pokéball setup, delay, and rendering remain beyond the explicit boundary"
 
 [[function]]
 assembly_symbol = "FormatMovesString"
