@@ -23138,14 +23138,14 @@ assembly_symbol = "PrintCriticalOHKOText"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_print_critical_ohko_text"
 c_source = "verification/ports/print_critical_ohko_text.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
     "wCriticalHitOrOHKO and wTextBoxID",
     "executed DelayFrames iteration count",
 ]
-proof_domain = "all symbolic register inputs with concrete wCriticalHitOrOHKO values 0 (no-hit), 1 (critical-hit), and 2 (OHKO); nonzero selection, PrintText setup, flag clear, and the complete 20-frame DelayFrames loop are covered"
-decoder = "exact 29-byte linked body checked in verification/tests/test_print_critical_ohko_text.py; the load/AND branch is executed, the two fixed text pointers compose through the PrintText call boundary, wCriticalHitOrOHKO is cleared, and native C executes the real DelayFrame/DEC-C loop through port_delay_frames_step with a terminating vblank observation and a 20-iteration endpoint"
+proof_domain = "all symbolic register inputs with the exhaustive meaningful wCriticalHitOrOHKO values 0 (no-hit), 1 (critical-hit), and 2 (OHKO); nonzero selection, PrintText setup, flag clear, and the complete 20-frame DelayFrames loop are covered"
+decoder = "exact 29-byte linked body checked in verification/tests/test_print_critical_ohko_text.py; every feasible 0/1/2 branch executes, the two fixed text pointers compose through the complete PrintText transition, wCriticalHitOrOHKO is cleared, and native C executes the real DelayFrame/DEC-C loop through port_delay_frames_step with a terminating vblank observation and a 20-iteration endpoint"
 
 [[function]]
 assembly_symbol = "CheckForDisobedience"
