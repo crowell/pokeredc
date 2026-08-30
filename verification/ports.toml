@@ -22399,9 +22399,10 @@ c_source = "verification/ports/print_send_out_mon_message.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "wTextBoxID",
 ]
-proof_domain = "all register/flag and enemy-HP-byte inputs through the GoText branch after OR-ing current enemy HP"
-decoder = "HL initialization, HL-increment HP loads, OR flags, and GoText pointer setup are modeled exactly; the text-printing and percentage branches remain beyond the explicit boundary"
+proof_domain = "all register/flag and enemy-HP-byte inputs through the zero-HP GoText PrintText branch after OR-ing current enemy HP"
+decoder = "HL initialization, HL-increment HP loads, OR flags, GoText pointer setup, and zero-HP PrintText composition are modeled exactly; the nonzero percentage calculation and alternate text branches remain beyond the explicit boundary"
 
 [[function]]
 assembly_symbol = "SlidePlayerAndEnemySilhouettesOnScreen"

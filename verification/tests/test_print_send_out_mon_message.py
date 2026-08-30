@@ -25,8 +25,10 @@ NATIVE_ELF = ROOT / "verification/build/ports.elf"
 ROM = ROOT / "pokered.gbc"
 SYMBOLS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
+NATIVE_MEMORY = 0x200000
 DONE = 0xEFFF
 HP = 0xCFE6
+TEXT_BOX_ID = 0xD125
 
 
 @dataclass(frozen=True)
@@ -39,6 +41,7 @@ class Endpoint:
     e: claripy.ast.BV
     h: claripy.ast.BV
     l: claripy.ast.BV
+    text_box_id: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
@@ -65,12 +68,20 @@ class SetupGoHL(angr.SimProcedure):
         self.jump(self.state.addr + 3)
 
 
-class Boundary(angr.SimProcedure):
+class PrintBranch(angr.SimProcedure):
     def run(self) -> None:  # type: ignore[override]
         self.inhibit_autoret = True
-        self.successors.add_successor(
-            self.state.copy(), DONE, claripy.BoolV(True), "Ijk_Boring"
-        )
+        zero = self.state.regs.a == 0
+        for is_zero in (True, False):
+            successor = self.state.copy()
+            successor.add_constraints(zero if is_zero else ~zero)
+            if is_zero:
+                successor.memory.store(TEXT_BOX_ID, claripy.BVV(1, 8))
+                successor.regs.b = claripy.BVV(0xC4, 8)
+                successor.regs.c = claripy.BVV(0xB9, 8)
+            self.successors.add_successor(
+                successor, DONE, claripy.BoolV(True), "Ijk_Boring"
+            )
 
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
@@ -91,16 +102,21 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project.hook(base + 3, Sm83LoadAAtHlIncrement(base + 4), length=1)
     project.hook(base + 4, OrAtHL(), length=1)
     project.hook(base + 5, SetupGoHL(), length=3)
-    project.hook(base + 8, Boundary(), length=2)
+    project.hook(base + 8, PrintBranch(), length=2)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
     state.memory.store(HP, values["hp_low"])
     state.memory.store(HP + 1, values["hp_high"])
+    state.memory.store(TEXT_BOX_ID, claripy.BVV(0, 8))
     manager = project.factory.simulation_manager(state)
     manager.explore(find=DONE, num_find=1)
     assert not manager.errored
     return [
-        Endpoint(**assembly_registers(end), constraints=tuple(end.solver.constraints))
+        Endpoint(
+            **assembly_registers(end),
+            text_box_id=end.memory.load(TEXT_BOX_ID, 1),
+            constraints=tuple(end.solver.constraints),
+        )
         for end in manager.found
     ]
 
@@ -109,16 +125,18 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project = angr.Project(NATIVE_ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_print_send_out_mon_message")
     assert function is not None
-    state = project.factory.call_state(function.rebased_addr, NATIVE_STATE)
+    state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, values["hp_low"])
     state.memory.store(NATIVE_STATE + 9, values["hp_high"])
+    state.memory.store(NATIVE_MEMORY + TEXT_BOX_ID, claripy.BVV(0, 8))
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
     return [
         Endpoint(
             **native_registers(end, NATIVE_STATE),
+            text_box_id=end.memory.load(NATIVE_MEMORY + TEXT_BOX_ID, 1),
             constraints=tuple(end.solver.constraints),
         )
         for end in manager.deadended
