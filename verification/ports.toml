@@ -23139,9 +23139,10 @@ status = "partial"
 observables = [
     "all registers and flags",
     "wCriticalHitOrOHKO and wTextBoxID",
+    "executed DelayFrames iteration count",
 ]
-proof_domain = "all symbolic register inputs with concrete wCriticalHitOrOHKO values 0 (no-hit), 1 (critical-hit), and 2 (OHKO); nonzero selection, PrintText setup, flag clear, and terminal DelayFrames state are covered"
-decoder = "exact 29-byte linked body checked in verification/tests/test_print_critical_ohko_text.py; the load/AND branch is executed, the two fixed text pointers compose through the PrintText call boundary, wCriticalHitOrOHKO is cleared, and the terminal 20-frame delay is represented by an explicit final-state boundary"
+proof_domain = "all symbolic register inputs with concrete wCriticalHitOrOHKO values 0 (no-hit), 1 (critical-hit), and 2 (OHKO); nonzero selection, PrintText setup, flag clear, and the complete 20-frame DelayFrames loop are covered"
+decoder = "exact 29-byte linked body checked in verification/tests/test_print_critical_ohko_text.py; the load/AND branch is executed, the two fixed text pointers compose through the PrintText call boundary, wCriticalHitOrOHKO is cleared, and native C executes the real DelayFrame/DEC-C loop through port_delay_frames_step with a terminating vblank observation and a 20-iteration endpoint"
 
 [[function]]
 assembly_symbol = "CheckForDisobedience"
