@@ -4,6 +4,7 @@
 #define W_CUR_MAP 0xd35eu
 #define W_CUR_MAP_TEXT_PTR 0xd36cu
 #define W_NUM_SPRITES 0xd4e1u
+#define W_MAP_SPRITE_DATA 0xd4e4u
 #define W_SPRITE_INDEX 0xcf13u
 #define H_TEXT_ID 0xff8cu
 #define H_FRAME_COUNTER 0xffd5u
@@ -53,6 +54,32 @@ shift_left_flags(port_u8 value, port_u8 *result)
 
 static port_u8
 add_hl_de_flags(port_u16 left, port_u16 right, port_u16 *result,
+	port_u8 old_flags);
+
+static void
+lookup_map_text(struct display_text_id_state *state, port_u8 *memory)
+{
+	port_u16 hl = (port_u16)(((port_u16)state->registers.h << 8) |
+		state->registers.l);
+	port_u8 index = (port_u8)(state->registers.a - 1u);
+	port_u8 shifted;
+	port_u8 shift_flags = shift_left_flags(index, &shifted);
+	port_u16 address;
+	port_u8 low;
+	state->registers.e = shifted;
+	state->registers.f = add_hl_de_flags(hl, shifted, &address,
+		shift_flags);
+	low = memory[address];
+	state->registers.h = memory[(port_u16)(address + 1u)];
+	state->registers.l = low;
+	state->registers.a = memory[(port_u16)(((port_u16)state->registers.h << 8) |
+		state->registers.l)];
+	state->registers.f = (port_u8)(state->registers.f &
+		(PORT_FLAG_C | PORT_FLAG_H | PORT_FLAG_Z));
+}
+
+static port_u8
+add_hl_de_flags(port_u16 left, port_u16 right, port_u16 *result,
 	port_u8 old_flags)
 {
 	port_u32 wide = (port_u32)left + (port_u32)right;
@@ -65,9 +92,10 @@ add_hl_de_flags(port_u16 left, port_u16 right, port_u16 *result,
 	return flags;
 }
 
-/* Port of the bounded initialization, dictionary, and out-of-range map-text
- * prefix of DisplayTextID in home/text_script.asm.  Sprite-facing, remaining
- * text-ID, script, and shared display continuations remain separate bounds. */
+/* Port of the bounded initialization, dictionary, sprite-facing, and
+ * out-of-range map-text prefix of DisplayTextID in home/text_script.asm.
+ * Remaining text-ID, script, and shared display continuations remain separate
+ * bounds. */
 __attribute__((noinline, used)) void
 port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 {
@@ -136,33 +164,24 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 	}
 
 	/* ld a,[wNumSprites]; ld e,a; ldh a,[hSpriteIndex]; cp e; jr nc,
-	 * .skipSpriteHandling.  The equal case intentionally falls through to
-	 * the sprite-facing handler, so this bounded port only consumes the strict
-	 * out-of-range path before the map-text lookup. */
+	 * .skipSpriteHandling.  Equal and in-range sprite IDs run the facing
+	 * update boundary and replace A with the sprite's text ID before the
+	 * shared map-text lookup. */
 	{
 		port_u8 num_sprites = memory[W_NUM_SPRITES];
 		state->registers.e = num_sprites;
 		state->registers.f = compare_flags(state->registers.a, num_sprites);
-		if (state->registers.a >= num_sprites &&
-		    state->registers.a != num_sprites) {
-			port_u16 hl = (port_u16)(((port_u16)state->registers.h << 8) |
-				state->registers.l);
-			port_u8 index = (port_u8)(state->registers.a - 1u);
-			port_u8 shifted;
-			port_u8 shift_flags = shift_left_flags(index, &shifted);
-			port_u16 address;
-			port_u8 low;
-			state->registers.e = shifted;
-			state->registers.f = add_hl_de_flags(hl, shifted, &address,
-				shift_flags);
-			low = memory[address];
-			state->registers.h = memory[(port_u16)(address + 1u)];
-			state->registers.l = low;
-			state->registers.a = memory[(port_u16)(((port_u16)state->registers.h << 8) |
-				state->registers.l)];
-			state->registers.f = (port_u8)(state->registers.f &
-				(PORT_FLAG_C | PORT_FLAG_H | PORT_FLAG_Z));
+		if (state->registers.a > num_sprites) {
+			lookup_map_text(state, memory);
 			return;
 		}
+		if (state->registers.a != 0u) {
+			port_u16 entry = (port_u16)(W_MAP_SPRITE_DATA +
+				(port_u16)(state->registers.a - 1u) * 2u + 1u);
+			state->registers.a = memory[entry];
+		}
 	}
+	/* The shared map-text lookup below executes for sprite-facing and
+	 * non-sprite IDs alike; its DEC/SLA/ADD-HL flags are preserved exactly. */
+	lookup_map_text(state, memory);
 }
