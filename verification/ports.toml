@@ -22388,8 +22388,8 @@ status = "partial"
 observables = [
     "all registers and flags",
 ]
-proof_domain = "all register/flag inputs through the initial wild/trainer branch after loading and decrementing wIsInBattle"
-decoder = "SM83 absolute load and DEC A flags are modeled exactly; subsequent text, cry, and sound branches remain beyond the explicit boundary"
+proof_domain = "all register/flag inputs plus concrete cur-map, enemy-species, and fishing inputs through wIsInBattle decrement, wild/trainer selection, the non-Tower WildMonAppearedText versus HookedMonAttackedText choice, and TrainerWantsToFightText pointer setup; Tower-specific item/ghost handling and subsequent cry, sound, delay, Pokeball, and PrintText paths remain beyond the explicit boundary"
+decoder = "exact linked entry bytes through the wild/trainer branch are checked in verification/tests/test_print_beginning_battle_text.py; absolute loads and DEC A flags are shimmed, while the branch-selection boundary models the explicit PlayCry/.playSFX and Tower gate exits and native C reproduces the three text-pointer outcomes"
 
 [[function]]
 assembly_symbol = "PrintSendOutMonMessage"
