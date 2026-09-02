@@ -20842,6 +20842,21 @@ proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-n
 decoder = "6-byte body checked (21e769c3493c: ld hl,$69e7; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "PrintSafariZoneSteps"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_print_safari_zone_steps"
+c_source = "verification/ports/print_safari_zone_steps.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wCurMap, the three wSafariSteps bytes, and wNumSafariBalls",
+    "the complete 18x20 tilemap",
+    "ordered TextBoxBorder, PrintNumber, and PlaceString call inputs",
+]
+proof_domain = "all canonical register/flag, tilemap, and Safari-step inputs over representative lower-bound exclusion ($d8), upper-bound exclusion ($e2), and the common in-range body ($d9); both ball-count branches (below 10 and 10 or above) compose arbitrary matching complete transitions from the six independently proven text/number callees"
+decoder = "exact 74-byte linked body executes under angr; direct map/ball loads, CP and carry branches, coordinate/pair setup, the single-digit space store, and the PrintNumber tail execute directly, while each proven text/number callee is represented by a complete matching tilemap/register transition and production C calls its real port"
+
+[[function]]
 assembly_symbol = "PrintSafariZoneSteps.tenOrMore"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_print_safari_zone_steps_ten_or_more"
