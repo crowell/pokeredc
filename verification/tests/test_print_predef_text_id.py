@@ -104,6 +104,29 @@ class DisplayBoundary(angr.SimProcedure):
         self.jump(self.continuation)
 
 
+class NativeDisplayBoundary(angr.SimProcedure):
+    """Native adapter for the initialization-only DisplayTextID boundary."""
+
+    def run(self, *args: claripy.ast.BV) -> None:  # type: ignore[override]
+        pointer = self.state.regs.rdi
+        memory = self.state.regs.rsi
+        old_bank = self.state.memory.load(memory + H_LOADED_ROM_BANK, 1)
+        old_f = self.state.memory.load(pointer + 1, 1)
+        old_e = self.state.memory.load(pointer + 5, 1)
+        self.state.memory.store(memory + W_TEXT_PREDEF_FLAG, claripy.BVV(0, 8))
+        self.state.memory.store(memory + H_FRAME_COUNTER, claripy.BVV(30, 8))
+        self.state.memory.store(pointer + 0, claripy.BVV(11, 8))
+        self.state.memory.store(pointer + 1, claripy.BVV(0, 8))
+        self.state.memory.store(pointer + 2, old_bank)
+        self.state.memory.store(pointer + 3, old_f)
+        self.state.memory.store(pointer + 4, claripy.BVV(0, 8))
+        self.state.memory.store(pointer + 5, old_e)
+        self.state.memory.store(pointer + 6, claripy.BVV(0x3F, 8))
+        self.state.memory.store(pointer + 7, claripy.BVV(0x22, 8))
+        self.state.memory.store(memory + W_SPRITE_INDEX, claripy.BVV(11, 8))
+        self.ret()
+
+
 def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
     registers = native_registers(state, NATIVE_STATE) if native else assembly_registers(state)
     return Endpoint(
@@ -168,6 +191,9 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_print_predef_text_id")
     assert function is not None
+    display = project.loader.find_symbol("port_display_text_id")
+    assert display is not None
+    project.hook(display.rebased_addr, NativeDisplayBoundary())
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(7, 8))
