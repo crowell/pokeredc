@@ -27,6 +27,8 @@ void port_display_repel_wore_off_text(
 	struct display_repel_wore_off_text_state *, port_u8 *);
 void port_display_pokemon_fainted_text(
 	struct display_pokemon_fainted_text_state *, port_u8 *);
+void port_display_player_blacked_out_text(
+	struct display_player_blacked_out_text_state *, port_u8 *);
 
 static port_u16
 read_word(const port_u8 *memory, port_u16 address)
@@ -158,6 +160,11 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 	 * records each exact compare result and leaves the callee at its boundary. */
 	if (state->registers.a == TEXT_START_MENU)
 		return;
+	if (state->registers.a == TEXT_MON_FAINTED ||
+	    state->registers.a == TEXT_BLACKED_OUT ||
+	    state->registers.a == TEXT_REPEL_WORE_OFF ||
+	    state->registers.a == TEXT_SAFARI_GAME_OVER)
+		state->registers.f = (port_u8)(PORT_FLAG_Z | PORT_FLAG_N);
 	if (state->registers.a == TEXT_REPEL_WORE_OFF) {
 		struct display_repel_wore_off_text_state repel = {0};
 		repel.registers = state->registers;
@@ -178,9 +185,18 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 		state->registers = fainted.registers;
 		return;
 	}
+	if (state->registers.a == TEXT_BLACKED_OUT) {
+		struct display_player_blacked_out_text_state blacked_out = {0};
+		blacked_out.registers = state->registers;
+		for (port_u8 i = 0; i < 8u; ++i)
+			blacked_out.joy_inputs[i] = state->joy_inputs[i];
+		blacked_out.joy_input_count = state->joy_input_count;
+		port_display_player_blacked_out_text(&blacked_out, memory);
+		state->registers = blacked_out.registers;
+		return;
+	}
 	if (state->registers.a == TEXT_MON_FAINTED ||
 	    state->registers.a == TEXT_BLACKED_OUT ||
-	    state->registers.a == TEXT_REPEL_WORE_OFF ||
 	    state->registers.a == TEXT_SAFARI_GAME_OVER)
 	{
 		state->registers.f = (port_u8)(PORT_FLAG_Z | PORT_FLAG_N);

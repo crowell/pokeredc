@@ -49,6 +49,7 @@ R_ROMB = 0x2000
 STACK = 0xD000
 TEXT_BOX_ID = 0xD125
 W_ENTERING_CABLE_CLUB = 0xCC47
+W_STATUS_FLAGS6 = 0xD732
 EXPECTED = bytes.fromhex(
     "f0b8f50601219670cdd6352111cfcb46cb862006fa5ed3cdbc123e1ee0d"
     "5216cd32a666f1600f08cea13cf"
@@ -72,6 +73,7 @@ class Endpoint:
     loaded_bank: claripy.ast.BV
     romb: claripy.ast.BV
     text_box_id: claripy.ast.BV
+    status_flags6: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
@@ -119,6 +121,18 @@ class FaintedDispatchBoundary(angr.SimProcedure):
             self.state.regs.c = claripy.BVV(0xB9, 8)
             self.state.regs.a = claripy.BVV(1, 8)
             self.state.regs.f = claripy.BVV(0x10, 8)
+        elif self.text_id == 0xD1:
+            self.state.memory.store(TEXT_BOX_ID, claripy.BVV(1, 8))
+            self.state.memory.store(
+                W_STATUS_FLAGS6,
+                self.state.memory.load(W_STATUS_FLAGS6, 1) & 0xDF,
+            )
+            self.state.regs.h = claripy.BVV(0x2A, 8)
+            self.state.regs.l = claripy.BVV(0xBA, 8)
+            self.state.regs.b = claripy.BVV(0xC4, 8)
+            self.state.regs.c = claripy.BVV(0xB9, 8)
+            self.state.regs.a = self.state.memory.load(W_STATUS_FLAGS6, 1)
+            self.state.regs.f = claripy.BVV(0x42, 8)
         self.inhibit_autoret = True
         self.jump(RETURN)
 
@@ -170,6 +184,7 @@ def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
         loaded_bank=state.memory.load(base + H_LOADED_ROM_BANK, 1),
         romb=state.memory.load(base + R_ROMB, 1),
         text_box_id=state.memory.load(base + TEXT_BOX_ID, 1),
+        status_flags6=state.memory.load(base + W_STATUS_FLAGS6, 1),
         constraints=tuple(state.solver.constraints),
     )
 
@@ -207,6 +222,7 @@ def _setup(state: angr.SimState, base: int, *, predef: int,
     state.memory.store(base + R_ROMB, claripy.BVV(5, 8))
     state.memory.store(base + TEXT_BOX_ID, claripy.BVV(0, 8))
     state.memory.store(base + W_ENTERING_CABLE_CLUB, claripy.BVV(1, 8))
+    state.memory.store(base + W_STATUS_FLAGS6, claripy.BVV(0xFF, 8))
 
 
 def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
@@ -284,7 +300,7 @@ def test_display_text_id_initialization_prefix_pathwise_equivalence() -> None:
     assert_pathwise_equivalent(
         _assembly(values, predef=1), _native(values, predef=1),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
     )
 
 
@@ -295,7 +311,7 @@ def test_display_text_id_map_bank_prefix_pathwise_equivalence() -> None:
     assert_pathwise_equivalent(
         _assembly(values, predef=0), _native(values, predef=0),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
     )
 
 
@@ -309,7 +325,7 @@ def test_display_text_id_sprite_handling_pathwise_equivalence() -> None:
         _native(values, predef=0, text_id=2, num_sprites=2,
                 sprite_text_id=1),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
     )
 
 
@@ -322,7 +338,7 @@ def test_display_text_id_special_dispatch_pathwise_equivalence(text_id: int) -> 
         _assembly(values, predef=0, text_id=text_id),
         _native(values, predef=0, text_id=text_id),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
     )
 
 
@@ -337,5 +353,5 @@ def test_display_text_id_out_of_range_sprite_gate_pathwise_equivalence(
         _assembly(values, predef=0, text_id=2, num_sprites=num_sprites),
         _native(values, predef=0, text_id=2, num_sprites=num_sprites),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
     )
