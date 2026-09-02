@@ -101,6 +101,30 @@ class PrefixEnd(angr.SimProcedure):
         self.jump(RETURN)
 
 
+class NormalTextBoundary(angr.SimProcedure):
+    """PrintText_NoCreatingTextBox + AfterDisplayingTextID composition."""
+
+    def run(self) -> None:
+        self.state.regs.a = claripy.BVV(1, 8)
+        self.state.regs.f = claripy.BVV(0x10, 8)  # Z80 H -> canonical H
+        self.state.regs.b = claripy.BVV(0xC4, 8)
+        self.state.regs.c = claripy.BVV(0xB9, 8)
+        self.inhibit_autoret = True
+        self.jump(RETURN)
+
+
+class NativeNormalTextBoundary(angr.SimProcedure):
+    """Native adapter for the two proven normal-text continuation ports."""
+
+    def run(self, *args: claripy.ast.BV) -> None:  # type: ignore[override]
+        pointer = self.state.regs.rdi
+        self.state.memory.store(pointer + 0, claripy.BVV(1, 8))
+        self.state.memory.store(pointer + 1, claripy.BVV(0x20, 8))
+        self.state.memory.store(pointer + 2, claripy.BVV(0xC4, 8))
+        self.state.memory.store(pointer + 3, claripy.BVV(0xB9, 8))
+        self.ret()
+
+
 class FaintedDispatchBoundary(angr.SimProcedure):
     def __init__(self, text_id: int) -> None:
         super().__init__()
@@ -309,7 +333,7 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
         project.hook(base + 0x6e, Sm83AddHlRegisterPair("de", base + 0x6f), length=1)
         project.hook(base + 0x6f, Sm83LoadAAtHlIncrement(base + 0x70), length=1)
         project.hook(base + 0x72, LoadAAtHL(base + 0x73), length=1)
-        project.hook(base + 0x73, PrefixEnd(), length=1)
+        project.hook(base + 0x73, NormalTextBoundary(), length=1)
     state = project.factory.blank_state(addr=base)
     set_assembly_registers(state, values)
     _setup(state, 0, predef=predef, text_id=text_id,
@@ -337,6 +361,10 @@ def _native(values: dict[str, claripy.ast.BV], *, predef: int,
     project.hook(safari_after.rebased_addr,
                  FaintedAfterBoundary() if text_id in (0xD0, 0xD2)
                  else SafariAfterBoundary())
+    normal_print = project.loader.find_symbol(
+        "port_print_text_no_creating_text_box")
+    assert normal_print is not None
+    project.hook(normal_print.rebased_addr, NativeNormalTextBoundary())
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(7, 8))

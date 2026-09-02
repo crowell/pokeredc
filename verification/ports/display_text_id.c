@@ -1,4 +1,4 @@
-#include "port_state.h"
+#include "joypad_port.h"
 
 #define W_TEXT_PREDEF_FLAG 0xcf11u
 #define W_CUR_MAP 0xd35eu
@@ -31,6 +31,9 @@ void port_display_player_blacked_out_text(
 	struct display_player_blacked_out_text_state *, port_u8 *);
 void port_display_safari_game_over_text(
 	struct display_safari_game_over_text_state *, port_u8 *);
+void port_print_text_no_creating_text_box(struct cpu_register_state *, port_u8 *);
+void port_after_displaying_text_id(
+	struct after_displaying_text_id_state *, port_u8 *);
 
 static port_u16
 read_word(const port_u8 *memory, port_u16 address)
@@ -62,6 +65,20 @@ z80_flags_from_sm83(port_u8 flags)
 		((flags & PORT_FLAG_N) >> 5) |
 		((flags & PORT_FLAG_H) >> 1) |
 		((flags & PORT_FLAG_C) >> 4));
+}
+
+static void
+display_normal_map_text(struct display_text_id_state *state, port_u8 *memory)
+{
+	struct after_displaying_text_id_state after = {0};
+
+	port_print_text_no_creating_text_box(&state->registers, memory);
+	after.registers = state->registers;
+	for (port_u8 i = 0; i < 8u; ++i)
+		after.joy_inputs[i] = state->joy_inputs[i];
+	after.joy_input_count = state->joy_input_count;
+	port_after_displaying_text_id(&after, memory);
+	state->registers = after.registers;
 }
 
 static port_u8
@@ -112,10 +129,9 @@ add_hl_de_flags(port_u16 left, port_u16 right, port_u16 *result,
 	return flags;
 }
 
-/* Port of the bounded initialization, dictionary, sprite-facing, and
- * out-of-range map-text prefix of DisplayTextID in home/text_script.asm.
- * Remaining text-ID, script, and shared display continuations remain separate
- * bounds. */
+/* Port of the initialization, dictionary, sprite-facing, and ordinary
+ * map-text path of DisplayTextID in home/text_script.asm.  Script-marker
+ * dispatches and the later close-display continuation remain separate bounds. */
 __attribute__((noinline, used)) void
 port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 {
@@ -238,6 +254,7 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 		state->registers.f = compare_flags(state->registers.a, num_sprites);
 		if (state->registers.a > num_sprites) {
 			lookup_map_text(state, memory);
+			display_normal_map_text(state, memory);
 			return;
 		}
 		if (state->registers.a != 0u) {
@@ -249,4 +266,5 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 	/* The shared map-text lookup below executes for sprite-facing and
 	 * non-sprite IDs alike; its DEC/SLA/ADD-HL flags are preserved exactly. */
 	lookup_map_text(state, memory);
+	display_normal_map_text(state, memory);
 }
