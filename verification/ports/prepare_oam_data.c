@@ -16,6 +16,7 @@
 #define SHADOW_OAM_END 0xc3a0U
 
 void port_hide_sprites(struct clear_sprites_state *);
+void port_get_sprite_screen_xy_memory(struct cpu_register_state *, port_u8 *);
 
 static void
 dec8(struct cpu_register_state *r)
@@ -41,25 +42,6 @@ cp8(struct cpu_register_state *r, port_u8 right)
 		r->f |= PORT_FLAG_H;
 	if (left < right)
 		r->f |= PORT_FLAG_C;
-}
-
-static void
-screen_xy(struct cpu_register_state *r, port_u8 *memory, port_u8 offset)
-{
-	port_u8 e = (port_u8)(offset + 2u);
-	port_u8 y;
-	port_u8 x;
-
-	e = (port_u8)(e + 2u);
-	y = memory[(port_u16)(W_SPRITE_STATE_DATA1 + e)];
-	e = (port_u8)(e + 2u);
-	x = memory[(port_u16)(W_SPRITE_STATE_DATA1 + e)];
-	memory[W_SPRITE_STATE_DATA1 + offset + 10u] = (port_u8)((y + 4u) & 0xf0u);
-	memory[W_SPRITE_STATE_DATA1 + offset + 11u] = (port_u8)(x & 0xf0u);
-	memory[H_SCREEN_Y] = y;
-	memory[H_SCREEN_X] = x;
-	r->e = (port_u8)(offset + 11u);
-	r->a = memory[W_SPRITE_STATE_DATA1 + offset + 11u];
 }
 
 static void
@@ -116,8 +98,11 @@ port_prepare_oam_data(struct cpu_register_state *r, port_u8 *memory)
 		if (picture != 0) {
 			image = memory[W_SPRITE_STATE_DATA1 + offset + 2u];
 			memory[W_SAVED_IMAGE] = image;
+			/* The two image-index loads in the assembly leave E at slot + 2
+			 * before the GetSpriteScreenXY call. */
+			r->e = (port_u8)(offset + 2u);
 			if (image == 0xffu) {
-				screen_xy(r, memory, offset);
+				port_get_sprite_screen_xy_memory(r, memory);
 			} else {
 				table_index = (port_u8)(image & 0x0fu);
 				if (image >= 0xa0u)
@@ -134,7 +119,7 @@ port_prepare_oam_data(struct cpu_register_state *r, port_u8 *memory)
 				r->c = (port_u8)pattern;
 				r->h = (port_u8)(coordinate >> 8);
 				r->l = (port_u8)coordinate;
-				screen_xy(r, memory, offset);
+				port_get_sprite_screen_xy_memory(r, memory);
 				oam_offset = memory[H_OAM_OFFSET];
 				for (;;) {
 					port_u8 yoff = memory[coordinate++];

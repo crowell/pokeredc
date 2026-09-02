@@ -262,7 +262,8 @@ def _setup(state: angr.SimState, base: int, *, enabled: int,
            offscreen: bool = False, visible: bool = False,
            priority: bool = False, unchanging: bool = False,
            second_sprite: bool = False, ledge: bool = False,
-           alternate_facing: bool = False) -> None:
+           alternate_facing: bool = False, four_tile_sprite: bool = False,
+           image_value: int | None = None) -> None:
     state.memory.store(base + W_UPDATE, claripy.BVV(enabled, 8))
     state.memory.store(base + H_MOVEMENT_FLAGS,
                        claripy.BVV(0x40 if ledge else 0, 8))
@@ -285,16 +286,20 @@ def _setup(state: angr.SimState, base: int, *, enabled: int,
         state.memory.store(base + W_SPRITE_STATE_DATA1 + 4, claripy.BVV(0x2C, 8))
         state.memory.store(base + W_SPRITE_STATE_DATA1 + 6, claripy.BVV(0x3D, 8))
     if visible:
+        image = image_value if image_value is not None else (
+            0xB0 if four_tile_sprite else 0xA0 if unchanging else
+            (1 if alternate_facing else 0)
+        )
+        table_index = image & 0x0f
+        if image >= 0xa0:
+            table_index += 0x10
         state.memory.store(base + W_SPRITE_STATE_DATA1, claripy.BVV(1, 8))
         state.memory.store(base + W_SPRITE_STATE_DATA1 + 2,
-                           claripy.BVV(0xA0 if unchanging else
-                                       (1 if alternate_facing else 0), 8))
+                           claripy.BVV(image, 8))
         state.memory.store(base + W_SPRITE_STATE_DATA1 + 4, claripy.BVV(0x2C, 8))
         state.memory.store(base + W_SPRITE_STATE_DATA1 + 6, claripy.BVV(0x3D, 8))
         for offset, value in enumerate((0x80, 0x40, 0x98, 0x40)):
-            state.memory.store(base + SPRITE_TABLE + offset,
-                               claripy.BVV(value, 8))
-            state.memory.store(base + SPRITE_TABLE + 0x40 + offset,
+            state.memory.store(base + SPRITE_TABLE + table_index * 4 + offset,
                                claripy.BVV(value, 8))
             if alternate_facing:
                 state.memory.store(base + SPRITE_TABLE + 4 + offset,
@@ -307,8 +312,7 @@ def _setup(state: angr.SimState, base: int, *, enabled: int,
             state.memory.store(base + W_SPRITE_STATE_DATA1 + 0x10,
                                claripy.BVV(1, 8))
             state.memory.store(base + W_SPRITE_STATE_DATA1 + 0x12,
-                               claripy.BVV(0xA0 if unchanging else
-                                           (1 if alternate_facing else 0), 8))
+                               claripy.BVV(image, 8))
             state.memory.store(base + W_SPRITE_STATE_DATA1 + 0x14,
                                claripy.BVV(0x3C, 8))
             state.memory.store(base + W_SPRITE_STATE_DATA1 + 0x16,
@@ -340,7 +344,8 @@ def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
 def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
               offscreen: bool, visible: bool, priority: bool,
               unchanging: bool, second_sprite: bool, ledge: bool,
-              alternate_facing: bool) -> list[Endpoint]:
+              alternate_facing: bool, four_tile_sprite: bool = False,
+              image_value: int | None = None) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "PrepareOAMData")
     tail = symbol_location(SYMBOLS, "GetSpriteScreenXY")
     assert linked_bytes(ROM, location, tail.address - location.address) == bytes.fromhex(
@@ -395,7 +400,7 @@ def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
             project.hook(q + 0x70, Sm83LoadAImmediate(W_SAVED_IMAGE, q + 0x73), length=3)
             project.hook(q + 0x73, Sm83SwapRegister("a", q + 0x75), length=1)
             project.hook(q + 0x75, Sm83AndImmediate(0x0F, q + 0x77), length=2)
-            project.hook(q + 0x76, Sm83CpRegister("b", q + 0x78), length=2)
+            project.hook(q + 0x76, Sm83CpImmediate(0x0B, q + 0x78), length=2)
             project.hook(q + 0x78, BranchNZ(q + 0x7E, q + 0x7A), length=2)
             for offset, target in ((0x7F, 0x81), (0x81, 0x83),
                                    (0x84, 0x86)):
@@ -429,7 +434,8 @@ def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
     _setup(state, 0, enabled=enabled, offscreen=offscreen, visible=visible,
            priority=priority, unchanging=unchanging,
            second_sprite=second_sprite, ledge=ledge,
-           alternate_facing=alternate_facing)
+           alternate_facing=alternate_facing, four_tile_sprite=four_tile_sprite,
+           image_value=image_value)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     return [_endpoint(end, native=False, base=0)
             for end in collect_returns(project, state, RETURN)]
@@ -438,7 +444,8 @@ def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
 def _native(values: dict[str, claripy.ast.BV], *, enabled: int,
             offscreen: bool, visible: bool, priority: bool,
             unchanging: bool, second_sprite: bool, ledge: bool,
-            alternate_facing: bool) -> list[Endpoint]:
+            alternate_facing: bool, four_tile_sprite: bool = False,
+            image_value: int | None = None) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_prepare_oam_data")
     assert function is not None
@@ -447,7 +454,8 @@ def _native(values: dict[str, claripy.ast.BV], *, enabled: int,
     _setup(state, NATIVE_MEMORY, enabled=enabled, offscreen=offscreen,
            visible=visible, priority=priority, unchanging=unchanging,
            second_sprite=second_sprite, ledge=ledge,
-           alternate_facing=alternate_facing)
+           alternate_facing=alternate_facing, four_tile_sprite=four_tile_sprite,
+           image_value=image_value)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
@@ -485,3 +493,35 @@ def test_prepare_oam_data_pathwise_equivalence(
                 second_sprite=second_sprite, ledge=ledge,
                 alternate_facing=alternate_facing),
                                (*REGISTERS, "memory"))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+def test_prepare_oam_data_four_tile_sprite_pathwise_equivalence() -> None:
+    values = {register: claripy.BVV((index * 13 + 1) & 0xff, 8)
+              for index, register in enumerate(REGISTERS)}
+    assert_pathwise_equivalent(
+        _assembly(values, enabled=1, offscreen=False, visible=True,
+                  priority=True, unchanging=False, second_sprite=False,
+                  ledge=False, alternate_facing=False, four_tile_sprite=True),
+        _native(values, enabled=1, offscreen=False, visible=True,
+                priority=True, unchanging=False, second_sprite=False,
+                ledge=False, alternate_facing=False, four_tile_sprite=True),
+        (*REGISTERS, "memory"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+def test_prepare_oam_data_high_normal_sprite_pathwise_equivalence() -> None:
+    values = {register: claripy.BVV((index * 13 + 1) & 0xff, 8)
+              for index, register in enumerate(REGISTERS)}
+    assert_pathwise_equivalent(
+        _assembly(values, enabled=1, offscreen=False, visible=True,
+                  priority=False, unchanging=False, second_sprite=False,
+                  ledge=False, alternate_facing=False, image_value=0x8F),
+        _native(values, enabled=1, offscreen=False, visible=True,
+                priority=False, unchanging=False, second_sprite=False,
+                ledge=False, alternate_facing=False, image_value=0x8F),
+        (*REGISTERS, "memory"),
+    )

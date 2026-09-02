@@ -114,3 +114,25 @@ port_get_sprite_screen_xy(struct sprite_screen_xy_state *state)
 	de = (port_u16)(((port_u16)state->registers.d << 8) | state->registers.e);
 	screen_write(state, initial_d, initial_e, de, state->registers.a);
 }
+
+/* Raw-memory adapter for callers whose sprite-state and HRAM live in the
+ * shared PC memory model.  PrepareOAMData always invokes this with D=$c1 and
+ * E at the sprite image index (slot + 2), so the six addresses are distinct.
+ * The underlying port retains the complete register/flag transition. */
+__attribute__((noinline, used)) void
+port_get_sprite_screen_xy_memory(struct cpu_register_state *registers,
+	port_u8 *memory)
+{
+	struct sprite_screen_xy_state state;
+	port_u8 initial_d = registers->d;
+	port_u8 initial_e = registers->e;
+	port_u8 index;
+
+	state.registers = *registers;
+	for (index = 0; index < 6; index++)
+		state.memory[index] = memory[screen_address(initial_d, initial_e, index)];
+	port_get_sprite_screen_xy(&state);
+	*registers = state.registers;
+	for (index = 0; index < 6; index++)
+		memory[screen_address(initial_d, initial_e, index)] = state.memory[index];
+}
