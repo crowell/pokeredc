@@ -23,6 +23,8 @@
 void port_display_text_id_init(
 	struct display_text_id_init_private_state *, port_u8 *);
 void port_switch_to_map_rom_bank(struct switch_to_map_rom_bank_state *);
+void port_display_repel_wore_off_text(
+	struct display_repel_wore_off_text_state *, port_u8 *);
 
 static port_u16
 read_word(const port_u8 *memory, port_u16 address)
@@ -154,6 +156,16 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 	 * records each exact compare result and leaves the callee at its boundary. */
 	if (state->registers.a == TEXT_START_MENU)
 		return;
+	if (state->registers.a == TEXT_REPEL_WORE_OFF) {
+		struct display_repel_wore_off_text_state repel = {0};
+		repel.registers = state->registers;
+		for (port_u8 i = 0; i < 8u; ++i)
+			repel.joy_inputs[i] = state->joy_inputs[i];
+		repel.joy_input_count = state->joy_input_count;
+		port_display_repel_wore_off_text(&repel, memory);
+		state->registers = repel.registers;
+		return;
+	}
 	if (state->registers.a == TEXT_MON_FAINTED ||
 	    state->registers.a == TEXT_BLACKED_OUT ||
 	    state->registers.a == TEXT_REPEL_WORE_OFF ||

@@ -55,6 +55,8 @@ struct display_text_id_state {
 	struct cpu_register_state registers;
 	port_u8 loaded_rom_bank;
 	port_u8 mapper_bank;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
 };
 
 struct display_text_id_init_private_state {
@@ -3437,7 +3439,7 @@ _Static_assert(sizeof(struct binary_accumulator_state) == 4, "unexpected ABI pad
 _Static_assert(sizeof(struct cpu_register_state) == 8, "unexpected ABI padding");
 _Static_assert(sizeof(struct display_pokemon_fainted_text_state) == 17,
     "unexpected ABI padding");
-_Static_assert(sizeof(struct display_text_id_state) == 10,
+_Static_assert(sizeof(struct display_text_id_state) == 19,
     "unexpected ABI padding");
 _Static_assert(sizeof(struct display_text_id_init_private_state) == 9,
     "unexpected ABI padding");

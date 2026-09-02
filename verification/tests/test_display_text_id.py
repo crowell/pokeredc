@@ -47,6 +47,8 @@ H_FRAME_COUNTER = 0xFFD5
 H_LOADED_ROM_BANK = 0xFFB8
 R_ROMB = 0x2000
 STACK = 0xD000
+TEXT_BOX_ID = 0xD125
+W_ENTERING_CABLE_CLUB = 0xCC47
 EXPECTED = bytes.fromhex(
     "f0b8f50601219670cdd6352111cfcb46cb862006fa5ed3cdbc123e1ee0d"
     "5216cd32a666f1600f08cea13cf"
@@ -69,6 +71,7 @@ class Endpoint:
     sprite_index: claripy.ast.BV
     loaded_bank: claripy.ast.BV
     romb: claripy.ast.BV
+    text_box_id: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
@@ -95,7 +98,19 @@ class PrefixEnd(angr.SimProcedure):
 
 
 class FaintedDispatchBoundary(angr.SimProcedure):
+    def __init__(self, text_id: int) -> None:
+        super().__init__()
+        self.text_id = text_id
+
     def run(self) -> None:  # type: ignore[override]
+        if self.text_id == 0xD2:
+            self.state.memory.store(TEXT_BOX_ID, claripy.BVV(1, 8))
+            self.state.regs.h = claripy.BVV(0x2A, 8)
+            self.state.regs.l = claripy.BVV(0xC8, 8)
+            self.state.regs.b = claripy.BVV(0xC4, 8)
+            self.state.regs.c = claripy.BVV(0xB9, 8)
+            self.state.regs.a = claripy.BVV(1, 8)
+            self.state.regs.f = claripy.BVV(0x10, 8)
         self.inhibit_autoret = True
         self.jump(RETURN)
 
@@ -146,6 +161,7 @@ def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
         sprite_index=state.memory.load(base + W_SPRITE_INDEX, 1),
         loaded_bank=state.memory.load(base + H_LOADED_ROM_BANK, 1),
         romb=state.memory.load(base + R_ROMB, 1),
+        text_box_id=state.memory.load(base + TEXT_BOX_ID, 1),
         constraints=tuple(state.solver.constraints),
     )
 
@@ -181,6 +197,8 @@ def _setup(state: angr.SimState, base: int, *, predef: int,
     state.memory.store(base + 0x5678, claripy.BVV(0x99, 8))
     state.memory.store(base + H_LOADED_ROM_BANK, claripy.BVV(7, 8))
     state.memory.store(base + R_ROMB, claripy.BVV(5, 8))
+    state.memory.store(base + TEXT_BOX_ID, claripy.BVV(0, 8))
+    state.memory.store(base + W_ENTERING_CABLE_CLUB, claripy.BVV(1, 8))
 
 
 def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
@@ -209,7 +227,7 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
     dispatch_offsets = {0x00: 0x2c, 0xd0: 0x36, 0xd1: 0x3b, 0xd2: 0x40, 0xd3: 0x31}
     if text_id in dispatch_offsets:
         project.hook(base + dispatch_offsets[text_id],
-                     FaintedDispatchBoundary(), length=3)
+                     FaintedDispatchBoundary(text_id), length=3)
     else:
         project.hook(base + 0x6a, Sm83DecRegister("a", base + 0x6b), length=1)
         project.hook(base + 0x6c, Sm83SlaRegister("e", base + 0x6e), length=2)
@@ -240,6 +258,8 @@ def _native(values: dict[str, claripy.ast.BV], *, predef: int,
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(7, 8))
     state.memory.store(NATIVE_STATE + 9, claripy.BVV(5, 8))
+    for offset in range(10, 19):
+        state.memory.store(NATIVE_STATE + offset, claripy.BVV(0, 8))
     _setup(state, NATIVE_MEMORY, predef=predef, text_id=text_id,
            num_sprites=num_sprites, sprite_text_id=sprite_text_id)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
@@ -256,7 +276,7 @@ def test_display_text_id_initialization_prefix_pathwise_equivalence() -> None:
     assert_pathwise_equivalent(
         _assembly(values, predef=1), _native(values, predef=1),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id"),
     )
 
 
@@ -267,7 +287,7 @@ def test_display_text_id_map_bank_prefix_pathwise_equivalence() -> None:
     assert_pathwise_equivalent(
         _assembly(values, predef=0), _native(values, predef=0),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id"),
     )
 
 
@@ -281,7 +301,7 @@ def test_display_text_id_sprite_handling_pathwise_equivalence() -> None:
         _native(values, predef=0, text_id=2, num_sprites=2,
                 sprite_text_id=1),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id"),
     )
 
 
@@ -294,7 +314,7 @@ def test_display_text_id_special_dispatch_pathwise_equivalence(text_id: int) -> 
         _assembly(values, predef=0, text_id=text_id),
         _native(values, predef=0, text_id=text_id),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id"),
     )
 
 
@@ -309,5 +329,5 @@ def test_display_text_id_out_of_range_sprite_gate_pathwise_equivalence(
         _assembly(values, predef=0, text_id=2, num_sprites=num_sprites),
         _native(values, predef=0, text_id=2, num_sprites=num_sprites),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id"),
     )
