@@ -12318,6 +12318,31 @@ decoder = "exact 34-byte linked body checked in a four-case pathwise proof; SWAP
 
 
 [[function]]
+assembly_symbol = "CheckSpriteAvailability"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_check_sprite_availability"
+c_source = "verification/ports/check_sprite_availability.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "current sprite's state-data1 and state-data2 fields",
+    "the four tilemap cells beneath the sprite",
+    "object visibility, player position, grass, walking, and toggleable-object state",
+]
+proof_domain = "symbolic entry registers with current sprite offset zero; covers a hidden toggleable object, an off-screen random sprite, a blocked bottom-left tile, a fully visible stationary sprite, and a fully visible sprite while the player is walking"
+decoder = "exact 123-byte linked body checked in a focused pathwise proof; every body instruction is adapted individually, while IsObjectHidden, GetTileSpriteStandsOn, and UpdateSpriteImage use their complete proven transitions and native C calls the real ports"
+
+
+
+
+
+
+
+
+
+
+
+[[function]]
 assembly_symbol = "GetBoxSRAMLocation"
 assembly_source = "engine/menus/save.asm"
 c_symbol = "port_get_box_sram_location"
