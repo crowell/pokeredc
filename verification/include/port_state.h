@@ -1566,6 +1566,15 @@ struct default_music_fade_state {
 	port_u8 channel_sound_ids[3];
 };
 
+/* State carried across the ForceBikeOrSurf tail into the proven
+ * PlayDefaultMusic continuation. */
+struct force_bike_or_surf_state {
+	struct cpu_register_state registers;
+	struct cpu_register_state music_callback_registers;
+	port_u8 music_callback_status_flags4;
+	port_u8 music_callback_last_music_sound_id;
+};
+
 struct play_music_state {
 	struct cpu_register_state registers;
 	port_u8 new_sound_id;
@@ -3559,6 +3568,7 @@ _Static_assert(sizeof(struct jump_move_effect_state) == 14, "unexpected ABI padd
 _Static_assert(sizeof(struct init_battle_dispatch_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct print_type_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct default_music_fade_state) == 15, "unexpected ABI padding");
+_Static_assert(sizeof(struct force_bike_or_surf_state) == 18, "unexpected ABI padding");
 _Static_assert(sizeof(struct play_music_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct bankswitch_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_double_state) == 16, "unexpected ABI padding");

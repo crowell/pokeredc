@@ -12658,6 +12658,22 @@ decoder = "exact 44-byte body and all linked addresses checked; initializer comp
 
 
 [[function]]
+assembly_symbol = "ForceBikeOrSurf"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_force_bike_or_surf"
+c_source = "verification/ports/force_bike_or_surf.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hLoadedROMBank and rROMB",
+    "wStatusFlags4, wLastMusicSoundID, wLowHealthAlarm, and wChannelSoundIDs",
+    "the complete LoadPlayerSpriteGraphics call input",
+    "the complete PlayDefaultMusic call input",
+]
+proof_domain = "all canonical register/flag, bank, graphics-callee post-state, and audio-state inputs; both low-health-alarm classes (zero and nonzero); arbitrary canonical PlayDefaultMusicCommon continuation state"
+decoder = "exact 8-byte linked body executes under angr; LD B,nn and LD HL,nn run directly, while independently proven Bankswitch begin/graphics-call/return and PlayDefaultMusic transitions compose at their real native-port call boundaries"
+
+[[function]]
 assembly_symbol = "CheckForceBikeOrSurf"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_check_force_bike_or_surf"
