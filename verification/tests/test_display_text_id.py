@@ -50,6 +50,7 @@ STACK = 0xD000
 TEXT_BOX_ID = 0xD125
 W_ENTERING_CABLE_CLUB = 0xCC47
 W_STATUS_FLAGS6 = 0xD732
+W_JOY_IGNORE = 0xCD6B
 EXPECTED = bytes.fromhex(
     "f0b8f50601219670cdd6352111cfcb46cb862006fa5ed3cdbc123e1ee0d"
     "5216cd32a666f1600f08cea13cf"
@@ -74,6 +75,7 @@ class Endpoint:
     romb: claripy.ast.BV
     text_box_id: claripy.ast.BV
     status_flags6: claripy.ast.BV
+    joy_ignore: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
@@ -137,6 +139,52 @@ class FaintedDispatchBoundary(angr.SimProcedure):
         self.jump(RETURN)
 
 
+class SafariDispatchBoundary(angr.SimProcedure):
+    """Complete DisplaySafariGameOverText transition for this dispatcher path."""
+
+    def run(self) -> None:
+        saved_a = self.state.regs.a
+        saved_f = self.state.regs.f
+        self.state.memory.store(TEXT_BOX_ID, claripy.BVV(1, 8))
+        self.state.memory.store(W_JOY_IGNORE, claripy.BVV(0, 8))
+        self.state.regs.h = claripy.BVV(0x69, 8)
+        self.state.regs.l = claripy.BVV(0xED, 8)
+        self.state.regs.b = saved_a
+        self.state.regs.c = saved_f
+        self.inhibit_autoret = True
+        self.state.regs.f = saved_f
+        self.jump(RETURN)
+
+
+class SafariPrivateBoundary(angr.SimProcedure):
+    """Nested PrintSafariGameOverText boundary used by the native composition."""
+
+    def run(self, *args: claripy.ast.BV) -> None:  # type: ignore[override]
+        memory = self.state.regs.rsi
+        self.state.memory.store(memory + TEXT_BOX_ID, claripy.BVV(1, 8))
+        self.state.memory.store(memory + W_JOY_IGNORE, claripy.BVV(0, 8))
+        self.ret()
+
+
+class SafariAfterBoundary(angr.SimProcedure):
+    """Nested AfterDisplayingTextID boundary; preserves its input registers."""
+
+    def run(self, *args: claripy.ast.BV) -> None:  # type: ignore[override]
+        self.ret()
+
+
+class FaintedAfterBoundary(angr.SimProcedure):
+    """Shared AfterDisplayingTextID transition for faint/repel handlers."""
+
+    def run(self, *args: claripy.ast.BV) -> None:  # type: ignore[override]
+        pointer = self.state.regs.rdi
+        self.state.memory.store(pointer + 0, claripy.BVV(1, 8))
+        self.state.memory.store(pointer + 1, claripy.BVV(0x20, 8))
+        self.state.memory.store(pointer + 2, claripy.BVV(0xC4, 8))
+        self.state.memory.store(pointer + 3, claripy.BVV(0xB9, 8))
+        self.ret()
+
+
 class LoadAAtHL(angr.SimProcedure):
     def __init__(self, continuation: int) -> None:
         super().__init__()
@@ -185,6 +233,7 @@ def _endpoint(state: angr.SimState, *, native: bool, base: int) -> Endpoint:
         romb=state.memory.load(base + R_ROMB, 1),
         text_box_id=state.memory.load(base + TEXT_BOX_ID, 1),
         status_flags6=state.memory.load(base + W_STATUS_FLAGS6, 1),
+        joy_ignore=state.memory.load(base + W_JOY_IGNORE, 1),
         constraints=tuple(state.solver.constraints),
     )
 
@@ -223,6 +272,7 @@ def _setup(state: angr.SimState, base: int, *, predef: int,
     state.memory.store(base + TEXT_BOX_ID, claripy.BVV(0, 8))
     state.memory.store(base + W_ENTERING_CABLE_CLUB, claripy.BVV(1, 8))
     state.memory.store(base + W_STATUS_FLAGS6, claripy.BVV(0xFF, 8))
+    state.memory.store(base + W_JOY_IGNORE, claripy.BVV(0xA5, 8))
 
 
 def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
@@ -250,8 +300,9 @@ def _assembly(values: dict[str, claripy.ast.BV], *, predef: int,
     project.hook(base + 0x4e, SpriteHandlingBoundary(base + 0x6a), length=0x1c)
     dispatch_offsets = {0x00: 0x2c, 0xd0: 0x36, 0xd1: 0x3b, 0xd2: 0x40, 0xd3: 0x31}
     if text_id in dispatch_offsets:
-        project.hook(base + dispatch_offsets[text_id],
-                     FaintedDispatchBoundary(text_id), length=3)
+        boundary = (SafariDispatchBoundary() if text_id == 0xD3 else
+                    FaintedDispatchBoundary(text_id))
+        project.hook(base + dispatch_offsets[text_id], boundary, length=3)
     else:
         project.hook(base + 0x6a, Sm83DecRegister("a", base + 0x6b), length=1)
         project.hook(base + 0x6c, Sm83SlaRegister("e", base + 0x6e), length=2)
@@ -278,6 +329,14 @@ def _native(values: dict[str, claripy.ast.BV], *, predef: int,
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_display_text_id")
     assert function is not None
+    safari_private = project.loader.find_symbol(
+        "port_print_safari_game_over_text_private")
+    safari_after = project.loader.find_symbol("port_after_displaying_text_id")
+    assert safari_private is not None and safari_after is not None
+    project.hook(safari_private.rebased_addr, SafariPrivateBoundary())
+    project.hook(safari_after.rebased_addr,
+                 FaintedAfterBoundary() if text_id in (0xD0, 0xD2)
+                 else SafariAfterBoundary())
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(7, 8))
@@ -300,7 +359,8 @@ def test_display_text_id_initialization_prefix_pathwise_equivalence() -> None:
     assert_pathwise_equivalent(
         _assembly(values, predef=1), _native(values, predef=1),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6",
+         "joy_ignore"),
     )
 
 
@@ -311,7 +371,8 @@ def test_display_text_id_map_bank_prefix_pathwise_equivalence() -> None:
     assert_pathwise_equivalent(
         _assembly(values, predef=0), _native(values, predef=0),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6",
+         "joy_ignore"),
     )
 
 
@@ -325,7 +386,8 @@ def test_display_text_id_sprite_handling_pathwise_equivalence() -> None:
         _native(values, predef=0, text_id=2, num_sprites=2,
                 sprite_text_id=1),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6",
+         "joy_ignore"),
     )
 
 
@@ -338,7 +400,8 @@ def test_display_text_id_special_dispatch_pathwise_equivalence(text_id: int) -> 
         _assembly(values, predef=0, text_id=text_id),
         _native(values, predef=0, text_id=text_id),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6",
+         "joy_ignore"),
     )
 
 
@@ -353,5 +416,6 @@ def test_display_text_id_out_of_range_sprite_gate_pathwise_equivalence(
         _assembly(values, predef=0, text_id=2, num_sprites=num_sprites),
         _native(values, predef=0, text_id=2, num_sprites=num_sprites),
         (*REGISTERS, "text_predef", "list_menu", "frame_counter",
-         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6"),
+         "sprite_index", "loaded_bank", "romb", "text_box_id", "status_flags6",
+         "joy_ignore"),
     )

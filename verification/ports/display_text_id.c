@@ -29,6 +29,8 @@ void port_display_pokemon_fainted_text(
 	struct display_pokemon_fainted_text_state *, port_u8 *);
 void port_display_player_blacked_out_text(
 	struct display_player_blacked_out_text_state *, port_u8 *);
+void port_display_safari_game_over_text(
+	struct display_safari_game_over_text_state *, port_u8 *);
 
 static port_u16
 read_word(const port_u8 *memory, port_u16 address)
@@ -48,6 +50,18 @@ compare_flags(port_u8 left, port_u8 right)
 	if (left < right)
 		flags |= PORT_FLAG_C;
 	return flags;
+}
+
+/* The callfar wrapper returns its saved AF through BC in the Z80 flag
+ * encoding.  Portable state uses canonical SM83 flags, so translate only the
+ * C byte that carries the saved F value on the Safari branch. */
+static port_u8
+z80_flags_from_sm83(port_u8 flags)
+{
+	return (port_u8)(((flags & PORT_FLAG_Z) >> 1) |
+		((flags & PORT_FLAG_N) >> 5) |
+		((flags & PORT_FLAG_H) >> 1) |
+		((flags & PORT_FLAG_C) >> 4));
 }
 
 static port_u8
@@ -193,6 +207,17 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 		blacked_out.joy_input_count = state->joy_input_count;
 		port_display_player_blacked_out_text(&blacked_out, memory);
 		state->registers = blacked_out.registers;
+		return;
+	}
+	if (state->registers.a == TEXT_SAFARI_GAME_OVER) {
+		struct display_safari_game_over_text_state safari = {0};
+		safari.registers = state->registers;
+		for (port_u8 i = 0; i < 8u; ++i)
+			safari.joy_inputs[i] = state->joy_inputs[i];
+		safari.joy_input_count = state->joy_input_count;
+		port_display_safari_game_over_text(&safari, memory);
+		state->registers = safari.registers;
+		state->registers.c = z80_flags_from_sm83(state->registers.c);
 		return;
 	}
 	if (state->registers.a == TEXT_MON_FAINTED ||
