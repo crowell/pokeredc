@@ -12966,6 +12966,21 @@ observables = [
 proof_domain = "exact linked-body path equivalence for unused-current, no-peer, offscreen-peer, stationary collision, distant-peer rejection, opposing vertical movement, high collision-bit, nonzero current-slot, and multi-peer accumulation cases; additionally, all nine classified (zero, $ff, other) Y-step pairs, all nine classified X-step pairs, all Y-pixel pairs, and all X-pixel pairs are symbolic with one visible peer while the linked 16-slot loop completes. All direct calls compose through the complete separately-proven SetSpriteCollisionValues transition"
 decoder = "exact 11-byte entry prefix asserted and the linked body executes through individual SM83 arithmetic, memory, stack, branch, and loop adapters; the bundled Z80 p-code backend does not fork conditional branches, so all branch instructions are explicitly flag-driven adapters. Coverage is representative rather than exhaustive across all 16-slot configurations and coordinate/vector combinations."
 
+[[function]]
+assembly_symbol = "CanWalkOntoTile"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_can_walk_onto_tile"
+c_source = "verification/ports/can_walk_onto_tile.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "hCurrentSpriteOffset, hRandomAdd, hRandomSub, and rDIV",
+    "the current 16-byte wSpriteStateData1 and wSpriteStateData2 slots",
+    "the scanned collision-table bytes",
+]
+proof_domain = "all scripted movement values below WALK with symbolic caller registers; non-scripted collision-table match, sentinel, and repeated non-match scan failures with symbolic random inputs; vertical and horizontal off-screen rejection; and a passable displacement success path that executes the real unused-current-sprite early-return body of DetectCollisionBetweenSprites. Visible-peer collision configurations and the remaining signed displacement combinations are outside this current proof domain."
+decoder = "the complete C routine scans the collision table, calls the real detect-collision and random ports, executes both coordinate checks, and preserves the assembly's asymmetric displacement logic and delayed-failure writes. The focused angr test executes the linked assembly through individual SM83 load, arithmetic, comparison, branch, stack, call/return, memory-store, and Random-boundary adapters; Random is a complete separately-proven composition transition."
+
 
 
 

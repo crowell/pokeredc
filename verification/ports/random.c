@@ -80,3 +80,28 @@ port_random_generate(struct random_generate_state *state)
 	state->random_add = random.random_add;
 	state->random_sub = random.random_sub;
 }
+
+/* Adapter for overworld code whose Random state lives in the shared PC
+ * memory model.  The flat proof memory has one rDIV value, so both hardware
+ * reads observe that value; a native hardware driver may refresh rDIV between
+ * the two reads before invoking this adapter. */
+__attribute__((noinline, used)) void
+port_random_generate_memory(struct cpu_register_state *registers,
+	port_u8 *memory)
+{
+	struct random_generate_state state;
+
+	state.registers = *registers;
+	state.random_add = memory[0xffd3u];
+	state.random_sub = memory[0xffd4u];
+	state.div_first = memory[0xff04u];
+	state.div_second = memory[0xff04u];
+	state.loaded_bank = memory[0xffb8u];
+	state.rom_bank = memory[0x2000u];
+	port_random_generate(&state);
+	*registers = state.registers;
+	memory[0xffd3u] = state.random_add;
+	memory[0xffd4u] = state.random_sub;
+	memory[0xffb8u] = state.loaded_bank;
+	memory[0x2000u] = state.rom_bank;
+}
