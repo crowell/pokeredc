@@ -23114,11 +23114,11 @@ c_source = "verification/ports/print_move_failure_text.c"
 status = "partial"
 observables = [
     "all registers and flags",
-    "wCriticalHitOrOHKO and wTextBoxID",
+    "wCriticalHitOrOHKO, wDamage, and wTextBoxID",
     "Jump Kick path selection",
 ]
-proof_domain = "all register/flag, whose-turn, damage-multiplier, critical, and player/enemy move-effect inputs through text selection, PrintText, critical clear, and Jump Kick comparison boundary"
-decoder = "exact 46-byte linked body is covered; player/enemy effect selection, three failure-text cases, real PrintText composition, critical clear, and CP JUMP_KICK flags/path are modeled; recoil arithmetic, screen shake, and player/enemy damage callees remain explicit boundaries"
+proof_domain = "all register/flag, whose-turn, damage-multiplier, critical, player/enemy move-effect, and 16-bit damage inputs through text selection, PrintText, critical clear, Jump Kick comparison, three 16-bit right shifts with minimum recoil, and the crash-text PrintText call"
+decoder = "the complete 99-byte linked body through the crash-text PrintText and predef-shake boundary is covered; player/enemy effect selection, three failure-text cases, real PrintText composition, critical clear, CP JUMP_KICK flags/path, SRL/RR recoil arithmetic, zero-to-one minimum damage, and crash-text pointer setup are modeled; screen shake and player/enemy damage callees remain explicit boundaries"
 
 [[function]]
 assembly_symbol = "PrintDoesntAffectText"
