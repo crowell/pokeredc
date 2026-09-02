@@ -25,6 +25,8 @@ void port_display_text_id_init(
 void port_switch_to_map_rom_bank(struct switch_to_map_rom_bank_state *);
 void port_display_repel_wore_off_text(
 	struct display_repel_wore_off_text_state *, port_u8 *);
+void port_display_pokemon_fainted_text(
+	struct display_pokemon_fainted_text_state *, port_u8 *);
 
 static port_u16
 read_word(const port_u8 *memory, port_u16 address)
@@ -164,6 +166,16 @@ port_display_text_id(struct display_text_id_state *state, port_u8 *memory)
 		repel.joy_input_count = state->joy_input_count;
 		port_display_repel_wore_off_text(&repel, memory);
 		state->registers = repel.registers;
+		return;
+	}
+	if (state->registers.a == TEXT_MON_FAINTED) {
+		struct display_pokemon_fainted_text_state fainted = {0};
+		fainted.registers = state->registers;
+		for (port_u8 i = 0; i < 8u; ++i)
+			fainted.joy_inputs[i] = state->joy_inputs[i];
+		fainted.joy_input_count = state->joy_input_count;
+		port_display_pokemon_fainted_text(&fainted, memory);
+		state->registers = fainted.registers;
 		return;
 	}
 	if (state->registers.a == TEXT_MON_FAINTED ||

@@ -111,6 +111,14 @@ class FaintedDispatchBoundary(angr.SimProcedure):
             self.state.regs.c = claripy.BVV(0xB9, 8)
             self.state.regs.a = claripy.BVV(1, 8)
             self.state.regs.f = claripy.BVV(0x10, 8)
+        elif self.text_id == 0xD0:
+            self.state.memory.store(TEXT_BOX_ID, claripy.BVV(1, 8))
+            self.state.regs.h = claripy.BVV(0x2A, 8)
+            self.state.regs.l = claripy.BVV(0xA4, 8)
+            self.state.regs.b = claripy.BVV(0xC4, 8)
+            self.state.regs.c = claripy.BVV(0xB9, 8)
+            self.state.regs.a = claripy.BVV(1, 8)
+            self.state.regs.f = claripy.BVV(0x10, 8)
         self.inhibit_autoret = True
         self.jump(RETURN)
 
