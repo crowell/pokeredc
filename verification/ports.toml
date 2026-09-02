@@ -12982,6 +12982,22 @@ proof_domain = "all scripted movement values below WALK with symbolic caller reg
 decoder = "the complete C routine scans the collision table, calls the real detect-collision and random ports, executes both coordinate checks, and preserves the assembly's asymmetric displacement logic and delayed-failure writes. The focused angr test executes the linked assembly through individual SM83 load, arithmetic, comparison, branch, stack, call/return, memory-store, and Random-boundary adapters; Random is a complete separately-proven composition transition."
 
 
+[[function]]
+assembly_symbol = "UpdatePlayerSprite"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_update_player_sprite"
+c_source = "verification/ports/update_player_sprite.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wSpritePlayerStateData1 image/animation/facing bytes",
+    "wSpritePlayerStateData2 walk-animation counter and grass priority",
+    "hTilePlayerStandingOn and hCurrentSpriteOffset",
+]
+proof_domain = "symbolic caller registers through both nonzero walk-animation-counter terminals ($ff disable and decrement-disable), and concrete text-box suppression; stationary, down-facing rollover, font-loaded not-moving, and moving/spinning normal frames below MAP_TILESET_SIZE. Normal-frame cases execute the real linked unused-current-sprite early-return body of DetectCollisionBetweenSprites. Other facing priorities, animation-counter values, map-tile values, and visible-peer collision configurations remain outside this proof domain."
+decoder = "exact 150-byte linked body and the 11-byte DetectCollisionBetweenSprites entry prefix are asserted. The focused angr proof adapters execute each SM83 absolute/high-memory load/store, arithmetic, bit test, conditional edge, direct call/return, and the adjacent INC HL/LD A,[HL] rollover pair at audited instruction boundaries; production C calls the real detector port rather than a test boundary."
+
+
 
 
 
