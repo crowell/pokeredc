@@ -27,11 +27,14 @@ static void set_hl(struct cpu_register_state *registers, port_u16 value)
 	registers->l = (port_u8)value;
 }
 
+void port_force_bike_or_surf(struct force_bike_or_surf_state *, port_u8 *);
+
 /* Port of CheckForceBikeOrSurf in engine/overworld/player_state.asm. */
 __attribute__((noinline, used)) void
-port_check_force_bike_or_surf(struct cpu_register_state *registers,
+port_check_force_bike_or_surf(struct force_bike_or_surf_state *state,
     port_u8 *memory)
 {
+	struct cpu_register_state *registers = &state->registers;
 	port_u8 status = memory[W_STATUS_FLAGS6];
 	port_u8 current_map;
 	port_u8 y;
@@ -109,6 +112,7 @@ port_check_force_bike_or_surf(struct cpu_register_state *registers,
 		registers->a = 1u;
 		memory[W_WALK_BIKE_SURF_STATE] = 1u;
 		memory[W_WALK_BIKE_SURF_STATE_COPY] = 1u;
+		port_force_bike_or_surf(state, memory);
 		return;
 	}
 }

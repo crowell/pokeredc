@@ -17,7 +17,9 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import linked_bytes, rom_window, symbol_location
+from verification.harness.rom import (
+    linked_bytes, rom_window, sm83_flags_to_z80, symbol_location,
+)
 from verification.harness.sm83_shims import (
     Sm83CpImmediate,
     Sm83CpRegister,
@@ -43,6 +45,12 @@ W_B4F_SCRIPT = 0xD668
 W_WALK_STATE = 0xD700
 W_WALK_STATE_COPY = 0xD11A
 W_STATUS6 = 0xD732
+H_LOADED_ROM_BANK = 0xFFB8
+R_ROMB = 0x2000
+W_STATUS_FLAGS4 = 0xD72E
+W_LOW_HEALTH_ALARM = 0xD083
+W_CHANNEL_SOUND_IDS = 0xC026
+W_LAST_MUSIC_SOUND_ID = 0xCFCA
 TABLE = 0x43E6
 TABLE_BYTES = bytes((0x1B, 10, 17, 0x1B, 11, 17, 0x1D, 8, 33,
                      0x1D, 9, 33, 0xA1, 7, 18, 0xA1, 7, 19,
@@ -64,6 +72,8 @@ class Endpoint:
     b4f_script: claripy.ast.BV
     walk_state: claripy.ast.BV
     walk_state_copy: claripy.ast.BV
+    music_state: claripy.ast.BV
+    force_call: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
@@ -144,7 +154,76 @@ class Return(angr.SimProcedure):
         self.jump(DONE)
 
 
-def _setup(state: angr.SimState, base: int, *, status6: int, current_map: int,
+class ForceBikeOrSurfBoundary(angr.SimProcedure):
+    """Complete proven ForceBikeOrSurf transition at Check's tail call."""
+
+    def __init__(self, values: dict[str, claripy.ast.BV], *, native: bool) -> None:
+        super().__init__()
+        self.values = values
+        self.native = native
+
+    def _finish(self, pointer: claripy.ast.BV | None = None,
+                memory: claripy.ast.BV | None = None) -> None:
+        if self.native:
+            assert pointer is not None and memory is not None
+            self.state.globals["force_call"] = claripy.Concat(
+                self.state.memory.load(pointer, 18),
+                self.state.memory.load(memory + H_LOADED_ROM_BANK, 1),
+                self.state.memory.load(memory + R_ROMB, 1),
+                self.state.memory.load(memory + W_STATUS_FLAGS4, 1),
+                self.state.memory.load(memory + W_LAST_MUSIC_SOUND_ID, 1),
+                self.state.memory.load(memory + W_LOW_HEALTH_ALARM, 1),
+                self.state.memory.load(memory + W_CHANNEL_SOUND_IDS, 3),
+            )
+            for offset, name in enumerate(REGISTERS):
+                self.state.memory.store(pointer + offset,
+                                        self.state.memory.load(pointer + 8 + offset, 1))
+            self.state.memory.store(memory + W_STATUS_FLAGS4,
+                                    self.state.memory.load(pointer + 16, 1))
+            self.state.memory.store(memory + W_LAST_MUSIC_SOUND_ID,
+                                    self.state.memory.load(pointer + 17, 1))
+        else:
+            registers = assembly_registers(self.state)
+            self.state.globals["force_call"] = claripy.Concat(
+                *(registers[name] for name in REGISTERS),
+                *(self.values[f"music_{name}"] for name in REGISTERS),
+                self.values["music_callback_status_flags4"],
+                self.values["music_callback_last_music_sound_id"],
+                self.state.memory.load(H_LOADED_ROM_BANK, 1),
+                self.state.memory.load(R_ROMB, 1),
+                self.state.memory.load(W_STATUS_FLAGS4, 1),
+                self.state.memory.load(W_LAST_MUSIC_SOUND_ID, 1),
+                self.state.memory.load(W_LOW_HEALTH_ALARM, 1),
+                self.state.memory.load(W_CHANNEL_SOUND_IDS, 3),
+            )
+            for name in REGISTERS:
+                value = self.values[f"music_{name}"]
+                setattr(self.state.regs, name,
+                        sm83_flags_to_z80(value) if name == "f" else value)
+            self.state.memory.store(W_STATUS_FLAGS4,
+                                    self.values["music_callback_status_flags4"])
+            self.state.memory.store(W_LAST_MUSIC_SOUND_ID,
+                                    self.values["music_callback_last_music_sound_id"])
+
+        if self.state.solver.eval(self.values["low_health_alarm"]) == 0:
+            base = memory if self.native else 0
+            assert base is not None
+            for index in range(3):
+                self.state.memory.store(base + W_CHANNEL_SOUND_IDS + index,
+                                        claripy.BVV(0, 8))
+        if self.native:
+            self.ret()
+        else:
+            self.inhibit_autoret = True
+            self.jump(DONE)
+
+    def run(self, *args: claripy.ast.BV) -> None:  # type: ignore[override]
+        self._finish(self.state.regs.rdi if self.native else None,
+                     self.state.regs.rsi if self.native else None)
+
+
+def _setup(state: angr.SimState, values: dict[str, claripy.ast.BV], base: int,
+           *, status6: int, current_map: int,
            y: int, x: int) -> None:
     state.memory.store(base + W_STATUS6, claripy.BVV(status6, 8))
     state.memory.store(base + W_CUR_MAP, claripy.BVV(current_map, 8))
@@ -154,6 +233,15 @@ def _setup(state: angr.SimState, base: int, *, status6: int, current_map: int,
     state.memory.store(base + W_B4F_SCRIPT, claripy.BVV(0x77, 8))
     state.memory.store(base + W_WALK_STATE, claripy.BVV(0x77, 8))
     state.memory.store(base + W_WALK_STATE_COPY, claripy.BVV(0x77, 8))
+    state.memory.store(base + H_LOADED_ROM_BANK, values["bank"])
+    state.memory.store(base + R_ROMB, values["romb"])
+    state.memory.store(base + W_STATUS_FLAGS4, values["music_status_flags4"])
+    state.memory.store(base + W_LAST_MUSIC_SOUND_ID,
+                       values["music_last_music_sound_id"])
+    state.memory.store(base + W_LOW_HEALTH_ALARM, values["low_health_alarm"])
+    for index in range(3):
+        state.memory.store(base + W_CHANNEL_SOUND_IDS + index,
+                           values[f"channel_{index}"])
     for offset, value in enumerate(TABLE_BYTES):
         state.memory.store(base + TABLE + offset, claripy.BVV(value, 8))
 
@@ -168,12 +256,22 @@ def _endpoint(state: angr.SimState, base: int, *, register_base: int | None = No
         b4f_script=state.memory.load(base + W_B4F_SCRIPT, 1),
         walk_state=state.memory.load(base + W_WALK_STATE, 1),
         walk_state_copy=state.memory.load(base + W_WALK_STATE_COPY, 1),
+        music_state=claripy.Concat(
+            state.memory.load(base + H_LOADED_ROM_BANK, 1),
+            state.memory.load(base + R_ROMB, 1),
+            state.memory.load(base + W_STATUS_FLAGS4, 1),
+            state.memory.load(base + W_LAST_MUSIC_SOUND_ID, 1),
+            state.memory.load(base + W_LOW_HEALTH_ALARM, 1),
+            state.memory.load(base + W_CHANNEL_SOUND_IDS, 3),
+        ),
+        force_call=state.globals["force_call"],
         constraints=tuple(state.solver.constraints),
     )
 
 
 def _assembly(values: dict[str, claripy.ast.BV], **kwargs: int) -> list[Endpoint]:
     loc = symbol_location(SYMBOLS, "CheckForceBikeOrSurf")
+    force = symbol_location(SYMBOLS, "ForceBikeOrSurf")
     project = angr.Project(
         rom_window(ROM, loc.bank), auto_load_libs=False,
         rebase_granularity=0x100,
@@ -214,14 +312,16 @@ def _assembly(values: dict[str, claripy.ast.BV], **kwargs: int) -> list[Endpoint
     project.hook(b + 0x41, LoadImmediateKeepFlags(1, b + 0x43), length=2)
     project.hook(b + 0x43, Sm83StoreAImmediate(W_WALK_STATE, b + 0x46), length=3)
     project.hook(b + 0x46, Sm83StoreAImmediate(W_WALK_STATE_COPY, b + 0x49), length=3)
-    project.hook(b + 0x49, Return(), length=1)
     project.hook(b + 0x50, LoadImmediateKeepFlags(2, b + 0x52), length=2)
     project.hook(b + 0x52, Sm83StoreAImmediate(W_WALK_STATE, b + 0x55), length=3)
     project.hook(b + 0x55, Sm83StoreAImmediate(W_WALK_STATE_COPY, b + 0x58), length=3)
     project.hook(b + 0x59, Return(), length=1)
+    project.hook(force.address, ForceBikeOrSurfBoundary(values, native=False),
+                 length=1)
     state = project.factory.blank_state(addr=b)
     set_assembly_registers(state, values)
-    _setup(state, 0, **kwargs)
+    state.globals["force_call"] = claripy.BVV(0, 208)
+    _setup(state, values, 0, **kwargs)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     manager = project.factory.simulation_manager(state)
     manager.explore(find=DONE, num_find=16)
@@ -244,17 +344,46 @@ class Sm83BitAtHl(angr.SimProcedure):
 def _native(values: dict[str, claripy.ast.BV], **kwargs: int) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_check_force_bike_or_surf")
-    assert function is not None
+    force = project.loader.find_symbol("port_force_bike_or_surf")
+    assert function is not None and force is not None
+    project.hook(force.rebased_addr, ForceBikeOrSurfBoundary(values, native=True))
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
-    _setup(state, NATIVE_MEMORY, **kwargs)
+    store_native_registers(state, NATIVE_STATE + 8,
+                           {name: values[f"music_{name}"] for name in REGISTERS})
+    state.memory.store(NATIVE_STATE + 16, values["music_callback_status_flags4"])
+    state.memory.store(NATIVE_STATE + 17,
+                       values["music_callback_last_music_sound_id"])
+    state.globals["force_call"] = claripy.BVV(0, 208)
+    _setup(state, values, NATIVE_MEMORY, **kwargs)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and len(manager.deadended) == 1
     return [_endpoint(manager.deadended[0], NATIVE_MEMORY, register_base=NATIVE_STATE)]
 
 
+def _values(prefix: str, low_health_alarm: int) -> dict[str, claripy.ast.BV]:
+    values = symbolic_registers(prefix)
+    for name in REGISTERS:
+        values[f"music_{name}"] = (
+            claripy.Concat(claripy.BVS(f"{prefix}_music_{name}", 4),
+                           claripy.BVV(0, 4))
+            if name == "f" else claripy.BVS(f"{prefix}_music_{name}", 8)
+        )
+    values["bank"] = claripy.BVS(f"{prefix}_bank", 8)
+    values["romb"] = claripy.BVS(f"{prefix}_romb", 8)
+    values["music_status_flags4"] = claripy.BVS(f"{prefix}_status4", 8)
+    values["music_last_music_sound_id"] = claripy.BVS(f"{prefix}_last_music", 8)
+    values["music_callback_status_flags4"] = claripy.BVS(f"{prefix}_callback_status4", 8)
+    values["music_callback_last_music_sound_id"] = claripy.BVS(f"{prefix}_callback_last_music", 8)
+    values["low_health_alarm"] = claripy.BVV(low_health_alarm, 8)
+    for index in range(3):
+        values[f"channel_{index}"] = claripy.BVS(f"{prefix}_channel_{index}", 8)
+    return values
+
+
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
+@pytest.mark.parametrize("low_health_alarm", (0, 0x80))
 @pytest.mark.parametrize("status6,current_map,y,x", [
     (0x20, 0x1B, 10, 17),   # already forced bike: early return
     (0x00, 0x55, 0, 0),     # sentinel / no match
@@ -266,12 +395,14 @@ def _native(values: dict[str, claripy.ast.BV], **kwargs: int) -> list[Endpoint]:
     (0x00, 0x55, 10, 17),   # wrong-map and wrong-Y skips
 ])
 def test_check_force_bike_or_surf_pathwise_equivalence(status6: int, current_map: int,
-                                                        y: int, x: int) -> None:
-    values = symbolic_registers("cfbos")
+                                                        y: int, x: int,
+                                                        low_health_alarm: int) -> None:
+    values = _values(f"cfbos_{low_health_alarm}", low_health_alarm)
     assert_pathwise_equivalent(
         _assembly(values, status6=status6, current_map=current_map, y=y, x=x),
         _native(values, status6=status6, current_map=current_map, y=y, x=x),
-        (*REGISTERS, "status6", "b3f_script", "b4f_script", "walk_state", "walk_state_copy"),
+        (*REGISTERS, "status6", "b3f_script", "b4f_script", "walk_state",
+         "walk_state_copy", "music_state", "force_call"),
     )
 
 
