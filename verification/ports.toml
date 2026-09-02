@@ -12293,6 +12293,31 @@ decoder = "exact 63-byte alternate-encoding body checked against the same exhaus
 
 
 [[function]]
+assembly_symbol = "IsObjectHidden"
+assembly_source = "engine/overworld/toggleable_objects.asm"
+c_symbol = "port_is_object_hidden"
+c_source = "verification/ports/is_object_hidden.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "hIsToggleableObjectOff",
+    "the first toggleable-object list entry pair and sentinel",
+    "the selected wToggleableObjectFlags byte",
+]
+proof_domain = "all register/flag inputs with hCurrentSpriteOffset = $10, over the sentinel, one nonmatching entry, and a first-entry match with flag bit zero or one; ToggleableObjectFlagAction composes through its proven C port"
+decoder = "exact 34-byte linked body checked in a four-case pathwise proof; SWAP, list scan, comparison branches, the real toggleable-object flag-action call/return, AND branch, HRAM store, and return are modeled explicitly"
+
+
+
+
+
+
+
+
+
+
+
+[[function]]
 assembly_symbol = "GetBoxSRAMLocation"
 assembly_source = "engine/menus/save.asm"
 c_symbol = "port_get_box_sram_location"
