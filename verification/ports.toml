@@ -30638,3 +30638,17 @@ observables = [
 ]
 proof_domain = "all caller registers and flags with current sprite offset zero and an arbitrary source-tile byte; covers every scripted movement value below WALK and the non-scripted collision-table-sentinel failure with arbitrary Random inputs. The tested slot starts from fixed in-range coordinates and uses the CanWalkOntoTile scripted or sentinel transition; non-scripted passable/collision-table-match paths, offsets other than zero, and broader collision configurations remain outside this composition proof."
 decoder = "exact 51-byte linked body and tail target checked. Every TryWalking instruction is adapted at its own audited seam; the C port calls the actual CanWalkOntoTile and UpdateSpriteImage ports. The assembly-side CanWalkOntoTile boundary is a complete transition for the two stated domains, including failure's Random and delayed state writes, and UpdateSpriteImage is its separately proven complete active-slot transition."
+
+[[function]]
+assembly_symbol = "UpdateNPCSprite"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_update_npc_sprite"
+c_source = "verification/ports/update_npc_sprite.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wMapSpriteData movement-byte-2 lookup, wCurSpriteMovement2, and the active 16-byte sprite-state-data-1/data-2 slots",
+    "hCurrentSpriteOffset, object-hidden state and toggleable-object list/flag bytes",
+]
+proof_domain = "all caller registers and flags with hCurrentSpriteOffset zero, covering the uninitialized movement-status terminal and an initialized slot rejected by the configured first toggleable-object entry. The remaining face-player, font, delay, walking-animation, player-walk, scripted, random, direction-selection, and TryWalking terminals are implemented but remain outside the current linked composition proof."
+decoder = "exact 250-byte linked body is asserted. The proof executes every entry-prefix instruction individually through the movement-byte-2 lookup and movement-status branch; InitializeSpriteStatus and the hidden-object CheckSpriteAvailability return are complete separately-proven transitions for the stated domains. Native C calls the actual availability, initialization, screen-position, delay, walking-animation, random, computed-load, facing, image, and TryWalking ports through raw-memory adapters."
