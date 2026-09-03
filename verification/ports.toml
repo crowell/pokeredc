@@ -30693,3 +30693,17 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs and all 256 hCurrentSpriteOffset values"
 decoder = "exact 9-byte linked body checked; the two 8-bit ADD operations use audited SM83 flag shims while the linked loads, register transfer, and return execute directly"
+
+[[function]]
+assembly_symbol = "DoScriptedNPCMovement"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_do_scripted_npc_movement"
+c_source = "verification/ports/do_scripted_npc_movement.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wStatusFlags4, wStatusFlags5, wNPCMovementDirections2, wNPCMovementDirections2Index, and wScriptedNPCWalkCounter",
+    "the active wSpriteStateData1/wSpriteStateData2 slot and hCurrentSpriteOffset, hSpriteVRAMSlotAndFacing, and hSpriteAnimFrameCounter",
+]
+proof_domain = "all caller register and canonical-flag inputs with active sprite offset zero; covers disabled scripted movement, first-call initialization through the down-facing/non-rollover animation composition, a down command with a symbolic screen-Y coordinate and nonzero walk counter, down-command counter rollover/index advance, and an unrecognized command byte. Left, right, up, $ff, movement-table-index carry, nonzero offsets, and broader animation state combinations are implemented but remain outside this composition proof."
+decoder = "exact 112-byte linked body checked inside the functional proof; individual SM83 absolute/high-memory loads, BIT/SET, ADD/CP/DEC/INC flag operations, conditional branches, direct stores, and terminal RET are adapted at instruction seams. The GetSpriteScreenYPointer/GetSpriteScreenXYPointerCommon, InitScriptedNPCMovement, and valid down-facing/non-rollover AnimScriptedNPCMovement call boundaries use their complete applicable transitions, while native C calls the actual tail entry ports, common helper, initializer, and animation port."
