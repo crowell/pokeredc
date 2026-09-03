@@ -30680,3 +30680,16 @@ observables = [
 ]
 proof_domain = "all caller registers and flags with active sprite offset zero, facing down, intra-animation counter zero, and symbolic image-base/animation-output values. The initializer stores zero and eight before composing the non-rollover AnimScriptedNPCMovement transition; other facing and counter cases are covered by that callee's separate partial proof but are not yet composed here."
 decoder = "exact 12-byte linked body checked; XOR, both absolute stores, and JP tail seam execute individually. The animation tail boundary preserves the complete applicable face-down/non-rollover state transition, while native C calls the actual AnimScriptedNPCMovement port."
+
+[[function]]
+assembly_symbol = "GetSpriteScreenXYPointerCommon"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_get_sprite_screen_xy_pointer_common"
+c_source = "verification/ports/get_sprite_screen_xy_pointer_common.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hCurrentSpriteOffset",
+]
+proof_domain = "all general-register and canonical-flag inputs and all 256 hCurrentSpriteOffset values"
+decoder = "exact 9-byte linked body checked; the two 8-bit ADD operations use audited SM83 flag shims while the linked loads, register transfer, and return execute directly"
