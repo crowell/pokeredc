@@ -30490,8 +30490,8 @@ observables = [
     "complete ordered _UpdateSprites call input",
     "complete post-state from the banked _UpdateSprites seam",
 ]
-proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites C callee; DEC flags and homecall bank/A/F restoration are preserved exactly. The wrapper proof deliberately retains its callable composition boundary; _UpdateSprites itself has a separate functional proof."
-decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed, while production C models the DEC flags and calls the real port_update_sprites_private implementation with the homecall bank-register save/restore contract"
+proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites C callee; DEC flags and homecall bank/A/F restoration are preserved exactly. A second composition proof executes the real native _UpdateSprites implementation for all 16 image-base bytes zero, through its complete 16-iteration scan."
+decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed. The generic wrapper proof uses an explicit callee boundary, while the all-unused composition replaces that boundary with the complete applicable bank-1 scan transition and native C calls the real port_update_sprites_private implementation with the homecall bank-register save/restore contract"
 
 [[function]]
 assembly_symbol = "DisplayOptionMenu"
