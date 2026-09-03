@@ -30490,8 +30490,8 @@ observables = [
     "complete ordered _UpdateSprites call input",
     "complete post-state from the banked _UpdateSprites seam",
 ]
-proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites seam; DEC flags and homecall bank/A/F restoration are preserved exactly, while the _UpdateSprites sprite iteration remains an explicit boundary"
-decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed, while production C models the DEC flags and calls the explicit port_update_sprites_private seam with the real bank-register save/restore contract; the bank-1 sprite body is not yet ported"
+proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites C callee; DEC flags and homecall bank/A/F restoration are preserved exactly. The wrapper proof deliberately retains its callable composition boundary; _UpdateSprites itself has a separate functional proof."
+decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed, while production C models the DEC flags and calls the real port_update_sprites_private implementation with the homecall bank-register save/restore contract"
 
 [[function]]
 assembly_symbol = "DisplayOptionMenu"
@@ -30707,3 +30707,17 @@ observables = [
 ]
 proof_domain = "all caller register and canonical-flag inputs with active sprite offset zero; covers disabled scripted movement, first-call initialization through the down-facing/non-rollover animation composition, a down command with a symbolic screen-Y coordinate and nonzero walk counter, down-command counter rollover/index advance, and an unrecognized command byte. Left, right, up, $ff, movement-table-index carry, nonzero offsets, and broader animation state combinations are implemented but remain outside this composition proof."
 decoder = "exact 112-byte linked body checked inside the functional proof; individual SM83 absolute/high-memory loads, BIT/SET, ADD/CP/DEC/INC flag operations, conditional branches, direct stores, and terminal RET are adapted at instruction seams. The GetSpriteScreenYPointer/GetSpriteScreenXYPointerCommon, InitScriptedNPCMovement, and valid down-facing/non-rollover AnimScriptedNPCMovement call boundaries use their complete applicable transitions, while native C calls the actual tail entry ports, common helper, initializer, and animation port."
+
+[[function]]
+assembly_symbol = "_UpdateSprites"
+assembly_source = "engine/overworld/sprite_collisions.asm"
+c_symbol = "port_update_sprites_private"
+c_source = "verification/ports/update_sprites.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "the 16 wSpriteStateData2 image-base bytes and hCurrentSpriteOffset",
+    "all callback-driven sprite/global state on active slots",
+]
+proof_domain = "all general-register and canonical-flag inputs with all sixteen image-base bytes zero. The proof executes the real complete 16-iteration scan and observes every image-base location and the final current-sprite offset; player, NPC, scripted-NPC, and active-slot callback paths are implemented through their real C ports but remain outside this first composition proof."
+decoder = "exact 40-byte linked _UpdateSprites body checked inside the functional test. SM83 INC/SUB/AND/ADD/CP flags, FF00+n store, loads, loop branches, and final RET run at individual seams; the all-unused proof executes every loop iteration without summarizing the scan. Native C uses the actual 16-slot loop and calls the real player, NPC, and scripted-NPC ports on active slots."
