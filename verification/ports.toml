@@ -30721,3 +30721,17 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs with all sixteen image-base bytes zero. The proof executes the real complete 16-iteration scan and observes every image-base location and the final current-sprite offset; player, NPC, scripted-NPC, and active-slot callback paths are implemented through their real C ports but remain outside this first composition proof."
 decoder = "exact 40-byte linked _UpdateSprites body checked inside the functional test. SM83 INC/SUB/AND/ADD/CP flags, FF00+n store, loads, loop branches, and final RET run at individual seams; the all-unused proof executes every loop iteration without summarizing the scan. Native C uses the actual 16-slot loop and calls the real player, NPC, and scripted-NPC ports on active slots."
+
+[[function]]
+assembly_symbol = "MapEntryAfterBattle"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_map_entry_after_battle"
+c_source = "verification/ports/map_entry_after_battle.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "warp coordinates/count, destination warp/map, and movement flags",
+    "wMapPalOffset, FadePal4 input bytes, and rBGP/rOBP0/rOBP1",
+]
+proof_domain = "all caller register/flag inputs with zero map warps, nonzero wMapPalOffset=1, and symbolic coordinates, destination/movement state, and three FadePal4 palette bytes. This composes IsPlayerStandingOnWarp's no-warp terminal and the complete LoadGBPal tail. Nonzero warp scans and the wMapPalOffset=0 GBFadeInFromWhite tail are implemented but remain outside this first composition proof."
+decoder = "exact 18-byte linked body checked inside the functional test. The banked IsPlayerStandingOnWarp call, absolute map-palette load, AND, and JP tail are instruction-level seams; the no-warp and LoadGBPal boundaries execute their complete applicable transitions while native C calls the real warp scanner and palette port."
