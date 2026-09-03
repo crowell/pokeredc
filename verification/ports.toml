@@ -30652,3 +30652,17 @@ observables = [
 ]
 proof_domain = "all caller registers and flags with hCurrentSpriteOffset zero, covering the uninitialized movement-status terminal and an initialized slot rejected by the configured first toggleable-object entry. The remaining face-player, font, delay, walking-animation, player-walk, scripted, random, direction-selection, and TryWalking terminals are implemented but remain outside the current linked composition proof."
 decoder = "exact 250-byte linked body is asserted. The proof executes every entry-prefix instruction individually through the movement-byte-2 lookup and movement-status branch; InitializeSpriteStatus and the hidden-object CheckSpriteAvailability return are complete separately-proven transitions for the stated domains. Native C calls the actual availability, initialization, screen-position, delay, walking-animation, random, computed-load, facing, image, and TryWalking ports through raw-memory adapters."
+
+[[function]]
+assembly_symbol = "AnimScriptedNPCMovement"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_anim_scripted_npc_movement"
+c_source = "verification/ports/anim_scripted_npc_movement.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "the active sprite's image-base offset, facing, intra-animation counter, animation-frame counter, and image index",
+    "hCurrentSpriteOffset, hSpriteVRAMSlotAndFacing, and hSpriteAnimFrameCounter",
+]
+proof_domain = "all register/flag inputs with hCurrentSpriteOffset zero; all image-base, counter, image, and HRAM inputs; each valid facing direction ($00/$04/$08/$0c), the invalid-facing early return, and both AdvanceScriptedNPCAnimFrameCounter terminals are covered. Other active-slot offsets remain outside the current proof domain."
+decoder = "exact 62-byte linked body checked with individual load, arithmetic, comparison/branch, high-memory-store, call, and return seams. AdvanceScriptedNPCAnimFrameCounter is a complete separately-proven composition transition; native C invokes its actual port and transfers every affected counter/HRAM field."
