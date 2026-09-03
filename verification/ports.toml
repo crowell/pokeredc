@@ -30666,3 +30666,17 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with hCurrentSpriteOffset zero; all image-base, counter, image, and HRAM inputs; each valid facing direction ($00/$04/$08/$0c), the invalid-facing early return, and both AdvanceScriptedNPCAnimFrameCounter terminals are covered. Other active-slot offsets remain outside the current proof domain."
 decoder = "exact 62-byte linked body checked with individual load, arithmetic, comparison/branch, high-memory-store, call, and return seams. AdvanceScriptedNPCAnimFrameCounter is a complete separately-proven composition transition; native C invokes its actual port and transfers every affected counter/HRAM field."
+
+[[function]]
+assembly_symbol = "InitScriptedNPCMovement"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_init_scripted_npc_movement"
+c_source = "verification/ports/init_scripted_npc_movement.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wNPCMovementDirections2Index and wScriptedNPCWalkCounter",
+    "the active sprite's animation fields and hSpriteVRAMSlotAndFacing/hSpriteAnimFrameCounter",
+]
+proof_domain = "all caller registers and flags with active sprite offset zero, facing down, intra-animation counter zero, and symbolic image-base/animation-output values. The initializer stores zero and eight before composing the non-rollover AnimScriptedNPCMovement transition; other facing and counter cases are covered by that callee's separate partial proof but are not yet composed here."
+decoder = "exact 12-byte linked body checked; XOR, both absolute stores, and JP tail seam execute individually. The animation tail boundary preserves the complete applicable face-down/non-rollover state transition, while native C calls the actual AnimScriptedNPCMovement port."
