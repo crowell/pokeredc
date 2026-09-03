@@ -11,17 +11,25 @@
 #define SPS_W_FACING_DIRECTION_LIST 0xcd48u
 #define SPS_OBJ_SIZE 4u
 
+void port_copy_data(struct cpu_register_state *, port_u8 *);
+
 __attribute__((noinline, used)) void
 port_spin_player_sprite(struct cpu_register_state *state, port_u8 *memory)
 {
-	(void)state;
-	port_u16 hl = ((port_u16)(state->h) << 8) | (port_u16)(state->l);
-	port_u8 img = memory[hl];
-	memory[SPS_W_SPRITE_PLAYER_STATE_DATA1_IMAGE_INDEX] = img;
-	for (port_u16 i = 0; i < SPS_OBJ_SIZE; i++) {
-		memory[SPS_W_FACING_DIRECTION_LIST - 1 + i] =
-			memory[SPS_W_FACING_DIRECTION_LIST + i];
-	}
-	port_u8 src0 = memory[SPS_W_FACING_DIRECTION_LIST - 1];
-	memory[SPS_W_FACING_DIRECTION_LIST + 3] = src0;
+	port_u8 saved_h = state->h;
+	port_u8 saved_l = state->l;
+
+	state->a = memory[((port_u16)state->h << 8) | state->l];
+	memory[SPS_W_SPRITE_PLAYER_STATE_DATA1_IMAGE_INDEX] = state->a;
+	state->h = (port_u8)(SPS_W_FACING_DIRECTION_LIST >> 8);
+	state->l = (port_u8)SPS_W_FACING_DIRECTION_LIST;
+	state->d = (port_u8)((SPS_W_FACING_DIRECTION_LIST - 1) >> 8);
+	state->e = (port_u8)(SPS_W_FACING_DIRECTION_LIST - 1);
+	state->b = 0;
+	state->c = SPS_OBJ_SIZE;
+	port_copy_data(state, memory);
+	state->a = memory[SPS_W_FACING_DIRECTION_LIST - 1];
+	memory[SPS_W_FACING_DIRECTION_LIST + 3] = state->a;
+	state->h = saved_h;
+	state->l = saved_l;
 }

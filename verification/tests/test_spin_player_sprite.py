@@ -11,6 +11,9 @@ from archinfo import ArchPcode
 
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
+    REGISTERS,
+    assembly_registers,
+    native_registers,
     set_assembly_registers,
     store_native_registers,
     symbolic_registers,
@@ -57,6 +60,7 @@ class CopyDataSim(angr.SimProcedure):
         state.regs.b = claripy.BVV(0, 8)
         state.regs.c = claripy.BVV(0, 8)
         state.regs.a = claripy.BVV(0, 8)
+        state.regs.f = claripy.BVV(0x40, 8)
         self.jump(self._next_address)
 
 
@@ -96,6 +100,14 @@ def _store_inputs(state: angr.SimState) -> None:
 
 @dataclass(frozen=True)
 class Endpoint:
+    a: claripy.ast.BV
+    f: claripy.ast.BV
+    b: claripy.ast.BV
+    c: claripy.ast.BV
+    d: claripy.ast.BV
+    e: claripy.ast.BV
+    h: claripy.ast.BV
+    l: claripy.ast.BV
     m_image: claripy.ast.BV
     m_flist0: claripy.ast.BV
     m_flist1: claripy.ast.BV
@@ -104,8 +116,10 @@ class Endpoint:
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-def _load(end: angr.SimState) -> Endpoint:
+def _load(end: angr.SimState, native: bool) -> Endpoint:
+    registers = native_registers(end, NATIVE_STATE) if native else assembly_registers(end)
     return Endpoint(
+        **registers,
         m_image=end.memory.load(W_SPRITE_PLAYER_STATE_DATA1_IMAGE_INDEX, 1),
         m_flist0=end.memory.load(W_FACING_DIRECTION_LIST + 0, 1),
         m_flist1=end.memory.load(W_FACING_DIRECTION_LIST + 1, 1),
@@ -142,7 +156,7 @@ def _assembly_endpoint(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     state.regs.sp = claripy.BVV(0xE000, 16)
     state.memory.store(0xE000, claripy.BVV(GB_RETURN, 16), endness="Iend_LE")
     returned = collect_returns(project, state, GB_RETURN)
-    return [_load(end) for end in returned]
+    return [_load(end, False) for end in returned]
 
 
 def _native_endpoint(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
@@ -157,12 +171,17 @@ def _native_endpoint(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
-    return [_load(end) for end in manager.deadended]
+    return [_load(end, True) for end in manager.deadended]
 
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_spin_player_sprite_symbolic_equivalence() -> None:
+    location = symbol_location(SYMBOLS, "SpinPlayerSprite")
+    expected = bytes.fromhex(
+        "7eea02c1e52148cd1147cd010400cdb500fa47cdea4bcde1c9"
+    )
+    assert linked_bytes(ROM, location, len(expected)) == expected
     inputs = symbolic_registers("sps")
     # The caller passes the image-index source pointer in HL; fix it concrete so
     # the store/copy addresses are concrete (the five name bytes stay symbolic).
@@ -173,13 +192,5 @@ def test_spin_player_sprite_symbolic_equivalence() -> None:
     assert_pathwise_equivalent(
         assembly,
         native,
-        ("m_image", "m_flist0", "m_flist1", "m_flist2", "m_flist3"),
+        (*REGISTERS, "m_image", "m_flist0", "m_flist1", "m_flist2", "m_flist3"),
     )
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_spin_player_sprite_exact_linked_body() -> None:
-    location = symbol_location(SYMBOLS, "SpinPlayerSprite")
-    expected = bytes.fromhex(
-        "7eea02c1e52148cd1147cd010400cdb500fa47cdea4bcde1c9"
-    )
-    assert linked_bytes(ROM, location, len(expected)) == expected
