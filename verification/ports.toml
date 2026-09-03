@@ -30624,3 +30624,17 @@ observables = [
 ]
 proof_domain = "all register inputs, player sprite coordinates/directions, cut-versus-boulder offset selectors, and arbitrary existing sprite-36 OAM bytes, with complete GetCutOrBoulderDustAnimationOffsets and WriteOAMBlock composition"
 decoder = "exact 19-byte body including the inline OAMBlock data checked; the real offset lookup and WriteOAMBlock transitions execute through explicit proven boundaries, and native C calls both real ports while preserving the tail-call register contract"
+
+[[function]]
+assembly_symbol = "TryWalking"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_try_walking"
+c_source = "verification/ports/try_walking.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "the current 16-byte wSpriteStateData1 and wSpriteStateData2 slots",
+    "the source tile, collision-table sentinel, hCurrentSpriteOffset, hTilePlayerStandingOn, hRandomAdd, hRandomSub, and rDIV",
+]
+proof_domain = "all caller registers and flags with current sprite offset zero and an arbitrary source-tile byte; covers every scripted movement value below WALK and the non-scripted collision-table-sentinel failure with arbitrary Random inputs. The tested slot starts from fixed in-range coordinates and uses the CanWalkOntoTile scripted or sentinel transition; non-scripted passable/collision-table-match paths, offsets other than zero, and broader collision configurations remain outside this composition proof."
+decoder = "exact 51-byte linked body and tail target checked. Every TryWalking instruction is adapted at its own audited seam; the C port calls the actual CanWalkOntoTile and UpdateSpriteImage ports. The assembly-side CanWalkOntoTile boundary is a complete transition for the two stated domains, including failure's Random and delayed state writes, and UpdateSpriteImage is its separately proven complete active-slot transition."
