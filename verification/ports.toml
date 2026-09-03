@@ -30478,6 +30478,21 @@ proof_domain = "all general-register and canonical-flag inputs, arbitrary tilema
 decoder = "the exact complete 58-byte linked body executes under angr; only individual XOR/store/load instructions and seven independently proven callee boundaries are shimmed, while production C calls real port_text_box_border, port_place_string, port_print_num_badges, port_print_num_owned_mons, port_print_play_time, and port_delay_frames"
 
 [[function]]
+assembly_symbol = "InitFacingDirectionList"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_init_facing_direction_list"
+c_source = "verification/ports/init_facing_direction_list.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wSpritePlayerStateData1ImageIndex and wSpritePlayerStateData1YPixels",
+    "wSavedPlayerFacingDirection and wSavedPlayerScreenY",
+    "all four wFacingDirectionList bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs, symbolic player screen-Y and pre-existing saved/list bytes, and each of the four valid sprite facing-image indices (down, left, up, right); invalid facing values are excluded because the assembly and native loops intentionally do not terminate for them"
+decoder = "the exact complete 36-byte linked body fa02c1ea50cdfa04c1ea4fcd2113471148cd010400cdb500fa02c12148cdbe2320fc2bc9 executes with audited SM83 absolute load/store and CP [HL] shims; the fixed four-byte CopyData call applies its complete independently proven transfer transition, while production C calls the real port_copy_data loop"
+
+[[function]]
 assembly_symbol = "UpdateSprites"
 assembly_source = "home/update_sprites.asm"
 c_symbol = "port_update_sprites"
