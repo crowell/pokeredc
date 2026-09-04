@@ -17246,6 +17246,27 @@ observables = [
 proof_domain = "the 3-byte OverworldLoop prefix through its first DelayFrame call boundary, over all symbolic general-register and canonical-flag inputs; subsequent frame timing, joypad dispatch, movement, collision, and warp logic remain outside this proof"
 decoder = "exact 3-byte linked prefix checked; the independently proven DelayFrame terminal transition is composed at its call boundary, while native C calls the real port_delay_frame with a terminating no-VBlank observation"
 [[function]]
+assembly_symbol = "OverworldLoopLessDelay"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_overworld_loop_less_delay"
+c_source = "verification/ports/overworld_loop_less_delay.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rBGP",
+    "rOBP0",
+    "rOBP1",
+]
+proof_domain = "the 6-byte OverworldLoopLessDelay prefix through LoadGBPal, with symbolic general registers and fixed map-palette offset and FadePal4 bytes; later movement, input, collision, and warp dispatch remain outside this proof"
+decoder = "exact 6-byte linked prefix checked; independently proven DelayFrame and LoadGBPal terminal transitions compose at their call boundaries, and native C calls both real ports while copying the palette results to hardware bytes"
+[[function]]
 assembly_symbol = "ClearVariablesOnEnterMap"
 assembly_source = "engine/overworld/clear_variables.asm"
 c_symbol = "port_clear_variables_on_enter_map"
