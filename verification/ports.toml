@@ -19622,9 +19622,12 @@ c_source = "verification/ports/check_warps_no_collision.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "wDestinationWarpID and hWarpDestinationMap",
+    "wWarpedFromWhichWarp and wWarpedFromWhichMap",
+    "matched warp-entry source pointer",
 ]
-proof_domain = "the 24-byte nonzero-warp setup prefix through the initial wWarpEntries pointer, with wNumberOfWarps=3 and fixed player coordinates (9,10); the zero-warp map-connection path and full warp scan remain outside this proof"
-decoder = "exact 24-byte linked prefix checked; SM83 absolute loads, AND A, and the conditional zero branch use individual shims, while the setup loads and HL pointer execute in the linked body and native C mirrors the nonzero branch"
+proof_domain = "all symbolic register and canonical-flag inputs across matches at warp-entry indices 0, 1, and 2 in a three-entry table; the complete coordinate scan, real WarpFound1/WarpFound2 transitions, destination stores, and matched source pointer are compared pathwise"
+decoder = "exact 24-byte setup prefix checked; absolute loads, AND, HL+ loads, CP, and SET/call seams use individual or bounded instruction boundaries, the retry path executes for prior nonmatches, and real WarpFound1/WarpFound2 ports compose at the match boundary; zero-warp map-connection, extra-check, and no-match paths remain outside this proof"
 [[function]]
 assembly_symbol = "WarpFound2"
 assembly_source = "home/overworld.asm"
