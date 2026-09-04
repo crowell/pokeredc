@@ -28,6 +28,9 @@ STACK = 0xD000
 DONE = 0xEFFF
 H_LOADED_ROM_BANK = 0xFFB8
 R_ROMB = 0x2000
+VCHARS0 = 0x8000
+VCHARS1 = 0x8800
+VCHARS2 = 0x9000
 EXPECTED = bytes.fromhex(
     "21995a1100900100063e10cdf7172159591100960140013e10cdf717"
     "2159591100880140013e10cdf71721996011008001c0063e10c3f717"
@@ -44,6 +47,7 @@ class Endpoint:
     e: claripy.ast.BV
     h: claripy.ast.BV
     l: claripy.ast.BV
+    memory: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
@@ -54,6 +58,14 @@ class FarCopyData2Summary(angr.SimProcedure):
 
     def run(self) -> None:  # type: ignore[override]
         size = claripy.Concat(self.state.regs.b, self.state.regs.c)
+        length = int(self.state.solver.eval(size))
+        source = int(self.state.solver.eval(self.state.regs.hl))
+        destination = int(self.state.solver.eval(self.state.regs.de))
+        for offset in range(length):
+            self.state.memory.store(
+                destination + offset,
+                self.state.memory.load(source + offset, 1),
+            )
         self.state.regs.hl = self.state.regs.hl + size
         self.state.regs.de = self.state.regs.de + size
         self.state.regs.a = claripy.BVV(0, 8)
@@ -70,15 +82,23 @@ def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
 
 
 def _setup_assembly(state: angr.SimState) -> None:
+    state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     state.memory.store(H_LOADED_ROM_BANK, claripy.BVV(0, 8))
     state.memory.store(R_ROMB, claripy.BVV(0, 8))
 
 
 def _setup_native(state: angr.SimState) -> None:
+    state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     state.memory.store(NATIVE_MEMORY + H_LOADED_ROM_BANK, claripy.BVV(0, 8))
     state.memory.store(NATIVE_MEMORY + R_ROMB, claripy.BVV(0, 8))
-    for source, size in ((0x5A99, 0x600), (0x5959, 0x140), (0x6099, 0x6C0)):
-        state.memory.store(NATIVE_MEMORY + source, claripy.BVV(0, size * 8))
+    for symbol, size in (
+        ("FightIntroBackMon", 0x600),
+        ("GameFreakIntro", 0x140),
+        ("FightIntroFrontMon", 0x6C0),
+    ):
+        data = linked_bytes(ROM, symbol_location(SYMBOLS, symbol), size)
+        state.memory.store(NATIVE_MEMORY + symbol_location(SYMBOLS, symbol).address,
+                           claripy.BVV(data))
 
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
@@ -113,7 +133,19 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     assert not manager.errored
     assert len(manager.found) == 1
     end = manager.found[0]
-    return [Endpoint(**assembly_registers(end), constraints=tuple(end.solver.constraints))]
+    return [
+        Endpoint(
+            **assembly_registers(end),
+            memory=claripy.Concat(
+                end.memory.load(VCHARS0, 0x6C0),
+                end.memory.load(VCHARS1, 0x140),
+                end.memory.load(VCHARS2, 0x740),
+                end.memory.load(H_LOADED_ROM_BANK, 1),
+                end.memory.load(R_ROMB, 1),
+            ),
+            constraints=tuple(end.solver.constraints),
+        )
+    ]
 
 
 def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
@@ -128,7 +160,19 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     assert not manager.errored
     assert len(manager.deadended) == 1
     end = manager.deadended[0]
-    return [Endpoint(**native_registers(end, NATIVE_STATE), constraints=tuple(end.solver.constraints))]
+    return [
+        Endpoint(
+            **native_registers(end, NATIVE_STATE),
+            memory=claripy.Concat(
+                end.memory.load(NATIVE_MEMORY + VCHARS0, 0x6C0),
+                end.memory.load(NATIVE_MEMORY + VCHARS1, 0x140),
+                end.memory.load(NATIVE_MEMORY + VCHARS2, 0x740),
+                end.memory.load(NATIVE_MEMORY + H_LOADED_ROM_BANK, 1),
+                end.memory.load(NATIVE_MEMORY + R_ROMB, 1),
+            ),
+            constraints=tuple(end.solver.constraints),
+        )
+    ]
 
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
@@ -138,5 +182,5 @@ def test_load_intro_graphics_pathwise_equivalence() -> None:
     assert_pathwise_equivalent(
         _assembly(values),
         _native(values),
-        ("a", "f", "b", "c", "d", "e", "h", "l"),
+        ("a", "f", "b", "c", "d", "e", "h", "l", "memory"),
     )

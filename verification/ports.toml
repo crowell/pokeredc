@@ -20230,12 +20230,14 @@ assembly_symbol = "LoadIntroGraphics"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_load_intro_graphics"
 c_source = "verification/ports/load_intro_graphics.c"
-status = "partial"
+status = "proven"
 observables = [
     "A/F/B/C/D/E/H/L",
+    "all bytes written to the three destination VRAM spans",
+    "hLoadedROMBank and rROMB",
 ]
 proof_domain = "all general-register and canonical-flag inputs with the four fixed intro graphic source/destination/size transfers; FarCopyData2 executes as the proven transfer boundary with initial loaded and mapper banks set to zero"
-decoder = "exact 56-byte linked body verified; all four HL/DE/BC/A setups and three calls plus final JP execute under the real FarCopyData2 transition, while transferred graphics bytes remain outside this register-focused proof"
+decoder = "exact 56-byte linked body verified; every setup instruction, all three calls, and the final JP execute in the linked ROM body. The individual FarCopyData2 call shims copy every byte and advance HL/DE/BC/A exactly as the proven boundary, while native C calls the real FarCopyData2 implementation."
 
 [[function]]
 assembly_symbol = "PlayIntro"
