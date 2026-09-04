@@ -17215,6 +17215,19 @@ decoder = "exact 36-byte linked body checked; the two `call CopyData` sites and 
 
 
 [[function]]
+assembly_symbol = "EnterMap"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_enter_map"
+c_source = "verification/ports/enter_map.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "wJoyIgnore",
+]
+proof_domain = "the 7-byte EnterMap prefix through the LoadMapData call boundary, over symbolic initial A/F and fixed loaded-ROM-bank/map-view setup; later ClearVariablesOnEnterMap and map-entry control flow remain outside this proof"
+decoder = "exact 7-byte linked prefix checked; the LD [wJoyIgnore],A instruction uses an SM83 store shim and the independently proven LoadMapData call uses a boundary summary that preserves its bank-restored A/F contract, while native C calls the real port_load_map_data"
+[[function]]
 assembly_symbol = "ClearVariablesOnEnterMap"
 assembly_source = "engine/overworld/clear_variables.asm"
 c_symbol = "port_clear_variables_on_enter_map"
