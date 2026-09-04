@@ -89,7 +89,7 @@ port_load_map_sprite_tile_patterns(struct cpu_register_state *r, port_u8 *memory
 
 	r->a = count;
 	if (count == 0) {
-		r->f = PORT_FLAG_Z;
+		r->f = PORT_FLAG_H | PORT_FLAG_Z;
 		return;
 	}
 	r->f = 0;
