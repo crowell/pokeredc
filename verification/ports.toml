@@ -21033,6 +21033,20 @@ proof_domain = "deterministic naming-screen setup through the first PrintAlphabe
 decoder = "exact 90-byte linked prefix checked; SET [HL], absolute stores, LD [HL+] stores, and LD HL,nn use instruction shims, while display, palette, tile, sprite, border, and naming-text calls are matched call-boundary summaries. Interactive alphabet input and submission remain outside this proof"
 
 [[function]]
+assembly_symbol = "ChoosePlayerName"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_choose_player_name"
+c_source = "verification/ports/choose_player_name.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurrentMenuItem",
+    "wNamingScreenType",
+]
+proof_domain = "custom-name selection prefix through the DisplayNamingScreen call boundary; the shared slide, intro name-box menu, custom-screen selection, and naming-screen type state are compared under the DisplayIntroNameTextBox custom-menu contract"
+decoder = "exact 39-byte linked prefix checked; OakSpeechSlidePicRight and DisplayIntroNameTextBox are matched real C call boundaries, while LD A,[wCurrentMenuItem], AND A, JR Z, LD HL, XOR A, and the naming-type store use instruction shims. Default-name selection, interactive submission, and post-screen text remain outside this proof"
+
+[[function]]
 assembly_symbol = "DisplayTitleScreen.doClearSaveDialogue"
 assembly_source = "engine/movie/title.asm"
 c_symbol = "port_display_title_screen_do_clear_save_dialogue"
