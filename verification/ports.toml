@@ -17228,6 +17228,24 @@ observables = [
 proof_domain = "the 7-byte EnterMap prefix through the LoadMapData call boundary, over symbolic initial A/F and fixed loaded-ROM-bank/map-view setup; later ClearVariablesOnEnterMap and map-entry control flow remain outside this proof"
 decoder = "exact 7-byte linked prefix checked; the LD [wJoyIgnore],A instruction uses an SM83 store shim and the independently proven LoadMapData call uses a boundary summary that preserves its bank-restored A/F contract, while native C calls the real port_load_map_data"
 [[function]]
+assembly_symbol = "OverworldLoop"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_overworld_loop"
+c_source = "verification/ports/overworld_loop.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "the 3-byte OverworldLoop prefix through its first DelayFrame call boundary, over all symbolic general-register and canonical-flag inputs; subsequent frame timing, joypad dispatch, movement, collision, and warp logic remain outside this proof"
+decoder = "exact 3-byte linked prefix checked; the independently proven DelayFrame terminal transition is composed at its call boundary, while native C calls the real port_delay_frame with a terminating no-VBlank observation"
+[[function]]
 assembly_symbol = "ClearVariablesOnEnterMap"
 assembly_source = "engine/overworld/clear_variables.asm"
 c_symbol = "port_clear_variables_on_enter_map"
