@@ -22048,8 +22048,8 @@ observables = [
     "L",
     "animation-command source byte",
 ]
-proof_domain = "PlayAnimation.animationLoop -> .AnimationOver branch with command byte $FF, arbitrary non-pointer register inputs, fixed command pointer"
-decoder = "animation-loop LD A,[HL+], CP $FF, JR Z, and RET path checked with explicit SM83 LD/CP shims; no special-effect or subanimation calls are modeled"
+proof_domain = "PlayAnimation.animationLoop -> .AnimationOver branch with command byte $FF, arbitrary non-pointer register inputs, and fixed command pointer"
+decoder = "terminal LD A,[HL+], CP $FF, JR Z, and RET path checked with explicit SM83 LD/CP shims; the functional equivalence test also asserts the exact six-byte terminal branch; special-effect and subanimation dispatch remain outside this proof"
 
 [[function]]
 assembly_symbol = "LoadSubanimation"
