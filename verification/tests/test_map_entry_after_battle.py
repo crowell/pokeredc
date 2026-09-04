@@ -27,13 +27,18 @@ class WarpNone(angr.SimProcedure):
 class Palette(angr.SimProcedure):
  def run(self):
   s=self.state; a=s.memory.load(FADE-1,1);s.memory.store(BGP,a);a=s.memory.load(FADE,1);s.memory.store(OBP0,a);a=s.memory.load(FADE+1,1);s.memory.store(OBP1,a);s.regs.a=a;s.regs.b=claripy.BVV(1,8);s.regs.h=claripy.BVV(0x21,8);s.regs.l=claripy.BVV(0x18,8);s.regs.f=claripy.BVV(2,8);self.jump(RET) # type: ignore[override]
+class WarpMatch(angr.SimProcedure):
+ def __init__(self,n):super().__init__();self.n=n
+ def run(self):
+  s=self.state;s.regs.a=s.memory.load(DM,1);s.regs.b=claripy.BVV(3,8);s.regs.c=claripy.BVV(1,8);s.regs.h=claripy.BVV(0xd7,8);s.regs.l=claripy.BVV(0x36,8);s.regs.f=claripy.BVV(0x42,8);s.memory.store(MOVE,s.memory.load(MOVE,1)|4);self.jump(self.n) # type: ignore[override]
 def setup(s,b,i):
  for a,k in ((WARPS,'warps'),(Y,'y'),(X,'x'),(DW,'dw'),(DM,'dm'),(MOVE,'move')):s.memory.store(b+a,i[k])
+ s.memory.store(b+0xd3af,i['y']);s.memory.store(b+0xd3b0,i['x']);s.memory.store(b+0xd3b1,i['dw']);s.memory.store(b+0xd3b2,i['dm'])
  s.memory.store(b+PAL,claripy.BVV(1,8));s.memory.store(b+FADE-1,i['p0']);s.memory.store(b+FADE,i['p1']);s.memory.store(b+FADE+1,i['p2'])
 def end(s,n):
  b=NM if n else 0;r=native_registers(s,NS) if n else assembly_registers(s);w=(WARPS,Y,X,DW,DM,MOVE,PAL,FADE-1,FADE,FADE+1,BGP,OBP0,OBP1);return E(**r,state=claripy.Concat(*(s.memory.load(b+a,1) for a in w)),constraints=tuple(s.solver.constraints))
-def asm(i):
- l=symbol_location(SYMBOLS,'MapEntryAfterBattle');assert linked_bytes(ROM,l,len(BODY))==BODY;p=angr.Project(rom_window(ROM,l.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={'backend':'blob','arch':ArchPcode('z80:LE:16:default'),'base_addr':0,'entry_point':l.address});q=l.address;p.hook(q,WarpNone(q+8),length=8);p.hook(q+8,Load(PAL,q+11),length=3);p.hook(q+11,AndA(q+12),length=1);p.hook(q+12,Palette(),length=3);s=p.factory.blank_state(addr=q);set_assembly_registers(s,i);setup(s,0,i);m=p.factory.simulation_manager(s);m.explore(find=RET);assert not m.errored and len(m.found)==1;return [end(m.found[0],False)]
+def asm(i,match=False):
+ l=symbol_location(SYMBOLS,'MapEntryAfterBattle');assert linked_bytes(ROM,l,len(BODY))==BODY;p=angr.Project(rom_window(ROM,l.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={'backend':'blob','arch':ArchPcode('z80:LE:16:default'),'base_addr':0,'entry_point':l.address});q=l.address;p.hook(q,WarpMatch(q+8) if match else WarpNone(q+8),length=8);p.hook(q+8,Load(PAL,q+11),length=3);p.hook(q+11,AndA(q+12),length=1);p.hook(q+12,Palette(),length=3);s=p.factory.blank_state(addr=q);set_assembly_registers(s,i);setup(s,0,i);m=p.factory.simulation_manager(s);m.explore(find=RET);assert not m.errored and len(m.found)==1;return [end(m.found[0],False)]
 def native(i):
  p=angr.Project(ELF,auto_load_libs=False);f=p.loader.find_symbol('port_map_entry_after_battle');assert f;s=p.factory.call_state(f.rebased_addr,NS,NM);store_native_registers(s,NS,i);setup(s,NM,i);m=p.factory.simulation_manager(s);m.run();assert not m.errored and len(m.deadended)==1;return [end(m.deadended[0],True)]
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),reason='artifacts')
@@ -42,3 +47,9 @@ def test_map_entry_after_battle_pathwise_equivalence():
  for k in ('warps','y','x','dw','dm','move','p0','p1','p2'):i[k]=claripy.BVS('map_entry_'+k,8)
  i['warps']=claripy.BVV(0,8)
  assert_pathwise_equivalent(asm(i),native(i),(*REGISTERS,'state'))
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),reason='artifacts')
+def test_map_entry_after_battle_matching_warp_pathwise_equivalence():
+ i=symbolic_registers('map_entry_match')
+ for k in ('y','x','dw','dm','move','p0','p1','p2'):i[k]=claripy.BVS('map_entry_match_'+k,8)
+ i['warps']=claripy.BVV(1,8);i['y']=claripy.BVV(4,8);i['x']=claripy.BVV(5,8)
+ assert_pathwise_equivalent(asm(i,match=True),native(i),(*REGISTERS,'state'))
