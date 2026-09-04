@@ -15447,6 +15447,22 @@ observables = [
 ]
 proof_domain = "all register/flag/global/read/write inputs, every inventory pointer/count/capacity, every finite FF-terminated scan, and all wrapped quantity sums; exhaustive setup, scan, quantity-overflow, insertion, and unwind phases compose inductively"
 decoder = "exact 112-byte body checked; five saved stack words, bag/PC capacity selection, scan recurrence, quantity split/overflow, new-slot pointer arithmetic/writes, all success/failure flags, unusual AF-to-BC unwind, and global quantity restoration modeled explicitly"
+[[function]]
+assembly_symbol = "AddItemToInventory"
+assembly_source = "home/inventory.asm"
+c_symbol = "port_add_item_to_inventory_home"
+c_source = "verification/ports/add_item_to_inventory.c"
+status = "proven"
+observables = [
+    "all registers and flags (with carry as the wrapper result)",
+    "hLoadedROMBank and rROMB",
+    "inventory count, item, quantity, and terminator writes",
+    "wCurItem, wItemQuantity, and body-shadow restoration",
+]
+proof_domain = "entry ROM banks 1 and 2; bag and PC-box inventories with nonzero quantities in 0..99; empty, small, and full-box cases; full bags and full inventories holding a growable matching item are excluded"
+decoder = "exact 23-byte home wrapper and exact 112-byte banked body checked; MBC1 bank-3 entry and restoration, real AddItemToInventory_ body composition, home/body global staging, B/C preservation, and carry reconstruction from inventory effects modeled explicitly"
+
+
 
 
 
@@ -25360,13 +25376,15 @@ assembly_symbol = "WriteMonPartySpriteOAMBySpecies"
 assembly_source = "engine/gfx/mon_icons.asm"
 c_symbol = "port_write_mon_party_sprite_oam_by_species_private"
 c_source = "verification/ports/write_mon_party_sprite_oam_by_species_private.c"
-status = "partial"
+status = "proven"
 observables = [
-    "A",
-    "hPartyMonIndex",
+    "all registers and flags",
+    "hPartyMonIndex and wMonPartySpriteSpecies",
+    "wPokedexNum, wOAMBaseTile, and wSymmetricSpriteOAMAttributes",
+    "wShadowOAM and wMonPartySpritesSavedOAM",
 ]
-proof_domain = "all species, party-index, and register inputs through sprite-ID lookup setup"
-decoder = "party-index reset, species load, and GetPartyMonSpriteID continuation boundary are modeled exactly; OAM tile selection, OAM writes, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, species, sprite-ID, Pokédex, base-tile, attribute, shadow-OAM, and saved-OAM inputs; the GetPartyMonSpriteID lookup is supplied compositionally at its real call boundary"
+decoder = "exact linked BySpecies, WriteMonPartySpriteOAM, CopyData, symmetric-writer, and asymmetric-writer bytes checked; party-index reset, lookup continuation, helix/symmetric branch, real OAM writers, and 96-byte saved-OAM copy are composed with only individual SM83 instruction shims"
 
 [[function]]
 assembly_symbol = "WriteMonPartySpriteOAM"
