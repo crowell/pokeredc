@@ -20256,6 +20256,20 @@ proof_domain = "all general-register and canonical-flag inputs, all tracked Copy
 decoder = "exact 68-byte linked body checked; every setup instruction executes through individual SM83 shims, all three CopyVideoData calls use the complete proven transfer boundary, and both CopyData paths execute through the complete proven copy transition. Native C calls real port_copy_video_data and port_copy_data."
 
 [[function]]
+assembly_symbol = "CheckForUserInterruption"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_for_user_interruption"
+c_source = "verification/ports/check_for_user_interruption.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hVBlankOccurred",
+    "hJoyPressed, hJoyHeld, hJoy5, hJoy6, hJoy7, hFrameCounter",
+]
+proof_domain = "all general-register inputs with C in {1, 2}, arbitrary initial hVBlankOccurred, and representative held-command, button-command, and timeout joypad states; DelayFrame and JoypadLowSensitivity execute at their complete C boundaries"
+decoder = "exact 27-byte linked body checked; DelayFrame, JoypadLowSensitivity, both loop branches, and both RET exits are modeled, while native C calls the real DelayFrame and JoypadLowSensitivity ports"
+
+[[function]]
 assembly_symbol = "PlayIntro"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_play_intro"
