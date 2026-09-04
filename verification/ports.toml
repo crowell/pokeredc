@@ -29637,6 +29637,17 @@ proof_domain = "all register/flag inputs, every initial wToggleableObjectFlags b
 decoder = "exact 50-byte linked body executes under angr on one linear path; SM83-only EA/2A/FA decoder shims plus the two proven callee boundaries (FillMemory clear, ToggleableObjectFlagAction set with the flag byte read-modify-write at HL+C/8); the 687-byte table is byte-verified against ROM and the native port calls the real port_fill_memory and port_toggleable_object_flag_action in order"
 
 [[function]]
+assembly_symbol = "OakSpeech"
+assembly_source = "engine/movie/oak_speech/oak_speech.asm"
+c_symbol = "port_oak_speech"
+c_source = "verification/ports/oak_speech.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "setup prefix through the PrepareOakSpeech call boundary; music-stop, music-select, screen-clear, textbox-tile, and real PrepareOakSpeech call sequencing is preserved, while later Oak dialogue, pictures, text, and fades remain outside this proof"
+decoder = "exact 22-byte linked prefix checked; PlaySound, PlayMusic, ClearScreen, and LoadTextBoxTilePatterns use matched call-boundary summaries, while PrepareOakSpeech executes the real C port on the native side and a call-boundary summary on the assembly side"
+[[function]]
 assembly_symbol = "PrepareOakSpeech"
 assembly_source = "engine/movie/oak_speech/oak_speech.asm"
 c_symbol = "port_prepare_oak_speech"
