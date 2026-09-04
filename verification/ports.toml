@@ -20212,6 +20212,21 @@ proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn
 decoder = "6-byte body checked (010b00c3b500: ld bc,$000b; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "PlayIntro"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_play_intro"
+c_source = "verification/ports/play_intro.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags after DelayFrame",
+    "hJoyHeld",
+    "hAutoBGTransferEnabled",
+    "hSCX",
+]
+proof_domain = "all general-register and canonical-flag inputs through the deterministic orchestration and cleanup sequence; PlayShootingStar, PlayIntroScene, and GBFadeOutToWhite are explicit visual-effect call boundaries"
+decoder = "exact 27-byte linked body checked; setup stores, cleanup stores, ClearSprites, DelayFrame, and RET are modeled, while native production C calls the real ClearSprites and DelayFrame ports"
+
+[[function]]
 assembly_symbol = "PrepareTitleScreen"
 assembly_source = "engine/movie/title.asm"
 c_symbol = "port_prepare_title_screen"
