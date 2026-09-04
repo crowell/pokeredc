@@ -29,11 +29,6 @@ void port_update_sprites(struct cpu_register_state *, port_u8 *);
 void port_copy_screen_tile_buffer_to_vram(struct cpu_register_state *, port_u8 *);
 void port_load_font_tile_patterns(struct load_font_tile_patterns_state *, port_u8 *);
 
-struct display_text_id_init_private_state {
-	struct cpu_register_state registers;
-	port_u8 list_menu_id;
-};
-
 static void
 set_pair(struct cpu_register_state *registers, port_u16 value)
 {

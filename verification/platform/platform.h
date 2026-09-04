@@ -18,6 +18,12 @@
  *   poll keyboard -> hJoyInput -> kernel frame -> render -> present -> audio.
  */
 
+#include "../include/bank.h"
+
+/* The platform keeps the 64 KiB CPU address space plus the backing stores
+ * used by the upstream bank-aware ports. */
+#define GB_STORAGE_SIZE 0x128000u
+
 #include "../include/port_state.h"
 #include "../ports/joypad_port.h"
 #include <stddef.h>
@@ -46,6 +52,7 @@
 #define R_OBP0 0xFF48u
 #define R_OBP1 0xFF49u
 #define R_WY 0xFF4Au
+#define R_ROMB 0x2000u
 #define R_WX 0xFF4Bu
 
 /* LCDC bits */

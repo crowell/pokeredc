@@ -58,6 +58,20 @@ observables = [
 proof_domain = "all 65,536 initial A/B pairs"
 decoder = "generic Z80 encodings verified; SUB B half-carry shim required"
 
+[[function]]
+assembly_symbol = "PrepareForSpecialWarp"
+assembly_source = "engine/overworld/special_warps.asm"
+c_symbol = "port_prepare_for_special_warp"
+c_source = "verification/ports/prepare_for_special_warp.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wCurMap, wCurrentTileBlockMapViewPointer, wCurMapTileset, wLastMap",
+    "wStatusFlags3, wStatusFlags6, wYOffsetSinceLastSpecialWarp, wXOffsetSinceLastSpecialWarp, and wDestinationWarpID",
+]
+proof_domain = "all general-register and canonical-flag inputs across new-game, debug, fly/destination, and dungeon-return routing; status3 values 0, 1, and $ff; status6 combinations with debug, fly/dungeon, and dungeon bits; complete LoadSpecialWarpData, LoadTilesetHeader, and PrepareNewGameDebug compositional boundaries"
+decoder = "exact 49-byte linked body checked; individual SM83 bit/res/load/store/branch seams and the RET NZ terminal are shimmed at audited instruction boundaries, while production C preserves call ordering, status-bit clearing, destination selection, status3 override, dungeon early return, and last-map writes"
+
 
 
 
@@ -392,17 +406,11 @@ c_symbol = "port_get_player_teleport_anim_frame_delay"
 c_source = "verification/ports/teleport_delay.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and canonical flags",
     "wOnSGB",
 ]
 proof_domain = "all general-register, canonical-flag, and wOnSGB byte inputs"
-decoder = "machine bytes verified; SM83 FA absolute load and both INC A operations shimmed"
+decoder = "the exact 8-byte linked body fa1bcfee013c3cc9 executes under angr; the SM83 FA absolute load and both INC A operations are shimmed, while native C uses the real CPU-and-memory ABI and reads wOnSGB directly"
 
 
 
@@ -7824,6 +7832,22 @@ decoder = "exact 15-byte linked body checked; all four SM83 absolute stores mode
 
 
 [[function]]
+assembly_symbol = "PrintPredefTextID"
+assembly_source = "home/predef_text.asm"
+c_symbol = "port_print_predef_text_id"
+c_source = "verification/ports/print_predef_text_id.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "hTextID, wTextPredefFlag, wCurMapTextPtr, and hSavedMapTextPtr",
+    "hFrameCounter and wSpriteIndex",
+    "hLoadedROMBank and rROMB",
+]
+proof_domain = "the complete PrintPredefTextID pointer-save, predef-flag setup, DisplayTextID initialization-prefix boundary, and pointer-restore tail; the downstream text dictionary and interactive display remain in the documented DisplayTextID partial boundary"
+decoder = "exact linked bytes through the shared RestoreMapTextPointer return are checked in verification/tests/test_print_predef_text_id.py; individual high-memory and HLI instructions are shimmed, SetMapTextPointer effects are modeled at its proven boundary, and native C calls the real DisplayTextID port before restoring the map-text pointer"
+
+
+[[function]]
 assembly_symbol = "RestoreMapTextPointer"
 assembly_source = "home/predef_text.asm"
 c_symbol = "port_restore_map_text_pointer"
@@ -10091,6 +10115,58 @@ decoder = "exact 10-byte body checked; four symbolic HLI reads, DE/BC register a
 
 
 [[function]]
+assembly_symbol = "InitMapSprites"
+assembly_source = "engine/overworld/map_sprites.asm"
+c_symbol = "port_init_map_sprites"
+c_source = "verification/ports/init_map_sprites.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "all 16 sprite-state data1/data2 bytes",
+    "the loader's sprite-pattern and transfer state",
+]
+proof_domain = "the indoor-map path (map 0x25) with wNumSprites = 0 and the outdoor PALLET_TOWN early-return path (map 0) with an empty data1 sprite set; all general registers, the complete 16-slot picture-ID copy on indoor entry, the proven InitOutsideMapSprites outdoor transition, and the loader's zero-sprite terminal transition are compared, while nonzero sprite-pattern transfer paths remain covered by their own restricted port"
+decoder = "the exact 29-byte linked body is checked inside the functional test; InitOutsideMapSprites and the loader execute through their real native composition boundaries, while the conditional RET C, individual SM83 absolute loads/stores, pair setup, arithmetic, and branch instructions are shimmed for the p-code backend"
+
+
+[[function]]
+assembly_symbol = "LoadMapSpriteTilePatterns"
+assembly_source = "engine/overworld/map_sprites.asm"
+c_symbol = "port_load_map_sprite_tile_patterns"
+c_source = "verification/ports/load_map_sprite_tile_patterns.c"
+status = "partial"
+observables = [
+    "all registers and flags on the zero-sprite path",
+    "wNumSprites, hVRAMSlot, hFourTileSpriteCount",
+    "all sixteen sprite-state image-base offsets and temporary picture IDs",
+]
+proof_domain = "the complete zero-sprite terminal path and a nonzero first-sprite path for FIRST_STILL_SPRITE (0x3d) using VRAM slot 11 with wFontLoaded set; both paths compare the loader's sprite-state memory and VRAM bookkeeping, while only the zero-sprite path compares registers and flags"
+decoder = "the zero-sprite test executes the exact 7-byte linked entry path; the nonzero test executes the exact linked loadTilePatternLoop body through prior-slot rejection, free-slot selection, four-tile VRAM placement, font-loaded transfer skips, next-slot cleanup, and the sixteen-entry picture-ID clearing loop. Only individual SM83 absolute loads/stores, immediate pair loads, arithmetic/branch boundaries, the ReadSpriteSheetData call boundary, and the cleanup iteration are shimmed; the full multi-sprite transfer matrix remains outside this proof domain"
+
+
+
+
+
+[[function]]
+assembly_symbol = "InitOutsideMapSprites"
+assembly_source = "engine/overworld/map_sprites.asm"
+c_symbol = "port_init_outside_map_sprites"
+c_source = "verification/ports/init_outside_map_sprites.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wSpriteSet, wSpriteSetID, wNumSprites",
+    "all sprite-state data1/data2 bytes",
+]
+proof_domain = "the complete early-return path for FIRST_INDOOR_MAP (map 0x25), the complete skip-loading path for PALLET_TOWN (map 0), and the split-map selection path for map 0x0d selecting sprite set 2; the outdoor paths use an already matching sprite-set ID, no font-reload flag, and all sprite data1 slots unused, while all registers and the full sprite-state regions are compared"
+decoder = "the exact linked body executes through the initial RET NC map guard, map lookup, split-set result, sprite-set equality branch, all fifteen real slot-stride iterations, and carry return; only individual SM83 absolute loads, arithmetic/flag instructions, conditional branches, and stack pointer shims are used, while sprite-set loading and the LoadMapSpriteTilePatterns composition remain outside this proof domain"
+
+
+
+
+[[function]]
+assembly_symbol = "CopyVideoData"
+[[function]]
 assembly_symbol = "CopyVideoData"
 assembly_source = "home/copy2.asm"
 c_symbol = "port_copy_video_data"
@@ -10615,6 +10691,20 @@ decoder = "exact 19-byte body checked; XOR, all three SRL/RR carry transfers, bo
 
 
 
+
+[[function]]
+assembly_symbol = "MoveSprite"
+assembly_source = "home/pathfinding.asm"
+c_symbol = "port_move_sprite"
+c_source = "verification/ports/move_sprite.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "complete wNPCMovementDirections destination region",
+    "wNPCNumScriptedSteps, movement-status, simulated-state, and joy-ignore globals",
+]
+proof_domain = "one- through five-command movement streams with the full destination region compared; SetSpriteMovementBytesToFF and GetSpriteMovementByte1Pointer compose at complete boundaries, while arbitrary stream lengths and downstream scripted movement remain"
+decoder = "exact 49-byte linked MoveSprite/MoveSprite_ body checked; the actual copy loop, sentinel-inclusive count, register restoration, status-bit set, and final mask writes execute under angr"
 
 [[function]]
 assembly_symbol = "DivideBytes"
@@ -11593,6 +11683,52 @@ decoder = "exact 16-byte body and both global addresses checked; initializer/fin
 
 
 [[function]]
+assembly_symbol = "AnimateIntroNidorino"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_animate_intro_nidorino"
+c_source = "verification/ports/play_intro.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wBaseCoordY and wBaseCoordX",
+    "the 36-entry updated intro OAM buffer",
+]
+proof_domain = "the complete IntroNidorinoAnimation1 table, including signed -1 movement and ANIMATION_END=80, with no user interruption; compares all registers, flags, coordinates, and 36 OAM entries after the loop"
+decoder = "exact 27-byte linked body checked; table reads, terminal comparison, coordinate stores, UpdateIntroNidorinoOAM and DelayFrames boundaries, DE preservation/increment, loop, and return are modeled. Other animation tables and interruption paths remain outside this proof"
+
+[[function]]
+assembly_symbol = "PlayIntroScene"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_play_intro_scene"
+c_source = "verification/ports/play_intro.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hSCX",
+    "wBaseCoordX and wBaseCoordY",
+    "BGP/OBP0/OBP1",
+    "joypad debounce and frame-counter interruption state",
+    "all initialized and updated OAM bytes",
+]
+proof_domain = "first-interruption path after initial Nidorino setup: palette setup, first tile-copy boundary, six-by-six OAM initialization, one Nidorino movement update, and immediate UP+SELECT+B interruption; compares all registers, flags, globals, hardware palette/SCX, joypad debounce state, and all 36 OAM entries"
+decoder = "exact 44-byte linked prefix checked; LDH/absolute stores and XOR use instruction shims, while RunPaletteCommand, IntroCopyTiles, InitIntroNidorinoOAM, UpdateIntroNidorinoOAM, and CheckForUserInterruption are matched call-boundary summaries. The remaining sound, animation, Gengar, and non-interrupted choreography remain outside this proof"
+
+[[function]]
+assembly_symbol = "IntroMoveMon"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_intro_move_mon"
+c_source = "verification/ports/play_intro.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hSCX, wBaseCoordX, and wBaseCoordY",
+    "the joypad debounce outputs",
+    "the updated intro OAM entries",
+]
+proof_domain = "one movement step for each of MOVE_NIDORINO_RIGHT, MOVE_GENGAR_LEFT, and MOVE_GENGAR_RIGHT with no user interruption; the Nidorino path compares all 36 updated OAM entries and each path compares registers, flags, movement globals, and debounce outputs"
+decoder = "exact 49-byte linked body checked; direction dispatch, SCX increments/decrements, the real C UpdateIntroNidorinoOAM and CheckForUserInterruption call boundaries, carry return, DEC D flags, loop, and return are modeled. User-interruption and multi-step movement domains remain outside this proof"
+
+[[function]]
 assembly_symbol = "UpdateIntroNidorinoOAM"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_update_intro_nidorino_oam"
@@ -12196,6 +12332,56 @@ decoder = "exact 63-byte alternate-encoding body checked against the same exhaus
 
 
 [[function]]
+assembly_symbol = "IsObjectHidden"
+assembly_source = "engine/overworld/toggleable_objects.asm"
+c_symbol = "port_is_object_hidden"
+c_source = "verification/ports/is_object_hidden.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "hIsToggleableObjectOff",
+    "the first toggleable-object list entry pair and sentinel",
+    "the selected wToggleableObjectFlags byte",
+]
+proof_domain = "all register/flag inputs with hCurrentSpriteOffset = $10, over the sentinel, one nonmatching entry, and a first-entry match with flag bit zero or one; ToggleableObjectFlagAction composes through its proven C port"
+decoder = "exact 34-byte linked body checked in a four-case pathwise proof; SWAP, list scan, comparison branches, the real toggleable-object flag-action call/return, AND branch, HRAM store, and return are modeled explicitly"
+
+
+
+
+
+
+
+
+
+
+
+[[function]]
+assembly_symbol = "CheckSpriteAvailability"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_check_sprite_availability"
+c_source = "verification/ports/check_sprite_availability.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "current sprite's state-data1 and state-data2 fields",
+    "the four tilemap cells beneath the sprite",
+    "object visibility, player position, grass, walking, and toggleable-object state",
+]
+proof_domain = "symbolic entry registers with current sprite offset zero; covers a hidden toggleable object, an off-screen random sprite, a blocked bottom-left tile, a fully visible stationary sprite, and a fully visible sprite while the player is walking"
+decoder = "exact 123-byte linked body checked in a focused pathwise proof; every body instruction is adapted individually, while IsObjectHidden, GetTileSpriteStandsOn, and UpdateSpriteImage use their complete proven transitions and native C calls the real ports"
+
+
+
+
+
+
+
+
+
+
+
+[[function]]
 assembly_symbol = "GetBoxSRAMLocation"
 assembly_source = "engine/menus/save.asm"
 c_symbol = "port_get_box_sram_location"
@@ -12489,6 +12675,61 @@ decoder = "exact 44-byte body checked; conditional local call, high-byte SRL, ca
 
 
 [[function]]
+assembly_symbol = "IsPlayerStandingOnDoorTile"
+assembly_source = "engine/overworld/doors.asm"
+c_symbol = "port_is_player_standing_on_door_tile"
+c_source = "verification/ports/door_tiles.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wCurMapTileset and standing tile",
+    "DoorTileIDPointers table bytes",
+    "selected door-tile list bytes",
+]
+proof_domain = "all symbolic register and flag inputs with concrete table/list records covering tileset miss, list terminator miss, first tile match, and late tile match; complete push/pop DE restoration and AND/CP/SCF flag paths"
+decoder = "exact 35-byte body checked; IsInArray composes through its complete proven transition, while individual SM83 absolute loads, HLI/pointer loads, AND, CP, SCF, and return paths are shimmed; native C executes the zero-terminated door-list loop"
+
+
+
+
+
+
+
+[[function]]
+assembly_symbol = "IsPlayerStandingOnDoorTileOrWarpTile"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_is_player_standing_on_door_tile_or_warp_tile"
+c_source = "verification/ports/door_warp.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wMovementFlags bit 2",
+    "DoorTileIDPointers and WarpTileIDPointers records",
+    "standing door/warp tile lists",
+]
+proof_domain = "all symbolic register and flag inputs with concrete tileset, door-list, and warp-list records covering door match, door miss with warp match, both list misses, and tileset miss; complete HL/DE/BC restoration and movement-flag RES path"
+decoder = "exact 47-byte body checked; the banked IsPlayerStandingOnDoorTile and IsInArray callees compose through complete transition boundaries, while ADD A, pointer loads, HLI loads, and RES bit 2 are instruction-level shims; native C executes both lookup paths and the flag-clear branch"
+
+
+
+
+
+
+[[function]]
+assembly_symbol = "IsWarpTileInFrontOfPlayer"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_is_warp_tile_in_front_of_player"
+c_source = "verification/ports/overworld_warp.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wTileInFrontOfPlayer and the four directional tile-map cells",
+    "WarpTileListPointers and selected warp-carpet list",
+]
+proof_domain = "all symbolic register and flag inputs with valid sprite-facing directions, arbitrary coordinates and tile-map cells, every normal warp-list match/miss position, and both SS Anne Bow tile outcomes; complete HL/DE/BC restoration and GetTileAndCoordsInFrontOfPlayer/IsInArray composition"
+decoder = "exact 41-byte body checked; the proven GetTileAndCoordsInFrontOfPlayer and IsInArray transitions compose at call boundaries, while absolute loads, SRL, ADD HL,BC, HLI pointer loads, CP, SCF, and AND paths are shimmed; native C executes normal and SS Anne lookup paths"
+
+[[function]]
 assembly_symbol = "IsPlayerStandingOnWarp"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_is_player_standing_on_warp"
@@ -12503,6 +12744,41 @@ observables = [
 ]
 proof_domain = "all register/flag/global/record inputs and every counted finite warp list, including zero entries, every match position, both coordinate mismatch paths, pointer wraparound, and count underflow behavior"
 decoder = "exact 44-byte body and all linked addresses checked; initializer composes with exhaustive Y mismatch, X mismatch, match/store/set-bit, and DEC-C continuation/termination transitions"
+
+
+[[function]]
+assembly_symbol = "ForceBikeOrSurf"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_force_bike_or_surf"
+c_source = "verification/ports/force_bike_or_surf.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hLoadedROMBank and rROMB",
+    "wStatusFlags4, wLastMusicSoundID, wLowHealthAlarm, and wChannelSoundIDs",
+    "the complete LoadPlayerSpriteGraphics call input",
+    "the complete PlayDefaultMusic call input",
+]
+proof_domain = "all canonical register/flag, bank, graphics-callee post-state, and audio-state inputs; both low-health-alarm classes (zero and nonzero); arbitrary canonical PlayDefaultMusicCommon continuation state"
+decoder = "exact 8-byte linked body executes under angr; LD B,nn and LD HL,nn run directly, while independently proven Bankswitch begin/graphics-call/return and PlayDefaultMusic transitions compose at their real native-port call boundaries"
+
+[[function]]
+assembly_symbol = "CheckForceBikeOrSurf"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_check_force_bike_or_surf"
+c_source = "verification/ports/check_force_bike_or_surf.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wStatusFlags6",
+    "wSeafoamIslandsB3FCurScript and wSeafoamIslandsB4FCurScript",
+    "wWalkBikeSurfState and wWalkBikeSurfStateCopy",
+    "complete ForcedBikeOrSurfMaps scan state",
+    "hLoadedROMBank/rROMB and PlayDefaultMusic audio state",
+    "complete ForceBikeOrSurf call input",
+]
+proof_domain = "all symbolic canonical register/flag, bank, graphics/audio, and ForceBikeOrSurf continuation inputs; early always-on-bike return, sentinel/no-match, every forced-map table position, map/Y/X mismatch paths, Route 16/18 bike setup, Seafoam B3F/B4F surfing setup, and both low-health alarm classes"
+decoder = "exact 91-byte linked body executes under angr with instruction-level shims for backend gaps; all scan/store paths execute directly, and the normal bike tail composes the independently proven ForceBikeOrSurf transition through its real C port"
 
 
 
@@ -12764,6 +13040,67 @@ observables = [
 ]
 proof_domain = "all register and flag inputs, including zero, $ff, and every other accumulator value"
 decoder = "exact 19-byte body checked; AND zero test, B/C initialization, $ff comparison, special negative-one path, generic nonzero normalization, and final flags modeled explicitly"
+
+[[function]]
+assembly_symbol = "DetectCollisionBetweenSprites"
+assembly_source = "engine/overworld/sprite_collisions.asm"
+c_symbol = "port_detect_collision_between_sprites"
+c_source = "verification/ports/detect_collision_between_sprites.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "hCurrentSpriteOffset and hCollidingSprite* work bytes",
+    "the complete 16-slot wSpriteStateData1 region",
+]
+proof_domain = "exact linked-body path equivalence for unused-current, no-peer, offscreen-peer, stationary collision, distant-peer rejection, opposing vertical movement, high collision-bit, nonzero current-slot, and multi-peer accumulation cases; additionally, all nine classified (zero, $ff, other) Y-step pairs, all nine classified X-step pairs, all Y-pixel pairs, and all X-pixel pairs are symbolic with one visible peer while the linked 16-slot loop completes. All direct calls compose through the complete separately-proven SetSpriteCollisionValues transition"
+decoder = "exact 11-byte entry prefix asserted and the linked body executes through individual SM83 arithmetic, memory, stack, branch, and loop adapters; the bundled Z80 p-code backend does not fork conditional branches, so all branch instructions are explicitly flag-driven adapters. Coverage is representative rather than exhaustive across all 16-slot configurations and coordinate/vector combinations."
+
+[[function]]
+assembly_symbol = "CanWalkOntoTile"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_can_walk_onto_tile"
+c_source = "verification/ports/can_walk_onto_tile.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "hCurrentSpriteOffset, hRandomAdd, hRandomSub, and rDIV",
+    "the current 16-byte wSpriteStateData1 and wSpriteStateData2 slots",
+    "the scanned collision-table bytes",
+]
+proof_domain = "all scripted movement values below WALK with symbolic caller registers; non-scripted collision-table match, sentinel, and repeated non-match scan failures with symbolic random inputs; vertical and horizontal off-screen rejection; and a passable displacement success path that executes the real unused-current-sprite early-return body of DetectCollisionBetweenSprites. Visible-peer collision configurations and the remaining signed displacement combinations are outside this current proof domain."
+decoder = "the complete C routine scans the collision table, calls the real detect-collision and random ports, executes both coordinate checks, and preserves the assembly's asymmetric displacement logic and delayed-failure writes. The focused angr test executes the linked assembly through individual SM83 load, arithmetic, comparison, branch, stack, call/return, memory-store, and Random-boundary adapters; Random is a complete separately-proven composition transition."
+
+
+[[function]]
+assembly_symbol = "UpdatePlayerSprite"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_update_player_sprite"
+c_source = "verification/ports/update_player_sprite.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wSpritePlayerStateData1 image/animation/facing bytes",
+    "wSpritePlayerStateData2 walk-animation counter and grass priority",
+    "hTilePlayerStandingOn and hCurrentSpriteOffset",
+]
+proof_domain = "symbolic caller registers through both nonzero walk-animation-counter terminals ($ff disable and decrement-disable), and concrete text-box suppression; stationary, down-facing rollover, font-loaded not-moving, and moving/spinning normal frames below MAP_TILESET_SIZE. Normal-frame cases execute the real linked unused-current-sprite early-return body of DetectCollisionBetweenSprites. Other facing priorities, animation-counter values, map-tile values, and visible-peer collision configurations remain outside this proof domain."
+decoder = "exact 150-byte linked body and the 11-byte DetectCollisionBetweenSprites entry prefix are asserted. The focused angr proof adapters execute each SM83 absolute/high-memory load/store, arithmetic, bit test, conditional edge, direct call/return, and the adjacent INC HL/LD A,[HL] rollover pair at audited instruction boundaries; production C calls the real detector port rather than a test boundary."
+
+
+[[function]]
+assembly_symbol = "UpdateSpriteInWalkingAnimation"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_update_sprite_in_walking_animation"
+c_source = "verification/ports/update_sprite_walking_animation.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "hCurrentSpriteOffset and the active sprite's state-data-1 bytes 3 through 8",
+    "the active sprite's walk-animation counter",
+    "Random adapter memory when the walking counter reaches zero",
+]
+proof_domain = "all register inputs with H=$c1, current sprite offset zero, symbolic frame/vector/pixel bytes, and every walk-animation counter except one, so the real linked body reaches RET NZ after a nonterminal walking tick. Both intra-animation-frame branches are covered symbolically. The walking-completion scripted and Random paths, other sprite offsets, and inherited H pages are outside this current proof domain."
+decoder = "exact 43-byte linked prefix through RET NZ asserted; individual SM83 high-memory loads, arithmetic, HLI accesses, stores, frame branch, and conditional return execute under angr. The C body includes the remaining complete assembly flow and calls port_random_generate_memory at its real Random call site, but that composition is not yet included in the proof domain."
 
 
 
@@ -13458,6 +13795,72 @@ decoder = "exact 22-byte body and linked HRAM/mapper addresses checked; LDH, PUS
 
 
 
+
+
+[[function]]
+assembly_symbol = "TextScript_GameCornerPrizeMenu"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_text_script_game_corner_prize_menu"
+c_source = "verification/ports/text_script_game_corner_prize_menu.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "hLoadedROMBank and rROMB",
+    "the CeladonPrizeMenu callback-input transition",
+    "the complete HoldTextDisplayOpen call-input transition",
+]
+proof_domain = "all symbolic register/flag/bank inputs, arbitrary CeladonPrizeMenu post-state and callback-bank outputs, and the shared host-input hold-open tail; the prize-menu body itself remains an explicit unported callback boundary"
+decoder = "exact 11-byte linked body 0614211b67cdd635c3df29 checked functionally; menu-bank/pointer setup, proven Bankswitch restoration, indirect callback-entry trace, and proven HoldTextDisplayOpen composition are modeled exactly"
+
+
+[[function]]
+assembly_symbol = "TextScript_PokemonCenterPC"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_text_script_pokemon_center_pc"
+c_source = "verification/ports/text_script_pokemon_center_pc.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "hLoadedROMBank and rROMB",
+    "the ActivatePC callback-input transition",
+    "the complete HoldTextDisplayOpen call-input transition",
+]
+proof_domain = "all symbolic register/flag/bank inputs, arbitrary ActivatePC post-state and callback-bank outputs, and the shared host-input hold-open tail; the ActivatePC body itself remains an explicit unported callback boundary"
+decoder = "exact 7-byte linked entry 0605212c7e18f3 checked functionally; the shared BankswitchAndContinue path composes through proven Bankswitch and HoldTextDisplayOpen transitions"
+
+
+[[function]]
+assembly_symbol = "TextScript_BillsPC"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_text_script_bills_pc"
+c_source = "verification/ports/text_script_bills_pc.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "the complete SaveScreenTilesToBuffer2 screen-buffer transfer",
+    "hLoadedROMBank and rROMB",
+    "the BillsPC_ callback-input transition",
+    "the complete HoldTextDisplayOpen call-input transition",
+]
+proof_domain = "all symbolic register/flag/bank inputs and visible tilemap bytes, arbitrary BillsPC_ post-state and callback-bank outputs, and the shared host-input hold-open tail; the BillsPC_ body remains an explicit unported callback boundary"
+decoder = "exact 10-byte linked entry cdf436060821c2541805 checked functionally; the real SaveScreenTilesToBuffer2 transfer composes before the shared BankswitchAndContinue path, with proven Bankswitch and HoldTextDisplayOpen transitions"
+
+
+[[function]]
+assembly_symbol = "TextScript_ItemStoragePC"
+assembly_source = "home/map_objects.asm"
+c_symbol = "port_text_script_item_storage_pc"
+c_source = "verification/ports/text_script_item_storage_pc.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "the complete SaveScreenTilesToBuffer2 screen-buffer transfer",
+    "hLoadedROMBank and rROMB",
+    "the PlayerPC callback-input transition",
+    "the complete HoldTextDisplayOpen call-input transition",
+]
+proof_domain = "all symbolic register/flag/bank inputs and visible tilemap bytes, arbitrary PlayerPC post-state and callback-bank outputs, and the shared host-input hold-open tail; the PlayerPC body remains an explicit unported callback boundary"
+decoder = "exact 10-byte linked entry cdf436060121e678180f checked functionally; the real SaveScreenTilesToBuffer2 transfer composes before the shared BankswitchAndContinue path, with proven Bankswitch and HoldTextDisplayOpen transitions"
 
 
 [[function]]
@@ -14326,6 +14729,104 @@ decoder = "exact 39-byte body checked; SWAP/ADD flags, four call/fallthrough ent
 
 
 [[function]]
+assembly_symbol = "CollisionCheckOnLand"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_collision_check_on_land"
+c_source = "verification/ports/collision_check_on_land.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "movement/simulation/sprite collision state",
+    "hTextID and player direction",
+    "collision sound channel and PlaySound state",
+]
+proof_domain = "movement-bit and simulated-input early returns, direct sprite-collision and collision-sound suppression/trigger branches, no-NPC and nonzero-NPC no-match paths, and a tile-pair collision path through the sprite-front scan, tile-pair terminator, passability-table match, and passability-table sentinel"
+decoder = "exact 63-byte linked body checked; direct absolute-load/branch/sound seams are compared pathwise, and the focused paths compose the independently proven sprite-front, jumping/tile-pair, and passability transitions at complete matching boundaries; broader NPC and tile-pair table combinations remain documented"
+
+[[function]]
+assembly_symbol = "CollisionCheckOnWater"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_collision_check_on_water"
+c_source = "verification/ports/collision_check_on_water.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "front-tile, surf-state, and collision-table state",
+    "collision sound channel and PlaySound state",
+]
+proof_domain = "scripted-movement early return, sprite-collision and tile-pair gates, water and Safari shoreline no-collision paths, Vermilion dock stop-surfing versus non-port fallthrough, passable-land stop-surfing, collision-table sentinel collision, and already-playing collision-sound paths; all general-register inputs, front-tile/surf-state memory, and relevant helper transitions are compared"
+decoder = "exact 100-byte linked body checked; individual SM83 status/load/compare/branch/store/SCF seams and bounded passability scan execute in the linked body, while jumping/tile-pair, front-tile, sprite-graphics, music, and sound calls compose through audited matching boundaries"
+
+[[function]]
+assembly_symbol = "CheckForJumpingAndTilePairCollisions"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_for_jumping_and_tile_pair_collisions"
+c_source = "verification/ports/check_for_jumping_and_tile_pair_collisions.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "front and standing tile globals",
+    "movement ledge/fishing early return",
+    "tile-pair collision scan state",
+]
+proof_domain = "collision-table match and miss paths plus pre-existing ledge/fishing and non-overworld early returns; GetTileAndCoordsInFrontOfPlayer, HandleLedges, CheckForTilePairCollisions2, and CheckForTilePairCollisions compose at complete transition boundaries"
+decoder = "exact 26-byte prefix checked; push/pop caller context, predef/farcall seams, BIT ledge test, standing-tile store, and full tile-pair scan transition are compared pathwise"
+
+[[function]]
+assembly_symbol = "IsPlayerFacingEdgeOfMap"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_is_player_facing_edge_of_map"
+c_source = "verification/ports/is_player_facing_edge_of_map.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "map-edge carry result",
+    "saved BC/DE/HL restoration",
+]
+proof_domain = "all register inputs and all valid four facing directions, with edge and non-edge coordinates and arbitrary map dimensions"
+decoder = "exact linked body and address bounds checked; directional pointer dispatch, coordinate loads, doubled map bounds, CP/AND/SCF tails, and complete BC/DE/HL restoration are compared pathwise"
+
+[[function]]
+assembly_symbol = "LoadHoppingShadowOAM"
+assembly_source = "engine/overworld/ledges.asm"
+c_symbol = "port_load_hopping_shadow_oam"
+c_source = "verification/ports/load_hopping_shadow_oam.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "CopyVideoDataDouble bank, VBlank, and transfer state",
+    "the complete four-entry shadow OAM block at wShadowOAM + $90",
+]
+proof_domain = "all initial register/flag inputs and transfer/hardware bytes; the fixed one-tile LedgeHoppingShadow transfer, complete CopyVideoDataDouble transition, literal four-entry OAM block, and WriteOAMBlock register effects are compared"
+decoder = "exact 24-byte linked body checked; the two proven callee transitions are composed at their call boundaries, while native C executes the fixed VRAM setup, real one-tile CopyVideoDataDouble call, literal OAM source, and real WriteOAMBlock placement"
+
+
+
+
+
+
+
+[[function]]
+assembly_symbol = "HandleLedges"
+assembly_source = "engine/overworld/ledges.asm"
+c_symbol = "port_handle_ledges"
+c_source = "verification/ports/handle_ledges.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "movement, ledge, joy-ignore, and simulated-joypad state",
+    "front/standing tile lookup and complete LedgeTiles traversal",
+    "hopping-shadow transfer/OAM and PlaySound state on a ledge match",
+]
+proof_domain = "all documented early-return, table-miss, matching-table/no-input, and matching-table/input paths; all eight LedgeTiles entries, four facing directions, collision-table and tilemap effects, complete StartSimulatingJoypadStates and LoadHoppingShadowOAM transitions, and all four PlaySound branches are compared"
+decoder = "exact 93-byte linked body checked; individual SM83 BIT/AND/CP/HLI/LDH seams are shimmed, while the real GetTileAndCoordsInFrontOfPlayer, StartSimulatingJoypadStates, LoadHoppingShadowOAM, and PlaySound C ports execute compositionally"
+
+
+
+
+
+
+[[function]]
 assembly_symbol = "UpdateSpriteMovementDelay"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_update_sprite_movement_delay"
@@ -14991,6 +15492,22 @@ observables = [
 ]
 proof_domain = "all register/flag/global/read/write inputs, every inventory pointer/count/capacity, every finite FF-terminated scan, and all wrapped quantity sums; exhaustive setup, scan, quantity-overflow, insertion, and unwind phases compose inductively"
 decoder = "exact 112-byte body checked; five saved stack words, bag/PC capacity selection, scan recurrence, quantity split/overflow, new-slot pointer arithmetic/writes, all success/failure flags, unusual AF-to-BC unwind, and global quantity restoration modeled explicitly"
+[[function]]
+assembly_symbol = "AddItemToInventory"
+assembly_source = "home/inventory.asm"
+c_symbol = "port_add_item_to_inventory_home"
+c_source = "verification/ports/add_item_to_inventory.c"
+status = "proven"
+observables = [
+    "all registers and flags (with carry as the wrapper result)",
+    "hLoadedROMBank and rROMB",
+    "active inventory count, item, quantity, and terminator writes",
+    "wCurItem, wItemQuantity, and body-shadow restoration",
+]
+proof_domain = "entry ROM banks 1 and 2; non-full bag and PC-box inventories with nonzero quantities in 0..99, including small and empty inventories; full bags and full inventories are excluded"
+decoder = "exact 23-byte home wrapper and exact 112-byte banked body checked; MBC1 bank-3 entry and restoration, real AddItemToInventory_ body composition, home/body global staging, B/C preservation, and carry reconstruction from inventory effects modeled explicitly"
+
+
 
 
 
@@ -15076,6 +15593,21 @@ observables = [
 proof_domain = "initialized current-map tile data with all four connection slots disabled and with each north, south, west, or east slot enabled in isolation; background fill, bordered row copy, all connection loops, bank state, stride/width aliases, source pointer advance, destination writes, and final register state are compared pathwise"
 decoder = "exact 226-byte body checked; fixed background-fill and individual SM83 LDH/absolute-load/HL+/DE-copy backend gaps are shimmed, while proven connection-tilemap callees and SwitchToMapRomBank are composed at their call boundaries; all four connection dispatches and disabled fallthroughs execute in the linked body"
 
+[[function]]
+assembly_symbol = "LoadMapData"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_load_map_data"
+c_source = "verification/ports/load_map_data.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wMapViewVRAMPointer, wWalkCounter, wUnusedCurMapTilesetCopy, wWalkBikeSurfStateCopy, wSpriteSetID, wUpdateSpritesEnabled",
+    "hLoadedROMBank and rROMB",
+    "the complete wCurrentMapView and vBGMap0 18x20 transfer regions",
+]
+proof_domain = "all three music-gating branches (wStatusFlags6 masked nonzero, wStatusFlags6 clear with wStatusFlags7 bit 1 set, and both clear) with hLoadedROMBank/rROMB initialized to 2; LCD, text-pattern, map-header, sprite, tile-block, tileset, map-view, palette, player-graphics, UpdateMusic6Times, and PlayDefaultMusicFadeOutCurrent helpers are explicit audited boundaries, while the fixed 18x20 map-view transfer, update-sprite enable, bank restoration, and return sequencing are compared"
+decoder = "exact 123-byte linked body checked; individual SM83 absolute/high-memory load-store, flag, stack, and farcall setup instructions are shimmed, the fixed transfer is summarized by a concrete 18x20 adapter because the generic p-code backend makes the bounded loop path-explode, and both music-call sites execute through individual proven callee boundaries"
+
 
 
 
@@ -15084,14 +15616,16 @@ assembly_symbol = "MarkTownVisitedAndLoadToggleableObjects"
 assembly_source = "engine/overworld/toggleable_objects.asm"
 c_symbol = "port_mark_town_visited_and_load_toggleable_objects"
 c_source = "verification/ports/mark_town_visited_and_load_toggleable_objects.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
     "wTownVisitedFlag",
     "the complete wToggleableObjectList destination",
+    "hDividend and hDivisor",
+    "loaded ROM bank and mapper bank",
 ]
-proof_domain = "map-0 town setup covering an empty list, two matching toggle records, and a nonmatching record; town-visited bit setting, pointer-table lookup, list writes/sentinel, map-stop behavior, and final registers/flags are compared pathwise"
-decoder = "exact 98-byte body checked; FlagActionPredef and Divide are composed at audited boundaries, while individual SM83 pointer arithmetic, HRAM, register-transfer, conditional-branch, and DE-write backend gaps are shimmed; route-map flag behavior and symbolic pointer-table domains remain"
+proof_domain = "six concrete pathwise cases cover town and non-town maps, map-indexed pointer entries with zero and nonzero state offsets, empty/matching/nonmatching records, multiple list writes, town-visited byte/bit placement, Divide quotient/remainder, bank restoration, sentinels, map-stop behavior, and final registers/flags"
+decoder = "exact 98-byte body checked; FlagActionPredef and the real Divide wrapper are composed at audited boundaries, while individual SM83 pointer arithmetic, HRAM, register-transfer, conditional-branch, and DE-write backend gaps are shimmed"
 
 
 
@@ -15143,6 +15677,20 @@ decoder = "exact 33-byte body checked; saved pointers, fixed three-byte rows, HL
 
 
 
+
+[[function]]
+assembly_symbol = "CheckForCollisionWhenPushingBoulder"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_check_for_collision_when_pushing_boulder"
+c_source = "verification/ports/check_for_collision_when_pushing_boulder.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "two-step tile and boulder collision result globals",
+    "collision-table pointer traversal and tile-pair state",
+]
+proof_domain = "two-steps-ahead tile lookup followed by collision-table sentinel and nonmatching scans, a matching passable tile with no tile-pair collision, a tile-pair elevation collision, stairs termination, and both no-collision and collision outcomes from the composed boulder-sprite scan"
+decoder = "exact 43-byte linked body checked; the complete two-step lookup, collision-table pointer traversal, CP/branch back-edge, tile-pair carry gate, stairs comparison, sentinel terminal path, and boulder-sprite call return are exercised under angr"
 
 [[function]]
 assembly_symbol = "CheckForBoulderCollisionWithSprites"
@@ -15408,6 +15956,34 @@ decoder = "the exact complete 18-byte dispatcher executes under angr across both
 
 
 
+
+[[function]]
+assembly_symbol = "OakSpeechSlidePicCommon"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_oak_speech_slide_pic_common"
+c_source = "verification/ports/oak_speech_slide_common.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags after the six-pass loop",
+    "hSlideDirection, hSlideAmount, hSlidingRegionSize, and hAutoBGTransferEnabled",
+    "the complete affected tilemap window",
+]
+proof_domain = "both caller-valid directions (0 and $ff), fixed six-pass/0x7d-byte intro geometry, all other general-register and canonical-flag inputs, and arbitrary initial bytes in the affected tilemap window"
+decoder = "exact 83-byte linked body checked; the six 0x7d-byte directional copy passes, zero-fill on left slides, Delay3 boundaries, HRAM state, stack register restoration, and final DEC flags are modeled in the proof, while native production C calls the real DelayFrames port"
+
+[[function]]
+assembly_symbol = "OakSpeechSlidePicLeft"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_oak_speech_slide_pic_left"
+c_source = "verification/ports/oak_speech_slide_left.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags at OakSpeechSlidePicCommon",
+    "the complete 12-by-11 cleared name-list text-box region",
+    "the complete 11-byte copied name at the caller DE destination",
+]
+proof_domain = "all general-register and canonical-flag inputs with DE fixed to the caller-valid wPlayerName destination, arbitrary 11-byte wNameBuffer contents, and the real ClearScreenArea, DelayFrames, and CopyData transitions"
+decoder = "exact 38-byte linked entry checked; PUSH/POP DE, 12-by-11 ClearScreenArea writes, two DelayFrames calls, fixed-length CopyData, common-entry cursor/geometry, and final A/$ff are modeled, while native production C calls the real proven helper ports"
 
 [[function]]
 assembly_symbol = "OakSpeechSlidePicRight"
@@ -16639,6 +17215,58 @@ decoder = "exact 36-byte linked body checked; the two `call CopyData` sites and 
 
 
 [[function]]
+assembly_symbol = "EnterMap"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_enter_map"
+c_source = "verification/ports/enter_map.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "wJoyIgnore",
+]
+proof_domain = "the 7-byte EnterMap prefix through the LoadMapData call boundary, over symbolic initial A/F and fixed loaded-ROM-bank/map-view setup; later ClearVariablesOnEnterMap and map-entry control flow remain outside this proof"
+decoder = "exact 7-byte linked prefix checked; the LD [wJoyIgnore],A instruction uses an SM83 store shim and the independently proven LoadMapData call uses a boundary summary that preserves its bank-restored A/F contract, while native C calls the real port_load_map_data"
+[[function]]
+assembly_symbol = "OverworldLoop"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_overworld_loop"
+c_source = "verification/ports/overworld_loop.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "the 3-byte OverworldLoop prefix through its first DelayFrame call boundary, over all symbolic general-register and canonical-flag inputs; subsequent frame timing, joypad dispatch, movement, collision, and warp logic remain outside this proof"
+decoder = "exact 3-byte linked prefix checked; the independently proven DelayFrame terminal transition is composed at its call boundary, while native C calls the real port_delay_frame with a terminating no-VBlank observation"
+[[function]]
+assembly_symbol = "OverworldLoopLessDelay"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_overworld_loop_less_delay"
+c_source = "verification/ports/overworld_loop_less_delay.c"
+status = "partial"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "rBGP",
+    "rOBP0",
+    "rOBP1",
+]
+proof_domain = "the 6-byte OverworldLoopLessDelay prefix through LoadGBPal, with symbolic general registers and fixed map-palette offset and FadePal4 bytes; later movement, input, collision, and warp dispatch remain outside this proof"
+decoder = "exact 6-byte linked prefix checked; independently proven DelayFrame and LoadGBPal terminal transitions compose at their call boundaries, and native C calls both real ports while copying the palette results to hardware bytes"
+[[function]]
 assembly_symbol = "ClearVariablesOnEnterMap"
 assembly_source = "engine/overworld/clear_variables.asm"
 c_symbol = "port_clear_variables_on_enter_map"
@@ -17065,11 +17693,12 @@ c_symbol = "port_spin_player_sprite"
 c_source = "verification/ports/spin_player_sprite.c"
 status = "proven"
 observables = [
+    "A/F/B/C/D/E/H/L",
     "m_image (wSpritePlayerStateData1ImageIndex = [HL] at entry)",
     "m_flist0..m_flist3 (wFacingDirectionList[0..3] after the rotate)",
 ]
-proof_domain = "all general-register and canonical-flag inputs; the HL input pointer is fixed concrete (0xC600) so the store/copy addresses are concrete, while the image-index source byte and the four facing-list entries stay symbolic and shared between the asm and native paths"
-decoder = "exact 25-byte linked body checked; `call CopyData` is modeled as a BC-byte forward copy from [HL] to [DE] (CopyDataSim), which rotates the list down by one entry; `ld [a16],a` (0xEA, writing wSpritePlayerStateData1ImageIndex and wFacingDirectionList+3) and `ld a,[a16]` (0xFA, reading the rotated former-first entry) are shimmed (absent from z80), and `ld a,[hl]`/`push hl`/`ld hl,nn`/`ld de,nn`/`ld bc,nn`/`pop hl`/`ret` run natively"
+proof_domain = "all general-register and canonical-flag inputs with the caller's HL image source fixed to concrete RAM 0xc600; the source byte and all four facing-list bytes remain symbolic and shared, while the concrete pointer makes the complete overlapping four-byte CopyData destination region observable"
+decoder = "the exact complete 25-byte linked body executes under angr; the fixed four-byte independently proven CopyData transition executes at its call site, including final A/F/BC/DE state, while production C calls the real port_copy_data loop. SM83 absolute load/store instructions are shimmed; the remaining load, stack, pair-load, and return instructions execute natively"
 
 
 
@@ -17829,6 +18458,155 @@ decoder = "20-byte body checked (fa2bd1fe042808cd65383e90c3b1230e41c33937: load 
 
 
 [[function]]
+assembly_symbol = "DisplaySafariGameOverText"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_safari_game_over_text"
+c_source = "verification/ports/display_safari_game_over_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextBoxID, wJoyIgnore, hLoadedROMBank, and rROMB",
+    "the complete far-call and AfterDisplayingTextID call-input transitions",
+]
+proof_domain = "all symbolic register/flag, text-box, joy-ignore, and bank inputs; the callfar setup, saved-AF-through-BC return behavior, proven PrintSafariGameOverText transition, and shared AfterDisplayingTextID tail boundary are composed exactly"
+decoder = "exact 12-byte linked body 21ed690607cdd635c3d629 checked inside the functional test; callfar/Bankswitch is modeled at its individual boundary, while the proven PrintSafariGameOverText and AfterDisplayingTextID transitions compose through real C ports"
+
+
+[[function]]
+assembly_symbol = "DisplayPokemartDialogue"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_pokemart_dialogue"
+c_source = "verification/ports/display_pokemart_dialogue.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextBoxID, wListMenuID, wUpdateSpritesEnabled, wItemListPointer, and wItemList",
+    "Pokemart list/menu state globals",
+    "hLoadedROMBank and rROMB",
+    "the complete PrintText, LoadItemList, DisplayPokemartDialogue_, and AfterDisplayingTextID call-input transitions",
+]
+proof_domain = "all symbolic register/flag, text/list, item-list, mart-state, and bank inputs through the existing DisplayPokemartDialogue_ money-box setup boundary; the buy/sell menu, payment, inventory, and continuation paths remain in the partial callee"
+decoder = "exact 39-byte linked body e521552acd493ce123cd5a2a3e02ea94cff0b8f53e01e0b8ea0020cd206cf1e0b8ea0020c3d629 checked functionally; HL save/restore, greeting PrintText, proven LoadItemList composition, priced-menu selection, bank-preserving homecall, and AfterDisplayingTextID tail are modeled exactly"
+
+
+[[function]]
+assembly_symbol = "DisplayPokemonCenterDialogue"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_pokemon_center_dialogue"
+c_source = "verification/ports/display_pokemon_center_dialogue.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "hItemPrice, hLoadedROMBank, and rROMB",
+    "the complete homecall and AfterDisplayingTextID call-input transitions",
+]
+proof_domain = "all symbolic register/flag, scratch-price, and bank inputs through the existing DisplayPokemonCenterDialogue_ welcome-text setup boundary, followed by the shared AfterDisplayingTextID tail boundary"
+decoder = "exact 30-byte linked body afe08be08ce08d23f0b8f53e01e0b8ea0020cde66ff1e0b8ea0020c3d629 checked functionally; the three scratch clears, HL increment, bank-preserving homecall, saved-AF restoration, and tail call are modeled exactly, while healing/menu/farewell paths remain in the partial callee"
+
+
+[[function]]
+assembly_symbol = "DisplayRepelWoreOffText"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_repel_wore_off_text"
+c_source = "verification/ports/display_repel_wore_off_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextBoxID and the PrintText cursor setup",
+    "the complete PrintText and AfterDisplayingTextID call-input transitions",
+]
+proof_domain = "all symbolic register/flag inputs and arbitrary initial wTextBoxID; the fixed RepelWoreOffText pointer, proven PrintText transition, and shared AfterDisplayingTextID tail boundary are composed exactly"
+decoder = "exact 9-byte linked body 21c82acd493cc3d629 checked inside the functional test; the LD HL immediate is executed by the linked body, while PrintText and AfterDisplayingTextID are complete proven compositional boundaries"
+
+
+[[function]]
+assembly_symbol = "DisplayPlayerBlackedOutText"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_player_blacked_out_text"
+c_source = "verification/ports/display_player_blacked_out_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextBoxID and wStatusFlags6",
+    "the complete PrintText and HoldTextDisplayOpen call-input transitions",
+]
+proof_domain = "all symbolic register/flag inputs, arbitrary initial wTextBoxID, and arbitrary wStatusFlags6; the fixed PlayerBlackedOutText pointer, bike-bit clearing, proven PrintText transition, and shared HoldTextDisplayOpen tail boundary are composed exactly"
+decoder = "exact 17-byte linked body 21ba2acd493cfa32d7cbafea32d7c3df29 checked inside the functional test; the LD HL/call/jump body executes under angr, individual absolute load/store instructions are shimmed, and PrintText and HoldTextDisplayOpen are complete proven compositional boundaries"
+
+
+[[function]]
+assembly_symbol = "DisplayPokemonFaintedText"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_pokemon_fainted_text"
+c_source = "verification/ports/display_pokemon_fainted_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextBoxID and the PrintText cursor setup",
+    "the complete PrintText and AfterDisplayingTextID call-input transitions",
+]
+proof_domain = "all symbolic register/flag inputs and arbitrary initial wTextBoxID; the fixed PokemonFaintedText pointer, proven PrintText transition, and shared AfterDisplayingTextID tail boundary are composed exactly"
+decoder = "exact 9-byte linked body 21a42acd493cc3d629 checked inside the functional test; the LD HL immediate is executed by the linked body, while PrintText and AfterDisplayingTextID are complete proven compositional boundaries"
+
+
+[[function]]
+assembly_symbol = "DisplayTextID"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_display_text_id"
+c_source = "verification/ports/display_text_id.c"
+status = "partial"
+observables = [
+    "all 8 registers and canonical flags",
+    "wTextPredefFlag and wListMenuID",
+    "hFrameCounter and wSpriteIndex",
+    "hLoadedROMBank and rROMB",
+    "the wCurMapTextPtr-derived HL pointer",
+    "wTextBoxID on the TEXT_REPEL_WORE_OFF, TEXT_MON_FAINTED, TEXT_BLACKED_OUT, and TEXT_SAFARI_GAME_OVER paths",
+    "wStatusFlags6 on the TEXT_BLACKED_OUT path",
+    "wJoyIgnore on the TEXT_SAFARI_GAME_OVER path",
+]
+proof_domain = "the complete DisplayTextID initialization prefix over both text-predef and current-map-bank branches, the TEXT_START_MENU, TEXT_MON_FAINTED, TEXT_BLACKED_OUT, TEXT_REPEL_WORE_OFF, and TEXT_SAFARI_GAME_OVER dictionary dispatches (including the complete PokemonFaintedText, PlayerBlackedOutText, RepelWoreOffText, and SafariGameOverText PrintText/AfterDisplayingTextID compositions), strict out-of-range sprite-index cases for text ID 2 (wNumSprites = 0 and 1), equal/in-range sprite-facing handling for text ID 2 with a concrete map-sprite text entry, and the ordinary map-text path through its first byte into PrintText_NoCreatingTextBox and AfterDisplayingTextID; the remaining text-ID dictionary and scripted first-byte dispatches remain beyond this boundary"
+decoder = "the linked entry bytes through all five initial text-ID dispatches, both sprite-index gates, sprite text-entry extraction, the map-text first-byte lookup, and the ordinary PrintText_NoCreatingTextBox/AfterDisplayingTextID continuation are checked in verification/tests/test_display_text_id.py; individual absolute/HRAM, DEC, SLA, ADD HL, and HLI/load seams are shimmed, UpdateSpriteFacingOffsetAndDelayMovement is an explicit boundary, the TEXT_REPEL_WORE_OFF, TEXT_MON_FAINTED, TEXT_BLACKED_OUT, and TEXT_SAFARI_GAME_OVER branches compose the real proven DisplayRepelWoreOffText, DisplayPokemonFaintedText, DisplayPlayerBlackedOutText, and DisplaySafariGameOverText ports, and the native port composes the complete DisplayTextIDInit, SwitchToMapRomBank, PrintText_NoCreatingTextBox, and AfterDisplayingTextID transitions while recording the independently proven text-handler state"
+
+
+[[function]]
+assembly_symbol = "AfterDisplayingTextID"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_after_displaying_text_id"
+c_source = "verification/ports/after_displaying_text_id.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wEnteringCableClub",
+    "hDownArrowBlink1",
+    "hDownArrowBlink2",
+    "hJoy5",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, and hJoyHeld",
+    "hLoadedROMBank and rROMB",
+]
+proof_domain = "both wEnteringCableClub branches, both WaitForTextScrollButtonPress outcomes (symbolic hJoy5 zero/nonzero), and terminating immediate-release or held-A-then-release host input sequences; all registers, wait-arrow state, joypad state, and bank state are compared"
+decoder = "the exact 9-byte entry body fa47cca72003cd6538 and contiguous HoldTextDisplayOpen loop execute under angr; the wait call composes through its proven transition, while Joypad homecall, hJoyHeld load, BIT A, and loop/exit control are modeled at individual boundaries"
+
+
+
+
+
+[[function]]
+assembly_symbol = "HoldTextDisplayOpen"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_hold_text_display_open"
+c_source = "verification/ports/hold_text_display_open.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "hJoyInput, hJoyLast, hJoyReleased, hJoyPressed, and hJoyHeld",
+    "hLoadedROMBank and rROMB",
+]
+proof_domain = "three terminating host-input sequences covering immediate release, one held-A poll followed by release, and held-A plus a direction followed by release; all live registers and initial joypad/bank state are symbolic, and the real Joypad homecall transition is executed natively"
+decoder = "exact 10-byte linked loop body cd611bf0b4cb6720f9 checked functionally; the Joypad call, hJoyHeld load, BIT A flag semantics, and both loop/exit paths are modeled with individual instruction/callee boundaries"
+
+
+[[function]]
 assembly_symbol = "WaitForTextScrollButtonPress"
 assembly_source = "home/joypad2.asm"
 c_symbol = "port_wait_for_text_scroll_button_press"
@@ -18140,6 +18918,22 @@ decoder = "19-byte body checked (e5c5cd7d3a116dcdd5010b00cdb500d1c1e1c9: save re
 
 
 [[function]]
+assembly_symbol = "PlaceNextChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_next_char"
+c_source = "verification/ports/text.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete destination/source text-pointer transition",
+    "the caller's saved HL cursor restored on terminal handlers",
+    "all text-token memory effects",
+]
+proof_domain = "direct PlaceNextChar entry with arbitrary live registers and an arbitrary saved HL cursor, covering the ordinary-character continuation and TX_END terminal paths directly; the shared complete dispatch loop is the same implementation exercised by the full PlaceString token suite, including every dictionary and scrolling handler path"
+decoder = "native C carries the assembly caller's saved HL explicitly and executes the complete PlaceString dispatch loop from the PlaceNextChar entry; the focused direct-entry test proves ordinary and terminal control flow, while the existing PlaceString path-equivalence suite covers all remaining token branches against the linked body"
+
+
+[[function]]
 assembly_symbol = "PlaceString"
 assembly_source = "home/text.asm"
 c_symbol = "port_place_string"
@@ -18171,6 +18965,22 @@ observables = [
 proof_domain = "all register/flag inputs and arbitrary wTextBoxID values; arbitrary text pointer (HL)"
 decoder = "angr pathwise equivalence proven (verification/tests/test_print_text_equivalence.py): wTextBoxID = MESSAGE_BOX (0x01) and BC = (1,14) box coordinate (0xc4b9) match, and HL (text pointer) is preserved across the push hl / pop hl round-trip. The three display-only calls (DisplayTextBoxID, UpdateSprites, Delay3) are skipped as no-ops in both the assembly hooks and the native port; the jp TextCommandProcessor tail is a control-flow boundary modeled as a return."
 
+
+
+
+
+[[function]]
+assembly_symbol = "PrintText_NoCreatingTextBox"
+assembly_source = "home/window.asm"
+c_symbol = "port_print_text_no_creating_text_box"
+c_source = "verification/ports/print_text_no_creating_text_box.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "BC cursor destination (1,14) = 0xc4b9",
+]
+proof_domain = "all register/flag inputs and every text-pointer/register value; the routine only establishes the fixed dialogue cursor and tail-jumps to the proven TextCommandProcessor"
+decoder = "exact 6-byte linked body 01b9c4c3401b checked inside the functional proof; LD BC,nn executes natively and the JP TextCommandProcessor tail is an explicit continuation boundary"
 
 
 
@@ -18439,6 +19249,23 @@ observables = [
 proof_domain = "full 8-register compositional pathwise equivalence plus the second CopyVideoData register result; the push/restore, carry branch, pointer adjustment, and second JP boundary are exercised."
 decoder = "25-byte body checked (d5e5010c05cd4818e1d13ec0835f300114cbdc010c05c34818: push/push; first CopyVideoData; restore; DE/HL adjustment; second CopyVideoData JP); PC-portable explicit callee state."
 
+
+
+[[function]]
+assembly_symbol = "LoadPlayerSpriteGraphics"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_load_player_sprite_graphics"
+c_source = "verification/ports/load_player_sprite_graphics.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wWalkBikeSurfState and wWalkBikeSurfStateCopy",
+    "hLoadedROMBank, hROMBankTemp, rROMB, and VBlank copy state",
+    "the ordered two-pass player-sprite graphics transfer state",
+    "BikeRidingTilesets lookup state",
+]
+proof_domain = "all symbolic register and flag inputs, every walk/bike/surf state selection including zero, one, two, and other values, both tile-animation outcomes, direct Route 23/Indigo Plateau bike permission, bike-list match, and bike-list denial; complete loader dispatch, pointer adjustment, carry increment, and both real CopyVideoData transitions"
+decoder = "exact 46-byte linked body checked; absolute/HRAM loads and stores, SM83 DEC/AND/XOR/ADD/INC flag seams, proven IsBikeRidingAllowed, and both CopyVideoData call/JP transitions are composed; native C executes the complete selection logic and two transfer passes"
 
 
 [[function]]
@@ -18759,6 +19586,61 @@ observables = [
 proof_domain = "all register/flag inputs and every 16-bit HL; HL is incremented by two modulo 65536, and A/F/B/C/D/E are preserved (INC HL is 16-bit and affects no flags)"
 decoder = "exact 5-byte body checked (2323c3b507); the INC HL instructions are run natively and the JP 0x7b5 tail is an explicit boundary. Pathwise equivalence proven against port_check_warps_no_collision_retry2 across all register/flag inputs."
 
+[[function]]
+assembly_symbol = "WarpFound1"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_warp_found1"
+c_source = "verification/ports/warp_found1.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wDestinationWarpID",
+    "hWarpDestinationMap",
+    "advanced HL source pointer",
+]
+proof_domain = "all register/flag inputs with HL fixed to a two-byte warp-entry source containing destination warp ID and destination map bytes; both transfer instructions and the final HL are compared"
+decoder = "exact 7-byte linked body checked; SM83 LD A,[HL+], absolute store, and high-memory store use individual instruction shims, while native C performs both ordered transfers"
+[[function]]
+assembly_symbol = "CheckWarpsCollision"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_warps_collision"
+c_source = "verification/ports/check_warps_collision.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wDestinationWarpID and hWarpDestinationMap",
+    "wWarpedFromWhichWarp and wWarpedFromWhichMap",
+    "matched warp-entry source pointer",
+]
+proof_domain = "all symbolic register and canonical-flag inputs across matches at warp-entry indices 0, 1, and 2 in a three-entry table; the complete coordinate scan, destination stores, and independently proven WarpFound2 transition are compared pathwise"
+decoder = "exact 41-byte linked body checked; absolute loads/stores, high-memory store, HL+ loads, CP B, and DEC C use individual SM83 shims, the retry loop executes natively, and the real port_warp_found2 transition composes at the match boundary; the no-match jump back to OverworldLoop and larger warp tables remain outside this proof"
+[[function]]
+assembly_symbol = "CheckWarpsNoCollision"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_warps_no_collision"
+c_source = "verification/ports/check_warps_no_collision.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wDestinationWarpID and hWarpDestinationMap",
+    "wWarpedFromWhichWarp and wWarpedFromWhichMap",
+    "matched warp-entry source pointer",
+]
+proof_domain = "all symbolic register and canonical-flag inputs across matches at warp-entry indices 0, 1, and 2 in a three-entry table; the complete coordinate scan, real WarpFound1/WarpFound2 transitions, destination stores, and matched source pointer are compared pathwise"
+decoder = "exact 24-byte setup prefix checked; absolute loads, AND, HL+ loads, CP, and SET/call seams use individual or bounded instruction boundaries, the retry path executes for prior nonmatches, and real WarpFound1/WarpFound2 ports compose at the match boundary; zero-warp map-connection, extra-check, and no-match paths remain outside this proof"
+[[function]]
+assembly_symbol = "WarpFound2"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_warp_found2"
+c_source = "verification/ports/warp_found2.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wWarpedFromWhichWarp",
+    "wWarpedFromWhichMap",
+]
+proof_domain = "the 16-byte WarpFound2 prefix through CheckIfInOutsideMap, with wNumberOfWarps=3, wCurMap=1, and symbolic initial registers; later map-type branches, map-change sound, movement flags, and EnterMap recursion remain outside this proof"
+decoder = "exact 16-byte linked prefix checked; SM83 absolute loads/stores and SUB C use individual instruction shims, while the independently proven CheckIfInOutsideMap transition composes at its call boundary and native C calls the real predicate port"
 [[function]]
 assembly_symbol = "ContinueCheckWarpsNoCollisionLoop"
 assembly_source = "home/overworld.asm"
@@ -19482,6 +20364,157 @@ proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn
 decoder = "6-byte body checked (010b00c3b500: ld bc,$000b; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "IntroDrawBlackBars"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_intro_draw_black_bars"
+c_source = "verification/ports/intro_draw_black_bars.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 80-byte top and bottom tilemap bars",
+    "the complete 80-byte top and bottom vBGMap1 bars",
+]
+proof_domain = "all general-register and canonical-flag inputs; IntroClearScreen and all four IntroPlaceBlackTiles transitions execute over their fixed dimensions"
+decoder = "exact 35-byte linked body checked; the four coordinate/count setups and final JP are modeled, while native production C calls the real IntroClearScreen and IntroPlaceBlackTiles ports"
+
+[[function]]
+assembly_symbol = "LoadIntroGraphics"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_load_intro_graphics"
+c_source = "verification/ports/load_intro_graphics.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "all bytes written to the three destination VRAM spans",
+    "hLoadedROMBank and rROMB",
+]
+proof_domain = "all general-register and canonical-flag inputs with the four fixed intro graphic source/destination/size transfers; FarCopyData2 executes as the proven transfer boundary with initial loaded and mapper banks set to zero"
+decoder = "exact 56-byte linked body verified; every setup instruction, all three calls, and the final JP execute in the linked ROM body. The individual FarCopyData2 call shims copy every byte and advance HL/DE/BC/A exactly as the proven boundary, while native C calls the real FarCopyData2 implementation."
+
+[[function]]
+assembly_symbol = "LoadShootingStarGraphics"
+assembly_source = "engine/movie/splash.asm"
+c_symbol = "port_load_shooting_star_graphics"
+c_source = "verification/ports/load_shooting_star_graphics.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "rOBP0 and rOBP1",
+    "hAutoBGTransferEnabled, hLoadedROMBank, hROMBankTemp, rROMB",
+    "hVBlankCopySource, hVBlankCopyDest, hVBlankCopySize, hVBlankOccurred",
+    "the complete wShadowOAM region",
+]
+proof_domain = "all general-register and canonical-flag inputs, all tracked CopyVideoData hardware inputs, and all initial wShadowOAM bytes; the three one-tile transfers and two fixed OAM CopyData transfers"
+decoder = "exact 68-byte linked body checked; every setup instruction executes through individual SM83 shims, all three CopyVideoData calls use the complete proven transfer boundary, and both CopyData paths execute through the complete proven copy transition. Native C calls real port_copy_video_data and port_copy_data."
+
+[[function]]
+assembly_symbol = "CheckForUserInterruption"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_for_user_interruption"
+c_source = "verification/ports/check_for_user_interruption.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hVBlankOccurred",
+    "hJoyPressed, hJoyHeld, hJoy5, hJoy6, hJoy7, hFrameCounter",
+]
+proof_domain = "all general-register inputs with C in {1, 2}, arbitrary initial hVBlankOccurred, and representative held-command, button-command, and timeout joypad states; DelayFrame and JoypadLowSensitivity execute at their complete C boundaries"
+decoder = "exact 27-byte linked body checked; DelayFrame, JoypadLowSensitivity, both loop branches, and both RET exits are modeled, while native C calls the real DelayFrame and JoypadLowSensitivity ports"
+
+[[function]]
+assembly_symbol = "MoveDownSmallStars"
+assembly_source = "engine/movie/splash.asm"
+c_symbol = "port_move_down_small_stars"
+c_source = "verification/ports/move_down_small_stars.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "rOBP1",
+    "hMoveDownSmallStarsOAMCount, hJoyPressed, hJoyHeld, hJoy5, hJoy6, hJoy7, hFrameCounter, hVBlankOccurred",
+    "the complete wShadowOAM region",
+]
+proof_domain = "all general-register inputs with one- and two-entry OAM counts, representative held-command and button-command interruption paths, zero-interruption timeout path, symbolic initial rOBP1 and wShadowOAM; CheckForUserInterruption executes through its complete proven boundary"
+decoder = "exact 33-byte linked body checked; all setup instructions and the complete eight-iteration OAM/palette loop execute, with the held-command, button-command, and timeout CheckForUserInterruption exits modeled. Native C calls the real port_check_for_user_interruption."
+
+[[function]]
+assembly_symbol = "AnimateShootingStar"
+assembly_source = "engine/movie/splash.asm"
+c_symbol = "port_animate_shooting_star"
+c_source = "verification/ports/animate_shooting_star.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "rOBP0 and rOBP1",
+    "wNewSoundID, wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl, wAudioFadeReload, wAudioFadeCounter, wLastMusicSoundID, wChannelSoundIDs",
+    "hSavedROMBank, hLoadedROMBank, rROMB",
+    "hMoveDownSmallStarsOAMCount, hJoyPressed, hJoyHeld, hJoy5, hJoy6, hJoy7, hFrameCounter, hVBlankOccurred",
+    "the complete wShadowOAM region",
+]
+proof_domain = "representative held-command and button-command early exits after the big-star movement; fixed ROM graphics and joypad state; LoadShootingStarGraphics, PlaySound, CheckForUserInterruption, and the big-star instruction path execute at complete boundaries"
+decoder = "exact linked AnimateShootingStar body checked from AnimateShootingStar through SmallStarsOAM; both big-star interruption exits are exercised with complete dependency summaries. Native C calls the real graphics, sound, interruption, small-star movement, and copy ports; the uninterrupted flash and small-star tail remains unproven."
+
+[[function]]
+assembly_symbol = "PlayShootingStar"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_play_shooting_star"
+c_source = "verification/ports/play_shooting_star.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "rBGP and rLCDC",
+    "wCurOpponent, wNewSoundID, wAudioROMBank, wAudioSavedROMBank",
+    "hLoadedROMBank and rROMB",
+    "hJoyHeld",
+    "the complete wShadowOAM region",
+]
+proof_domain = "the interrupted shooting-star path with all title-screen orchestration calls composed through real production C dependencies; fixed zeroed 64K memory and the UP+SELECT+B interruption command"
+decoder = "exact 96-byte linked body checked; complete call sequencing, palette/LCD bit operations, music setup, cleanup, and JP Delay3 execute in the linked body, with individual instruction shims only for SM83 immediate loads/stores and memory-bit operations. The uninterrupted animation delay path remains outside the proof domain."
+
+[[function]]
+assembly_symbol = "PlayIntro"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_play_intro"
+c_source = "verification/ports/play_intro.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags after DelayFrame",
+    "hJoyHeld",
+    "hAutoBGTransferEnabled",
+    "hSCX",
+]
+proof_domain = "all general-register and canonical-flag inputs through the deterministic orchestration and cleanup sequence; PlayShootingStar, PlayIntroScene, and GBFadeOutToWhite are explicit visual-effect call boundaries"
+decoder = "exact 27-byte linked body checked; setup stores, cleanup stores, ClearSprites, DelayFrame, and RET are modeled, while native production C calls the real ClearSprites and DelayFrame ports"
+
+[[function]]
+assembly_symbol = "PrepareTitleScreen"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_prepare_title_screen"
+c_source = "verification/ports/prepare_title_screen.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wPlayerName",
+    "wRivalName",
+    "hWY",
+    "wLetterPrintingDelayFlags",
+    "wStatusFlags6",
+    "wStatusFlags7",
+    "wElite4Flags",
+    "wAudioROMBank",
+    "wAudioSavedROMBank",
+    "fallthrough DisplayTitleScreen",
+]
+proof_domain = "all general-register and canonical-flag inputs plus arbitrary 11-byte debug-name source data; the deterministic setup prefix through the DisplayTitleScreen fallthrough boundary"
+decoder = "exact 38-byte linked body checked; CopyDebugName calls are modeled as the already-proven 11-byte copy tail, SM83 XOR A, LDH [hWY],A, LD [a16],A, LD [HL+],A, and final fallthrough are explicitly shimmed"
+
+[[function]]
 assembly_symbol = "LoadEDTile"
 assembly_source = "engine/menus/naming_screen.asm"
 c_symbol = "port_load_ed_tile"
@@ -20070,6 +21103,71 @@ proof_domain = "full 8-register equivalence incl. F (LD B,imm / JP nn are flag-n
 decoder = "5-byte body checked (0603c3d635: ld b,$03; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "DisplayIntroNameTextBox"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_display_intro_name_text_box"
+c_source = "verification/ports/display_intro_name_text_box.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "wCurrentMenuItem",
+    "wLastMenuItem",
+    "wTopMenuItemX",
+    "wMenuWatchedKeys",
+    "wTopMenuItemY",
+    "wMaxMenuItem",
+]
+proof_domain = "all general-register and canonical-flag inputs, a concrete NAME-terminated intro name, and UpdateSprites disabled on entry; final menu initialization through the HandleMenuInput dispatch boundary"
+decoder = "exact 55-byte linked body checked; TextBoxBorder, both PlaceString calls, and UpdateSprites are explicit compositional call boundaries, while the SM83 XOR/INC and absolute stores execute under individual shims"
+
+[[function]]
+assembly_symbol = "DisplayNamingScreen"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_display_naming_screen"
+c_source = "verification/ports/display_naming_screen.c"
+status = "partial"
+observables = [
+    "A and F",
+    "H and L naming-buffer cursor",
+    "wStatusFlags5",
+    "naming menu globals",
+    "wStringBuffer",
+    "wNamingScreenSubmitName",
+    "wAnimCounter",
+]
+proof_domain = "deterministic naming-screen setup through the first PrintAlphabet call boundary; compares the no-text-delay flag, complete initial menu state, initial string-buffer terminator, submit and animation flags, and all live registers"
+decoder = "exact 90-byte linked prefix checked; SET [HL], absolute stores, LD [HL+] stores, and LD HL,nn use instruction shims, while display, palette, tile, sprite, border, and naming-text calls are matched call-boundary summaries. Interactive alphabet input and submission remain outside this proof"
+
+[[function]]
+assembly_symbol = "ChoosePlayerName"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_choose_player_name"
+c_source = "verification/ports/choose_player_name.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurrentMenuItem",
+    "wNamingScreenType",
+]
+proof_domain = "custom-name selection prefix through the DisplayNamingScreen call boundary; the shared slide, intro name-box menu, custom-screen selection, and naming-screen type state are compared under the DisplayIntroNameTextBox custom-menu contract"
+decoder = "exact 39-byte linked prefix checked; OakSpeechSlidePicRight and DisplayIntroNameTextBox are matched real C call boundaries, while LD A,[wCurrentMenuItem], AND A, JR Z, LD HL, XOR A, and the naming-type store use instruction shims. Default-name selection, interactive submission, and post-screen text remain outside this proof"
+
+[[function]]
+assembly_symbol = "ChooseRivalName"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_choose_rival_name"
+c_source = "verification/ports/choose_rival_name.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurrentMenuItem",
+    "wNamingScreenType",
+]
+proof_domain = "custom-name selection prefix through the DisplayNamingScreen call boundary; the shared slide, intro name-box menu, custom-screen selection, and rival naming-screen type state are compared under the DisplayIntroNameTextBox custom-menu contract"
+decoder = "exact 40-byte linked prefix checked; OakSpeechSlidePicRight and DisplayIntroNameTextBox are matched real C call boundaries, while LD A,[wCurrentMenuItem], AND A, JR Z, LD HL, LD A,1, and the naming-type store use instruction shims. Default-name selection, interactive submission, and post-screen text remain outside this proof"
+
+[[function]]
 assembly_symbol = "DisplayTitleScreen.doClearSaveDialogue"
 assembly_source = "engine/movie/title.asm"
 c_symbol = "port_display_title_screen_do_clear_save_dialogue"
@@ -20260,6 +21358,21 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F (LD HL,nn / JP nn are flag-neutral); the local PrintText jp is an explicit boundary."
 decoder = "6-byte body checked (21e769c3493c: ld hl,$69e7; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "PrintSafariZoneSteps"
+assembly_source = "engine/overworld/player_state.asm"
+c_symbol = "port_print_safari_zone_steps"
+c_source = "verification/ports/print_safari_zone_steps.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wCurMap, the three wSafariSteps bytes, and wNumSafariBalls",
+    "the complete 18x20 tilemap",
+    "ordered TextBoxBorder, PrintNumber, and PlaceString call inputs",
+]
+proof_domain = "all canonical register/flag, tilemap, and Safari-step inputs over representative lower-bound exclusion ($d8), upper-bound exclusion ($e2), and the common in-range body ($d9); both ball-count branches (below 10 and 10 or above) compose arbitrary matching complete transitions from the six independently proven text/number callees"
+decoder = "exact 74-byte linked body executes under angr; direct map/ball loads, CP and carry branches, coordinate/pair setup, the single-digit space store, and the PrintNumber tail execute directly, while each proven text/number callee is represented by a complete matching tilemap/register transition and production C calls its real port"
 
 [[function]]
 assembly_symbol = "PrintSafariZoneSteps.tenOrMore"
@@ -20802,6 +21915,25 @@ proof_domain = "full 8-register equivalence incl. F; LD H,D / LD L,E / JP nn are
 decoder = "5-byte body checked (626bc3493c: ld h,d; ld l,e; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "GetDefaultName"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_get_default_name"
+c_source = "verification/ports/get_default_name.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "requested default-name indices 0 through 2, the linked three-entry player-name list, and arbitrary initial registers and canonical flags"
+decoder = "exact 17-byte linked loop prefix checked; list terminator scan and CP/INC flag effects are modeled, with GetDefaultName.foundName as the explicit CopyData boundary"
+
+[[function]]
 assembly_symbol = "GetDefaultName.foundName"
 assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
 c_symbol = "port_get_default_name_found_name"
@@ -20902,8 +22034,8 @@ observables = [
     "frame-block source bytes",
     "destination OAM bytes",
 ]
-proof_domain = "one frame-block tile, FRAMEBLOCKMODE_02, no transformation (wSubAnimTransform=0), fixed source and destination pointers, arbitrary base coordinates and tile bytes"
-decoder = "entry prologue and one-tile no-transformation body checked with explicit SM83 absolute-load/store shims; native implementation includes all four coordinate/flag transformation formulas but mode-02 completion is the proved path"
+proof_domain = "frame blocks with one and two tiles, each transform type (0, 1, 2, 3), FRAMEBLOCKMODE_02, FRAMEBLOCKMODE_03, FRAMEBLOCKMODE_04, cleanup modes 0 and 1, and the GROWL cleanup exception; fixed source/destination pointers, one-frame delay, arbitrary base coordinates and symbolic tile bytes"
+decoder = "complete routine body is ported; linked assembly executes the real loop and all transform/mode branches with individual SM83 load/store, pair, arithmetic, and compare shims; DelayFrames and AnimationCleanOAM are proven callee boundaries; the functional equivalence test also asserts the exact linked 241-byte body"
 
 [[function]]
 assembly_symbol = "PlayAnimation"
@@ -20922,13 +22054,13 @@ observables = [
     "L",
     "animation-command source byte",
 ]
-proof_domain = "PlayAnimation.animationLoop -> .AnimationOver branch with command byte $FF, arbitrary non-pointer register inputs, fixed command pointer"
-decoder = "animation-loop LD A,[HL+], CP $FF, JR Z, and RET path checked with explicit SM83 LD/CP shims; no special-effect or subanimation calls are modeled"
+proof_domain = "PlayAnimation.animationLoop -> .AnimationOver branch with command byte $FF, arbitrary non-pointer register inputs, and fixed command pointer"
+decoder = "terminal LD A,[HL+], CP $FF, JR Z, and RET path checked with explicit SM83 LD/CP shims; the functional equivalence test also asserts the exact six-byte terminal branch; special-effect and subanimation dispatch remain outside this proof"
 
 [[function]]
 assembly_symbol = "LoadSubanimation"
 assembly_source = "engine/battle/animations.asm"
-c_symbol = "port_load_subanimation_normal"
+c_symbol = "port_load_subanimation"
 c_source = "verification/ports/load_subanimation.c"
 status = "partial"
 observables = [
@@ -20944,13 +22076,13 @@ observables = [
     "wSubAnimTransform",
     "wSubAnimSubEntryAddr",
 ]
-proof_domain = "non-enemy normal subanimation, player's turn, fixed pointer-table and subanimation addresses, arbitrary incoming registers and prior output bytes"
-decoder = "post-GetSubanimationTransform1 normal path modeled through the transformation store and subentry-address calculation; native implementation follows the linked pointer-table byte order and masks the packed frame count"
+proof_domain = "all eight packed subanimation types, one- and three-frame counters, both player and enemy turns, arbitrary general-register and canonical-flag inputs, fixed pointer-table and subanimation addresses"
+decoder = "complete routine body is ported; linked assembly executes pointer loads, packed count/type extraction, both transform helper boundaries, reverse offset loop, 16-bit address arithmetic, and output stores under individual SM83 instruction shims; the functional equivalence test also asserts the exact linked 70-byte body; counter values other than 1 and 3 remain outside this proof"
 
 [[function]]
 assembly_symbol = "LoadMoveAnimationTiles"
 assembly_source = "engine/battle/animations.asm"
-c_symbol = "port_load_move_animation_tiles_zero"
+c_symbol = "port_load_move_animation_tiles"
 c_source = "verification/ports/load_move_animation_tiles.c"
 status = "partial"
 observables = [
@@ -20965,8 +22097,8 @@ observables = [
     "wTempTilesetNumTiles",
     "wWhichBattleAnimTileset",
 ]
-proof_domain = "first move-animation tileset (wWhichBattleAnimTileset=0), arbitrary incoming registers and prior temporary tile-count byte"
-decoder = "tileset-zero table entry and pre-CopyVideoData register setup are modeled; CopyVideoData remains the explicit downstream continuation"
+proof_domain = "all valid wWhichBattleAnimTileset values 0, 1, and 2, arbitrary incoming registers, canonical flags, and temporary tile-count state; CopyVideoData is verified as the linked real helper boundary"
+decoder = "complete routine body is ported; linked assembly executes the banked pointer-table lookup, count/address loads, destination setup, and CopyVideoData call boundary with individual SM83 instruction shims; the functional equivalence test also asserts the exact linked 28-byte body; invalid tileset values and graphics-transfer side effects remain outside this proof"
 
 [[function]]
 assembly_symbol = "MoveAnimation"
@@ -20988,8 +22120,8 @@ observables = [
     "wSubAnimTransform",
     "wAnimSoundID",
 ]
-proof_domain = "MoveAnimation.animationFinished branch after saved-register restoration, arbitrary incoming registers and prior output bytes"
-decoder = "finish-branch stores modeled; WaitForSoundToFinish and entry save/restore are explicit branch boundaries"
+proof_domain = "all general-register and canonical-flag inputs plus arbitrary prior output bytes through the animationFinished terminal branch; the real linked call boundary and PUSH/POP restoration execute pathwise"
+decoder = "exact 24-byte linked body checked; WaitForSoundToFinish is an explicit call boundary, XOR/absolute stores/DEC A run via individual SM83 shims, and the actual POP AF/BC/DE/HL/RET sequence restores registers; earlier MoveAnimation dispatch and the loop continuation remain outside this proof"
 
 [[function]]
 assembly_symbol = "PlaySubanimation"
@@ -21008,8 +22140,8 @@ observables = [
     "L",
     "wSubAnimCounter",
 ]
-proof_domain = "terminal frame path with wSubAnimCounter=1, after DrawFrameBlock and DoSpecialEffectByAnimationId boundaries"
-decoder = "DEC/store/RET-Z terminal sequence checked through an explicit branch summary; downstream frame-loop continuation is not modeled"
+proof_domain = "terminal frame path with wSubAnimCounter=1, arbitrary incoming registers and canonical flags, after DrawFrameBlock and DoSpecialEffectByAnimationId boundaries"
+decoder = "linked assembly executes the terminal LD/DEC/STORE/RET-Z sequence with individual SM83 load/store/DEC shims, and the functional equivalence test asserts the exact eight-byte terminal body; downstream frame-loop continuation remains outside this proof"
 
 [[function]]
 assembly_symbol = "AnimationCleanOAM"
@@ -21829,8 +22961,8 @@ status = "partial"
 observables = [
     "all registers and flags",
 ]
-proof_domain = "all register/flag inputs through the initial wild/trainer branch after loading and decrementing wIsInBattle"
-decoder = "SM83 absolute load and DEC A flags are modeled exactly; subsequent text, cry, and sound branches remain beyond the explicit boundary"
+proof_domain = "all register/flag inputs plus concrete cur-map, enemy-species, and fishing inputs through wIsInBattle decrement, wild/trainer selection, the non-Tower WildMonAppearedText versus HookedMonAttackedText choice, and TrainerWantsToFightText pointer setup; Tower-specific item/ghost handling and subsequent cry, sound, delay, Pokeball, and PrintText paths remain beyond the explicit boundary"
+decoder = "exact linked entry bytes through the wild/trainer branch are checked in verification/tests/test_print_beginning_battle_text.py; absolute loads and DEC A flags are shimmed, while the branch-selection boundary models the explicit PlayCry/.playSFX and Tower gate exits and native C reproduces the three text-pointer outcomes"
 
 [[function]]
 assembly_symbol = "PrintSendOutMonMessage"
@@ -21840,9 +22972,10 @@ c_source = "verification/ports/print_send_out_mon_message.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "wTextBoxID",
 ]
-proof_domain = "all register/flag and enemy-HP-byte inputs through the GoText branch after OR-ing current enemy HP"
-decoder = "HL initialization, HL-increment HP loads, OR flags, and GoText pointer setup are modeled exactly; the text-printing and percentage branches remain beyond the explicit boundary"
+proof_domain = "all symbolic register inputs and representative big-endian enemy-HP/max-HP pairs covering zero HP and every nonzero percentage text bucket (70+, 40-69, 10-39, and 0-9)"
+decoder = "exact 110-byte linked body is checked in verification/tests/test_print_send_out_mon_message.py; HP capture, the real Multiply and Divide C ports, quotient threshold selection, all four text pointers, and the final PrintText composition are modeled, while the test domain uses valid representative HP/max-HP pairs rather than every numeric HP value"
 
 [[function]]
 assembly_symbol = "SlidePlayerAndEnemySilhouettesOnScreen"
@@ -22527,9 +23660,12 @@ c_source = "verification/ports/print_move_is_disabled_text.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "wPlayerBattleStatus1 and wEnemyBattleStatus1",
+    "wNamedObjectIndex",
+    "wTextBoxID",
 ]
-proof_domain = "all register/flag inputs through the player/enemy status branch"
-decoder = "selected-move/status pointer setup and high-memory AND-A flags are modeled exactly; status clearing and disabled-text rendering remain beyond the explicit boundary"
+proof_domain = "all register/flag inputs and whose-turn paths, with concrete selected-move and battle-status bytes, through charging-up clearing, selected-move capture, the GetMoveName return boundary, and the complete MoveIsDisabledText PrintText transition"
+decoder = "exact linked body checked in verification/tests/test_print_move_is_disabled_text.py; player/enemy HL/DE selection, res CHARGING_UP, wNamedObjectIndex write, wNameBuffer DE return, MoveIsDisabledText HL setup, and the real PrintText composition are modeled, while GetMoveName remains the explicit proven-callee boundary"
 
 [[function]]
 assembly_symbol = "HandleSelfConfusionDamage"
@@ -22551,9 +23687,11 @@ c_source = "verification/ports/print_move_failure_text.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "wCriticalHitOrOHKO, wDamage, and wTextBoxID",
+    "Jump Kick path selection",
 ]
-proof_domain = "all register/flag inputs through the player/enemy move-effect branch"
-decoder = "player/enemy effect pointer setup and high-memory AND-A flags are modeled exactly; failure-text selection and recoil paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, whose-turn, damage-multiplier, critical, player/enemy move-effect, and 16-bit damage inputs through text selection, PrintText, critical clear, Jump Kick comparison, three 16-bit right shifts with minimum recoil, and the crash-text PrintText call"
+decoder = "the complete 99-byte linked body through the crash-text PrintText and predef-shake boundary is covered; player/enemy effect selection, three failure-text cases, real PrintText composition, critical clear, CP JUMP_KICK flags/path, SRL/RR recoil arithmetic, zero-to-one minimum damage, and crash-text pointer setup are modeled; screen shake and player/enemy damage callees remain explicit boundaries"
 
 [[function]]
 assembly_symbol = "PrintDoesntAffectText"
@@ -22574,12 +23712,14 @@ assembly_symbol = "PrintCriticalOHKOText"
 assembly_source = "engine/battle/core.asm"
 c_symbol = "port_print_critical_ohko_text"
 c_source = "verification/ports/print_critical_ohko_text.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "wCriticalHitOrOHKO and wTextBoxID",
+    "executed DelayFrames iteration count",
 ]
-proof_domain = "all register/flag and wCriticalHitOrOHKO inputs through the zero/nonzero branch"
-decoder = "wCriticalHitOrOHKO load and AND-A flags are modeled exactly; critical/OHKO text selection, clearing, and delay remain beyond the explicit boundary"
+proof_domain = "all symbolic register inputs with the exhaustive meaningful wCriticalHitOrOHKO values 0 (no-hit), 1 (critical-hit), and 2 (OHKO); nonzero selection, PrintText setup, flag clear, and the complete 20-frame DelayFrames loop are covered"
+decoder = "exact 29-byte linked body checked in verification/tests/test_print_critical_ohko_text.py; every feasible 0/1/2 branch executes, the two fixed text pointers compose through the complete PrintText transition, wCriticalHitOrOHKO is cleared, and native C executes the real DelayFrame/DEC-C loop through port_delay_frames_step with a terminating vblank observation and a 20-iteration endpoint"
 
 [[function]]
 assembly_symbol = "CheckForDisobedience"
@@ -23494,9 +24634,10 @@ c_source = "verification/ports/display_link_battle_versus_text_box.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "all tilemap bytes written by TextBoxBorder",
 ]
-proof_domain = "all register/flag inputs through TextBoxBorder"
-decoder = "LoadTextBoxTilePatterns call boundary, link-versus textbox coordinate setup, and BC dimensions are modeled exactly; text placement, tile graphics, pokeball setup, delay, and rendering remain beyond the explicit boundary"
+proof_domain = "all register/flag inputs and the complete 20x12 tilemap window through the LoadTextBoxTilePatterns boundary and TextBoxBorder transition"
+decoder = "exact 13-byte linked prefix checked in verification/tests/test_display_link_battle_versus_text_box.py; the graphics call is an explicit boundary, coordinate and dimension instructions execute, and native C composes the complete proven TextBoxBorder transition while text placement, pokéball setup, delay, and rendering remain beyond the explicit boundary"
 
 [[function]]
 assembly_symbol = "FormatMovesString"
@@ -23754,10 +24895,10 @@ status = "partial"
 observables = [
     "all registers and flags",
     "wSafariBaitFactor",
-    "wSafariRockFactor",
+    "wSafariEscapeFactor (rock-factor path)",
 ]
-proof_domain = "all register/flag and bait/rock-factor inputs through safari text selection"
-decoder = "bait/rock factor decrement flags, eating/angry text pointer selection, and no-text return are modeled exactly; enemy species/catch-rate update, tile loading, text rendering, and continuation calls remain beyond the explicit boundary"
+proof_domain = "all register/flag and bait/escape-factor inputs through the bait, zero-escape return, and angry-text selection paths"
+decoder = "exact 45-byte linked body checked in verification/tests/test_print_safari_zone_battle_text_private.py; bait/escape-factor decrements, DEC/AND flags, eating/angry text pointer selection, and the zero-escape return are modeled exactly, while enemy species/catch-rate update, tile loading, text rendering, and continuation calls remain beyond the explicit boundary"
 
 [[function]]
 assembly_symbol = "ScaleSpriteByTwo"
@@ -24650,13 +25791,15 @@ assembly_symbol = "WriteMonPartySpriteOAMBySpecies"
 assembly_source = "engine/gfx/mon_icons.asm"
 c_symbol = "port_write_mon_party_sprite_oam_by_species_private"
 c_source = "verification/ports/write_mon_party_sprite_oam_by_species_private.c"
-status = "partial"
+status = "proven"
 observables = [
-    "A",
-    "hPartyMonIndex",
+    "all registers and flags",
+    "hPartyMonIndex and wMonPartySpriteSpecies",
+    "wPokedexNum, wOAMBaseTile, and wSymmetricSpriteOAMAttributes",
+    "wShadowOAM and wMonPartySpritesSavedOAM",
 ]
-proof_domain = "all species, party-index, and register inputs through sprite-ID lookup setup"
-decoder = "party-index reset, species load, and GetPartyMonSpriteID continuation boundary are modeled exactly; OAM tile selection, OAM writes, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag, species, sprite-ID, Pokédex, base-tile, attribute, shadow-OAM, and saved-OAM inputs; the GetPartyMonSpriteID lookup is supplied compositionally at its real call boundary"
+decoder = "exact linked BySpecies, WriteMonPartySpriteOAM, CopyData, symmetric-writer, and asymmetric-writer bytes checked; party-index reset, lookup continuation, helix/symmetric branch, real OAM writers, and 96-byte saved-OAM copy are composed with only individual SM83 instruction shims"
 
 [[function]]
 assembly_symbol = "WriteMonPartySpriteOAM"
@@ -25280,7 +26423,7 @@ observables = [
     "hWY, hAutoBGTransferEnabled, font-transfer bank state, and VBlank copy state",
     "all affected tilemap and font-transfer bytes",
 ]
-proof_domain = "all register/flag inputs over dialogue and start-menu text IDs, both EVENT_GOT_POKEDEX outcomes, automatic-box suppression, sprite-update suppression/call paths with wUpdateSpritesEnabled=2, all 15 facing-save iterations, all 16 animation-clear iterations, and the complete copy/font setup transitions"
+proof_domain = "all register/flag inputs over dialogue and start-menu text IDs, both EVENT_GOT_POKEDEX outcomes, automatic-box suppression, sprite-update suppression/call paths with representative wUpdateSpritesEnabled values 0, 1, and 2 (covering underflow, zero, and nonzero decrements), all 15 facing-save iterations, all 16 animation-clear iterations, and the complete copy/font setup transitions"
 decoder = "exact 117-byte linked body checked implicitly by symbol boundary; only individual SM83 absolute/HRAM load-store gaps and proven TextBoxBorder, CopyScreenTileBufferToVRAM, UpdateSprites early-return, and LoadFontTilePatterns call boundaries are shimmed, while production C executes the border selection, 15-entry facing loop, 16-entry stand-still loop, and real transfer ports; the _UpdateSprites bank-1 body remains outside this proof domain"
 
 [[function]]
@@ -28601,6 +29744,17 @@ proof_domain = "all register/flag inputs, every initial wToggleableObjectFlags b
 decoder = "exact 50-byte linked body executes under angr on one linear path; SM83-only EA/2A/FA decoder shims plus the two proven callee boundaries (FillMemory clear, ToggleableObjectFlagAction set with the flag byte read-modify-write at HL+C/8); the 687-byte table is byte-verified against ROM and the native port calls the real port_fill_memory and port_toggleable_object_flag_action in order"
 
 [[function]]
+assembly_symbol = "OakSpeech"
+assembly_source = "engine/movie/oak_speech/oak_speech.asm"
+c_symbol = "port_oak_speech"
+c_source = "verification/ports/oak_speech.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "setup prefix through the PrepareOakSpeech call boundary; music-stop, music-select, screen-clear, textbox-tile, and real PrepareOakSpeech call sequencing is preserved, while later Oak dialogue, pictures, text, and fades remain outside this proof"
+decoder = "exact 22-byte linked prefix checked; PlaySound, PlayMusic, ClearScreen, and LoadTextBoxTilePatterns use matched call-boundary summaries, while PrepareOakSpeech executes the real C port on the native side and a call-boundary summary on the assembly side"
+[[function]]
 assembly_symbol = "PrepareOakSpeech"
 assembly_source = "engine/movie/oak_speech/oak_speech.asm"
 c_symbol = "port_prepare_oak_speech"
@@ -28716,6 +29870,377 @@ proof_domain = "the plain single-byte BCD configuration (C=1: no money sign, no 
 decoder = "exact 55-byte linked body and the exact proved 35-byte PrintBCDDigit callee execute under angr as one unbroken per-instruction hook chain; SM83 AND/SWAP/BIT/RES/ADD/LD shims plus fork shims for the SLEIGH conditional-branch defect; each digit's jp PrintLetterDelay tail is an identity boundary on this function's observable state (A/F dead on return inside the loop, register saves balanced) and the native C calls the real port_print_bcd_digit_full per digit"
 
 [[function]]
+assembly_symbol = "PlaceDexEnd"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_dex_end"
+c_source = "verification/ports/place_dex_end.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "the period write at the entry HL cursor",
+    "the restored caller HL",
+]
+proof_domain = "all symbolic register/flag inputs, a symbolic caller-saved HL, and every initial byte in the destination window; the entry cursor is fixed to the tested tilemap slot so the indexed write is fully observable"
+decoder = "exact 4-byte body checked (36e8e1c9); LD [HL], '.' writes the complete destination byte, POP HL restores the symbolic caller cursor, and RET is modeled only as the terminal boundary"
+
+
+
+
+
+[[function]]
+assembly_symbol = "DoneText"
+assembly_source = "home/text.asm"
+c_symbol = "port_done_text"
+c_source = "verification/ports/done_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "the restored caller HL",
+    "the DE pointer to the embedded stop marker minus one",
+]
+proof_domain = "all symbolic register/flag inputs and a symbolic caller-saved HL; the handler has no memory writes and the embedded bank-0 text marker makes DE deterministic"
+decoder = "exact 6-byte body checked (e111b31a1bc9); POP HL, LD DE,.stop, DEC DE, and RET are modeled instruction-by-instruction, with RET only as the terminal boundary"
+
+
+
+
+
+[[function]]
+assembly_symbol = "NullChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_null_char"
+c_source = "verification/ports/null_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "BC copied from the entry cursor",
+    "the restored caller HL",
+    "DE pointing one byte before TextIDErrorText",
+]
+proof_domain = "all symbolic register/flag inputs and a symbolic caller-saved HL, with the entry cursor fixed to the tested tilemap slot; the handler has no memory writes"
+decoder = "exact 8-byte body checked (444de111f4191bc9); LD B,H/LD C,L, POP HL, LD DE,TextIDErrorText, DEC DE, and RET are modeled instruction-by-instruction"
+
+
+
+
+
+[[function]]
+assembly_symbol = "PlaceCommandCharacter"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_command_character"
+c_source = "verification/ports/place_command_character.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "the rendered replacement-text destination window",
+    "the advanced caller text pointer in DE",
+]
+proof_domain = "all symbolic registers, flags, destination bytes, and saved DE over literal and every PlaceCommandCharacter replacement dictionary token (PLAYER, RIVAL, POUND, PKMN, SIXDOTS, PC, TM, TRAINER, and ROCKET), with the linked PlaceNextChar continuation exercised for TX_END, an ordinary character, and TX_LINE; the proven PlaceString and PlaceNextChar transitions compose exactly"
+decoder = "exact 10-byte body checked (cd55196069d113c35619); PlaceString entry, cursor moves, stack save/restore, all nine replacement dictionary expansions, and the linked PlaceNextChar ordinary-character, TX_END, and TX_LINE paths are modeled under angr with individual shims only for unsupported call/return and memory instructions; the focused suite covers 30 path-equivalence cases"
+
+[[function]]
+assembly_symbol = "PrintPlayerName"
+assembly_source = "home/text.asm"
+c_symbol = "port_print_player_name"
+c_source = "verification/ports/print_player_name.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, wPlayerName replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d51158d1184c asserted inside verification/tests/test_print_player_name.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+[[function]]
+assembly_symbol = "PrintRivalName"
+assembly_source = "home/text.asm"
+c_symbol = "port_print_rival_name"
+c_source = "verification/ports/print_rival_name.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, wRivalName replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d5114ad31846 asserted inside verification/tests/test_print_rival_name.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+[[function]]
+assembly_symbol = "TrainerChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_trainer_char"
+c_source = "verification/ports/trainer_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, TrainerCharText replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d511581a1840 asserted inside verification/tests/test_trainer_char.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+[[function]]
+assembly_symbol = "PCChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_pc_char"
+c_source = "verification/ports/pc_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, PCCharText replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d511601a1834 asserted inside verification/tests/test_pc_char.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+[[function]]
+assembly_symbol = "TMChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_tm_char"
+c_source = "verification/ports/tm_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, TMCharText replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d511551a183a asserted inside verification/tests/test_tm_char.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+[[function]]
+assembly_symbol = "RocketChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_rocket_char"
+c_source = "verification/ports/rocket_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, RocketCharText replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d511631a182e asserted inside verification/tests/test_rocket_char.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+[[function]]
+assembly_symbol = "PlacePOKe"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_poke"
+c_source = "verification/ports/place_poke.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, PlacePOKeText replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d5116a1a1828 asserted inside verification/tests/test_place_poke.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+[[function]]
+assembly_symbol = "SixDotsChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_six_dots_char"
+c_source = "verification/ports/six_dots_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, SixDotsCharText replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d5116f1a1822 asserted inside verification/tests/test_six_dots_char.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+[[function]]
+assembly_symbol = "PlacePKMN"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_pkmn"
+c_source = "verification/ports/place_pkmn.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "PlaceCommandCharacter call-input registers",
+    "the saved caller DE passed through the dictionary wrapper",
+]
+proof_domain = "all symbolic register/flag inputs with the destination cursor fixed to the text buffer; the macro's push-DE, PlacePKMNText replacement pointer, and jump into the independently tested complete PlaceCommandCharacter transition are proven compositionally"
+decoder = "exact 6-byte linked body d511791a181c asserted inside verification/tests/test_place_pkmn.py; the push-DE stack bytes and replacement DE setup execute in the linked body, and PlaceCommandCharacter is an individual compositional boundary shared by native C's real port call"
+
+
+
+
+
+[[function]]
+assembly_symbol = "ContText"
+assembly_source = "home/text.asm"
+c_symbol = "port_cont_text_handler"
+c_source = "verification/ports/cont_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "the complete ContCharText far-command template",
+    "the restored caller destination in HL and advanced source DE",
+    "wLetterPrintingDelayFlags and nested text-processor effects",
+]
+proof_domain = "all symbolic register/flag, destination, saved-DE, and delay-flag inputs through the complete ContText handler; the nested TextCommandProcessor far-stream transition composes through its proven dispatcher while the linked test covers the saved-DE push/pop, destination handoff, and PlaceNextChar continuation"
+decoder = "exact 16-byte linked body d5444d218c1acd401b6069d1 checked; native C writes the exact five-byte ContCharText far wrapper, calls the real port_text_command_processor, restores BC-derived HL, advances the saved DE, and the focused proof models the nested terminal stream and continuation boundary"
+
+
+[[function]]
+assembly_symbol = "CloseTextDisplay"
+assembly_source = "home/text_script.asm"
+c_symbol = "port_close_text_display"
+c_source = "verification/ports/close_text_display.c"
+status = "proven"
+observables = [
+    "all 8 registers and canonical flags",
+    "hWY, hAutoBGTransferEnabled, hLoadedROMBank, and rROMB",
+    "rBGP, rOBP0, and rOBP1",
+    "wFontLoaded",
+    "all 15 restored sprite-facing bytes",
+    "ordered SwitchToMapRomBank, DelayFrame, LoadGBPal, InitMapSprites, LoadPlayerSpriteGraphics, LoadCurrentMapView, and UpdateSprites transitions",
+]
+proof_domain = "both BIT_FLY_WARP branches, all symbolic live registers and saved AF, map palette/hardware bytes, font and 15-entry sprite-facing/original regions, and the complete 15-entry restore loop; proven helper calls are exercised compositionally at explicit boundaries"
+decoder = "exact 70-byte linked body fa5ed3cdbc123e90e0b0cdaf20cdba20afe0ba2119c20e0f1110007e257724190d20f83e05e0b8ea0020cd5b7821c4cfcb86fa32d7cb5fcc9709cdaa0cf1e0b8ea0020c32924 checked functionally; unsupported SM83 load/store/bit boundaries are individually shimmed, the restore loop executes natively, and the jp UpdateSprites tail is a real linked target boundary"
+
+
+[[function]]
+assembly_symbol = "_ContTextNoPause"
+assembly_source = "home/text.asm"
+c_symbol = "port_cont_text_no_pause"
+c_source = "verification/ports/cont_text_no_pause.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "the complete 80-byte text scroll region",
+    "the restored caller DE",
+    "the fixed text cursor HL = 0xc4e1",
+]
+proof_domain = "all symbolic register/flag and text-region inputs with a symbolic saved DE; both complete ScrollTextUpOneLine transitions compose, and the jp NextChar continuation composes the proven DE increment"
+decoder = "exact 14-byte body checked (d5cd181bcd181b21e1c4d1c3e819); balanced PUSH/POP DE, both proven scroll calls, cursor setup, and the NextChar DE increment are modeled under angr"
+
+
+
+
+
+[[function]]
+assembly_symbol = "PromptText"
+assembly_source = "home/text.asm"
+c_symbol = "port_prompt_text"
+c_source = "verification/ports/prompt_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wLinkState",
+    "the prompt arrow tile at $c4f2",
+    "the restored caller HL and DoneText DE continuation pointer",
+]
+proof_domain = "both link-state paths (LINK_STATE_BATTLING and a non-battle state), all symbolic register/flag inputs, symbolic arrow state, and symbolic caller-saved HL; ProtectedDelay3, ManualTextScroll, and DoneText compose through their proven transitions"
+decoder = "exact 24-byte PromptText body checked (fa2bd1fe04caa21a3eeeeaf2c4cd3a1bcd98383e7feaf2c4); load/compare/branch, arrow writes, proven delay/manual-scroll callees, and the proven DoneText fall-through are modeled under angr"
+
+
+
+
+
+[[function]]
+assembly_symbol = "_ContText"
+assembly_source = "home/text.asm"
+c_symbol = "port_cont_text"
+c_source = "verification/ports/cont_text.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wLinkState",
+    "the prompt arrow tile at $c4f2",
+    "the complete 80-byte text scroll region",
+    "the restored caller DE and fixed text cursor HL",
+]
+proof_domain = "both link-state paths (LINK_STATE_BATTLING and a non-battle state), all symbolic register/flag, arrow, text-region, and saved-DE inputs; ProtectedDelay3, ManualTextScroll, and the complete _ContTextNoPause transition compose through proven ports"
+decoder = "exact 32-byte body checked (3eeeeaf2c4cd3a1bd5cd9838d13e7feaf2c4d5cd181bcd181b21e1c4d1c3e819); arrow writes, proven delay/manual-scroll callees, both scroll calls, cursor setup, and the NextChar continuation boundary are modeled under angr"
+
+
+
+
+
+[[function]]
+assembly_symbol = "PageChar"
+assembly_source = "home/text.asm"
+c_symbol = "port_page_char"
+c_source = "verification/ports/page_char.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wLinkState",
+    "the prompt arrow and complete seven-row clear region",
+    "the restored caller DE",
+    "the installed row-11 text cursor HL = 0xc47d",
+]
+proof_domain = "both link-state paths, all symbolic register/flag, arrow, clear-region, and saved-DE inputs; ProtectedDelay3, ManualTextScroll, ClearScreenArea, and the complete 20-frame DelayFrames transition compose through proven ports"
+decoder = "exact 35-byte body checked (d53eeeeaf2c4cd3a1bcd98382169c4011207cdc4180e14cd3937d1e1217dc4e5c3e819); stack balancing, arrow setup, proven delay/manual-scroll/clear/delay callees, row-11 cursor installation, and NextChar continuation are modeled under angr"
+
+
+
+
+
+[[function]]
+assembly_symbol = "Paragraph"
+assembly_source = "home/text.asm"
+c_symbol = "port_paragraph"
+c_source = "verification/ports/paragraph.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wLinkState",
+    "the prompt arrow and complete four-row clear region",
+    "the restored caller DE",
+    "the installed row-14 text cursor HL = 0xc4b9",
+]
+proof_domain = "both link-state paths, all symbolic register/flag, arrow, clear-region, and saved-DE inputs; ProtectedDelay3, ManualTextScroll, ClearScreenArea, and the complete 20-frame DelayFrames transition compose through proven ports"
+decoder = "exact 33-byte body checked (d53eeeeaf2c4cd3a1bcd983821a5c4011204cdc4180e14cd3937d121b9c4c3e819); stack balancing, arrow setup, proven delay/manual-scroll/clear/delay callees, row-14 cursor installation, and NextChar continuation are modeled under angr"
+
+
+
+
+
+[[function]]
+assembly_symbol = "PlaceMoveUsersName"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_move_users_name"
+c_source = "verification/ports/place_move_users_name.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wWhoseTurn",
+    "the complete replacement-text destination window",
+    "the battle and enemy nickname source buffers",
+    "the restored-and-advanced caller DE",
+]
+proof_domain = "both wWhoseTurn paths with symbolic registers, flags, destination bytes, and saved DE; player nickname rendering composes through PlaceCommandCharacter and enemy literal plus nickname rendering composes through the proven PlaceString transition"
+decoder = "the exact 30-byte linked body through the PlaceCommandCharacter continuation is checked (f0f3d5a720051109d0180b11721acd5519606911dacfcd55196069d113c3); load/branch, stack save, both PlaceString calls, cursor moves, and DE restoration are modeled under angr"
+
+
+
+
+
+[[function]]
+assembly_symbol = "PlaceMoveTargetsName"
+assembly_source = "home/text.asm"
+c_symbol = "port_place_move_targets_name"
+c_source = "verification/ports/place_move_users_name.c"
+status = "proven"
+observables = [
+    "all 8 registers and flags",
+    "wWhoseTurn (read without mutation)",
+    "the complete replacement-text destination window",
+    "the battle and enemy nickname source buffers",
+    "the restored-and-advanced caller DE",
+]
+proof_domain = "both symbolic wWhoseTurn inputs (opposite-side selection), with symbolic registers, flags, destination bytes, and saved DE; the XOR wrapper composes with the complete proven PlaceMoveUsersName body"
+decoder = "exact 36-byte linked body checked (f0f3ee011802f0f3d5a720051109d0180b11721acd5519606911dacfcd55196069d113c3); XOR/relative entry and the shared user-name body are modeled under angr"
+
+
+
+
+
+[[function]]
 assembly_symbol = "TextCommand_SCROLL"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_scroll"
@@ -28810,8 +30335,8 @@ observables = [
     "all registers and canonical flags",
     "wLinkState",
 ]
-proof_domain = "the non-link configuration (wLinkState concrete non-battling; the link-battling branch loops through the dispatcher and is out of this domain) with the entry A symbolic, the entry F concrete-clear (the raw-vs-canonical representation of the non-SM83 flag bits is out of scope for this pass-through handler), and the entry BC/DE symbolic; the ManualTextScroll call composes through the proved port under its terminating A/B observation (the established text-poll boundary precedent); the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
-decoder = "exact 12-byte linked body executes under angr on one linear path; SM83-only PUSH/POP BC and POP HL shims (the pop written through the p-code's byte-swapped HL pair view); the ManualTextScroll call-site boundary carries the proved terminating transition (the saved registers pass through, A := SFX_PRESS_AB); the native C calls the real port_manual_text_scroll with the entry state mapped to its typed inputs"
+proof_domain = "representative concrete values from both wLinkState classes (normal dialogue values 0, 1, 3, 5, and 255 plus LINK_STATE_BATTLING) with the entry A symbolic, the entry F concrete-clear (the raw-vs-canonical representation of the non-SM83 flag bits is out of scope for this pass-through handler), and the entry BC/DE symbolic; the ManualTextScroll call composes through its proved normal A/B or link-battle delay transition; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 12-byte linked body executes under angr on six concrete link-state paths; SM83-only PUSH/POP BC and POP HL shims (the pop written through the p-code's byte-swapped HL pair view); the ManualTextScroll call-site boundary carries the matching proved normal or link transition; the native C calls the real port_manual_text_scroll with the entry state mapped to its typed inputs"
 
 [[function]]
 assembly_symbol = "TextCommand_PROMPT_BUTTON"
@@ -28824,8 +30349,8 @@ observables = [
     "the down-arrow slot at wTileMap+(18,16)",
     "wLinkState",
 ]
-proof_domain = "the non-link configuration (wLinkState concrete non-battling; the link-battling branch loops into TextCommand_WAIT_BUTTON and is out of this domain) with the entry A/B/C/D/E symbolic, the entry F concrete-clear, HL concrete (the pushed text pointer, modeled as the entry HL), and the arrow slot symbolic; the ManualTextScroll call composes through the proved port under its terminating A/B observation (the established text-poll boundary precedent); the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
-decoder = "exact 27-byte linked body executes under angr on one linear path; SM83-only LD [a16],A and POP HL shims (the pop written through the p-code's byte-swapped HL pair view), the cp LINK_STATE_BATTLING flag boundary, and the ManualTextScroll call-site boundary carrying the proved terminating transition; the native C writes the arrow and blank tiles, calls the real port_manual_text_scroll with the entry state mapped to its typed inputs, and carries the compare's flag semantics"
+proof_domain = "both concrete wLinkState paths (normal dialogue and LINK_STATE_BATTLING) with the entry A/B/C/D/E symbolic, the entry F concrete-clear, HL concrete (the pushed text pointer, modeled as the entry HL), and the arrow slot symbolic; normal dialogue composes through the proved ManualTextScroll transition and arrow writes, while link battle composes through the complete TextCommand_WAIT_BUTTON handler and its proved ManualTextScroll delay transition; the continuation into NextTextCommand is the terminal and composes through the dispatcher proof"
+decoder = "exact 27-byte linked body executes under angr on both concrete branch paths; SM83-only LD [a16],A and POP HL shims (the pop written through the p-code's byte-swapped HL pair view), the cp LINK_STATE_BATTLING branch, the normal ManualTextScroll call-site boundary, and the complete linked TextCommand_WAIT_BUTTON body are exercised; native C writes the normal-path arrow and blank tiles, calls the real port_text_command_wait_button on the link path, and preserves the compare/callee flag semantics"
 
 [[function]]
 assembly_symbol = "SpriteDifferentialDecode"
@@ -29081,6 +30606,21 @@ proof_domain = "all general-register and canonical-flag inputs, an arbitrary 16-
 decoder = "exact 14-byte linked body e12a5f2a57e56069cd5519e118b0 verified; the ld a,[hli] post-increment loads (0x2A) are shimmed with an angr SimProcedure because the generic z80 p-code arch mis-decodes them as LD HL,(nn), and the PlaceString call is shimmed; the p-code HL pair is reconstructed as (regs.h << 8) | regs.l so the real H/L map to the p-code high/low bytes; the Z80 flag byte is written as 0x42 so z80_flags_to_sm83 yields the canonical SM83 N|Z = 0xc0"
 
 [[function]]
+assembly_symbol = "NextTextCommand"
+assembly_source = "home/text.asm"
+c_symbol = "port_next_text_command"
+c_source = "verification/ports/text_command_processor.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the advanced command-stream HL pointer",
+    "wLetterPrintingDelayFlags",
+]
+proof_domain = "direct NextTextCommand entry with arbitrary registers, saved AF, and command-stream memory; the TX_END restore/return path is proved directly, while the complete nonterminal command-dispatch loop is shared with TextCommandProcessor and its all-command path-equivalence suite"
+decoder = "native C carries the assembly caller's saved AF explicitly and executes the complete command-fetch loop; the focused direct-entry test checks HLI, AF restoration, delay-flag restoration, and return, while the existing TextCommandProcessor suite covers TX_FAR, TX_SOUND, and every jump-table handler"
+
+
+[[function]]
 assembly_symbol = "TextCommandProcessor"
 assembly_source = "home/text.asm"
 c_symbol = "port_text_command_processor"
@@ -29115,6 +30655,33 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, an arbitrary 3-byte far-command argument at a fixed text pointer, and arbitrary initial hLoadedROMBank/rROMB values; the recursive TextCommandProcessor call is treated as a no-op compositional boundary, while the bank switch, D:E far pointer load, HL restoration, and bank restoration are exercised"
 decoder = "exact 30-byte linked body e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b verified; SM83 HL+ loads and LDH stores are shimmed, the recursive processor call is replaced by a returning boundary, and the final jp NextTextCommand is the terminal sentinel"
+
+[[function]]
+assembly_symbol = "LoadCopyrightAndTextBoxTiles"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_load_copyright_and_text_box_tiles"
+c_source = "verification/ports/load_copyright_and_text_box_tiles.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "hWY",
+    "tilemap after ClearScreen and copyright placement",
+]
+proof_domain = "all general-register and canonical-flag inputs with LCD disabled, two-row title text layout, fixed title-screen tilemap/source data, and the real ClearScreen, LoadTextBoxTilePatterns, CopyVideoData, and PlaceString compositional boundaries"
+decoder = "exact 9-byte linked wrapper verified; hWY clear and ordered ClearScreen/LoadTextBoxTilePatterns calls execute before the complete LoadCopyrightTiles fall-through, with individual helper summaries; LCD-enabled and single-spaced layout branches remain outside this proof"
+
+[[function]]
+assembly_symbol = "LoadCopyrightTiles"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_load_copyright_tiles"
+c_source = "verification/ports/load_copyright_tiles.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "copyright tilemap writes",
+]
+proof_domain = "all general-register and canonical-flag inputs with the fixed CopyrightTextString source, two-row text layout, and fixed title-screen VRAM/tilemap destinations; CopyVideoData and PlaceString execute as proven callee boundaries"
+decoder = "exact 23-byte linked body verified; DE/HL/BC setup, real CopyVideoData transfer boundary, title tilemap cursor/source setup, and tail PlaceString transition are ported; graphics bytes remain the hardware transfer boundary and the single-spaced layout branch is not yet covered"
 
 [[function]]
 assembly_symbol = "LoadTitleMonSprite"
@@ -29168,6 +30735,16 @@ proof_domain = "all general-register and canonical-flag inputs, arbitrary text-p
 decoder = "exact 14-byte linked body 2a5f2a57d52a5f7e57cd7573d1c9 verified; all HL+ loads and stack pointer restoration are shimmed, while the coordinate call is replaced by its proven symbolic transition"
 
 [[function]]
+assembly_symbol = "DisplayTextBoxID"
+assembly_source = "home/textbox.asm"
+c_symbol = "port_display_text_box_id_wrapper"
+c_source = "verification/ports/display_text_box_id_wrapper.c"
+status = "partial"
+observables = ["all 8 registers and canonical flags", "hLoadedROMBank and rROMB"]
+proof_domain = "the complete homecall_sf wrapper around the independently tested DisplayTextBoxID_ boundary; bank-1 setup, saved-AF-through-BC restoration, and final bank writes are covered, while the nested DisplayTextBoxID_ dispatcher remains its documented partial boundary"
+decoder = "exact 21-byte linked body checked in verification/tests/test_display_text_box_id_wrapper.py; individual LDH/absolute-load/stack seams and the nested DisplayTextBoxID_ callee boundary are shimmed, while native C calls the real dispatcher and restores the caller bank"
+
+[[function]]
 assembly_symbol = "DisplayTextBoxID_"
 assembly_source = "engine/menus/text_box.asm"
 c_symbol = "port_display_text_box_id"
@@ -29180,8 +30757,8 @@ observables = [
     "text destination and source pointer state",
     "tilemap bytes affected by PlaceString",
 ]
-proof_domain = "all register/flag inputs and table bytes for the no-match, coordinate-only, and text-and-coordinate entries; interactive TWO_OPTION_MENU and function-table handlers remain explicit boundaries"
-decoder = "native port composes through the proven SearchTextBoxTable, GetTextBoxIDCoords, GetAddressOfScreenCoords, TextBoxBorder, GetTextBoxIDText, PlaceString, and UpdateSprites ports; interactive menu handlers are intentionally deferred"
+proof_domain = "all register/flag inputs and table bytes for the no-match path, every six coordinate-only table entries (MESSAGE_BOX, MENU_TEMPLATE_03, MENU_TEMPLATE_07, LIST_MENU_BOX, MENU_TEMPLATE_10, and MON_SPRITE_POPUP), and every eleven text-and-coordinate table entries, plus MONEY_BOX, BUY_SELL_QUIT_MENU, and FIELD_MOVE_MON_MENU dispatch with complete handler orchestrations, and TWO_OPTION_MENU dispatch for menu IDs 0 through 7 with fixed B=1/C=1 and HL=0xc420"
+decoder = "native port composes through the proven SearchTextBoxTable, GetTextBoxIDCoords, GetAddressOfScreenCoords, TextBoxBorder, GetTextBoxIDText, PlaceString, UpdateSprites, DisplayMoneyBox, DoBuySellQuitMenu, DisplayFieldMoveMonMenu, and DisplayTwoOptionMenu ports; dispatcher proofs execute the real function-table branches and the real 229-byte two-option body, with only their documented instruction and callee boundaries shimmed"
 
 [[function]]
 assembly_symbol = "DisplayMoneyBox"
@@ -29197,6 +30774,22 @@ observables = [
 ]
 proof_domain = "all register/flag inputs and the complete money-box orchestration, with DisplayTextBoxID, ClearScreenArea, and PrintBCDNumber represented by their independently proven call boundaries"
 decoder = "the complete DisplayMoneyBox body executes under angr with only the three proven callee boundaries shimmed; native C preserves the no-text-delay bit, MONEY_BOX_TEMPLATE selection, coordinate/register setup, money source pointer, and final bit clear"
+
+[[function]]
+assembly_symbol = "DisplayYesNoChoice"
+assembly_source = "home/yes_no.asm"
+c_symbol = "port_display_yes_no_choice"
+c_source = "verification/ports/display_yes_no_choice.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wTextBoxID",
+    "hAutoBGTransferEnabled",
+    "complete 360-byte tilemap and backup regions",
+    "DisplayTextBoxID and LoadScreenTilesFromBuffer1 call-input registers",
+]
+proof_domain = "all symbolic register/flag inputs, arbitrary screen-buffer bytes, and the complete wrapper orchestration; DisplayTextBoxID remains an independently tested partial boundary while LoadScreenTilesFromBuffer1 composes through its complete proven transition"
+decoder = "exact 11-byte linked body 3e14ea25d1cde830c32537 asserted inside verification/tests/test_display_yes_no_choice.py; the absolute wTextBoxID store is shimmed individually, DisplayTextBoxID is a symbolic compositional boundary, and the complete 360-byte buffer restore plus auto-BG state transition is modeled at the proven LoadScreenTilesFromBuffer1 boundary"
 
 [[function]]
 assembly_symbol = "DoBuySellQuitMenu"
@@ -29229,6 +30822,22 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs over the no-field-move path and every 1..4 field-move count, with concrete party moves and the complete FieldMoveDisplayData/FieldMoveNames/PokemonMenuEntries tables; TextBoxBorder, UpdateSprites, GetMonFieldMoves, and PlaceString are composed at their proven transitions, with UpdateSprites restricted to its early-return path"
 decoder = "the complete 245-byte linked body executes under angr; unsupported indexed/absolute/high-memory instructions and the four callee boundaries are shimmed individually, while native C performs the initialization, geometry loops, border/update calls, field-name scan, per-row placement, menu placement, and terminal state"
+
+[[function]]
+assembly_symbol = "DisplayTwoOptionMenu"
+assembly_source = "engine/menus/text_box.asm"
+c_symbol = "port_display_two_option_menu"
+c_source = "verification/ports/display_two_option_menu.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "menu configuration, selection, and exit-method bytes",
+    "wStatusFlags5, wTwoOptionMenuID, and wMiscFlags",
+    "wBuffer save/restore bytes",
+    "all affected tilemap bytes",
+]
+proof_domain = "menu IDs 0 through 7, fixed B=1/C=1 and HL=0xc420, and deterministic HandleMenuInput/UpdateSprites/DelayFrames/PlaySound transitions; TextBoxBorder, CableClub_TextBoxBorder, PlaceString, and the two screen-tile save/restore callees are represented by complete transition boundaries, so interactive input alternatives and arbitrary border coordinates remain outside this proof domain"
+decoder = "the complete 229-byte linked body executes under angr; individual SM83 absolute loads/stores, LD-immediate/register-transfer, LD [HL+], XOR, and the two border call targets are shimmed at instruction boundaries, while native C performs menu-table lookup, both border variants, text placement, input branches, delay, sound, screen restoration, and final return flags"
 
 [[function]]
 assembly_symbol = "IsSurfingAllowed"
@@ -29335,6 +30944,66 @@ proof_domain = "all general-register and canonical-flag inputs, arbitrary tilema
 decoder = "the exact complete 58-byte linked body executes under angr; only individual XOR/store/load instructions and seven independently proven callee boundaries are shimmed, while production C calls real port_text_box_border, port_place_string, port_print_num_badges, port_print_num_owned_mons, port_print_play_time, and port_delay_frames"
 
 [[function]]
+assembly_symbol = "PlayerSpinWhileMovingUpOrDown"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_player_spin_while_moving_up_or_down"
+c_source = "verification/ports/player_spin_while_moving.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wPlayerSpinWhileMovingUpOrDownAnimDeltaY, MaxY, and FrameDelay",
+    "wSpritePlayerStateData1YPixels and ImageIndex",
+    "all four wFacingDirectionList bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs plus symbolic spin-source/image/list bytes over the four terminating gameplay motion configurations: delta +16 to max 60 and delta -16 to max 236, each with one-step and two-step paths; arbitrary configurations are excluded because the original loop intentionally runs until Y exactly equals MaxY"
+decoder = "the exact complete 29-byte linked body cd1747fa3dcd4ffa04c181ea04c14ffa3ecdb9c8fa3fcd4fcd393718e3 executes through its real back edge; the complete proven SpinPlayerSprite and DelayFrames transitions are composed at their call sites, while production C calls real port_spin_player_sprite and port_delay_frames and executes the loop"
+
+[[function]]
+assembly_symbol = "DoFlyAnimation"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_do_fly_animation"
+c_source = "verification/ports/do_fly_animation.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wFlyAnimUsingCoordList, wFlyAnimCounter, and wFlyAnimBirdSpriteImageIndex",
+    "wSpritePlayerStateData1ImageIndex, YPixels, and XPixels (including untouched adjacent Y byte)",
+    "the four input coordinate-list bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs except DE, which is fixed to an arbitrary symbolic four-byte coordinate list when the non-$ff coordinate-copy path is selected; both coordinate modes ($ff skip and non-$ff copy) through one and two complete animation iterations, with arbitrary preexisting animation/player bytes"
+decoder = "the exact complete 41-byte linked body fa3fcdee01ea3fcdea02c1cdd73dfa3dcdfeff280a2104c11a1322231a1377fa3ecd3dea3ecd20d8c9 executes through its real back edge; individual SM83 absolute loads/stores, XOR/CP/DEC flag operations, coordinate loads, HLI store, and both conditional branches are modeled explicitly, while the complete independently proven Delay3 transition is composed at its real call site and production C calls real port_delay3"
+
+[[function]]
+assembly_symbol = "LoadBirdSpriteGraphics"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_load_bird_sprite_graphics"
+c_source = "verification/ports/load_bird_sprite_graphics.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "hAutoBGTransferEnabled, hLoadedROMBank, hROMBankTemp, and rROMB",
+    "hVBlankCopySource, hVBlankCopyDest, hVBlankCopySize, and hVBlankOccurred",
+    "the complete ordered states of all four DelayFrame calls made by the two 12-tile transfers",
+]
+proof_domain = "all general-register and canonical-flag inputs and all relevant video-transfer hardware inputs; both fixed 12-tile BirdSprite transfers execute their complete two-chunk CopyVideoData loops"
+decoder = "the exact complete 28-byte linked body 11804d210080010c05cd481811404e210088010c05c34818 and each real 62-byte CopyVideoData body execute under angr; only individual unsupported SM83 hardware load/store, XOR/CP/SUB instructions and the independently proved DelayFrame boundary are shimmed, while native C calls real port_copy_video_data twice"
+
+[[function]]
+assembly_symbol = "InitFacingDirectionList"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_init_facing_direction_list"
+c_source = "verification/ports/init_facing_direction_list.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wSpritePlayerStateData1ImageIndex and wSpritePlayerStateData1YPixels",
+    "wSavedPlayerFacingDirection and wSavedPlayerScreenY",
+    "all four wFacingDirectionList bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs, symbolic player screen-Y and pre-existing saved/list bytes, and each of the four valid sprite facing-image indices (down, left, up, right); invalid facing values are excluded because the assembly and native loops intentionally do not terminate for them"
+decoder = "the exact complete 36-byte linked body fa02c1ea50cdfa04c1ea4fcd2113471148cd010400cdb500fa02c12148cdbe2320fc2bc9 executes with audited SM83 absolute load/store and CP [HL] shims; the fixed four-byte CopyData call applies its complete independently proven transfer transition, while production C calls the real port_copy_data loop"
+
+[[function]]
 assembly_symbol = "UpdateSprites"
 assembly_source = "home/update_sprites.asm"
 c_symbol = "port_update_sprites"
@@ -29347,8 +31016,8 @@ observables = [
     "complete ordered _UpdateSprites call input",
     "complete post-state from the banked _UpdateSprites seam",
 ]
-proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites seam; DEC flags and homecall bank/A/F restoration are preserved exactly, while the _UpdateSprites sprite iteration remains an explicit boundary"
-decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed, while production C models the DEC flags and calls the explicit port_update_sprites_private seam with the real bank-register save/restore contract; the bank-1 sprite body is not yet ported"
+proof_domain = "all general-register and canonical-flag inputs, every symbolic wUpdateSpritesEnabled value (including the early RET NZ and homecall paths), arbitrary bank-register state, and arbitrary complete post-state for the bank-1 _UpdateSprites C callee; DEC flags and homecall bank/A/F restoration are preserved exactly. A second composition proof executes the real native _UpdateSprites implementation for all 16 image-base bytes zero, through its complete 16-iteration scan."
+decoder = "the exact complete 25-byte linked body executes under angr; LD A,[wUpdateSpritesEnabled], DEC A, RET NZ, and the banked homecall are individually shimmed. The generic wrapper proof uses an explicit callee boundary, while the all-unused composition replaces that boundary with the complete applicable bank-1 scan transition and native C calls the real port_update_sprites_private implementation with the homecall bank-register save/restore contract"
 
 [[function]]
 assembly_symbol = "DisplayOptionMenu"
@@ -29366,6 +31035,20 @@ observables = [
 ]
 proof_domain = "the complete setup plus one host-driven cancel iteration with TEXT SPEED initialized from wOptions=5 and hJoy5=PAD_B; option cursor setup, persistent option decoding, and the cancel sound return are compared, while the internal polling loop and display-only drawing calls remain host continuations"
 decoder = "the exact 101-byte linked setup body executes under angr; individual SM83 absolute/HRAM stores and the proven setup/call boundaries are shimmed, then the real linked loop is entered through an explicit cancel-input continuation; native C preserves the setup and one-iteration option state machine, with full interactive-loop composition still pending"
+
+[[function]]
+assembly_symbol = "TryLoadSaveFile"
+assembly_source = "engine/menus/save.asm"
+c_symbol = "port_try_load_save_file"
+c_source = "verification/ports/try_load_save_file.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wSaveFileStatus and wStatusFlags5",
+    "the ordered ClearScreen, font/text-box tile-pattern, save-loader, PrintText, and DelayFrames transitions",
+]
+proof_domain = "all register/flag inputs over the successful load and each of the three checksum-failure exits; the focused proof composes the six existing save/text/timing callees at complete matching transitions and exercises the bad-sum warning state, while their internal effects remain covered by their own proofs"
+decoder = "exact 54-byte linked body cd0f19cd8036cda036cd2376380ecd90763809cdbd7638043e0218162130d7e5cbf6211e76cd493c0e64cd3937e1cbb63e01ea verified inside the functional test; real call ordering, all three carry-guarded loader branches, warning flag set/clear, PrintText, fixed 100-frame delay, and final status store execute pathwise with individual callee boundaries"
 
 [[function]]
 assembly_symbol = "LoadMainData"
@@ -29411,3 +31094,230 @@ observables = [
 ]
 proof_domain = "all general-register and canonical-flag inputs, matching and checksum-failure paths, deterministic SRAM contents, and every byte in the fixed party-data and Pokédex transfers; CalcCheckSum and CopyData compose through their independently proven transitions"
 decoder = "the exact 58-byte linked body is checked byte-for-byte; hardware stores, CalcCheckSum, checksum comparison, both CopyData calls, and GoodCheckSum/CheckSumFailed effects are shimmed at audited boundaries, while production C performs the complete checksum gate and party/Pokédex transfers"
+
+[[function]]
+assembly_symbol = "TryPushingBoulder"
+assembly_source = "engine/overworld/push_boulder.asm"
+c_symbol = "port_try_pushing_boulder"
+c_source = "verification/ports/try_pushing_boulder.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "hSpriteIndex, wBoulderSpriteIndex, wMiscFlags, and wTileInFrontOfBoulderAndBoulderCollisionResult",
+    "the complete sprite movement destination region and PlaySound state on a push",
+]
+proof_domain = "strength-inactive and boulder-dust early exits plus the active-strength no-boulder lookup/reset path with complete register/flag/memory comparison; movement-byte rejection, the two-attempt gate, directional held-input exits, collision reset, and push-side effects are implemented behind the existing helper seams but remain follow-up composition paths"
+decoder = "the exact complete 144-byte linked body is checked through the DoBoulderDustAnimation boundary; the focused equivalence executes the real assembly through instruction-level load/bit shims and the zero-sprite lookup boundary, while native C preserves the complete downstream state machine and calls the real sprite, collision, movement, reset, and sound ports"
+
+[[function]]
+assembly_symbol = "PrepareOAMData"
+assembly_source = "engine/gfx/sprite_oam.asm"
+c_symbol = "port_prepare_oam_data"
+c_source = "verification/ports/prepare_oam_data.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wUpdateSpritesEnabled, sprite adjusted-coordinate state, and all 160 wShadowOAM bytes",
+    "hOAMBufferOffset, hSpriteOffset2, hSpriteScreenX, hSpriteScreenY, and hSpritePriority",
+]
+proof_domain = "the complete hide-sprites path with arbitrary register inputs and arbitrary OAM bytes, plus the update-enabled path with all 16 sprite slots explicitly unused, one off-screen image-index-$ff sprite, one or two visible image-index-0/player, image-index-$1/facing, image-index-$8f/high-normal, image-index-$a0/unchanging, or image-index-$b0/four-tile sprites using matching NormalOAM table entries, with either zero or high grass-priority state, with or without ledge/fishing movement flags, arbitrary register inputs, and arbitrary initial OAM bytes; these paths exercise the real 16-entry scan, repeated GetSpriteScreenXY coordinate adjustment, both facing-table selection branches, high nonzero table-index arithmetic, the special four-tile tile-offset branch, repeated four-tile table traversal/OAM emission, priority attribute merge, both unused-OAM clearing limits, and ledge/fishing OAM preservation, while broader multi-sprite/facing/animation combinations remain outside this proof domain"
+decoder = "the exact 194-byte linked body is checked inside the functional test; individual SM83 high-memory load/store, LD A,[DE], AND, CP, BIT, branch, ADD HL,DE, LD [HL],B, stack, table-load, arithmetic, and GetSpriteScreenXY call-site seams plus the HideSprites boundary drive the complete hide path, 16-iteration no-visible-sprite scan/clear path, off-screen coordinate-update path, and visible four-tile OAM loop, while native C calls the real port_hide_sprites and the real GetSpriteScreenXY port through its raw-memory adapter before executing the complete sprite/tile/OAM loops"
+
+[[function]]
+assembly_symbol = "LoadSmokeTileFourTimes"
+assembly_source = "engine/overworld/dust_smoke.asm"
+c_symbol = "port_load_smoke_tile_four_times"
+c_source = "verification/ports/load_smoke_tile_four_times.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the four ordered LoadSmokeTile call inputs",
+    "HL tile destination progression and loop counter",
+]
+proof_domain = "all register and canonical-flag inputs with the fixed four-iteration loop and the independently proven LoadSmokeTile transition"
+decoder = "exact 20-byte body checked; the real four-iteration PUSH/POP loop, TILE_SIZE HL advancement, DEC C termination, and LoadSmokeTile call boundary execute pathwise, while native C calls the real port_load_smoke_tile on every iteration"
+
+[[function]]
+assembly_symbol = "WriteCutOrBoulderDustAnimationOAMBlock"
+assembly_source = "engine/overworld/cut.asm"
+c_symbol = "port_write_cut_or_boulder_dust_animation_oam_block"
+c_source = "verification/ports/write_cut_or_boulder_dust_animation_oam_block.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the four computed animation offsets",
+    "the complete 16-byte shadow-OAM block at sprite 36",
+]
+proof_domain = "all register inputs, player sprite coordinates/directions, cut-versus-boulder offset selectors, and arbitrary existing sprite-36 OAM bytes, with complete GetCutOrBoulderDustAnimationOffsets and WriteOAMBlock composition"
+decoder = "exact 19-byte body including the inline OAMBlock data checked; the real offset lookup and WriteOAMBlock transitions execute through explicit proven boundaries, and native C calls both real ports while preserving the tail-call register contract"
+
+[[function]]
+assembly_symbol = "TryWalking"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_try_walking"
+c_source = "verification/ports/try_walking.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "the current 16-byte wSpriteStateData1 and wSpriteStateData2 slots",
+    "the source tile, collision-table sentinel, hCurrentSpriteOffset, hTilePlayerStandingOn, hRandomAdd, hRandomSub, and rDIV",
+]
+proof_domain = "all caller registers and flags with current sprite offset zero and an arbitrary source-tile byte; covers every scripted movement value below WALK and the non-scripted collision-table-sentinel failure with arbitrary Random inputs. The tested slot starts from fixed in-range coordinates and uses the CanWalkOntoTile scripted or sentinel transition; non-scripted passable/collision-table-match paths, offsets other than zero, and broader collision configurations remain outside this composition proof."
+decoder = "exact 51-byte linked body and tail target checked. Every TryWalking instruction is adapted at its own audited seam; the C port calls the actual CanWalkOntoTile and UpdateSpriteImage ports. The assembly-side CanWalkOntoTile boundary is a complete transition for the two stated domains, including failure's Random and delayed state writes, and UpdateSpriteImage is its separately proven complete active-slot transition."
+
+[[function]]
+assembly_symbol = "UpdateNPCSprite"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_update_npc_sprite"
+c_source = "verification/ports/update_npc_sprite.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wMapSpriteData movement-byte-2 lookup, wCurSpriteMovement2, and the active 16-byte sprite-state-data-1/data-2 slots",
+    "hCurrentSpriteOffset, object-hidden state and toggleable-object list/flag bytes",
+]
+proof_domain = "all caller registers and flags with hCurrentSpriteOffset zero, covering the uninitialized movement-status terminal and an initialized slot rejected by the configured first toggleable-object entry. The remaining face-player, font, delay, walking-animation, player-walk, scripted, random, direction-selection, and TryWalking terminals are implemented but remain outside the current linked composition proof."
+decoder = "exact 250-byte linked body is asserted. The proof executes every entry-prefix instruction individually through the movement-byte-2 lookup and movement-status branch; InitializeSpriteStatus and the hidden-object CheckSpriteAvailability return are complete separately-proven transitions for the stated domains. Native C calls the actual availability, initialization, screen-position, delay, walking-animation, random, computed-load, facing, image, and TryWalking ports through raw-memory adapters."
+
+[[function]]
+assembly_symbol = "AnimScriptedNPCMovement"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_anim_scripted_npc_movement"
+c_source = "verification/ports/anim_scripted_npc_movement.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "the active sprite's image-base offset, facing, intra-animation counter, animation-frame counter, and image index",
+    "hCurrentSpriteOffset, hSpriteVRAMSlotAndFacing, and hSpriteAnimFrameCounter",
+]
+proof_domain = "all register/flag inputs with hCurrentSpriteOffset zero; all image-base, counter, image, and HRAM inputs; each valid facing direction ($00/$04/$08/$0c), the invalid-facing early return, and both AdvanceScriptedNPCAnimFrameCounter terminals are covered. Other active-slot offsets remain outside the current proof domain."
+decoder = "exact 62-byte linked body checked with individual load, arithmetic, comparison/branch, high-memory-store, call, and return seams. AdvanceScriptedNPCAnimFrameCounter is a complete separately-proven composition transition; native C invokes its actual port and transfers every affected counter/HRAM field."
+
+[[function]]
+assembly_symbol = "InitScriptedNPCMovement"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_init_scripted_npc_movement"
+c_source = "verification/ports/init_scripted_npc_movement.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wNPCMovementDirections2Index and wScriptedNPCWalkCounter",
+    "the active sprite's animation fields and hSpriteVRAMSlotAndFacing/hSpriteAnimFrameCounter",
+]
+proof_domain = "all caller registers and flags with active sprite offset zero, facing down, intra-animation counter zero, and symbolic image-base/animation-output values. The initializer stores zero and eight before composing the non-rollover AnimScriptedNPCMovement transition; other facing and counter cases are covered by that callee's separate partial proof but are not yet composed here."
+decoder = "exact 12-byte linked body checked; XOR, both absolute stores, and JP tail seam execute individually. The animation tail boundary preserves the complete applicable face-down/non-rollover state transition, while native C calls the actual AnimScriptedNPCMovement port."
+
+[[function]]
+assembly_symbol = "GetSpriteScreenXYPointerCommon"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_get_sprite_screen_xy_pointer_common"
+c_source = "verification/ports/get_sprite_screen_xy_pointer_common.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "hCurrentSpriteOffset",
+]
+proof_domain = "all general-register and canonical-flag inputs and all 256 hCurrentSpriteOffset values"
+decoder = "exact 9-byte linked body checked; the two 8-bit ADD operations use audited SM83 flag shims while the linked loads, register transfer, and return execute directly"
+
+[[function]]
+assembly_symbol = "DoScriptedNPCMovement"
+assembly_source = "engine/overworld/movement.asm"
+c_symbol = "port_do_scripted_npc_movement"
+c_source = "verification/ports/do_scripted_npc_movement.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "wStatusFlags4, wStatusFlags5, wNPCMovementDirections2, wNPCMovementDirections2Index, and wScriptedNPCWalkCounter",
+    "the active wSpriteStateData1/wSpriteStateData2 slot and hCurrentSpriteOffset, hSpriteVRAMSlotAndFacing, and hSpriteAnimFrameCounter",
+]
+proof_domain = "all caller register and canonical-flag inputs with active sprite offset zero; covers disabled scripted movement, first-call initialization through the down-facing/non-rollover animation composition, a down command with a symbolic screen-Y coordinate and nonzero walk counter, down-command counter rollover/index advance, and an unrecognized command byte. Left, right, up, $ff, movement-table-index carry, nonzero offsets, and broader animation state combinations are implemented but remain outside this composition proof."
+decoder = "exact 112-byte linked body checked inside the functional proof; individual SM83 absolute/high-memory loads, BIT/SET, ADD/CP/DEC/INC flag operations, conditional branches, direct stores, and terminal RET are adapted at instruction seams. The GetSpriteScreenYPointer/GetSpriteScreenXYPointerCommon, InitScriptedNPCMovement, and valid down-facing/non-rollover AnimScriptedNPCMovement call boundaries use their complete applicable transitions, while native C calls the actual tail entry ports, common helper, initializer, and animation port."
+
+[[function]]
+assembly_symbol = "_UpdateSprites"
+assembly_source = "engine/overworld/sprite_collisions.asm"
+c_symbol = "port_update_sprites_private"
+c_source = "verification/ports/update_sprites.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "the 16 wSpriteStateData2 image-base bytes and hCurrentSpriteOffset",
+    "all callback-driven sprite/global state on active slots",
+]
+proof_domain = "all general-register and canonical-flag inputs with all sixteen image-base bytes zero. The proof executes the real complete 16-iteration scan and observes every image-base location and the final current-sprite offset; player, NPC, scripted-NPC, and active-slot callback paths are implemented through their real C ports but remain outside this first composition proof."
+decoder = "exact 40-byte linked _UpdateSprites body checked inside the functional test. SM83 INC/SUB/AND/ADD/CP flags, FF00+n store, loads, loop branches, and final RET run at individual seams; the all-unused proof executes every loop iteration without summarizing the scan. Native C uses the actual 16-slot loop and calls the real player, NPC, and scripted-NPC ports on active slots."
+
+[[function]]
+assembly_symbol = "MapEntryAfterBattle"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_map_entry_after_battle"
+c_source = "verification/ports/map_entry_after_battle.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "warp coordinates/count, destination warp/map, and movement flags",
+    "wMapPalOffset, FadePal4 input bytes, and rBGP/rOBP0/rOBP1",
+]
+proof_domain = "all caller register/flag inputs with zero map warps and a one-entry matching warp, wMapPalOffset=1, symbolic coordinates/state on the zero-warp path, concrete matching coordinates, symbolic destination/movement state, and three FadePal4 palette bytes. This composes IsPlayerStandingOnWarp's no-warp and matching transitions and the complete LoadGBPal tail. Nonzero warp scans, nonmatching entries, and the wMapPalOffset=0 GBFadeInFromWhite tail are implemented but remain outside this first composition proof."
+decoder = "exact 18-byte linked body checked inside the functional tests. The banked IsPlayerStandingOnWarp call, absolute map-palette load, AND, and JP tail are instruction-level seams; the no-warp and matching scanner transitions plus LoadGBPal boundary execute their complete applicable transitions while native C calls the real warp scanner and palette port."
+
+[[function]]
+assembly_symbol = "DakutensAndHandakutens"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_dakutens_and_handakutens"
+c_source = "verification/ports/dakutens_and_handakutens.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wNamingScreenLetter",
+]
+proof_domain = "all register/flag inputs with entry DE equality-constrained per case to the Dakutens (0x6885) or Handakutens (0x68d6) base and a valid two-character @-terminated wStringBuffer with symbolic bytes; every table-match position and the not-found terminator path are covered on both tables"
+decoder = "the native port calls the real proven port_calc_string_length and port_is_in_array with the entry-DE table pointer and $2 stride, then stores the dakuten variant on the found path; angr executes the complete linked body and both real callees with audited CP, INC, ADD HL, AND A, SCF, and LD [a16],A semantics"
+
+[[function]]
+assembly_symbol = "PrintAlphabet"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_print_alphabet"
+c_source = "verification/ports/print_alphabet.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "destination tilemap region (hlcoord 2,5 grid)",
+    "hAutoBGTransferEnabled",
+    "PlaceString and DelayFrames call-site input snapshots",
+]
+proof_domain = "all register/flag inputs, arbitrary wAlphabetCase byte covering both zero (upper) and nonzero (lower) paths, arbitrary initial destination-region and hAutoBGTransferEnabled bytes, and concrete linked LowerCase/UpperCaseAlphabet tables; both proven callee contracts applied as arbitrary matching transitions at their call-site boundaries"
+decoder = "exact 47-byte linked body checked; SM83 XOR/LDH/LD(a16)/AND/LD[HL+]/DEC shims with all other encodings generic Z80; Delay3 ld c,3 and jp DelayFrames execute for real into the DelayFrames-entry boundary; native C invokes real port_place_string and port_delay3, verified by firing hooks on both"
+
+[[function]]
+assembly_symbol = "PrintNicknameAndUnderscores"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_print_nickname_and_underscores"
+c_source = "verification/ports/print_nickname_and_underscores.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wNamingScreenNameLength",
+    "tilemap name row (10, 2) 1x10 bytes",
+    "tilemap underscore row (10, 3) 10 bytes",
+    "wTopMenuItemX",
+    "wCurrentMenuItem",
+    "menu-cursor target byte",
+]
+proof_domain = "concrete '@'-terminated name bytes across 7 type/length configurations (player-partial len 3, player-full len 7, rival-partial len 2, mon-partial len 5, mon-full len 10, mon-empty len 0, above-range type-3 len 4 taking the mon branch); all general-register and canonical-flag inputs, arbitrary initial tilemap/name-length/cursor/menu-item bytes (untouched tail cells fixed to prove preservation), and fixed wStatusFlags5 text-delay-disabled bit with a concrete wMenuCursorLocation pointer; single terminal path per case compared against the real linked body"
+decoder = "exact 99-byte linked body checked; real CalcStringLength/ClearScreenArea/PlaceString/EraseMenuCursor callees execute inline with only individual SM83 seams shimmed (EA/FA loads/stores, LD [HL+],A, CP/AND/BIT/DEC/INC/ADD-HL flag shims, software PUSH/POP, conditional RET forks, flag-preserving tail loads); production C calls the real proven ports with real loops and preserved call ordering"
+[[function]]
+assembly_symbol = "PrintNamingText"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_print_naming_text"
+c_source = "verification/ports/print_naming_text.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "naming-screen tilemap output",
+    "wMonPartySpriteSpecies, wPokedexNum, wNamedObjectIndex, and wNameBuffer",
+    "WriteMonPartySpriteOAMBySpecies and GetMonName call snapshots",
+]
+proof_domain = "all register inputs, arbitrary 10-byte mon names, and the three naming branches (type 0, type 1, and type 2-or-higher representative); sprite lookup/OAM and mon-name generation are supplied at their proven call boundaries"
+decoder = "exact linked body through the final JP PlaceString checked; branch selection, species handoff, sprite call continuation, named-object handoff, two name placements, and leftover blank tile are modeled with audited instruction seams and compositional dependency summaries"

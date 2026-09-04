@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 #define W_CUR_MAP 0xd35eu
 #define W_CUR_MAP_TILESET 0xd367u
@@ -83,9 +86,10 @@ static void copy_connection(struct cpu_register_state *r, port_u8 *memory, port_
 __attribute__((noinline, used)) void
 port_load_map_header(struct cpu_register_state *r, port_u8 *memory)
 {
-	port_u8 map = memory[W_CUR_MAP];
+	port_u8 map_bank;
 	port_u16 header;
 	struct switch_to_map_rom_bank_state bank;
+	port_u8 map = memory[W_CUR_MAP];
 
 	port_mark_town_visited_and_load_toggleable_objects(r, memory);
 	memory[W_UNUSED_CUR_MAP_TILESET] = memory[W_CUR_MAP_TILESET];
@@ -100,6 +104,9 @@ port_load_map_header(struct cpu_register_state *r, port_u8 *memory)
 	*r = bank.registers;
 	memory[H_LOADED_ROM_BANK] = bank.loaded_rom_bank;
 	memory[R_ROMB] = bank.mapper_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, bank.map_rom_bank);
+#endif
 
 	r->a = memory[W_CUR_MAP_TILESET];
 	r->b = r->a;
@@ -191,17 +198,26 @@ port_load_map_header(struct cpu_register_state *r, port_u8 *memory)
 			else { memory[extra] = 0; memory[extra + 1u] = 0; }
 			state1 = (port_u16)(state1 + SPRITE_STATE1_LENGTH);
 		}
-		set_hl(r, source); set_de(r, state1); r->b = 0; r->c = (port_u8)(sprites * 2u);
 	}
 finish:
+	map_bank = memory[H_LOADED_ROM_BANK];
+#ifdef PORT_PLATFORM_RUNTIME
+	/* LoadTilesetHeader, LoadWildData, and MapSongBanks are fixed-bank
+	 * data accesses in the original predef/farcall sequence. Restore the
+	 * map bank before LoadTileBlockMap consumes wCurMapDataPtr. */
+	port_sync_rom_window(memory, 3);
+#endif
 	port_load_tileset_header(r, memory);
 	port_load_wild_data(r, memory);
 	set_hl(r, saved_hl);
 	memory[0xd524u] = (port_u8)(memory[W_CUR_MAP_HEADER + 1u] << 1);
 	memory[0xd525u] = (port_u8)(memory[W_CUR_MAP_HEADER + 2u] << 1);
 	r->a = memory[W_CUR_MAP]; r->c = r->a; r->b = 0;
-	port_u8 saved_bank = memory[H_LOADED_ROM_BANK]; memory[H_LOADED_ROM_BANK] = 3; memory[R_ROMB] = 3;
+	memory[H_LOADED_ROM_BANK] = 3; memory[R_ROMB] = 3;
 	set_hl(r, (port_u16)(MAP_SONG_BANKS + (port_u16)map * 2u)); add_hl(r, pair(r->b, r->c)); add_hl(r, pair(r->b, r->c));
 	r->a = memory[pair(r->h, r->l)]; memory[0xd35bu] = r->a; set_hl(r, (port_u16)(pair(r->h, r->l) + 1u)); r->a = memory[pair(r->h, r->l)]; memory[0xd35cu] = r->a;
-	memory[H_LOADED_ROM_BANK] = saved_bank; memory[R_ROMB] = saved_bank;
+	memory[H_LOADED_ROM_BANK] = map_bank; memory[R_ROMB] = map_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, map_bank);
+#endif
 }

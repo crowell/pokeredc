@@ -17,8 +17,12 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import rom_window, symbol_location
-
+from verification.harness.rom import linked_bytes, rom_window, symbol_location
+from verification.harness.sm83_shims import (
+    Sm83DecRegister,
+    Sm83LoadAImmediate,
+    Sm83StoreAImmediate,
+)
 ROOT = Path(__file__).resolve().parents[2]
 NATIVE_ELF = ROOT / "verification/build/ports.elf"
 ROM = ROOT / "pokered.gbc"
@@ -26,6 +30,7 @@ SYMBOLS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
 NATIVE_MEMORY = 0x200000
 DONE = 0xEFFF
+STACK = 0xD000
 W_SUBANIM_COUNTER = 0xD087
 
 
@@ -43,12 +48,6 @@ class Endpoint:
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class FinishedSummary(angr.SimProcedure):
-    def run(self) -> None:
-        self.state.memory.store(W_SUBANIM_COUNTER, claripy.BVV(0, 8))
-        self.state.regs.a = claripy.BVV(0, 8)
-        self.state.regs.f = claripy.BVV(0xC0, 8)
-        self.jump(DONE)
 
 
 def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
@@ -71,10 +70,24 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
             "entry_point": terminal,
         },
     )
-    project.hook(terminal, FinishedSummary(), length=3)
+    project.hook(
+        terminal,
+        Sm83LoadAImmediate(W_SUBANIM_COUNTER, terminal + 3),
+        length=3,
+    )
+    project.hook(
+        terminal + 3, Sm83DecRegister("a", terminal + 4), length=1
+    )
+    project.hook(
+        terminal + 4,
+        Sm83StoreAImmediate(W_SUBANIM_COUNTER, terminal + 7),
+        length=3,
+    )
     state = project.factory.blank_state(addr=terminal)
     set_assembly_registers(state, values)
     state.memory.store(W_SUBANIM_COUNTER, claripy.BVV(1, 8))
+    state.regs.sp = STACK
+    state.memory.store(STACK, claripy.BVV(DONE, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
     manager.explore(find=DONE, num_find=1)
     assert not manager.errored
@@ -105,7 +118,13 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run make red")
 def test_play_subanimation_finished_pathwise_equivalence() -> None:
     values = _inputs("play_subanimation_finished")
-    assert_pathwise_equivalent(_assembly(values), _native(values), (*REGISTERS, "memory"))
+    location = symbol_location(SYMBOLS, "PlaySubanimation")
+    assert linked_bytes(ROM, location, 0x54)[0x4C:0x54] == bytes.fromhex(
+        "fa87d03dea87d0c8"
+    )
+    assert_pathwise_equivalent(
+        _assembly(values), _native(values), (*REGISTERS, "memory")
+    )

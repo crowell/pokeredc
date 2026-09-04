@@ -231,9 +231,11 @@ def _setup(state: angr.SimState, base: int, text: bool = False, text_box_id: int
     state.memory.store(base + W_STATUS_FLAGS5, claripy.BVV(0, 8))
     state.memory.store(base + W_UPDATE_SPRITES_ENABLED, claripy.BVV(0, 8))
     state.memory.store(base + FUNCTION_TABLE, claripy.BVV(0xFF, 8))
-    for i, value in enumerate((1, 0, 12, 19, 17, 0xFF)):
+    coord_id = text_box_id if not text and text_box_id != 0xFE else 1
+    for i, value in enumerate((coord_id, 0, 12, 19, 17, 0xFF)):
         state.memory.store(base + COORD_TABLE + i, claripy.BVV(value, 8))
-    state.memory.store(base + TEXT_TABLE, claripy.BVV(0x20, 8))
+    text_id = text_box_id if text else 0x20
+    state.memory.store(base + TEXT_TABLE, claripy.BVV(text_id, 8))
     for i, value in enumerate((0, 0, 4, 2)):
         state.memory.store(base + TEXT_TABLE + 1 + i, claripy.BVV(value, 8))
     for i, value in enumerate((TEXT_SOURCE & 0xFF, TEXT_SOURCE >> 8, 1, 1)):
@@ -320,18 +322,29 @@ def _native(values: dict[str, claripy.ast.BV], text: bool = False, text_box_id: 
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_display_text_box_id_coordinate_pathwise_equivalence() -> None:
+@pytest.mark.parametrize("text_box_id", (0x01, 0x03, 0x07, 0x0D, 0x10, 0x11))
+def test_display_text_box_id_coordinate_pathwise_equivalence(text_box_id: int) -> None:
     values = {register: claripy.BVV(0, 8) for register in REGISTERS}
     values["f"] = claripy.BVV(0, 8)
-    assert_pathwise_equivalent(_assembly(values), _native(values), (*REGISTERS, "memory"))
+    assert_pathwise_equivalent(
+        _assembly(values, text_box_id=text_box_id),
+        _native(values, text_box_id=text_box_id),
+        (*REGISTERS, "memory"),
+    )
 
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_display_text_box_id_text_pathwise_equivalence() -> None:
+@pytest.mark.parametrize("text_box_id", (0x05, 0x06, 0x08, 0x09, 0x0B, 0x0C,
+                                          0x0E, 0x0F, 0x12, 0x1A, 0x1B))
+def test_display_text_box_id_text_pathwise_equivalence(text_box_id: int) -> None:
     values = {register: claripy.BVV(0, 8) for register in REGISTERS}
     values["f"] = claripy.BVV(0, 8)
-    assert_pathwise_equivalent(_assembly(values, text=True), _native(values, text=True), (*REGISTERS, "memory"))
+    assert_pathwise_equivalent(
+        _assembly(values, text=True, text_box_id=text_box_id),
+        _native(values, text=True, text_box_id=text_box_id),
+        (*REGISTERS, "memory"),
+    )
 
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")

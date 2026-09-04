@@ -73,12 +73,24 @@ rom_map_bank(uint8_t *memory, const struct mac_rom *rom, unsigned bank)
 void
 gb_reset_memory(uint8_t *memory, const struct mac_rom *rom)
 {
-	memset(memory, 0, GB_MEM_SIZE);
-	if (rom != NULL && rom->data != NULL && rom->size >= ROM_WINDOW_SIZE)
+	memset(memory, 0, GB_STORAGE_SIZE);
+	if (rom != NULL && rom->data != NULL && rom->size >= ROM_WINDOW_SIZE) {
 		memcpy(memory + ROM_BANK0_START, rom->data, ROM_WINDOW_SIZE);
+		for (unsigned bank = 0;
+		    bank < PORT_ROM_BANK_COUNT &&
+		    (size_t)(bank + 1u) * ROM_WINDOW_SIZE <= rom->size;
+		    bank++) {
+			memcpy(memory + PORT_ROM_BACKING_BASE +
+			    (size_t)bank * PORT_ROM_WINDOW_SIZE,
+			    rom->data + (size_t)bank * ROM_WINDOW_SIZE,
+			    ROM_WINDOW_SIZE);
+		}
+	}
 	/* Init leaves the title-screen bank mapped; ports read the window. */
 	rom_map_bank(memory, rom, 1);
 	memory[H_LOADED_ROM_BANK] = 1;
+	memory[R_ROMB] = 1;
+	port_sync_rom_window(memory, 1);
 }
 
 void
@@ -87,8 +99,9 @@ rom_sync_window(uint8_t *memory, const struct mac_rom *rom,
 {
 	unsigned bank = memory[H_LOADED_ROM_BANK];
 
-	if (bank == *cached_bank)
-		return;
-	*cached_bank = bank;
+	/* Ports may synchronize the window internally without updating the
+	 * platform cache. Always remap here so the next VBlank cannot reuse a
+	 * stale host-side window. */
 	rom_map_bank(memory, rom, bank);
+	*cached_bank = bank;
 }

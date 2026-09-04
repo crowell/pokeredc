@@ -33,7 +33,8 @@ native: $(BUILD)/ports.elf
 
 # macOS glue layer: ports + platform compiled for the host, linked against
 # SDL2 (MacPorts). No -Werror here: proof builds above keep the strict flags.
-MAC_CFLAGS := -std=c11 -O2 -Wall -Wextra $(SDL_CFLAGS) -Iinclude
+MAC_CFLAGS := -std=c11 -O2 -Wall -Wextra $(SDL_CFLAGS) -Iinclude \
+	-DPORT_PLATFORM_RUNTIME
 MAC_OBJECTS := $(patsubst ports/%.c,$(MAC_BUILD)/%.o,$(PORT_SOURCES)) \
 	$(patsubst platform/%.c,$(MAC_BUILD)/%.o,$(PLATFORM_SOURCES))
 
@@ -45,11 +46,11 @@ run-mac: mac
 $(MAC_BUILD):
 	mkdir -p $@
 
-$(MAC_BUILD)/%.o: ports/%.c include/port_state.h | $(MAC_BUILD)
+$(MAC_BUILD)/%.o: ports/%.c include/port_state.h include/bank.h | $(MAC_BUILD)
 	$(CC) $(MAC_CFLAGS) -c $< -o $@
 
 $(MAC_BUILD)/%.o: platform/%.c platform/platform.h include/port_state.h \
-		ports/joypad_port.h | $(MAC_BUILD)
+		ports/joypad_port.h include/bank.h | $(MAC_BUILD)
 	$(CC) $(MAC_CFLAGS) -c $< -o $@
 
 $(MAC_BUILD)/pokered-mac: $(MAC_OBJECTS)

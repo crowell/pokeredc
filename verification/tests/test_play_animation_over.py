@@ -17,7 +17,12 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import collect_returns, rom_window, symbol_location
+from verification.harness.rom import (
+    collect_returns,
+    linked_bytes,
+    rom_window,
+    symbol_location,
+)
 from verification.harness.sm83_shims import Sm83CpImmediate, Sm83LoadAAtHlIncrement
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -113,4 +118,8 @@ def test_play_animation_animation_over_pathwise_equivalence() -> None:
     values = _inputs("play_animation_over")
     values["h"] = claripy.BVV(COMMAND >> 8, 8)
     values["l"] = claripy.BVV(COMMAND & 0xFF, 8)
-    assert_pathwise_equivalent(_assembly(values), _native(values), (*REGISTERS, "memory"))
+    location = symbol_location(SYMBOLS, "PlayAnimation.animationLoop")
+    assert linked_bytes(ROM, location, 6) == bytes.fromhex("2afeff2870fe")
+    assert_pathwise_equivalent(
+        _assembly(values), _native(values), (*REGISTERS, "memory")
+    )

@@ -8,5 +8,5 @@ port_play_subanimation_finished(struct cpu_register_state *state, port_u8 *memor
 {
 	memory[W_SUBANIM_COUNTER] = 0;
 	state->a = 0;
-	state->f = PORT_FLAG_Z;
+	state->f = (state->f & PORT_FLAG_C) | PORT_FLAG_N | PORT_FLAG_Z;
 }

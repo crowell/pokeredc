@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 void port_copy_data(struct cpu_register_state *state, port_u8 *memory);
 
@@ -15,9 +18,15 @@ port_far_copy_data2(struct far_copy_data2_state *state, port_u8 *memory)
     state->requested_bank = state->registers.a;
     state->rom_bank = state->requested_bank;
     state->loaded_bank = state->requested_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+    port_sync_rom_window(memory, state->requested_bank);
+#endif
     port_copy_data(&state->registers, memory);
     state->registers.a = original_bank;
     state->registers.f = original_f;
     state->loaded_bank = original_bank;
     state->rom_bank = original_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+    port_sync_rom_window(memory, original_bank);
+#endif
 }

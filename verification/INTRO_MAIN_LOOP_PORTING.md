@@ -14,21 +14,23 @@ This document is the integration contract for reaching a byte-for-byte-faithful 
 
 `verification/platform/apu.c` synthesizes all four DMG channels, including channel-1 sweep, pulse envelopes, wave RAM, LFSR noise, length counters, and NR50/NR51 routing. `verification/platform/video.c` now uses hardware OAM, WX-7 window positioning, and correct vertically-flipped 8x16 sprite tile selection.
 
-The runtime implementation is an integration scaffold, not a substitute for proof-porting the assembly labels below. Every unresolved integration point is marked `FIDELITY_BOUNDARY(name)` in C.
+The runtime implementation remains an integration scaffold, not a substitute
+for proof-porting every assembly label below. Unresolved integration points are
+marked `FIDELITY_BOUNDARY(name)` in C.
 
-## Non-negotiable prerequisite: bank-aware memory
+## Runtime memory model
 
-Assign this first. The current proof ABI passes a flat `uint8_t memory[0x10000]`. A port can write `hLoadedROMBank` or `rROMB`, but that does not remap `$4000-$7fff` until platform code regains control. Functions such as `LoadMapHeader`, `LoadTileBlockMap`, text-far dispatch, and the audio engine switch banks inside one C call, so composing their current flat-memory forms can read bytes from the wrong bank.
+The PC runtime keeps the 64 KiB CPU address space and adds bank-aware ROM/SRAM
+backing storage. `verification/include/bank.h` synchronizes the `$4000-$7fff`
+window when a composed port switches `hLoadedROMBank`/`rROMB`. Native proof
+ports retain their fixed-memory ABI; the PC platform exercises the backing bus.
 
-Implement a shared C bus with at least:
-
-- MBC1 ROM-bank and RAM-bank writes;
-- bank-aware reads from `$0000-$7fff` and external RAM;
-- ordinary VRAM/WRAM/OAM/HRAM/IO reads and writes;
-- a way for proof ports to use the bus without losing register-level observability;
-- deterministic test fixtures that catch a read made from a stale ROM window.
-
-Acceptance test: call `LoadMapHeader` for Red's House 2F without host-side remapping between its internal bank switches and compare every written map-header/object byte with an RGBDS ROM trace.
+The current acceptance scope is the title flow, OakSpeech prefix, player-data
+initialization, starter Potion insertion, special-warp preparation, the
+`EnterMap`/`LoadMapData` prefix, and the first playable overworld frame with
+player movement/collision and OAM refresh. Full naming, map-entry animation,
+warp/script dispatch, and complete overworld fidelity remain separate
+boundaries.
 
 ## Team A: exact intro orchestration
 
@@ -89,42 +91,36 @@ Acceptance test: log every write to NR10-NR52 and wave RAM from both implementat
 
 ## Team D: Oak speech and naming
 
-Do not skip this sequence or seed a map directly. Port:
+The runtime now composes the ported OakSpeech prefix, `InitPlayerData2`,
+`AddItemToInventory`, and `PrepareForSpecialWarp`. The naming screens and
+remaining picture/audio choreography stay outside the frame-driven path.
 
-- `OakSpeech`;
-- `AddItemToInventory` and `PrepareForSpecialWarp`;
-- `ChoosePlayerName`, `ChooseRivalName`, `DisplayIntroNameTextBox`, `GetDefaultName`;
-- `AskName`, `DisplayNamingScreen`, `PrintAlphabet`, `PrintNicknameAndUnderscores`, `DakutensAndHandakutens`, `PrintNamingText`;
-- `OakSpeechSlidePicLeft`, `OakSpeechSlidePicRight`, `OakSpeechSlidePicCommon`;
-- the complete compressed-picture chain used by `IntroDisplayPicCenteredOrUpperRight` and `LoadFlippedFrontSpriteByMonIndex`;
-- interactive `PrintText` waits/prompts rather than consuming them as symbolic callbacks;
-- the two shrink-picture transitions and final 20/50-frame delays.
-
-Existing useful ports include `PrepareOakSpeech`, `InitPlayerData2`, `IntroDisplayPicCenteredOrUpperRight`, `FadeInIntroPic`, `MovePicLeft`, `ClearScreenArea`, `TextCommandProcessor`, and the leaf naming completions. Audit each for a continuation-boundary comment before composing it.
-
-Acceptance test: exercise every default player/rival name, a custom name, B/cancel behavior, and text-speed option. Compare WRAM from `wPlayerName` through `wBoxDataEnd` before `SpecialEnterMap`.
+Acceptance test: exercise the OakSpeech prefix, confirm the starter Potion and
+special-warp state are initialized, and compare the resulting WRAM against the
+ROM before map entry.
 
 ## Team E: first map load
 
-Port and compose in this order:
+The PC driver composes the available map-entry prefix in this order:
 
-1. `SpecialEnterMap`
-2. `ResetPlayerSpriteData` (existing port; validate composition)
-3. `EnterMap`
-4. `LoadMapData`
-5. `LoadMapHeader` (existing port; migrate to bank-aware bus)
-6. `InitMapSprites`
-7. `LoadMapSpriteTilePatterns`
-8. `LoadTileBlockMap` (existing port; migrate to bus)
-9. `LoadTilesetTilePatternData` (existing port; validate VBlank scheduling)
-10. `LoadCurrentMapView` (existing port; validate full copy)
-11. `ClearVariablesOnEnterMap`
-12. `LoadPlayerSpriteGraphics`
-13. `RunPaletteCommand` (complete current partial port)
-14. `UpdateSprites` (complete current partial port)
-15. `CheckForceBikeOrSurf`
+1. `PrepareForSpecialWarp`
+2. `EnterMap`
+3. `LoadMapData`
+4. `LoadMapHeader`
+5. `InitMapSprites`
+6. `LoadMapSpriteTilePatterns`
+7. `LoadTileBlockMap`
+8. `LoadTilesetTilePatternData`
+9. `LoadCurrentMapView`
+10. `LoadPlayerSpriteGraphics`
+11. `CheckForceBikeOrSurf`
 
-Acceptance test: at the first `OverworldLoop` entry, compare the entire `$c000-$dfff` WRAM range, VRAM, OAM, IO registers, current ROM bank, and first rendered frame against the ROM.
+Runtime ROM-window synchronization covers the bank switches used by these
+ports. `EnterMap` is triggered by A/Start from the OakSpeech prefix.
+
+Acceptance test: at map entry, compare the entire `$c000-$dfff` WRAM range,
+VRAM, OAM, IO registers, current ROM bank, and first rendered frame against
+the ROM.
 
 ## Team F: minimum interactive overworld loop
 

@@ -29,6 +29,9 @@ SYMBOLS = ROOT / "pokered.sym"
 GB_STACK = 0xD000
 GB_RETURN = 0xFFFF
 NATIVE_STATE = 0x100000
+NATIVE_MEMORY = 0x200000
+ON_SGB = 0xCF1B
+BODY = bytes.fromhex("fa1bcfee013c3cc9")
 
 
 @dataclass(frozen=True)
@@ -48,6 +51,8 @@ class Endpoint:
 def _assembly_endpoint(inputs: dict[str, claripy.ast.BV]) -> Endpoint:
     location = symbol_location(SYMBOLS, "GetPlayerTeleportAnimFrameDelay")
     on_sgb = symbol_location(SYMBOLS, "wOnSGB").address
+    assert on_sgb == ON_SGB
+    assert linked_bytes(ROM, location, len(BODY)) == BODY
     project = angr.Project(
         rom_window(ROM, location.bank),
         auto_load_libs=False,
@@ -91,23 +96,25 @@ def _native_endpoint(inputs: dict[str, claripy.ast.BV]) -> Endpoint:
     project = angr.Project(NATIVE_ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_get_player_teleport_anim_frame_delay")
     assert function is not None
-    state = project.factory.call_state(function.rebased_addr, NATIVE_STATE)
+    state = project.factory.call_state(
+        function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY
+    )
     store_native_registers(state, NATIVE_STATE, inputs)
-    state.memory.store(NATIVE_STATE + 8, inputs["on_sgb"])
+    state.memory.store(NATIVE_MEMORY + ON_SGB, inputs["on_sgb"])
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored
     end = manager.deadended[0]
     return Endpoint(
         **native_registers(end, NATIVE_STATE),
-        on_sgb=end.memory.load(NATIVE_STATE + 8, 1),
+        on_sgb=end.memory.load(NATIVE_MEMORY + ON_SGB, 1),
         constraints=tuple(end.solver.constraints),
     )
 
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_teleport_delay_symbolic_equivalence() -> None:
+def test_teleport_delay_pathwise_equivalence() -> None:
     inputs = symbolic_registers("teleport_delay")
     inputs["on_sgb"] = claripy.BVS("teleport_delay_on_sgb", 8)
     assert_pathwise_equivalent(
@@ -115,9 +122,3 @@ def test_teleport_delay_symbolic_equivalence() -> None:
         [_native_endpoint(inputs)],
         (*REGISTERS, "on_sgb"),
     )
-
-
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_teleport_delay_machine_code_is_accounted_for() -> None:
-    location = symbol_location(SYMBOLS, "GetPlayerTeleportAnimFrameDelay")
-    assert linked_bytes(ROM, location, 8) == bytes.fromhex("fa1bcfee013c3cc9")

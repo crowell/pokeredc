@@ -235,7 +235,7 @@ main(int argc, char **argv)
 	struct mac_rom rom = { 0 };
 	struct mac_kernel kernel;
 	struct mac_game game;
-	static uint8_t memory[GB_MEM_SIZE];
+	static uint8_t memory[GB_STORAGE_SIZE];
 	const char *rom_path = "pokered.gbc";
 	const char *out_path = "/tmp/pokered_mac_smoke.ppm";
 	const char *dump_path = NULL;
@@ -301,8 +301,6 @@ main(int argc, char **argv)
 			if (d != NULL) {
 				fwrite(memory, 1, GB_MEM_SIZE, d);
 				fclose(d);
-				printf("smoke: memory dumped to %s\n",
-				    dump_path);
 			}
 		}
 

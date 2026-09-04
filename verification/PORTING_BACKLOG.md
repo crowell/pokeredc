@@ -7,59 +7,67 @@ This is a conservative static-call-graph backlog, not a claim that every label i
 ## Snapshot
 
 - Static call/jump candidates: 1467
-- Proven catalog entries excluded: 782
-- Existing partial ports to complete: 278
-- Missing C ports: 407
+- Proven catalog entries excluded: 820
+- Existing partial ports to complete: 321
+- Missing C ports: 326
 
 ## Runtime prerequisite
 
-Before composing these functions into the macOS game, replace the current flat 64 KiB proof-memory ROM model with bank-aware reads and writes (including MBC1 ROM/RAM banking). Several ports switch `hLoadedROMBank`/`rROMB` internally; remapping only between C calls cannot execute the real control flow correctly.
+The macOS runtime now allocates a 64 KiB CPU window plus bank-aware ROM/SRAM
+backing storage. `include/bank.h` synchronizes the active ROM window for
+runtime ports that switch `hLoadedROMBank`/`rROMB`; the native proof harness
+continues to use its fixed memory image.
 
 ## Boot-to-overworld critical path
 
-Complete the non-proven entries in this dependency order to boot, finish the opening flow, load Red's initial map, and run the first interactive overworld frame.
+The PC driver composes the proven title setup, inventory initialization,
+special-warp preparation, and the `EnterMap`/`LoadMapData` prefix after the
+player advances the opening dialogue. It now renders the loaded map, refreshes
+player OAM, progresses walking animation frames, and accepts basic land
+movement with collision checks. Full naming, interactive overworld dispatch,
+and map scripts remain partial.
 
 | Function | Current status | Assembly source |
 | --- | --- | --- |
-| `PlayIntro` | missing | `engine/movie/intro.asm:8` |
-| `PrepareTitleScreen` | missing | `engine/movie/title.asm:5` |
+| `PlayIntro` | partial | `engine/movie/intro.asm:8` |
+| `PrepareTitleScreen` | proven | `engine/movie/title.asm:5` |
 | `DisplayTitleScreen` | missing | `engine/movie/title.asm:28` |
 | `TitleScreenPickNewMon` | missing | `engine/movie/title.asm:271` |
 | `TitleScreenAnimateBallIfStarterOut` | missing | `engine/movie/title2.asm:90` |
 | `MainMenu` | partial | `engine/menus/main_menu.asm:1` |
-| `OakSpeech` | missing | `engine/movie/oak_speech/oak_speech.asm:42` |
-| `AddItemToInventory` | missing | `home/inventory.asm:34` |
-| `PrepareForSpecialWarp` | missing | `engine/overworld/special_warps.asm:1` |
-| `ChoosePlayerName` | missing | `engine/movie/oak_speech/oak_speech2.asm:1` |
-| `ChooseRivalName` | missing | `engine/movie/oak_speech/oak_speech2.asm:34` |
+| `OakSpeech` | partial | `engine/movie/oak_speech/oak_speech.asm:42` |
+| `AddItemToInventory` | proven | `home/inventory.asm:34` |
+| `PrepareForSpecialWarp` | proven | `engine/overworld/special_warps.asm:1` |
+| `ChoosePlayerName` | partial | `engine/movie/oak_speech/oak_speech2.asm:1` |
+| `ChooseRivalName` | partial | `engine/movie/oak_speech/oak_speech2.asm:34` |
 | `AskName` | missing | `engine/menus/naming_screen.asm:1` |
-| `DisplayNamingScreen` | missing | `engine/menus/naming_screen.asm:84` |
+| `DisplayNamingScreen` | partial | `engine/menus/naming_screen.asm:84` |
 | `LoadEDTile` | proven | `engine/menus/naming_screen.asm:326` |
-| `PrintAlphabet` | missing | `engine/menus/naming_screen.asm:337` |
-| `PrintNicknameAndUnderscores` | missing | `engine/menus/naming_screen.asm:369` |
-| `DakutensAndHandakutens` | missing | `engine/menus/naming_screen.asm:425` |
-| `PrintNamingText` | missing | `engine/menus/naming_screen.asm:453` |
+| `PrintAlphabet` | proven | `engine/menus/naming_screen.asm:337` |
+| `PrintNicknameAndUnderscores` | proven | `engine/menus/naming_screen.asm:369` |
+| `DakutensAndHandakutens` | proven | `engine/menus/naming_screen.asm:425` |
+| `PrintNamingText` | proven | `engine/menus/naming_screen.asm:453` |
 | `SpecialEnterMap` | missing | `engine/menus/main_menu.asm:327` |
-| `EnterMap` | missing | `home/overworld.asm:6` |
-| `LoadMapData` | missing | `home/overworld.asm:2293` |
-| `InitMapSprites` | missing | `engine/overworld/map_sprites.asm:11` |
-| `LoadMapSpriteTilePatterns` | missing | `engine/overworld/map_sprites.asm:33` |
-| `LoadPlayerSpriteGraphics` | missing | `home/overworld.asm:804` |
-| `CheckForceBikeOrSurf` | missing | `engine/overworld/player_state.asm:34` |
-| `OverworldLoop` | missing | `home/overworld.asm:41` |
-| `OverworldLoopLessDelay` | missing | `home/overworld.asm:43` |
+| `EnterMap` | partial | `home/overworld.asm:6` |
+| `LoadMapData` | partial | `home/overworld.asm:2293` |
+| `InitMapSprites` | partial | `engine/overworld/map_sprites.asm:11` |
+| `LoadMapSpriteTilePatterns` | partial | `engine/overworld/map_sprites.asm:33` |
+| `LoadPlayerSpriteGraphics` | proven | `home/overworld.asm:804` |
+| `CheckForceBikeOrSurf` | proven | `engine/overworld/player_state.asm:34` |
+| `OverworldLoop` | partial | `home/overworld.asm:41` |
+| `OverworldLoopLessDelay` | partial | `home/overworld.asm:43` |
 | `JoypadOverworld` | missing | `home/overworld.asm:1817` |
 | `RunMapScript` | missing | `home/overworld.asm:1946` |
-| `UpdatePlayerSprite` | missing | `engine/overworld/movement.asm:1` |
-| `UpdateNPCSprite` | missing | `engine/overworld/movement.asm:112` |
-| `CanWalkOntoTile` | missing | `engine/overworld/movement.asm:583` |
-| `CollisionCheckOnLand` | missing | `home/overworld.asm:1219` |
-| `CollisionCheckOnWater` | missing | `home/overworld.asm:1888` |
-| `CheckWarpsNoCollision` | missing | `home/overworld.asm:391` |
-| `CheckWarpsCollision` | missing | `home/overworld.asm:440` |
-| `WarpFound2` | missing | `home/overworld.asm:482` |
+| `UpdatePlayerSprite` | partial | `engine/overworld/movement.asm:1` |
+| `UpdateNPCSprite` | partial | `engine/overworld/movement.asm:112` |
+| `CanWalkOntoTile` | partial | `engine/overworld/movement.asm:583` |
+| `CollisionCheckOnLand` | partial | `home/overworld.asm:1219` |
+| `CollisionCheckOnWater` | proven | `home/overworld.asm:1888` |
+| `CheckWarpsNoCollision` | partial | `home/overworld.asm:391` |
+| `CheckWarpsCollision` | partial | `home/overworld.asm:440` |
+| `WarpFound2` | partial | `home/overworld.asm:482` |
 | `CheckMapConnections` | missing | `home/overworld.asm:548` |
-| `DisplayTextID` | missing | `home/text_script.asm:3` |
+| `DisplayTextID` | partial | `home/text_script.asm:3` |
 
 ## Partial ports to complete
 
@@ -165,7 +173,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `HandleSelfConfusionDamage` — assembly line 3672; callers: `CheckForDisobedience`, `CheckPlayerStatusConditions`; status: **partial** — `verification/ports/handle_self_confusion_damage.c`
 - `PrintMoveFailureText` — assembly line 3718; callers: `EnemyCheckIfMirrorMoveEffect`, `MirrorMoveCheck`; status: **partial** — `verification/ports/print_move_failure_text.c`
 - `PrintDoesntAffectText` — assembly line 3787; callers: `ParalyzeEffect_`; status: **complete** — `verification/ports/print_doesnt_affect_text.c`
-- `PrintCriticalOHKOText` — assembly line 3796; callers: `EnemyCheckIfMirrorMoveEffect`, `MirrorMoveCheck`; status: **partial** — `verification/ports/print_critical_ohko_text.c`
 - `CheckForDisobedience` — assembly line 3830; callers: `ExecutePlayerMove`; status: **partial** — `verification/ports/check_for_disobedience.c`
 - `GetDamageVarsForPlayerAttack` — assembly line 4030; callers: `HandleSelfConfusionDamage`, `PlayerCalcMoveDamage`; status: **partial** — `verification/ports/get_damage_vars_for_player_attack.c`
 - `GetDamageVarsForEnemyAttack` — assembly line 4143; callers: `CheckEnemyStatusConditions`, `EnemyCalcMoveDamage`; status: **partial** — `verification/ports/get_damage_vars_for_enemy_attack.c`
@@ -443,7 +450,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `LoadAnimSpriteGfx` — assembly line 96; callers: `FishingAnim`; status: **partial** — `verification/ports/load_anim_sprite_gfx_private.c`
 - `LoadMonPartySpriteGfxWithLCDDisabled` — assembly line 128; callers: `DrawPartyMenu_`; status: **partial** — `verification/ports/load_mon_party_sprite_gfx_lcd_disabled_private.c`
 - `WriteMonPartySpriteOAMByPartyIndex` — assembly line 167; callers: `RedrawPartyMenu_`; status: **partial** — `verification/ports/write_mon_party_sprite_oam_by_party_index_private.c`
-- `WriteMonPartySpriteOAMBySpecies` — assembly line 186; callers: `PrintNamingText`, `Trade_WriteCircledMonOAM`; status: **partial** — `verification/ports/write_mon_party_sprite_oam_by_species_private.c`
 - `WriteMonPartySpriteOAM` — assembly line 234; callers: `WriteMonPartySpriteOAMByPartyIndex`; status: **partial** — `verification/ports/write_mon_party_sprite_oam_private.c`
 - `GetPartyMonSpriteID` — assembly line 260; callers: `UnusedPartyMonSpriteFunction`, `WriteMonPartySpriteOAMByPartyIndex`, `WriteMonPartySpriteOAMBySpecies`; status: **partial** — `verification/ports/get_party_mon_sprite_id_private.c`
 
@@ -464,6 +470,10 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `ChangeBGPalColor0_4Frames` — assembly line 2; callers: `ApplyOutOfBattlePoisonDamage`; status: **complete** — `verification/ports/change_bg_pal_color0_4frames_private.c`
 - `PredefShakeScreenVertically` — assembly line 14; callers: `AnimationShakeScreenVertically`, `DoRockSlideSpecialEffects`; status: **complete** — `verification/ports/predef_shake_screen_vertically_private.c`
 - `PredefShakeScreenHorizontally` — assembly line 40; callers: `AnimationShakeScreenHorizontallyFast`, `DoRockSlideSpecialEffects`, `PrintMoveFailureText`; status: **complete** — `verification/ports/predef_shake_screen_horizontally_private.c`
+
+### `engine/gfx/sprite_oam.asm`
+
+- `PrepareOAMData` — assembly line 1; callers: `VBlank`; status: **partial** — `verification/ports/prepare_oam_data.c`
 
 ### `engine/items/item_effects.asm`
 
@@ -541,14 +551,84 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `LinkMenu` — assembly line 134; callers: `CableClubNPC`; status: **partial** — `verification/ports/link_menu_private.c`
 - `DisplayOptionMenu` — assembly line 443; callers: `MainMenu`, `StartMenu_Option`; status: **partial** — `verification/ports/display_option_menu.c`
 
+### `engine/menus/naming_screen.asm`
+
+- `DisplayNamingScreen` — assembly line 84; callers: `AskName`, `ChoosePlayerName`, `ChooseRivalName`, `DisplayNameRaterScreen`; status: **partial** — `verification/ports/display_naming_screen.c`
+
+### `engine/menus/save.asm`
+
+- `TryLoadSaveFile` — assembly line 1; callers: `MainMenu`, `OverworldLoopLessDelay`; status: **partial** — `verification/ports/try_load_save_file.c`
+
 ### `engine/menus/text_box.asm`
 
 - `DisplayTextBoxID_` — assembly line 2; callers: `DisplayTextBoxID`; status: **partial** — `verification/ports/display_text_box_id.c`
+- `DisplayTwoOptionMenu` — assembly line 206; callers: `DisplayTextBoxID_`; status: **partial** — `verification/ports/display_two_option_menu.c`
 - `TwoOptionMenu_RestoreScreenTiles` — assembly line 361; callers: `DisplayTwoOptionMenu`; status: **partial** — `verification/ports/menu_save_tiles.c`
+
+### `engine/movie/intro.asm`
+
+- `PlayIntro` — assembly line 8; callers: `Init`; status: **partial** — `verification/ports/play_intro.c`
+- `PlayIntroScene` — assembly line 23; callers: `PlayIntro`; status: **partial** — `verification/ports/play_intro.c`
+- `AnimateIntroNidorino` — assembly line 143; callers: `PlayIntroScene`; status: **partial** — `verification/ports/play_intro.c`
+- `IntroMoveMon` — assembly line 235; callers: `PlayIntroScene`; status: **partial** — `verification/ports/play_intro.c`
+- `PlayShootingStar` — assembly line 305; callers: `PlayIntro`; status: **partial** — `verification/ports/play_shooting_star.c`
+
+### `engine/movie/oak_speech/oak_speech.asm`
+
+- `OakSpeech` — assembly line 42; callers: `StartNewGameDebug`; status: **partial** — `verification/ports/oak_speech.c`
+
+### `engine/movie/oak_speech/oak_speech2.asm`
+
+- `ChoosePlayerName` — assembly line 1; callers: `OakSpeech`; status: **partial** — `verification/ports/choose_player_name.c`
+- `ChooseRivalName` — assembly line 34; callers: `OakSpeech`; status: **partial** — `verification/ports/choose_rival_name.c`
+
+### `engine/movie/splash.asm`
+
+- `AnimateShootingStar` — assembly line 27; callers: `PlayShootingStar`; status: **partial** — `verification/ports/animate_shooting_star.c`
+
+### `engine/movie/title.asm`
+
+- `LoadCopyrightAndTextBoxTiles` — assembly line 375; callers: `PlayShootingStar`; status: **partial** — `verification/ports/load_copyright_and_text_box_tiles.c`
+- `LoadCopyrightTiles` — assembly line 381; callers: `Credits`; status: **partial** — `verification/ports/load_copyright_tiles.c`
+
+### `engine/overworld/map_sprites.asm`
+
+- `InitMapSprites` — assembly line 11; callers: `CheckMapConnections`, `CloseTextDisplay`, `LoadMapData`, `ReloadMapSpriteTilePatterns`; status: **partial** — `verification/ports/init_map_sprites.c`
+- `LoadMapSpriteTilePatterns` — assembly line 33; callers: `InitOutsideMapSprites`; status: **partial** — `verification/ports/load_map_sprite_tile_patterns.c`
+- `InitOutsideMapSprites` — assembly line 256; callers: `InitMapSprites`; status: **partial** — `verification/ports/init_outside_map_sprites.c`
+
+### `engine/overworld/movement.asm`
+
+- `UpdatePlayerSprite` — assembly line 1; callers: `_UpdateSprites`; status: **partial** — `verification/ports/update_player_sprite.c`
+- `UpdateNPCSprite` — assembly line 112; callers: `UpdateNonPlayerSprite`; status: **partial** — `verification/ports/update_npc_sprite.c`
+- `UpdateSpriteInWalkingAnimation` — assembly line 301; callers: `UpdateNPCSprite`; status: **partial** — `verification/ports/update_sprite_walking_animation.c`
+- `CheckSpriteAvailability` — assembly line 477; callers: `UpdateNPCSprite`; status: **partial** — `verification/ports/check_sprite_availability.c`
+- `CanWalkOntoTile` — assembly line 583; callers: `TryWalking`; status: **partial** — `verification/ports/can_walk_onto_tile.c`
+- `DoScriptedNPCMovement` — assembly line 737; callers: `UpdateNonPlayerSprite`; status: **partial** — `verification/ports/do_scripted_npc_movement.c`
+- `InitScriptedNPCMovement` — assembly line 808; callers: `DoScriptedNPCMovement`; status: **partial** — `verification/ports/init_scripted_npc_movement.c`
+- `AnimScriptedNPCMovement` — assembly line 832; callers: `DoScriptedNPCMovement`, `InitScriptedNPCMovement`; status: **partial** — `verification/ports/anim_scripted_npc_movement.c`
+
+### `engine/overworld/player_animations.asm`
+
+- `DoFlyAnimation` — assembly line 226; callers: `EnterMapAnim`, `_LeaveMapAnim`; status: **partial** — `verification/ports/do_fly_animation.c`
+- `PlayerSpinWhileMovingUpOrDown` — assembly line 319; callers: `PlayerSpinWhileMovingDown`, `_LeaveMapAnim`; status: **partial** — `verification/ports/player_spin_while_moving.c`
+
+### `engine/overworld/player_state.asm`
+
+- `CheckForCollisionWhenPushingBoulder` — assembly line 352; callers: `TryPushingBoulder`; status: **partial** — `verification/ports/check_for_collision_when_pushing_boulder.c`
+
+### `engine/overworld/push_boulder.asm`
+
+- `TryPushingBoulder` — assembly line 1; callers: `RunMapScript`; status: **partial** — `verification/ports/try_pushing_boulder.c`
+
+### `engine/overworld/sprite_collisions.asm`
+
+- `_UpdateSprites` — assembly line 1; callers: `UpdateSprites`; status: **partial** — `verification/ports/update_sprites.c`
+- `DetectCollisionBetweenSprites` — assembly line 54; callers: `CanWalkOntoTile`, `UpdatePlayerSprite`; status: **partial** — `verification/ports/detect_collision_between_sprites.c`
 
 ### `engine/overworld/toggleable_objects.asm`
 
-- `MarkTownVisitedAndLoadToggleableObjects` — assembly line 1; callers: `LoadMapHeader`; status: **partial** — `verification/ports/mark_town_visited_and_load_toggleable_objects.c`
+- `IsObjectHidden` — assembly line 99; callers: `CheckSpriteAvailability`; status: **partial** — `verification/ports/is_object_hidden.c`
 
 ### `engine/pokemon/evos_moves.asm`
 
@@ -562,9 +642,37 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 
 - `DisplayListMenuID` — assembly line 4; callers: `CeruleanBadgeHouseMiddleAgedManText`, `DisplayBagMenu`, `DisplayElevatorFloorMenu`, `DisplayMonListMenu`, `DisplayPokemartDialogue_`, `PlayerPCDeposit`, `PlayerPCToss`, `PlayerPCWithdraw`, `StartMenu_Item`; status: **partial** — `verification/ports/display_list_menu_id.c`
 
+### `home/overworld.asm`
+
+- `EnterMap` — assembly line 6; callers: `OverworldLoopLessDelay`, `SpecialEnterMap`, `WarpFound2`; status: **partial** — `verification/ports/enter_map.c`
+- `OverworldLoop` — assembly line 41; callers: `CheckMapConnections`, `CheckWarpsCollision`, `OverworldLoopLessDelay`; status: **partial** — `verification/ports/overworld_loop.c`
+- `OverworldLoopLessDelay` — assembly line 43; callers: `CheckMapConnections`; status: **partial** — `verification/ports/overworld_loop_less_delay.c`
+- `CheckWarpsNoCollision` — assembly line 391; callers: `OverworldLoopLessDelay`; status: **partial** — `verification/ports/check_warps_no_collision.c`
+- `CheckWarpsCollision` — assembly line 440; callers: `OverworldLoopLessDelay`; status: **partial** — `verification/ports/check_warps_collision.c`
+- `WarpFound2` — assembly line 482; callers: `OverworldLoopLessDelay`; status: **partial** — `verification/ports/warp_found2.c`
+- `MapEntryAfterBattle` — assembly line 749; callers: `EnterMap`; status: **partial** — `verification/ports/map_entry_after_battle.c`
+- `CollisionCheckOnLand` — assembly line 1219; callers: `OverworldLoopLessDelay`; status: **partial** — `verification/ports/collision_check_on_land.c`
+- `LoadMapData` — assembly line 2293; callers: `EnterMap`, `ReturnToCableClubRoom`; status: **partial** — `verification/ports/load_map_data.c`
+
 ### `home/palettes.asm`
 
 - `RunPaletteCommand` — assembly line 38; callers: `ChangeMonPic`, `CheckMapConnections`, `DisplayDiploma`, `DisplayNamingScreen`, `DisplayTitleScreen`, `EnemySendOutFirstMon`, `EvolutionSetWholeScreenPalette`, `GetBattleHealthBarColor`, `HandlePlayerBlackOut`, `HoFShowMonOrPlayer`, `LeaguePCShowMon`, `LoadMapData`, `LoadTownMap`, `PlayIntroScene`, `PlayShootingStar`, `PromptUserToPlaySlots`, `RedrawPartyMenu_`, `SendOutMon`, `SetPartyMenuHPBarColor`, `ShowPokedexDataInternal`, `ShowPokedexMenu`, `SlidePlayerAndEnemySilhouettesOnScreen`, `StartMenu_TrainerInfo`, `StatusScreen`, `Trade_DrawOpenEndOfLinkCable`, `Trade_LoadMonSprite`, `_InitBattleCommon`, `_ScrollTrainerPicAfterBattle`; status: **partial** — `verification/ports/run_palette_command.c`
+
+### `home/pathfinding.asm`
+
+- `MoveSprite` — assembly line 10; callers: `BillsHouseBillExitsMachineScript`, `BillsHousePokemonWalkToMachineScript`, `CeruleanCityDefaultScript`, `CeruleanCityRivalDefeatedScript`, `ChampionsRoomOakArrivesScript`, `ChampionsRoomOakComeWithMeScript`, `CinnabarGymDefaultScript`, `GameCornerRocketBattleScript`, `MtMoonB2FMoveSuperNerdScript`, `OaksLabChoseStarterScript`, `OaksLabOakEntersLabScript`, `OaksLabOakGivesPokedexScript`, `OaksLabRivalArrivesAtOaksRequestScript`, `OaksLabRivalChallengesPlayerScript`, `OaksLabRivalStartsExitScript`, `PalletMovementScript_OakMoveLeft`, `PalletTownOakWalksToPlayerScript`, `PewterCitySuperNerd1ShowsPlayerMuseumScript`, `PewterCityYoungsterShowsPlayerGymScript`, `PokemonTower2FDefeatedRivalScript`, `PokemonTower7FRocketLeaveMovementScript`, `Route22MoveRival1`, `Route22MoveRival2`, `Route22MoveRivalRightScript`, `SSAnne2FDefaultScript`, `SSAnne2FRivalAfterBattleScript`, `SilphCo11FDefaultScript`, `SilphCo7FDefaultScript`, `SilphCo7FRivalAfterBattleScript`, `TryPushingBoulder`; status: **partial** — `verification/ports/move_sprite.c`
+
+### `home/predef_text.asm`
+
+- `PrintPredefTextID` — assembly line 1; callers: `AbleToPlaySlotsCheck`, `DisplayOakLabRightPoster`, `GymStatues`, `GymTrashScript`, `HiddenCoins`, `PrintBenchGuyText`, `PrintBlackboardLinkCableText`, `PrintBookshelfText`, `PrintCardKeyText`, `PrintNotebookText`, `StartSlotMachine`; status: **partial** — `verification/ports/print_predef_text_id.c`
+
+### `home/text_script.asm`
+
+- `DisplayTextID` — assembly line 3; callers: `AgathasRoomAgathaEndBattleScript`, `AgathasRoomDefaultScript`, `ApplyOutOfBattlePoisonDamage`, `BillsHousePCScript`, `BrunosRoomBrunoEndBattleScript`, `BrunosRoomDefaultScript`, `CeladonGymReceiveTM21`, `CeruleanCityDefaultScript`, `CeruleanCityRivalBattleScript`, `CeruleanCityRivalDefeatedScript`, `CeruleanCityRocketDefeatedScript`, `CeruleanGymReceiveTM11`, `ChampionsRoomRivalReadyToBattleScript`, `ChampionsRoom_DisplayTextID_AllowABSelectStart`, `CinnabarGymGetOpponentTextScript`, `CinnabarGymReceiveTM38`, `CinnabarIslandDefaultScript`, `DisplayEnemyTrainerTextAndStartBattle`, `FightingDojoDefaultScript`, `FightingDojoKarateMasterPostBattleScript`, `FuchsiaGymReceiveTM06`, `GameCornerRocketBattleScript`, `HallOfFameOakCongratulationsScript`, `LancesRoomDefaultScript`, `LancesRoomLanceEndBattleScript`, `LoreleisRoomDefaultScript`, `LoreleisRoomLoreleiEndBattleScript`, `Mansion1Script_Switches`, `Mansion2Script_Switches`, `Mansion3Script_Switches`, `Mansion4Script_Switches`, `MtMoonB2FDefaultScript`, `MtMoonB2FSuperNerdTakesOtherFossilScript`, `Museum1FDefaultScript`, `OaksLabOakChooseMonSpeechScript`, `OaksLabOakGivesPokedexScript`, `OaksLabPlayerDontGoAwayScript`, `OaksLabRivalArrivesAtOaksRequestScript`, `OaksLabRivalChallengesPlayerScript`, `OaksLabRivalChoosesStarterScript`, `OaksLabRivalStartsExitScript`, `OverworldLoopLessDelay`, `PalletTownOakHeyWaitScript`, `PalletTownOakNotSafeComeWithMeScript`, `PewterCityCheckPlayerLeavingEastScript`, `PewterCitySuperNerd1ShowsPlayerMuseumScript`, `PewterCityYoungsterShowsPlayerGymScript`, `PewterGymScriptReceiveTM34`, `PokemonTower2FDefaultScript`, `PokemonTower2FDefeatedRivalScript`, `PokemonTower5FDefaultScript`, `PokemonTower6FDefaultScript`, `PokemonTower6FMarowakBattleScript`, `PokemonTower7FEndBattleScript`, `PrintPredefTextID`, `RocketHideoutB4FBeatGiovanniScript`, `Route12DefaultScript`, `Route12SnorlaxPostBattleScript`, `Route16DefaultScript`, `Route16Gate1FDefaultScript`, `Route16Gate1FGuardScript`, `Route16SnorlaxPostBattleScript`, `Route18Gate1FDefaultScript`, `Route18Gate1FGuardScript`, `Route22GateDefaultScript`, `Route22Rival1AfterBattleScript`, `Route22Rival1StartBattleScript`, `Route22Rival2AfterBattleScript`, `Route22Rival2StartBattleScript`, `Route23DefaultScript`, `Route24AfterRocketBattleScript`, `Route24DefaultScript`, `Route5GateDefaultScript`, `Route6GateDefaultScript`, `Route7DefaultScript`, `Route8GateDefaultScript`, `SSAnne2FRivalAfterBattleScript`, `SSAnne2FRivalStartBattleScript`, `SafariZoneGameOver`, `SafariZoneGateDefaultScript`, `SafariZoneGateLeavingSafariScript`, `SafariZoneGateWouldYouLikeToJoinScript`, `SaffronGymSabrinaReceiveTM46Script`, `SilphCo11FDefaultScript`, `SilphCo11FGiovanniAfterBattleScript`, `SilphCo7FDefaultScript`, `SilphCo7FRivalAfterBattleScript`, `SilphCo7FRivalStartBattleScript`, `TryDoWildEncounter`, `VermilionCityDefaultScript`, `VermilionGymLTSurgeReceiveTM24Script`, `ViridianCityCheckGotPokedexScript`, `ViridianCityCheckGymOpenScript`, `ViridianCityOldManEndCatchTrainingScript`, `ViridianGymReceiveTM27`, `ViridianMartDefaultScript`, `ViridianMartOaksParcelScript`; status: **partial** — `verification/ports/display_text_id.c`
+
+### `home/textbox.asm`
+
+- `DisplayTextBoxID` — assembly line 5; callers: `AbandonLearning`, `AddAmountSoldToMoney`, `AskName`, `DaycareGentlemanText`, `DisplayBattleMenu`, `DisplayListMenuID`, `DisplayMonFrontSpriteInBox`, `DisplayMoneyBox`, `DisplayPokemartDialogue_`, `DisplayYesNoChoice`, `DoBuySellQuitMenu`, `DoClearSaveDialogue`, `DoUseNextMonDialogue`, `EnemySendOutFirstMon`, `ItemUseTMHM`, `MainSlotMachineLoop`, `MtMoonPokecenterMagikarpSalesmanText`, `Museum1FScientist1Text`, `PartyMenuOrRockOrRun`, `PrintText`, `SafariZoneGateSafariZoneWorker1WouldYouLikeToJoinText`, `SaveTheGame_YesOrNo`, `SlidePlayerAndEnemySilhouettesOnScreen`, `StartMenu_Item`, `StartMenu_Pokemon`, `SubtractAmountPaidFromMoney_`, `TossItem_`, `TradeCenter_Trade`, `TryingToLearn`, `TwoOptionMenu`, `VendingMachineMenu`; status: **partial** — `verification/ports/display_text_box_id_wrapper.c`
 
 ### `home/update_sprites.asm`
 
@@ -576,10 +684,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 ### `engine/debug/debug_party.asm`
 
 - `DebugSetPokedexEntries` — assembly line 128; callers: `PrepareNewGameDebug`; status: **missing**
-
-### `engine/gfx/sprite_oam.asm`
-
-- `PrepareOAMData` — assembly line 1; callers: `VBlank`; status: **missing**
 
 ### `engine/items/item_effects.asm`
 
@@ -609,11 +713,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 
 - `AskName` — assembly line 1; callers: `SendNewMonToBox`, `_AddPartyMon`; status: **missing**
 - `DisplayNameRaterScreen` — assembly line 56; callers: `NameRatersHouseNameRaterText`; status: **missing**
-- `DisplayNamingScreen` — assembly line 84; callers: `AskName`, `ChoosePlayerName`, `ChooseRivalName`, `DisplayNameRaterScreen`; status: **missing**
-- `PrintAlphabet` — assembly line 337; callers: `DisplayNamingScreen`; status: **missing**
-- `PrintNicknameAndUnderscores` — assembly line 369; callers: `DisplayNamingScreen`; status: **missing**
-- `DakutensAndHandakutens` — assembly line 425; callers: `DisplayNamingScreen`; status: **missing**
-- `PrintNamingText` — assembly line 453; callers: `DisplayNamingScreen`; status: **missing**
 
 ### `engine/menus/oaks_pc.asm`
 
@@ -652,7 +751,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 
 ### `engine/menus/save.asm`
 
-- `TryLoadSaveFile` — assembly line 1; callers: `MainMenu`, `OverworldLoopLessDelay`; status: **missing**
 - `SaveMenu` — assembly line 150; callers: `StartMenu_SaveReset`; status: **missing**
 - `SaveTheGame_YesOrNo` — assembly line 186; callers: `SaveMenu`; status: **missing**
 - `SaveMainData` — assembly line 208; callers: `SaveGameData`; status: **missing**
@@ -690,10 +788,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 
 - `HandleItemListSwapping` — assembly line 1; callers: `DisplayListMenuIDLoop`; status: **missing**
 
-### `engine/menus/text_box.asm`
-
-- `DisplayTwoOptionMenu` — assembly line 206; callers: `DisplayTextBoxID_`; status: **missing**
-
 ### `engine/movie/credits.asm`
 
 - `HallOfFamePC` — assembly line 1; callers: `HallOfFameResetEventsAndSaveScript`; status: **missing**
@@ -719,46 +813,18 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `HoFLoadPlayerPics` — assembly line 185; callers: `HoFShowMonOrPlayer`; status: **missing**
 - `HoFDisplayPlayerStats` — assembly line 209; callers: `AnimateHallOfFame`; status: **missing**
 
-### `engine/movie/intro.asm`
-
-- `PlayIntro` — assembly line 8; callers: `Init`; status: **missing**
-- `PlayIntroScene` — assembly line 23; callers: `PlayIntro`; status: **missing**
-- `AnimateIntroNidorino` — assembly line 143; callers: `PlayIntroScene`; status: **missing**
-- `IntroMoveMon` — assembly line 235; callers: `PlayIntroScene`; status: **missing**
-- `LoadIntroGraphics` — assembly line 283; callers: `PlayShootingStar`; status: **missing**
-- `PlayShootingStar` — assembly line 305; callers: `PlayIntro`; status: **missing**
-- `IntroDrawBlackBars` — assembly line 343; callers: `PlayShootingStar`; status: **missing**
-
 ### `engine/movie/oak_speech/clear_save.asm`
 
 - `DoClearSaveDialogue` — assembly line 1; callers: `DisplayTitleScreen`; status: **missing**
 
 ### `engine/movie/oak_speech/oak_speech.asm`
 
-- `OakSpeech` — assembly line 42; callers: `StartNewGameDebug`; status: **missing**
 - `DisplayPicCenteredOrUpperRight` — assembly line 227; callers: `DrawTrainerInfo`; status: **missing**
-
-### `engine/movie/oak_speech/oak_speech2.asm`
-
-- `ChoosePlayerName` — assembly line 1; callers: `OakSpeech`; status: **missing**
-- `ChooseRivalName` — assembly line 34; callers: `OakSpeech`; status: **missing**
-- `OakSpeechSlidePicLeft` — assembly line 67; callers: `ChoosePlayerName`, `ChooseRivalName`; status: **missing**
-- `DisplayIntroNameTextBox` — assembly line 162; callers: `ChoosePlayerName`, `ChooseRivalName`; status: **missing**
-- `GetDefaultName` — assembly line 192; callers: `ChoosePlayerName`, `ChooseRivalName`; status: **missing**
-
-### `engine/movie/splash.asm`
-
-- `LoadShootingStarGraphics` — assembly line 1; callers: `AnimateShootingStar`; status: **missing**
-- `AnimateShootingStar` — assembly line 27; callers: `PlayShootingStar`; status: **missing**
-- `MoveDownSmallStars` — assembly line 186; callers: `AnimateShootingStar`; status: **missing**
 
 ### `engine/movie/title.asm`
 
-- `PrepareTitleScreen` — assembly line 5; callers: `Init`; status: **missing**
 - `DisplayTitleScreen` — assembly line 28; callers: `CallCurrentTradeCenterFunction`, `DebugMenu`, `MainMenu`; status: **missing**
 - `TitleScreenPickNewMon` — assembly line 271; callers: `DisplayTitleScreen`; status: **missing**
-- `LoadCopyrightAndTextBoxTiles` — assembly line 375; callers: `PlayShootingStar`; status: **missing**
-- `LoadCopyrightTiles` — assembly line 381; callers: `Credits`; status: **missing**
 
 ### `engine/movie/title2.asm`
 
@@ -799,21 +865,15 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `UsedCut` — assembly line 1; callers: `StartMenu_Pokemon`; status: **missing**
 - `InitCutAnimOAM` — assembly line 74; callers: `UsedCut`; status: **missing**
 - `LoadCutGrassAnimationTilePattern` — assembly line 114; callers: `InitCutAnimOAM`; status: **missing**
-- `WriteCutOrBoulderDustAnimationOAMBlock` — assembly line 119; callers: `AnimateBoulderDust`, `InitCutAnimOAM`; status: **missing**
 
 ### `engine/overworld/cut2.asm`
 
 - `AnimCut` — assembly line 1; callers: `UsedCut`; status: **missing**
 - `AnimCutGrass_UpdateOAMEntries` — assembly line 46; callers: `AnimCut`; status: **missing**
 
-### `engine/overworld/doors.asm`
-
-- `IsPlayerStandingOnDoorTile` — assembly line 2; callers: `IsPlayerStandingOnDoorTileOrWarpTile`, `PlayerStepOutFromDoor`; status: **missing**
-
 ### `engine/overworld/dust_smoke.asm`
 
 - `AnimateBoulderDust` — assembly line 1; callers: `DoBoulderDustAnimation`; status: **missing**
-- `LoadSmokeTileFourTimes` — assembly line 65; callers: `AnimateBoulderDust`, `VermilionDockSSAnneLeavesScript`; status: **missing**
 
 ### `engine/overworld/elevator.asm`
 
@@ -838,28 +898,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `IsPlayerOnDungeonWarp` — assembly line 1; callers: `SeafoamIslands1F_Script`, `SeafoamIslandsB1F_Script`, `SeafoamIslandsB2F_Script`, `SeafoamIslandsB3F_Script`, `VictoryRoad3FDefaultScript`; status: **missing**
 - `CheckForHiddenEvent` — assembly line 18; callers: `CheckForHiddenEventOrBookshelfOrCardKeyDoor`; status: **missing**
 
-### `engine/overworld/ledges.asm`
-
-- `HandleLedges` — assembly line 1; callers: `CheckForJumpingAndTilePairCollisions`; status: **missing**
-- `LoadHoppingShadowOAM` — assembly line 59; callers: `HandleLedges`; status: **missing**
-
-### `engine/overworld/map_sprites.asm`
-
-- `InitMapSprites` — assembly line 11; callers: `CheckMapConnections`, `CloseTextDisplay`, `LoadMapData`, `ReloadMapSpriteTilePatterns`; status: **missing**
-- `LoadMapSpriteTilePatterns` — assembly line 33; callers: `InitOutsideMapSprites`; status: **missing**
-- `InitOutsideMapSprites` — assembly line 256; callers: `InitMapSprites`; status: **missing**
-
-### `engine/overworld/movement.asm`
-
-- `UpdatePlayerSprite` — assembly line 1; callers: `_UpdateSprites`; status: **missing**
-- `UpdateNPCSprite` — assembly line 112; callers: `UpdateNonPlayerSprite`; status: **missing**
-- `UpdateSpriteInWalkingAnimation` — assembly line 301; callers: `UpdateNPCSprite`; status: **missing**
-- `CheckSpriteAvailability` — assembly line 477; callers: `UpdateNPCSprite`; status: **missing**
-- `CanWalkOntoTile` — assembly line 583; callers: `TryWalking`; status: **missing**
-- `DoScriptedNPCMovement` — assembly line 737; callers: `UpdateNonPlayerSprite`; status: **missing**
-- `InitScriptedNPCMovement` — assembly line 808; callers: `DoScriptedNPCMovement`; status: **missing**
-- `AnimScriptedNPCMovement` — assembly line 832; callers: `DoScriptedNPCMovement`, `InitScriptedNPCMovement`; status: **missing**
-
 ### `engine/overworld/pathfinding.asm`
 
 - `FindPathToPlayer` — assembly line 1; callers: `OaksLabRivalChallengesPlayerScript`, `PalletTownOakWalksToPlayerScript`; status: **missing**
@@ -872,29 +910,13 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `PlayerSpinWhileMovingDown` — assembly line 83; callers: `EnterMapAnim`; status: **missing**
 - `_LeaveMapAnim` — assembly line 93; callers: `LeaveMapAnim`; status: **missing**
 - `LeaveMapThroughHoleAnim` — assembly line 204; callers: `_LeaveMapAnim`; status: **missing**
-- `DoFlyAnimation` — assembly line 226; callers: `EnterMapAnim`, `_LeaveMapAnim`; status: **missing**
-- `LoadBirdSpriteGraphics` — assembly line 250; callers: `EnterMapAnim`, `_LeaveMapAnim`; status: **missing**
-- `InitFacingDirectionList` — assembly line 260; callers: `EnterMapAnim`, `_LeaveMapAnim`; status: **missing**
 - `PlayerSpinInPlace` — assembly line 298; callers: `EnterMapAnim`, `_LeaveMapAnim`; status: **missing**
-- `PlayerSpinWhileMovingUpOrDown` — assembly line 319; callers: `PlayerSpinWhileMovingDown`, `_LeaveMapAnim`; status: **missing**
 - `FishingAnim` — assembly line 378; callers: `RodResponse`; status: **missing**
 - `_HandleMidJump` — assembly line 491; callers: `HandleMidJump`; status: **missing**
 
-### `engine/overworld/player_state.asm`
-
-- `CheckForceBikeOrSurf` — assembly line 34; callers: `EnterMap`; status: **missing**
-- `IsPlayerStandingOnDoorTileOrWarpTile` — assembly line 190; callers: `CheckWarpsNoCollisionLoop`, `TryDoWildEncounter`; status: **missing**
-- `PrintSafariZoneSteps` — assembly line 219; callers: `RedisplayStartMenu`; status: **missing**
-- `CheckForCollisionWhenPushingBoulder` — assembly line 352; callers: `TryPushingBoulder`; status: **missing**
-
 ### `engine/overworld/push_boulder.asm`
 
-- `TryPushingBoulder` — assembly line 1; callers: `RunMapScript`; status: **missing**
 - `DoBoulderDustAnimation` — assembly line 89; callers: `RunMapScript`; status: **missing**
-
-### `engine/overworld/special_warps.asm`
-
-- `PrepareForSpecialWarp` — assembly line 1; callers: `HandleBlackOut`, `HandleFlyWarpOrDungeonWarp`, `LinkMenu`, `MainMenu`, `OakSpeech`, `OverworldLoopLessDelay`; status: **missing**
 
 ### `engine/overworld/spinners.asm`
 
@@ -902,13 +924,10 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 
 ### `engine/overworld/sprite_collisions.asm`
 
-- `_UpdateSprites` — assembly line 1; callers: `UpdateSprites`; status: **missing**
 - `UpdateNonPlayerSprite` — assembly line 31; callers: `_UpdateSprites`; status: **missing**
-- `DetectCollisionBetweenSprites` — assembly line 54; callers: `CanWalkOntoTile`, `UpdatePlayerSprite`; status: **missing**
 
 ### `engine/overworld/toggleable_objects.asm`
 
-- `IsObjectHidden` — assembly line 99; callers: `CheckSpriteAvailability`; status: **missing**
 - `HideObject` — assembly line 137; callers: `BillsHouseBillSSTicketText`, `BillsHousePokemonEntersMachineScript`, `BluesHouseDaisySittingText`, `CeladonMansionRoofHouseEeveePokeballText`, `CeruleanCityClearScripts`, `CeruleanCityRivalCleanupScript`, `CeruleanHideRocket`, `ChampionsRoomOakExitsScript`, `EndTrainerBattle`, `FightingDojoHitmonchanPokeBallText`, `FightingDojoHitmonleePokeBallText`, `GameCornerRocketExitScript`, `HallOfFameOakCongratulationsScript`, `MtMoonB2FDomeFossilText`, `MtMoonB2FHelixFossilText`, `MtMoonB2FSuperNerdTakesOtherFossilScript`, `Museum1FScientist2Text`, `OaksLabMonChoiceMenu`, `OaksLabOakGivesPokedexScript`, `OaksLabPlayerWatchRivalExitScript`, `OaksLabRivalChoosesStarterScript`, `OaksLabRivalLeavesWithPokedexScript`, `OaksLabToggleOaksScript`, `PalletMovementScript_Done`, `PalletTownDaisyScript`, `PewterCityHideSuperNerd1Script`, `PewterCityHideYoungsterScript`, `PewterGymScriptReceiveTM34`, `PickUpItem`, `PokemonTower2FRivalExitsScript`, `PokemonTower7FHideNPCScript`, `PokemonTower7FMrFujiText`, `PokemonTower7FWarpToMrFujiHouseScript`, `RocketHideoutB4FBeatGiovanniScript`, `Route12DefaultScript`, `Route16DefaultScript`, `Route20HideObjectScript`, `Route22Rival1ExitScript`, `Route22Rival2ExitScript`, `Route23SetVictoryRoadBoulders`, `Route25ToggleBillsScript`, `SSAnne2FRivalExitScript`, `SeafoamIslands1F_Script`, `SeafoamIslandsB1F_Script`, `SeafoamIslandsB2F_Script`, `SeafoamIslandsB3F_Script`, `SilphCo11FTeamRocketLeavesScript`, `SilphCo7FRivalExitScript`, `VictoryRoad3FDefaultScript`, `ViridianGymGiovanniText`; status: **missing**
 
 ### `engine/overworld/trainer_sight.asm`
@@ -1005,10 +1024,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `SlotMachine_HandleInputWhileWheelsSpin` — assembly line 826; callers: `SlotMachine_SpinWheels`; status: **missing**
 - `LoadSlotMachineTiles` — assembly line 850; callers: `PromptUserToPlaySlots`; status: **missing**
 
-### `home/inventory.asm`
-
-- `AddItemToInventory` — assembly line 34; callers: `DisplayPokemartDialogue_`, `GiveItem`, `OakSpeech`, `PlayerPCDeposit`, `PlayerPCWithdraw`, `PrepareNewGameDebug`; status: **missing**
-
 ### `home/list_menu.asm`
 
 - `DisplayListMenuIDLoop` — assembly line 58; callers: `DisplayListMenuIDLoop`, `HandleItemListSwapping`; status: **missing**
@@ -1030,31 +1045,17 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 
 ### `home/overworld.asm`
 
-- `EnterMap` — assembly line 6; callers: `OverworldLoopLessDelay`, `SpecialEnterMap`, `WarpFound2`; status: **missing**
-- `OverworldLoop` — assembly line 41; callers: `CheckMapConnections`, `CheckWarpsCollision`, `OverworldLoopLessDelay`; status: **missing**
-- `OverworldLoopLessDelay` — assembly line 43; callers: `CheckMapConnections`; status: **missing**
 - `NewBattle` — assembly line 362; callers: `OverworldLoopLessDelay`; status: **missing**
-- `CheckWarpsNoCollision` — assembly line 391; callers: `OverworldLoopLessDelay`; status: **missing**
 - `CheckWarpsNoCollisionLoop` — assembly line 403; callers: `ContinueCheckWarpsNoCollisionLoop`; status: **missing**
-- `CheckWarpsCollision` — assembly line 440; callers: `OverworldLoopLessDelay`; status: **missing**
-- `WarpFound2` — assembly line 482; callers: `OverworldLoopLessDelay`; status: **missing**
 - `CheckMapConnections` — assembly line 548; callers: `CheckWarpsNoCollision`, `OverworldLoopLessDelay`; status: **missing**
 - `PlayMapChangeSound` — assembly line 690; callers: `WarpFound2`; status: **missing**
 - `ExtraWarpCheck` — assembly line 719; callers: `CheckWarpsNoCollisionLoop`, `OverworldLoopLessDelay`; status: **missing**
-- `MapEntryAfterBattle` — assembly line 749; callers: `EnterMap`; status: **missing**
 - `HandleBlackOut` — assembly line 756; callers: `OverworldLoopLessDelay`; status: **missing**
 - `StopMusic` — assembly line 772; callers: `HandleBlackOut`, `_LeaveMapAnim`; status: **missing**
 - `HandleFlyWarpOrDungeonWarp` — assembly line 783; callers: `OverworldLoopLessDelay`; status: **missing**
-- `LoadPlayerSpriteGraphics` — assembly line 804; callers: `AnimateBoulderDust`, `CloseTextDisplay`, `CollisionCheckOnWater`, `EnterMapAnim`, `ExitTownMap`, `LoadMapData`, `LoadTownMap_Fly`, `ReloadMapSpriteTilePatterns`, `VermilionDockSSAnneLeavesScript`; status: **missing**
 - `IsSpriteOrSignInFrontOfPlayer` — assembly line 1077; callers: `OverworldLoopLessDelay`; status: **missing**
-- `CollisionCheckOnLand` — assembly line 1219; callers: `OverworldLoopLessDelay`; status: **missing**
-- `CheckForJumpingAndTilePairCollisions` — assembly line 1282; callers: `CollisionCheckOnLand`, `CollisionCheckOnWater`; status: **missing**
 - `JoypadOverworld` — assembly line 1817; callers: `OverworldLoopLessDelay`; status: **missing**
-- `CollisionCheckOnWater` — assembly line 1888; callers: `OverworldLoopLessDelay`; status: **missing**
 - `RunMapScript` — assembly line 1946; callers: `JoypadOverworld`, `OverworldLoopLessDelay`; status: **missing**
-- `LoadMapData` — assembly line 2293; callers: `EnterMap`, `ReturnToCableClubRoom`; status: **missing**
-- `ForceBikeOrSurf` — assembly line 2388; callers: `CheckForceBikeOrSurf`, `SeafoamIslandsB4FObjectMoving2Script`; status: **missing**
-- `CheckForUserInterruption` — assembly line 2394; callers: `AnimateShootingStar`, `DisplayTitleScreen`, `IntroMoveMon`, `MoveDownSmallStars`, `PlayIntroScene`; status: **missing**
 
 ### `home/palettes.asm`
 
@@ -1062,7 +1063,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 
 ### `home/pathfinding.asm`
 
-- `MoveSprite` — assembly line 10; callers: `BillsHouseBillExitsMachineScript`, `BillsHousePokemonWalkToMachineScript`, `CeruleanCityDefaultScript`, `CeruleanCityRivalDefeatedScript`, `ChampionsRoomOakArrivesScript`, `ChampionsRoomOakComeWithMeScript`, `CinnabarGymDefaultScript`, `GameCornerRocketBattleScript`, `MtMoonB2FMoveSuperNerdScript`, `OaksLabChoseStarterScript`, `OaksLabOakEntersLabScript`, `OaksLabOakGivesPokedexScript`, `OaksLabRivalArrivesAtOaksRequestScript`, `OaksLabRivalChallengesPlayerScript`, `OaksLabRivalStartsExitScript`, `PalletMovementScript_OakMoveLeft`, `PalletTownOakWalksToPlayerScript`, `PewterCitySuperNerd1ShowsPlayerMuseumScript`, `PewterCityYoungsterShowsPlayerGymScript`, `PokemonTower2FDefeatedRivalScript`, `PokemonTower7FRocketLeaveMovementScript`, `Route22MoveRival1`, `Route22MoveRival2`, `Route22MoveRivalRightScript`, `SSAnne2FDefaultScript`, `SSAnne2FRivalAfterBattleScript`, `SilphCo11FDefaultScript`, `SilphCo7FDefaultScript`, `SilphCo7FRivalAfterBattleScript`, `TryPushingBoulder`; status: **missing**
 - `MoveSprite_` — assembly line 14; callers: `TrainerWalkUpToPlayer`; status: **missing**
 
 ### `home/pics.asm`
@@ -1078,10 +1078,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 - `PartyMenuInit` — assembly line 201; callers: `DisplayPartyMenu`, `GoBackToPartyMenu`; status: **missing**
 - `HandlePartyMenuInput` — assembly line 240; callers: `DisplayPartyMenu`, `GoBackToPartyMenu`; status: **missing**
 - `PrintStatusConditionNotFainted` — assembly line 327; callers: `DrawEnemyHUDAndHPBar`, `DrawPlayerHUDAndHPBar`; status: **missing**
-
-### `home/predef_text.asm`
-
-- `PrintPredefTextID` — assembly line 1; callers: `AbleToPlaySlotsCheck`, `DisplayOakLabRightPoster`, `GymStatues`, `GymTrashScript`, `HiddenCoins`, `PrintBenchGuyText`, `PrintBlackboardLinkCableText`, `PrintBookshelfText`, `PrintCardKeyText`, `PrintNotebookText`, `StartSlotMachine`; status: **missing**
 
 ### `home/reload_sprites.asm`
 
@@ -1103,22 +1099,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 
 - `RedisplayStartMenu` — assembly line 10; callers: `StartMenu_Item`, `StartMenu_Option`, `StartMenu_Pokedex`, `StartMenu_Pokemon`, `StartMenu_TrainerInfo`; status: **missing**
 - `CloseStartMenu` — assembly line 79; callers: `RedisplayStartMenu`, `StartMenu_Item`; status: **missing**
-
-### `home/text.asm`
-
-- `PlaceNextChar` — assembly line 52; callers: `ContText`, `NextChar`, `PlaceCommandCharacter`; status: **missing**
-- `NextTextCommand` — assembly line 328; callers: `TextCommand_DOTS`, `TextCommand_FAR`, `TextCommand_LOW`, `TextCommand_MOVE`, `TextCommand_NUM`, `TextCommand_PAUSE`, `TextCommand_PROMPT_BUTTON`, `TextCommand_SCROLL`, `TextCommand_SOUND`, `TextCommand_WAIT_BUTTON`; status: **missing**
-
-### `home/text_script.asm`
-
-- `DisplayTextID` — assembly line 3; callers: `AgathasRoomAgathaEndBattleScript`, `AgathasRoomDefaultScript`, `ApplyOutOfBattlePoisonDamage`, `BillsHousePCScript`, `BrunosRoomBrunoEndBattleScript`, `BrunosRoomDefaultScript`, `CeladonGymReceiveTM21`, `CeruleanCityDefaultScript`, `CeruleanCityRivalBattleScript`, `CeruleanCityRivalDefeatedScript`, `CeruleanCityRocketDefeatedScript`, `CeruleanGymReceiveTM11`, `ChampionsRoomRivalReadyToBattleScript`, `ChampionsRoom_DisplayTextID_AllowABSelectStart`, `CinnabarGymGetOpponentTextScript`, `CinnabarGymReceiveTM38`, `CinnabarIslandDefaultScript`, `DisplayEnemyTrainerTextAndStartBattle`, `FightingDojoDefaultScript`, `FightingDojoKarateMasterPostBattleScript`, `FuchsiaGymReceiveTM06`, `GameCornerRocketBattleScript`, `HallOfFameOakCongratulationsScript`, `LancesRoomDefaultScript`, `LancesRoomLanceEndBattleScript`, `LoreleisRoomDefaultScript`, `LoreleisRoomLoreleiEndBattleScript`, `Mansion1Script_Switches`, `Mansion2Script_Switches`, `Mansion3Script_Switches`, `Mansion4Script_Switches`, `MtMoonB2FDefaultScript`, `MtMoonB2FSuperNerdTakesOtherFossilScript`, `Museum1FDefaultScript`, `OaksLabOakChooseMonSpeechScript`, `OaksLabOakGivesPokedexScript`, `OaksLabPlayerDontGoAwayScript`, `OaksLabRivalArrivesAtOaksRequestScript`, `OaksLabRivalChallengesPlayerScript`, `OaksLabRivalChoosesStarterScript`, `OaksLabRivalStartsExitScript`, `OverworldLoopLessDelay`, `PalletTownOakHeyWaitScript`, `PalletTownOakNotSafeComeWithMeScript`, `PewterCityCheckPlayerLeavingEastScript`, `PewterCitySuperNerd1ShowsPlayerMuseumScript`, `PewterCityYoungsterShowsPlayerGymScript`, `PewterGymScriptReceiveTM34`, `PokemonTower2FDefaultScript`, `PokemonTower2FDefeatedRivalScript`, `PokemonTower5FDefaultScript`, `PokemonTower6FDefaultScript`, `PokemonTower6FMarowakBattleScript`, `PokemonTower7FEndBattleScript`, `PrintPredefTextID`, `RocketHideoutB4FBeatGiovanniScript`, `Route12DefaultScript`, `Route12SnorlaxPostBattleScript`, `Route16DefaultScript`, `Route16Gate1FDefaultScript`, `Route16Gate1FGuardScript`, `Route16SnorlaxPostBattleScript`, `Route18Gate1FDefaultScript`, `Route18Gate1FGuardScript`, `Route22GateDefaultScript`, `Route22Rival1AfterBattleScript`, `Route22Rival1StartBattleScript`, `Route22Rival2AfterBattleScript`, `Route22Rival2StartBattleScript`, `Route23DefaultScript`, `Route24AfterRocketBattleScript`, `Route24DefaultScript`, `Route5GateDefaultScript`, `Route6GateDefaultScript`, `Route7DefaultScript`, `Route8GateDefaultScript`, `SSAnne2FRivalAfterBattleScript`, `SSAnne2FRivalStartBattleScript`, `SafariZoneGameOver`, `SafariZoneGateDefaultScript`, `SafariZoneGateLeavingSafariScript`, `SafariZoneGateWouldYouLikeToJoinScript`, `SaffronGymSabrinaReceiveTM46Script`, `SilphCo11FDefaultScript`, `SilphCo11FGiovanniAfterBattleScript`, `SilphCo7FDefaultScript`, `SilphCo7FRivalAfterBattleScript`, `SilphCo7FRivalStartBattleScript`, `TryDoWildEncounter`, `VermilionCityDefaultScript`, `VermilionGymLTSurgeReceiveTM24Script`, `ViridianCityCheckGotPokedexScript`, `ViridianCityCheckGymOpenScript`, `ViridianCityOldManEndCatchTrainingScript`, `ViridianGymReceiveTM27`, `ViridianMartDefaultScript`, `ViridianMartOaksParcelScript`; status: **missing**
-- `AfterDisplayingTextID` — assembly line 92; callers: `DisplayPokemartDialogue`, `DisplayPokemonCenterDialogue`, `DisplayPokemonFaintedText`, `DisplayRepelWoreOffText`, `DisplaySafariGameOverText`; status: **missing**
-- `HoldTextDisplayOpen` — assembly line 99; callers: `BankswitchAndContinue`, `DisplayPlayerBlackedOutText`, `StartMenu_SaveReset`; status: **missing**
-- `CloseTextDisplay` — assembly line 105; callers: `CloseStartMenu`, `PromptUserToPlaySlots`, `StartMenu_Pokemon`, `TownMapText`; status: **missing**
-
-### `home/textbox.asm`
-
-- `DisplayTextBoxID` — assembly line 5; callers: `AbandonLearning`, `AddAmountSoldToMoney`, `AskName`, `DaycareGentlemanText`, `DisplayBattleMenu`, `DisplayListMenuID`, `DisplayMonFrontSpriteInBox`, `DisplayMoneyBox`, `DisplayPokemartDialogue_`, `DisplayYesNoChoice`, `DoBuySellQuitMenu`, `DoClearSaveDialogue`, `DoUseNextMonDialogue`, `EnemySendOutFirstMon`, `ItemUseTMHM`, `MainSlotMachineLoop`, `MtMoonPokecenterMagikarpSalesmanText`, `Museum1FScientist1Text`, `PartyMenuOrRockOrRun`, `PrintText`, `SafariZoneGateSafariZoneWorker1WouldYouLikeToJoinText`, `SaveTheGame_YesOrNo`, `SlidePlayerAndEnemySilhouettesOnScreen`, `StartMenu_Item`, `StartMenu_Pokemon`, `SubtractAmountPaidFromMoney_`, `TossItem_`, `TradeCenter_Trade`, `TryingToLearn`, `TwoOptionMenu`, `VendingMachineMenu`; status: **missing**
 
 ### `home/trainers.asm`
 
@@ -1145,10 +1125,6 @@ Complete the non-proven entries in this dependency order to boot, finish the ope
 ### `home/vblank.asm`
 
 - `VBlank` — assembly line 1; callers: static entry/jump only; status: **missing**
-
-### `home/window.asm`
-
-- `PrintText_NoCreatingTextBox` — assembly line 292; callers: `DisplayTextID`, `Evolution_PartyMonLoop`; status: **missing**
 
 ### `home/yes_no.asm`
 

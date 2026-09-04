@@ -1,10 +1,12 @@
 # REQUIRED — unported functions hit by the macOS game-flow driver
 
 `platform/game.c` composes the real boot flow (title screen → main menu →
-new game) exclusively from functions already ported in `verification/ports/`.
-Every asm label the driver needs but that has **no port yet** is listed here,
-grouped by the screen that gates it. Driver call sites carry a matching
-`/* REQUIRED: <label> */` comment (inlined approximations are marked).
+new game → first map load) from functions ported in `verification/ports/`.
+The driver advances from the OakSpeech prefix into `EnterMap`/`LoadMapData`
+when the player presses A or Start. Remaining asm labels that block full
+naming or interactive overworld behavior are listed here.
+Driver call sites carry a matching `/* REQUIRED: <label> */` comment where
+the driver still uses an inline approximation.
 
 Ports are added by translating the asm into `verification/ports/<name>.c`
 following the existing conventions (state struct + flat `memory`, see
@@ -66,23 +68,26 @@ now ported and the Oak driver composes the dispatcher, including its
 bank-1-to-bank-22 `TX_FAR` text stream. `DisplayTextBoxID_` / message-box
 setup, naming flow, and picture transfer remain separate gaps.
 
-Ported fragments ready to compose once the drivers above exist:
+Ported intro fragments remain available for later naming and picture fidelity:
 `port_move_pic_left`, `port_oak_speech_slide_pic_right`,
 `port_get_default_name_found_name`, `port_give_pokemon`,
-`port_oaks_lab_mon_choice_end`, `port_starter_dex_private`.
+`port_oaks_lab_mon_choice_end`, and `port_starter_dex_private`.
 
-## Overworld — future phase (walking around)
+## Overworld — map-load and interactive loop
 
-Per coverage scan: `OverworldLoop`, `EnterMap`, `EnterMapAnim`,
-`CheckWarpsNoCollision*` family, `CheckTilePassable` /
-`CollisionCheckOnLand/OnWater/JoypadOverworld`,
-`IsPlayerStandingOnDoorTileOrWarpTile`, `UpdateSprites`, `PrepareOAMData`
-(sprite DMA processing), full-body `TryDoWildEncounter`. Ported and ready
-to compose once those exist: `AdvancePlayerSprite`, `LoadCurrentMapView`,
-`ReloadMapData`, `ReloadTilesetTilePatterns`,
-`Schedule{North,South}Row/{East,West}ColumnRedraw`,
-`RedrawRowOrColumn`, `AutoBgMapTransfer`, `IsPlayerStandingOnWarp`,
-`GetTileSpriteStandsOn`, joypad suite.
+`EnterMap`, `LoadMapData`, `InitMapSprites`, `LoadMapSpriteTilePatterns`,
+`LoadCurrentMapView`, `LoadPlayerSpriteGraphics`, and
+`CheckForceBikeOrSurf` are ported and composed after the opening dialogue.
+The macOS runtime now calls the `OverworldLoop` and
+`OverworldLoopLessDelay` prefixes once per frame, dispatches the player
+direction/collision/advance path, progresses the player walking animation
+frames, and refreshes `PrepareOAMData` into the host OAM mirror.
+
+Remaining blockers for the full original overworld loop are
+`JoypadOverworld`, `RunMapScript`, collision/warp dispatch beyond the basic
+land movement path, NPC movement, and the complete wild-encounter path.
+These are available as partial/proven ports where listed in
+`PORTING_BACKLOG.md`, but are not yet safe to claim as a 1:1 game loop.
 
 ## Battle — future phase
 

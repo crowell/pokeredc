@@ -6,6 +6,12 @@
 #define TOGGLE_POINTERS 0x48f5u
 #define TOGGLE_STATES 0x4aeau
 #define FIRST_ROUTE_MAP 0x0cu
+#define H_DIVIDEND 0xff95u
+#define H_DIVISOR 0xff99u
+#define H_LOADED_ROM_BANK 0xffb8u
+#define R_ROMB 0x2000u
+
+void port_divide_wrapper(struct divide_wrapper_state *);
 
 static port_u16 read_word(const port_u8 *memory, port_u16 address)
 {
@@ -29,9 +35,40 @@ port_mark_town_visited_and_load_toggleable_objects(
 	port_u8 map = memory[W_CUR_MAP];
 	if (map < FIRST_ROUTE_MAP)
 		memory[W_TOWN_VISITED + (map >> 3)] |= (port_u8)(1u << (map & 7u));
-	port_u16 source = read_word(memory, (port_u16)(TOGGLE_POINTERS + (port_u16)map * 2u));
-	port_u16 offset = source >= TOGGLE_STATES ? (port_u16)((source - TOGGLE_STATES) / 3u) : 0u;
+	port_u16 source = read_word(memory, (port_u16)(TOGGLE_POINTERS +
+	    (port_u16)map * 2u));
+	port_u16 difference = (port_u16)(source - TOGGLE_STATES);
+	struct divide_wrapper_state divide = {0};
+	divide.divide.registers = *registers;
+	/* Divide consumes B as the number of dividend bytes; the assembly sets
+	 * B=2 immediately before its call and the home wrapper restores it. */
+	divide.divide.registers.b = 2;
+	divide.divide.dividend[0] = (port_u8)(difference >> 8);
+	divide.divide.dividend[1] = (port_u8)difference;
+	divide.divide.dividend[2] = 0;
+	divide.divide.dividend[3] = 0;
+	divide.divide.divisor = 3;
+	divide.loaded_rom_bank = memory[H_LOADED_ROM_BANK];
+	divide.mapper_bank = memory[R_ROMB];
+	memory[H_DIVIDEND] = divide.divide.dividend[0];
+	memory[H_DIVIDEND + 1u] = divide.divide.dividend[1];
+	memory[H_DIVIDEND + 2u] = divide.divide.dividend[2];
+	memory[H_DIVIDEND + 3u] = divide.divide.dividend[3];
+	memory[H_DIVISOR] = divide.divide.divisor;
+	port_divide_wrapper(&divide);
+	*registers = divide.divide.registers;
+	memory[H_DIVIDEND] = divide.divide.dividend[0];
+	memory[H_DIVIDEND + 1u] = divide.divide.dividend[1];
+	memory[H_DIVIDEND + 2u] = divide.divide.dividend[2];
+	memory[H_DIVIDEND + 3u] = divide.divide.dividend[3];
+	memory[H_DIVISOR] = divide.divide.divisor;
+	memory[H_LOADED_ROM_BANK] = divide.loaded_rom_bank;
+	memory[R_ROMB] = divide.mapper_bank;
+	port_u16 offset = (port_u16)(((port_u16)divide.divide.dividend[2] << 8) |
+	    divide.divide.dividend[3]);
+	registers->b = map;
 	port_u16 destination = W_TOGGLE_LIST;
+	registers->c = (port_u8)offset;
 	for (;;) {
 		port_u8 record_map = memory[source++];
 		if (record_map == 0xffu) {

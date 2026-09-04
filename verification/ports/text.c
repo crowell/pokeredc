@@ -107,11 +107,11 @@ ps_coord(port_u8 x, port_u8 y)
 	return (port_u16)(W_TILE_MAP + (port_u16)y * SCREEN_WIDTH + x);
 }
 
-__attribute__((noinline, used)) void
-port_place_string(struct cpu_register_state *state, port_u8 *memory)
+static void
+place_string_from_saved_cursor(struct cpu_register_state *state,
+	port_u8 *memory, port_u16 saved_hl)
 {
 	port_u16 dest = (port_u16)(((port_u16)state->h << 8) | state->l);
-	port_u16 saved_hl = dest;
 	port_u16 src = (port_u16)(((port_u16)state->d << 8) | state->e);
 	port_u8 c;
 
@@ -441,4 +441,24 @@ port_place_string(struct cpu_register_state *state, port_u8 *memory)
 		ps_emit(memory, &dest, c);
 		src = (port_u16)(src + 1);
 	}
+}
+
+__attribute__((noinline, used)) void
+port_place_string(struct cpu_register_state *state, port_u8 *memory)
+{
+	port_u16 cursor = (port_u16)(((port_u16)state->h << 8) | state->l);
+	place_string_from_saved_cursor(state, memory, cursor);
+}
+
+/* Port of the PlaceNextChar entry in home/text.asm.  PlaceString enters this
+ * label after saving its initial HL; every ordinary character and control
+ * token eventually returns here through the NextChar jump.  The shared loop
+ * therefore receives the live cursor in registers.HL and the explicit native
+ * representation of the caller's saved cursor. */
+__attribute__((noinline, used)) void
+port_place_next_char(struct place_next_char_state *state, port_u8 *memory)
+{
+	port_u16 saved_hl = (port_u16)(((port_u16)state->saved_h << 8) |
+	    state->saved_l);
+	place_string_from_saved_cursor(&state->registers, memory, saved_hl);
 }

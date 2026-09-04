@@ -48,6 +48,309 @@ struct cpu_register_state {
 	port_u8 l;
 };
 
+/* State for the DisplayTextID text-script entry.  The complete dialogue
+ * dispatcher continues into many interactive handlers; this port carries
+ * the register/bank state through its shared initialization prefix. */
+struct display_text_id_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+struct display_text_id_init_private_state {
+	struct cpu_register_state registers;
+	port_u8 list_menu_id;
+};
+
+struct print_predef_text_id_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
+struct display_text_box_id_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+};
+
+/* State for the DisplayPokemonFaintedText text-flow handler.  The handler
+ * tail-enters the shared AfterDisplayingTextID continuation, so its host
+ * polled input sequence is carried alongside the live CPU registers. */
+struct display_pokemon_fainted_text_state {
+	struct cpu_register_state registers;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the DisplayRepelWoreOffText text-flow handler. */
+struct display_repel_wore_off_text_state {
+	struct cpu_register_state registers;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the DisplayPlayerBlackedOutText text-flow handler. */
+struct display_player_blacked_out_text_state {
+	struct cpu_register_state registers;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the DisplaySafariGameOverText text-flow handler. */
+struct display_safari_game_over_text_state {
+	struct cpu_register_state registers;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the DisplayPokemonCenterDialogue text-flow wrapper. */
+struct display_pokemon_center_dialogue_state {
+	struct cpu_register_state registers;
+	port_u8 item_price[3];
+	port_u8 loaded_rom_bank;
+	port_u8 romb;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the TextScript_GameCornerPrizeMenu dispatch wrapper. */
+struct text_script_game_corner_prize_menu_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	struct cpu_register_state callback_registers;
+	port_u8 callback_loaded_rom_bank;
+	port_u8 callback_mapper_bank;
+	port_u8 callback_call[10];
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the TextScript_PokemonCenterPC dispatch wrapper. */
+struct text_script_pokemon_center_pc_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	struct cpu_register_state callback_registers;
+	port_u8 callback_loaded_rom_bank;
+	port_u8 callback_mapper_bank;
+	port_u8 callback_call[10];
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the TextScript_BillsPC dispatch wrapper. */
+struct text_script_bills_pc_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	struct cpu_register_state callback_registers;
+	port_u8 callback_loaded_rom_bank;
+	port_u8 callback_mapper_bank;
+	port_u8 callback_call[10];
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the TextScript_ItemStoragePC dispatch wrapper. */
+struct text_script_item_storage_pc_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 mapper_bank;
+	struct cpu_register_state callback_registers;
+	port_u8 callback_loaded_rom_bank;
+	port_u8 callback_mapper_bank;
+	port_u8 callback_call[10];
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the DisplayPokemartDialogue text-flow wrapper. */
+struct display_pokemart_dialogue_state {
+	struct cpu_register_state registers;
+	port_u8 loaded_rom_bank;
+	port_u8 romb;
+	port_u8 list_menu_id;
+	port_u8 private_list_scroll;
+	port_u8 private_saved_scroll;
+	port_u8 private_bought_sold;
+	port_u8 private_current_menu;
+	port_u8 private_player_number;
+	port_u8 private_print_prices;
+	port_u8 private_textbox_id;
+	port_u8 joy_inputs[8];
+	port_u8 joy_input_count;
+};
+
+/* State for the PlaceDexEnd dictionary-token handler.  The assembly caller
+ * has the output cursor in HL and its saved cursor on the stack; the native
+ * contract carries that popped HL explicitly. */
+struct place_dex_end_state {
+	struct cpu_register_state registers;
+	port_u8 saved_h;
+	port_u8 saved_l;
+};
+
+/* State for the DoneText dictionary-token handler. */
+struct done_text_state {
+	struct cpu_register_state registers;
+	port_u8 saved_h;
+	port_u8 saved_l;
+};
+
+/* State for the NullChar dictionary-token handler. */
+struct null_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_h;
+	port_u8 saved_l;
+};
+
+/* State for the PlaceCommandCharacter dictionary-token helper. */
+struct place_command_character_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PrintPlayerName dictionary-token wrapper. */
+struct print_player_name_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PrintRivalName dictionary-token wrapper. */
+struct print_rival_name_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the TrainerChar dictionary-token wrapper. */
+struct trainer_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PCChar dictionary-token wrapper. */
+struct pc_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the TMChar dictionary-token wrapper. */
+struct tm_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the RocketChar dictionary-token wrapper. */
+struct rocket_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PlacePOKe dictionary-token wrapper. */
+struct place_poke_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the SixDotsChar dictionary-token wrapper. */
+struct six_dots_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PlacePKMN dictionary-token wrapper. */
+struct place_pkmn_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the _ContTextNoPause dictionary-token handler. */
+struct cont_text_no_pause_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PromptText dictionary-token handler. */
+struct prompt_text_state {
+	struct cpu_register_state registers;
+	port_u8 saved_h;
+	port_u8 saved_l;
+};
+
+/* State for the ContText dictionary-token handler. */
+struct cont_text_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PageChar dictionary-token handler. */
+struct page_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the Paragraph dictionary-token handler. */
+struct paragraph_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PlaceMoveUsersName dictionary-token handler. */
+struct place_move_users_name_state {
+	struct cpu_register_state registers;
+	port_u8 saved_d;
+	port_u8 saved_e;
+};
+
+/* State for the PlaceNextChar entry inside PlaceString.  The assembly
+ * caller keeps the original destination cursor on the stack; native C
+ * carries that saved cursor explicitly while the live cursor remains in
+ * registers.HL. */
+struct place_next_char_state {
+	struct cpu_register_state registers;
+	port_u8 saved_h;
+	port_u8 saved_l;
+};
+
+/* State for the NextTextCommand dispatcher entry.  TextCommandProcessor
+ * saves AF on the SM83 stack before entering this label; the native contract
+ * carries both saved bytes explicitly. */
+struct next_text_command_state {
+	struct cpu_register_state registers;
+	port_u8 saved_a;
+	port_u8 saved_f;
+};
+
+/* State for CloseTextDisplay.  The caller's saved AF and the host-provided
+ * palette/frame observations are explicit because native C has no SM83
+ * stack or ROM bus. */
+struct close_text_display_state {
+	struct cpu_register_state registers;
+	port_u8 saved_a;
+	port_u8 saved_f;
+	port_u8 map_pal_offset;
+	port_u8 palette[3];
+	port_u8 observed_vblank;
+};
+
 struct script_reset_state {
 	struct cpu_register_state registers;
 	port_u8 joy_ignore;
@@ -1261,6 +1564,15 @@ struct default_music_fade_state {
 	port_u8 dispatched;
 	port_u8 low_health_alarm;
 	port_u8 channel_sound_ids[3];
+};
+
+/* State carried across the ForceBikeOrSurf tail into the proven
+ * PlayDefaultMusic continuation. */
+struct force_bike_or_surf_state {
+	struct cpu_register_state registers;
+	struct cpu_register_state music_callback_registers;
+	port_u8 music_callback_status_flags4;
+	port_u8 music_callback_last_music_sound_id;
 };
 
 struct play_music_state {
@@ -3134,6 +3446,34 @@ _Static_assert(sizeof(struct string_cmp_state) == 8, "unexpected ABI padding");
 _Static_assert(sizeof(struct accumulator_state) == 2, "unexpected ABI padding");
 _Static_assert(sizeof(struct binary_accumulator_state) == 4, "unexpected ABI padding");
 _Static_assert(sizeof(struct cpu_register_state) == 8, "unexpected ABI padding");
+_Static_assert(sizeof(struct display_pokemon_fainted_text_state) == 17,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct display_text_id_state) == 19,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct display_text_id_init_private_state) == 9,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct print_predef_text_id_state) == 10,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct display_text_box_id_state) == 10,
+    "unexpected ABI padding");
+_Static_assert(sizeof(struct display_repel_wore_off_text_state) == 17,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct display_player_blacked_out_text_state) == 17,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct display_safari_game_over_text_state) == 17,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct display_pokemon_center_dialogue_state) == 22,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct text_script_game_corner_prize_menu_state) == 39,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct text_script_pokemon_center_pc_state) == 39,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct text_script_bills_pc_state) == 39,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct text_script_item_storage_pc_state) == 39,
+	"unexpected ABI padding");
+_Static_assert(sizeof(struct display_pokemart_dialogue_state) == 27,
+	"unexpected ABI padding");
 _Static_assert(sizeof(struct auto_text_box_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct init_options_state) == 10, "unexpected ABI padding");
 _Static_assert(sizeof(struct discard_buttons_state) == 11, "unexpected ABI padding");
@@ -3228,6 +3568,7 @@ _Static_assert(sizeof(struct jump_move_effect_state) == 14, "unexpected ABI padd
 _Static_assert(sizeof(struct init_battle_dispatch_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct print_type_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct default_music_fade_state) == 15, "unexpected ABI padding");
+_Static_assert(sizeof(struct force_bike_or_surf_state) == 18, "unexpected ABI padding");
 _Static_assert(sizeof(struct play_music_state) == 13, "unexpected ABI padding");
 _Static_assert(sizeof(struct bankswitch_state) == 12, "unexpected ABI padding");
 _Static_assert(sizeof(struct far_copy_double_state) == 16, "unexpected ABI padding");

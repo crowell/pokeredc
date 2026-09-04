@@ -73,7 +73,8 @@ def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
 
 
 def _setup(state: angr.SimState, base: int, *, text_id: int,
-           pokedex: bool, no_box: bool, no_sprite_updates: bool) -> None:
+           pokedex: bool, no_box: bool, no_sprite_updates: bool,
+           update_sprites_enabled: int) -> None:
     state.memory.store(base + W_LIST_MENU_ID, claripy.BVV(0xA5, 8))
     state.memory.store(base + W_AUTO_TEXT_BOX_DRAWING_CONTROL,
                        claripy.BVV(1 if no_box else 0, 8))
@@ -81,7 +82,8 @@ def _setup(state: angr.SimState, base: int, *, text_id: int,
     state.memory.store(base + W_FONT_LOADED, claripy.BVV(0x80, 8))
     state.memory.store(base + W_MISC_FLAGS,
                        claripy.BVV(0x10 if no_sprite_updates else 0, 8))
-    state.memory.store(base + W_UPDATE_SPRITES_ENABLED, claripy.BVV(2, 8))
+    state.memory.store(base + W_UPDATE_SPRITES_ENABLED,
+                       claripy.BVV(update_sprites_enabled, 8))
     state.memory.store(base + W_EVENT_FLAGS + 4,
                        claripy.BVV(1 << 5 if pokedex else 0, 8))
     state.memory.store(base + H_WY, claripy.BVV(0x77, 8))
@@ -221,7 +223,8 @@ class LoadFont(angr.SimProcedure):
 
 
 def _assembly(values: dict[str, claripy.ast.BV], *, text_id: int,
-              pokedex: bool, no_box: bool, no_sprite_updates: bool) -> list[Endpoint]:
+              pokedex: bool, no_box: bool, no_sprite_updates: bool,
+              update_sprites_enabled: int) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "DisplayTextIDInit")
     p = angr.Project(rom_window(ROM, location.bank), auto_load_libs=False,
                      rebase_granularity=0x100,
@@ -243,7 +246,8 @@ def _assembly(values: dict[str, claripy.ast.BV], *, text_id: int,
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     _setup(state, 0, text_id=text_id, pokedex=pokedex, no_box=no_box,
-           no_sprite_updates=no_sprite_updates)
+           no_sprite_updates=no_sprite_updates,
+           update_sprites_enabled=update_sprites_enabled)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     manager = p.factory.simulation_manager(state)
     manager.explore(find=RETURN, num_find=1)
@@ -253,14 +257,16 @@ def _assembly(values: dict[str, claripy.ast.BV], *, text_id: int,
 
 
 def _native(values: dict[str, claripy.ast.BV], *, text_id: int,
-            pokedex: bool, no_box: bool, no_sprite_updates: bool) -> list[Endpoint]:
+            pokedex: bool, no_box: bool, no_sprite_updates: bool,
+            update_sprites_enabled: int) -> list[Endpoint]:
     p = angr.Project(ELF, auto_load_libs=False)
     function = p.loader.find_symbol("port_display_text_id_init")
     assert function is not None
     state = p.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     _setup(state, NATIVE_MEMORY, text_id=text_id, pokedex=pokedex, no_box=no_box,
-           no_sprite_updates=no_sprite_updates)
+           no_sprite_updates=no_sprite_updates,
+           update_sprites_enabled=update_sprites_enabled)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     manager = p.factory.simulation_manager(state)
     manager.run()
@@ -272,21 +278,26 @@ def _native(values: dict[str, claripy.ast.BV], *, text_id: int,
 
 @pytest.mark.skipif(not ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-@pytest.mark.parametrize("text_id,pokedex,no_box,no_sprite_updates", (
-    (1, False, False, False),
-    (0, False, False, False),
-    (0, True, False, False),
-    (1, False, True, False),
-    (1, False, False, True),
+@pytest.mark.parametrize("text_id,pokedex,no_box,no_sprite_updates,update_sprites_enabled", (
+    (1, False, False, False, 0),
+    (1, False, False, False, 1),
+    (1, False, False, False, 2),
+    (0, False, False, False, 0),
+    (0, True, False, False, 1),
+    (1, False, True, False, 2),
+    (1, False, False, True, 2),
 ))
 def test_display_text_id_init_pathwise_equivalence(
     text_id: int, pokedex: bool, no_box: bool, no_sprite_updates: bool,
+    update_sprites_enabled: int,
 ) -> None:
     values = _inputs(f"display_text_id_init_{text_id}_{int(pokedex)}_{int(no_box)}_{int(no_sprite_updates)}")
     assert_pathwise_equivalent(
         _assembly(values, text_id=text_id, pokedex=pokedex, no_box=no_box,
-                  no_sprite_updates=no_sprite_updates),
+                  no_sprite_updates=no_sprite_updates,
+                  update_sprites_enabled=update_sprites_enabled),
         _native(values, text_id=text_id, pokedex=pokedex, no_box=no_box,
-                no_sprite_updates=no_sprite_updates),
+                no_sprite_updates=no_sprite_updates,
+                update_sprites_enabled=update_sprites_enabled),
         (*REGISTERS, "memory"),
     )
