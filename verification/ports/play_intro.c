@@ -2,6 +2,11 @@
 
 void port_clear_sprites(struct clear_sprites_state *);
 void port_delay_frame(struct delay_frame_state *, const port_u8 *);
+void port_init_intro_nidorino_oam(struct init_intro_oam_state *, port_u8 *);
+void port_intro_copy_tiles(struct cpu_register_state *);
+void port_run_palette_command(struct cpu_register_state *, port_u8 *);
+void port_intro_move_mon(struct cpu_register_state *, port_u8 *);
+
 
 #define H_JOY_HELD 0xffb4u
 #define H_AUTO_BG_TRANSFER_ENABLED 0xffbau
@@ -168,4 +173,41 @@ port_play_intro(struct cpu_register_state *state, port_u8 *memory)
 	delay.registers = *state;
 	port_delay_frame(&delay, observations);
 	*state = delay.registers;
+}
+/*
+ * The scene port currently covers the setup and first-interruption path.
+ * The remaining animation choreography stays outside this proof domain.
+ */
+__attribute__((noinline, used)) void
+port_play_intro_scene(struct cpu_register_state *state, port_u8 *memory)
+{
+	struct init_intro_oam_state init;
+
+	state->b = 7;
+	port_run_palette_command(state, memory);
+	state->a = 0xe4;
+	memory[0xff47u] = state->a;
+	memory[0xff48u] = state->a;
+	memory[0xff49u] = state->a;
+	state->a = 0;
+	memory[H_SCX] = state->a;
+
+	state->b = 3;
+	port_intro_copy_tiles(state);
+	state->a = 0;
+	memory[W_BASE_COORD_X] = state->a;
+	state->a = 80;
+	memory[W_BASE_COORD_Y] = state->a;
+
+	init.registers = *state;
+	init.registers.b = 6;
+	init.registers.c = 6;
+	init.base_y = memory[W_BASE_COORD_Y];
+	init.base_x = memory[W_BASE_COORD_X];
+	port_init_intro_nidorino_oam(&init, memory);
+	*state = init.registers;
+
+	state->d = 40;
+	state->e = MOVE_NIDORINO_RIGHT;
+	port_intro_move_mon(state, memory);
 }

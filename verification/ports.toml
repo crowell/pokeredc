@@ -11697,6 +11697,23 @@ proof_domain = "the complete IntroNidorinoAnimation1 table, including signed -1 
 decoder = "exact 27-byte linked body checked; table reads, terminal comparison, coordinate stores, UpdateIntroNidorinoOAM and DelayFrames boundaries, DE preservation/increment, loop, and return are modeled. Other animation tables and interruption paths remain outside this proof"
 
 [[function]]
+assembly_symbol = "PlayIntroScene"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_play_intro_scene"
+c_source = "verification/ports/play_intro.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hSCX",
+    "wBaseCoordX and wBaseCoordY",
+    "BGP/OBP0/OBP1",
+    "joypad debounce and frame-counter interruption state",
+    "all initialized and updated OAM bytes",
+]
+proof_domain = "first-interruption path after initial Nidorino setup: palette setup, first tile-copy boundary, six-by-six OAM initialization, one Nidorino movement update, and immediate UP+SELECT+B interruption; compares all registers, flags, globals, hardware palette/SCX, joypad debounce state, and all 36 OAM entries"
+decoder = "exact 44-byte linked prefix checked; LDH/absolute stores and XOR use instruction shims, while RunPaletteCommand, IntroCopyTiles, InitIntroNidorinoOAM, UpdateIntroNidorinoOAM, and CheckForUserInterruption are matched call-boundary summaries. The remaining sound, animation, Gengar, and non-interrupted choreography remain outside this proof"
+
+[[function]]
 assembly_symbol = "IntroMoveMon"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_intro_move_mon"
