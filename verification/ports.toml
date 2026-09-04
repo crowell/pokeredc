@@ -19587,6 +19587,19 @@ proof_domain = "all register/flag inputs and every 16-bit HL; HL is incremented 
 decoder = "exact 5-byte body checked (2323c3b507); the INC HL instructions are run natively and the JP 0x7b5 tail is an explicit boundary. Pathwise equivalence proven against port_check_warps_no_collision_retry2 across all register/flag inputs."
 
 [[function]]
+assembly_symbol = "WarpFound2"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_warp_found2"
+c_source = "verification/ports/warp_found2.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wWarpedFromWhichWarp",
+    "wWarpedFromWhichMap",
+]
+proof_domain = "the 16-byte WarpFound2 prefix through CheckIfInOutsideMap, with wNumberOfWarps=3, wCurMap=1, and symbolic initial registers; later map-type branches, map-change sound, movement flags, and EnterMap recursion remain outside this proof"
+decoder = "exact 16-byte linked prefix checked; SM83 absolute loads/stores and SUB C use individual instruction shims, while the independently proven CheckIfInOutsideMap transition composes at its call boundary and native C calls the real predicate port"
+[[function]]
 assembly_symbol = "ContinueCheckWarpsNoCollisionLoop"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_continue_check_warps_no_collision_loop"
