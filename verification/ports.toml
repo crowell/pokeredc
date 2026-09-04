@@ -15456,7 +15456,7 @@ status = "proven"
 observables = [
     "all registers and flags (with carry as the wrapper result)",
     "hLoadedROMBank and rROMB",
-    "inventory count, item, quantity, and terminator writes",
+    "active inventory count, item, quantity, and terminator writes",
     "wCurItem, wItemQuantity, and body-shadow restoration",
 ]
 proof_domain = "entry ROM banks 1 and 2; non-full bag and PC-box inventories with nonzero quantities in 0..99, including small and empty inventories; full bags and full inventories are excluded"
