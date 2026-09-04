@@ -30355,6 +30355,20 @@ proof_domain = "all general-register and canonical-flag inputs, an arbitrary 3-b
 decoder = "exact 30-byte linked body e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b verified; SM83 HL+ loads and LDH stores are shimmed, the recursive processor call is replaced by a returning boundary, and the final jp NextTextCommand is the terminal sentinel"
 
 [[function]]
+assembly_symbol = "LoadCopyrightAndTextBoxTiles"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_load_copyright_and_text_box_tiles"
+c_source = "verification/ports/load_copyright_and_text_box_tiles.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "hWY",
+    "tilemap after ClearScreen and copyright placement",
+]
+proof_domain = "all general-register and canonical-flag inputs with LCD disabled, two-row title text layout, fixed title-screen tilemap/source data, and the real ClearScreen, LoadTextBoxTilePatterns, CopyVideoData, and PlaceString compositional boundaries"
+decoder = "exact 9-byte linked wrapper verified; hWY clear and ordered ClearScreen/LoadTextBoxTilePatterns calls execute before the complete LoadCopyrightTiles fall-through, with individual helper summaries; LCD-enabled and single-spaced layout branches remain outside this proof"
+
+[[function]]
 assembly_symbol = "LoadCopyrightTiles"
 assembly_source = "engine/movie/title.asm"
 c_symbol = "port_load_copyright_tiles"
