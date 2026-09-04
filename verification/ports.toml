@@ -30854,3 +30854,17 @@ observables = [
 ]
 proof_domain = "concrete '@'-terminated name bytes across 7 type/length configurations (player-partial len 3, player-full len 7, rival-partial len 2, mon-partial len 5, mon-full len 10, mon-empty len 0, above-range type-3 len 4 taking the mon branch); all general-register and canonical-flag inputs, arbitrary initial tilemap/name-length/cursor/menu-item bytes (untouched tail cells fixed to prove preservation), and fixed wStatusFlags5 text-delay-disabled bit with a concrete wMenuCursorLocation pointer; single terminal path per case compared against the real linked body"
 decoder = "exact 99-byte linked body checked; real CalcStringLength/ClearScreenArea/PlaceString/EraseMenuCursor callees execute inline with only individual SM83 seams shimmed (EA/FA loads/stores, LD [HL+],A, CP/AND/BIT/DEC/INC/ADD-HL flag shims, software PUSH/POP, conditional RET forks, flag-preserving tail loads); production C calls the real proven ports with real loops and preserved call ordering"
+[[function]]
+assembly_symbol = "PrintNamingText"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_print_naming_text"
+c_source = "verification/ports/print_naming_text.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "naming-screen tilemap output",
+    "wMonPartySpriteSpecies, wPokedexNum, wNamedObjectIndex, and wNameBuffer",
+    "WriteMonPartySpriteOAMBySpecies and GetMonName call snapshots",
+]
+proof_domain = "all register inputs, arbitrary 10-byte mon names, and the three naming branches (type 0, type 1, and type 2-or-higher representative); sprite lookup/OAM and mon-name generation are supplied at their proven call boundaries"
+decoder = "exact linked body through the final JP PlaceString checked; branch selection, species handoff, sprite call continuation, named-object handoff, two name placements, and leftover blank tile are modeled with audited instruction seams and compositional dependency summaries"
