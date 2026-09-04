@@ -11683,6 +11683,21 @@ decoder = "exact 16-byte body and both global addresses checked; initializer/fin
 
 
 [[function]]
+assembly_symbol = "IntroMoveMon"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_intro_move_mon"
+c_source = "verification/ports/play_intro.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "hSCX, wBaseCoordX, and wBaseCoordY",
+    "the joypad debounce outputs",
+    "the updated intro OAM entries",
+]
+proof_domain = "one movement step for each of MOVE_NIDORINO_RIGHT, MOVE_GENGAR_LEFT, and MOVE_GENGAR_RIGHT with no user interruption; the Nidorino path compares all 36 updated OAM entries and each path compares registers, flags, movement globals, and debounce outputs"
+decoder = "exact 49-byte linked body checked; direction dispatch, SCX increments/decrements, the real C UpdateIntroNidorinoOAM and CheckForUserInterruption call boundaries, carry return, DEC D flags, loop, and return are modeled. User-interruption and multi-step movement domains remain outside this proof"
+
+[[function]]
 assembly_symbol = "UpdateIntroNidorinoOAM"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_update_intro_nidorino_oam"
