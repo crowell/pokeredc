@@ -21047,6 +21047,20 @@ proof_domain = "custom-name selection prefix through the DisplayNamingScreen cal
 decoder = "exact 39-byte linked prefix checked; OakSpeechSlidePicRight and DisplayIntroNameTextBox are matched real C call boundaries, while LD A,[wCurrentMenuItem], AND A, JR Z, LD HL, XOR A, and the naming-type store use instruction shims. Default-name selection, interactive submission, and post-screen text remain outside this proof"
 
 [[function]]
+assembly_symbol = "ChooseRivalName"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_choose_rival_name"
+c_source = "verification/ports/choose_rival_name.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wCurrentMenuItem",
+    "wNamingScreenType",
+]
+proof_domain = "custom-name selection prefix through the DisplayNamingScreen call boundary; the shared slide, intro name-box menu, custom-screen selection, and rival naming-screen type state are compared under the DisplayIntroNameTextBox custom-menu contract"
+decoder = "exact 40-byte linked prefix checked; OakSpeechSlidePicRight and DisplayIntroNameTextBox are matched real C call boundaries, while LD A,[wCurrentMenuItem], AND A, JR Z, LD HL, LD A,1, and the naming-type store use instruction shims. Default-name selection, interactive submission, and post-screen text remain outside this proof"
+
+[[function]]
 assembly_symbol = "DisplayTitleScreen.doClearSaveDialogue"
 assembly_source = "engine/movie/title.asm"
 c_symbol = "port_display_title_screen_do_clear_save_dialogue"
