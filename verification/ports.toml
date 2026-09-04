@@ -15913,6 +15913,20 @@ decoder = "the exact complete 18-byte dispatcher executes under angr across both
 
 
 [[function]]
+assembly_symbol = "OakSpeechSlidePicCommon"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_oak_speech_slide_pic_common"
+c_source = "verification/ports/oak_speech_slide_common.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags after the six-pass loop",
+    "hSlideDirection, hSlideAmount, hSlidingRegionSize, and hAutoBGTransferEnabled",
+    "the complete affected tilemap window",
+]
+proof_domain = "both caller-valid directions (0 and $ff), fixed six-pass/0x7d-byte intro geometry, all other general-register and canonical-flag inputs, and arbitrary initial bytes in the affected tilemap window"
+decoder = "exact 83-byte linked body checked; the six 0x7d-byte directional copy passes, zero-fill on left slides, Delay3 boundaries, HRAM state, stack register restoration, and final DEC flags are modeled in the proof, while native production C calls the real DelayFrames port"
+
+[[function]]
 assembly_symbol = "OakSpeechSlidePicLeft"
 assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
 c_symbol = "port_oak_speech_slide_pic_left"
