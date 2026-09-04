@@ -21015,6 +21015,24 @@ proof_domain = "all general-register and canonical-flag inputs, a concrete NAME-
 decoder = "exact 55-byte linked body checked; TextBoxBorder, both PlaceString calls, and UpdateSprites are explicit compositional call boundaries, while the SM83 XOR/INC and absolute stores execute under individual shims"
 
 [[function]]
+assembly_symbol = "DisplayNamingScreen"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_display_naming_screen"
+c_source = "verification/ports/display_naming_screen.c"
+status = "partial"
+observables = [
+    "A and F",
+    "H and L naming-buffer cursor",
+    "wStatusFlags5",
+    "naming menu globals",
+    "wStringBuffer",
+    "wNamingScreenSubmitName",
+    "wAnimCounter",
+]
+proof_domain = "deterministic naming-screen setup through the first PrintAlphabet call boundary; compares the no-text-delay flag, complete initial menu state, initial string-buffer terminator, submit and animation flags, and all live registers"
+decoder = "exact 90-byte linked prefix checked; SET [HL], absolute stores, LD [HL+] stores, and LD HL,nn use instruction shims, while display, palette, tile, sprite, border, and naming-text calls are matched call-boundary summaries. Interactive alphabet input and submission remain outside this proof"
+
+[[function]]
 assembly_symbol = "DisplayTitleScreen.doClearSaveDialogue"
 assembly_source = "engine/movie/title.asm"
 c_symbol = "port_display_title_screen_do_clear_save_dialogue"
