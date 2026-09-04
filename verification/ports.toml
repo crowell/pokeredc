@@ -21803,7 +21803,7 @@ decoder = "complete routine body is ported; linked assembly executes the pointer
 [[function]]
 assembly_symbol = "LoadMoveAnimationTiles"
 assembly_source = "engine/battle/animations.asm"
-c_symbol = "port_load_move_animation_tiles_zero"
+c_symbol = "port_load_move_animation_tiles"
 c_source = "verification/ports/load_move_animation_tiles.c"
 status = "partial"
 observables = [
@@ -21818,8 +21818,8 @@ observables = [
     "wTempTilesetNumTiles",
     "wWhichBattleAnimTileset",
 ]
-proof_domain = "first move-animation tileset (wWhichBattleAnimTileset=0), arbitrary incoming registers and prior temporary tile-count byte"
-decoder = "tileset-zero table entry and pre-CopyVideoData register setup are modeled; CopyVideoData remains the explicit downstream continuation"
+proof_domain = "wWhichBattleAnimTileset values 0, 1, and 2, arbitrary incoming registers, canonical flags, and temporary tile-count state; CopyVideoData is verified as the linked downstream helper boundary"
+decoder = "complete routine body is ported; linked assembly executes the banked pointer-table lookup, count/address loads, destination setup, and CopyVideoData call boundary with individual SM83 instruction shims; invalid tileset values and graphics-transfer side effects remain outside this proof"
 
 [[function]]
 assembly_symbol = "MoveAnimation"
