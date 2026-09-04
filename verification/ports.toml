@@ -20240,6 +20240,22 @@ proof_domain = "all general-register and canonical-flag inputs with the four fix
 decoder = "exact 56-byte linked body verified; every setup instruction, all three calls, and the final JP execute in the linked ROM body. The individual FarCopyData2 call shims copy every byte and advance HL/DE/BC/A exactly as the proven boundary, while native C calls the real FarCopyData2 implementation."
 
 [[function]]
+assembly_symbol = "LoadShootingStarGraphics"
+assembly_source = "engine/movie/splash.asm"
+c_symbol = "port_load_shooting_star_graphics"
+c_source = "verification/ports/load_shooting_star_graphics.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "rOBP0 and rOBP1",
+    "hAutoBGTransferEnabled, hLoadedROMBank, hROMBankTemp, rROMB",
+    "hVBlankCopySource, hVBlankCopyDest, hVBlankCopySize, hVBlankOccurred",
+    "the complete wShadowOAM region",
+]
+proof_domain = "all general-register and canonical-flag inputs, all tracked CopyVideoData hardware inputs, and all initial wShadowOAM bytes; the three one-tile transfers and two fixed OAM CopyData transfers"
+decoder = "exact 68-byte linked body checked; every setup instruction executes through individual SM83 shims, all three CopyVideoData calls use the complete proven transfer boundary, and both CopyData paths execute through the complete proven copy transition. Native C calls real port_copy_video_data and port_copy_data."
+
+[[function]]
 assembly_symbol = "PlayIntro"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_play_intro"
