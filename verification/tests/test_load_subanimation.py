@@ -373,12 +373,22 @@ def _native(values: dict[str, claripy.ast.BV], packed: int, turn: int) -> list[E
 
 @pytest.mark.parametrize(
     "packed,turn",
-    ((0x03, 0), (0x23, 1), (0xA3, 0), (0xA3, 1), (0x83, 1)),
+    [
+        (subanimation_type << 5 | counter, turn)
+        for subanimation_type in range(8)
+        for counter in (1, 3)
+        for turn in (0, 1)
+    ],
 )
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_load_subanimation_pathwise_equivalence(packed: int, turn: int) -> None:
     values = _inputs(f"load_subanimation_{packed:02x}_{turn}")
+    if packed == 1 and turn == 0:
+        location = symbol_location(SYMBOLS, "LoadSubanimation")
+        assert linked_bytes(ROM, location, 70) == bytes.fromhex(
+            "fa95d067fa94d06f2a5f7e571a47e61fea87d078e6e0fea02005cdca411803cdc241cb3fcb37ea8bd0fe04210000200bfa87d03d010300093d20fc13197dea96d07cea97d0c9"
+        )
     assert_pathwise_equivalent(
         _assembly(values, packed, turn),
         _native(values, packed, turn),

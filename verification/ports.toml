@@ -22070,8 +22070,8 @@ observables = [
     "wSubAnimTransform",
     "wSubAnimSubEntryAddr",
 ]
-proof_domain = "fixed pointer-table and subanimation addresses, all general-register and canonical-flag inputs, non-enemy normal and transformed cases, enemy/player-turn cases, and the reverse-subanimation case with a three-frame counter"
-decoder = "complete routine body is ported; linked assembly executes the pointer loads, packed count/type extraction, transform1/transform2 boundaries, reverse offset loop, 16-bit address arithmetic, and output stores under individual SM83 instruction shims; other non-enemy transform values and arbitrary reverse counters remain outside this proof"
+proof_domain = "all eight packed subanimation types, one- and three-frame counters, both player and enemy turns, arbitrary general-register and canonical-flag inputs, fixed pointer-table and subanimation addresses"
+decoder = "complete routine body is ported; linked assembly executes pointer loads, packed count/type extraction, both transform helper boundaries, reverse offset loop, 16-bit address arithmetic, and output stores under individual SM83 instruction shims; the functional equivalence test also asserts the exact linked 70-byte body; counter values other than 1 and 3 remain outside this proof"
 
 [[function]]
 assembly_symbol = "LoadMoveAnimationTiles"
