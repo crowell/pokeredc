@@ -30,7 +30,7 @@ void port_copy_data(struct cpu_register_state *, port_u8 *);
 #define SMALL_STARS_WAVE_SIZE 8u
 #define OBJ_SIZE 4u
 #define SCREEN_HEIGHT_PX_PLUS_OAM_Y_OFS 0xa0u
-#define SFX_SHOOTING_STAR 0x40u
+#define SFX_SHOOTING_STAR 0xc2u
 
 static void
 play_shooting_star_sound(struct cpu_register_state *registers, port_u8 *memory)
