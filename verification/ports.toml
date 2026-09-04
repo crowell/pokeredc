@@ -10136,13 +10136,12 @@ c_symbol = "port_load_map_sprite_tile_patterns"
 c_source = "verification/ports/load_map_sprite_tile_patterns.c"
 status = "partial"
 observables = [
-    "all registers and flags",
+    "all registers and flags on the zero-sprite path",
+    "wNumSprites, hVRAMSlot, hFourTileSpriteCount",
     "all sixteen sprite-state image-base offsets and temporary picture IDs",
-    "hVRAMSlot and hFourTileSpriteCount",
-    "the loaded sprite-pattern VRAM regions and transfer hardware state",
 ]
-proof_domain = "the no-sprite terminal path (wNumSprites = 0), with all registers, flags, and relevant memory symbolic; the complete nonzero loader is implemented and awaits its multi-sprite transfer proof"
-decoder = "exact 7-byte linked no-sprite entry path executes under angr with only the SM83 absolute load, AND, and conditional-return instruction boundaries shimmed; nonzero duplicate/new-sprite paths and their real transfer compositions remain outside this proof domain"
+proof_domain = "the complete zero-sprite terminal path and a nonzero first-sprite path for FIRST_STILL_SPRITE (0x3d) using VRAM slot 11 with wFontLoaded set; both paths compare the loader's sprite-state memory and VRAM bookkeeping, while only the zero-sprite path compares registers and flags"
+decoder = "the zero-sprite test executes the exact 7-byte linked entry path; the nonzero test executes the exact linked loadTilePatternLoop body through prior-slot rejection, free-slot selection, four-tile VRAM placement, font-loaded transfer skips, next-slot cleanup, and the sixteen-entry picture-ID clearing loop. Only individual SM83 absolute loads/stores, immediate pair loads, arithmetic/branch boundaries, the ReadSpriteSheetData call boundary, and the cleanup iteration are shimmed; the full multi-sprite transfer matrix remains outside this proof domain"
 
 
 

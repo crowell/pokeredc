@@ -205,7 +205,8 @@ port_load_map_sprite_tile_patterns(struct cpu_register_state *r, port_u8 *memory
 	hl = W_SPRITE_PLAYER_STATE_DATA2_PICTURE_ID;
 	for (unsigned i = 0; i < NUM_SPRITE_STATE_STRUCTS; ++i)
 		memory[(port_u16)(hl + i * SPRITE_STATE_LENGTH)] = 0;
-	r->a = 0;
+	r->a = (port_u8)(W_SPRITE_PLAYER_STATE_DATA2_PICTURE_ID +
+		NUM_SPRITE_STATE_STRUCTS * SPRITE_STATE_LENGTH);
 	r->b = 0;
 	r->f = PORT_FLAG_N | PORT_FLAG_Z;
 	set_pair(&r->h, &r->l,
