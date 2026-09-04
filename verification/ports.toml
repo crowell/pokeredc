@@ -20302,6 +20302,23 @@ proof_domain = "representative held-command and button-command early exits after
 decoder = "exact linked AnimateShootingStar body checked from AnimateShootingStar through SmallStarsOAM; both big-star interruption exits are exercised with complete dependency summaries. Native C calls the real graphics, sound, interruption, small-star movement, and copy ports; the uninterrupted flash and small-star tail remains unproven."
 
 [[function]]
+assembly_symbol = "PlayShootingStar"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_play_shooting_star"
+c_source = "verification/ports/play_shooting_star.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "rBGP and rLCDC",
+    "wCurOpponent, wNewSoundID, wAudioROMBank, wAudioSavedROMBank",
+    "hLoadedROMBank and rROMB",
+    "hJoyHeld",
+    "the complete wShadowOAM region",
+]
+proof_domain = "the interrupted shooting-star path with all title-screen orchestration calls composed through real production C dependencies; fixed zeroed 64K memory and the UP+SELECT+B interruption command"
+decoder = "exact 96-byte linked body checked; complete call sequencing, palette/LCD bit operations, music setup, cleanup, and JP Delay3 execute in the linked body, with individual instruction shims only for SM83 immediate loads/stores and memory-bit operations. The uninterrupted animation delay path remains outside the proof domain."
+
+[[function]]
 assembly_symbol = "PlayIntro"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_play_intro"
