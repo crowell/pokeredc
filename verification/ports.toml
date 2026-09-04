@@ -30790,3 +30790,16 @@ observables = [
 ]
 proof_domain = "all caller register/flag inputs with zero map warps, nonzero wMapPalOffset=1, and symbolic coordinates, destination/movement state, and three FadePal4 palette bytes. This composes IsPlayerStandingOnWarp's no-warp terminal and the complete LoadGBPal tail. Nonzero warp scans and the wMapPalOffset=0 GBFadeInFromWhite tail are implemented but remain outside this first composition proof."
 decoder = "exact 18-byte linked body checked inside the functional test. The banked IsPlayerStandingOnWarp call, absolute map-palette load, AND, and JP tail are instruction-level seams; the no-warp and LoadGBPal boundaries execute their complete applicable transitions while native C calls the real warp scanner and palette port."
+
+[[function]]
+assembly_symbol = "DakutensAndHandakutens"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_dakutens_and_handakutens"
+c_source = "verification/ports/dakutens_and_handakutens.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wNamingScreenLetter",
+]
+proof_domain = "all register/flag inputs with entry DE equality-constrained per case to the Dakutens (0x6885) or Handakutens (0x68d6) base and a valid two-character @-terminated wStringBuffer with symbolic bytes; every table-match position and the not-found terminator path are covered on both tables"
+decoder = "the native port calls the real proven port_calc_string_length and port_is_in_array with the entry-DE table pointer and $2 stride, then stores the dakuten variant on the found path; angr executes the complete linked body and both real callees with audited CP, INC, ADD HL, AND A, SCF, and LD [a16],A semantics"
