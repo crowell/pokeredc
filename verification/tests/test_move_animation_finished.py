@@ -17,8 +17,12 @@ from verification.harness.registers import (
     store_native_registers,
     symbolic_registers,
 )
-from verification.harness.rom import rom_window, symbol_location
-
+from verification.harness.rom import linked_bytes, rom_window, symbol_location
+from verification.harness.sm83_shims import (
+    Sm83DecRegister,
+    Sm83StoreAImmediate,
+    Sm83XorA,
+)
 ROOT = Path(__file__).resolve().parents[2]
 NATIVE_ELF = ROOT / "verification/build/ports.elf"
 ROM = ROOT / "pokered.gbc"
@@ -26,6 +30,7 @@ SYMBOLS = ROOT / "pokered.sym"
 NATIVE_STATE = 0x100000
 NATIVE_MEMORY = 0x200000
 DONE = 0xEFFF
+STACK = 0xD000
 W_ANIM_SOUND_ID = 0xCF07
 W_SUBANIM_TRANSFORM = 0xD08B
 W_SUBANIM_SUBENTRY_ADDR = 0xD096
@@ -53,13 +58,13 @@ class Endpoint:
     constraints: tuple[claripy.ast.Bool, ...]
 
 
-class FinishSummary(angr.SimProcedure):
-    def run(self) -> None:
-        self.state.memory.store(W_SUBANIM_SUBENTRY_ADDR, claripy.BVV(0, 8))
-        self.state.memory.store(W_UNUSED_MOVE_ANIM_BYTE, claripy.BVV(0, 8))
-        self.state.memory.store(W_SUBANIM_TRANSFORM, claripy.BVV(0, 8))
-        self.state.memory.store(W_ANIM_SOUND_ID, claripy.BVV(0xFF, 8))
-        self.jump(DONE)
+class CallBoundary(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None:
+        super().__init__()
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.jump(self.next_address)
 
 
 def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
@@ -101,10 +106,54 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
             "entry_point": location.address,
         },
     )
-    project.hook(location.address, FinishSummary(), length=1)
+    project.hook(location.address, CallBoundary(location.address + 3), length=3)
+    project.hook(location.address + 3, Sm83XorA(location.address + 4), length=1)
+    project.hook(
+        location.address + 4,
+        Sm83StoreAImmediate(W_SUBANIM_SUBENTRY_ADDR, location.address + 7),
+        length=3,
+    )
+    project.hook(
+        location.address + 7,
+        Sm83StoreAImmediate(W_UNUSED_MOVE_ANIM_BYTE, location.address + 10),
+        length=3,
+    )
+    project.hook(
+        location.address + 10, Sm83StoreAImmediate(W_SUBANIM_TRANSFORM, location.address + 13), length=3
+    )
+    project.hook(
+        location.address + 13, Sm83DecRegister("a", location.address + 14), length=1
+    )
+    project.hook(
+        location.address + 14,
+        Sm83StoreAImmediate(W_ANIM_SOUND_ID, location.address + 17),
+        length=3,
+    )
     state = project.factory.blank_state(addr=location.address)
     set_assembly_registers(state, values)
     _store_memory(state, 0, values)
+    state.regs.sp = STACK
+    state.memory.store(
+        STACK,
+        claripy.Concat(state.regs.a, state.regs.f),
+        endness="Iend_LE",
+    )
+    state.memory.store(
+        STACK + 2,
+        claripy.Concat(state.regs.b, state.regs.c),
+        endness="Iend_LE",
+    )
+    state.memory.store(
+        STACK + 4,
+        claripy.Concat(state.regs.d, state.regs.e),
+        endness="Iend_LE",
+    )
+    state.memory.store(
+        STACK + 6,
+        claripy.Concat(state.regs.h, state.regs.l),
+        endness="Iend_LE",
+    )
+    state.memory.store(STACK + 8, claripy.BVV(DONE, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
     manager.explore(find=DONE, num_find=1)
     assert not manager.errored
@@ -138,4 +187,10 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_move_animation_finished_pathwise_equivalence() -> None:
     values = _inputs("move_animation_finished")
-    assert_pathwise_equivalent(_assembly(values), _native(values), (*REGISTERS, "memory"))
+    location = symbol_location(SYMBOLS, "MoveAnimation.animationFinished")
+    assert linked_bytes(ROM, location, 24) == bytes.fromhex(
+        "cd4837afea96d0ea9bd0ea8bd03dea07cff1c1d1e1c9f0f3"
+    )
+    assert_pathwise_equivalent(
+        _assembly(values), _native(values), (*REGISTERS, "memory")
+    )

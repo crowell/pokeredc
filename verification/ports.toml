@@ -22114,8 +22114,8 @@ observables = [
     "wSubAnimTransform",
     "wAnimSoundID",
 ]
-proof_domain = "MoveAnimation.animationFinished branch after saved-register restoration, arbitrary incoming registers and prior output bytes"
-decoder = "finish-branch stores modeled; WaitForSoundToFinish and entry save/restore are explicit branch boundaries"
+proof_domain = "all general-register and canonical-flag inputs plus arbitrary prior output bytes through the animationFinished terminal branch; the real linked call boundary and PUSH/POP restoration execute pathwise"
+decoder = "exact 24-byte linked body checked; WaitForSoundToFinish is an explicit call boundary, XOR/absolute stores/DEC A run via individual SM83 shims, and the actual POP AF/BC/DE/HL/RET sequence restores registers; earlier MoveAnimation dispatch and the loop continuation remain outside this proof"
 
 [[function]]
 assembly_symbol = "PlaySubanimation"
