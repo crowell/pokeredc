@@ -20212,6 +20212,20 @@ proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn
 decoder = "6-byte body checked (010b00c3b500: ld bc,$000b; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "IntroDrawBlackBars"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_intro_draw_black_bars"
+c_source = "verification/ports/intro_draw_black_bars.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 80-byte top and bottom tilemap bars",
+    "the complete 80-byte top and bottom vBGMap1 bars",
+]
+proof_domain = "all general-register and canonical-flag inputs; IntroClearScreen and all four IntroPlaceBlackTiles transitions execute over their fixed dimensions"
+decoder = "exact 35-byte linked body checked; the four coordinate/count setups and final JP are modeled, while native production C calls the real IntroClearScreen and IntroPlaceBlackTiles ports"
+
+[[function]]
 assembly_symbol = "PlayIntro"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_play_intro"
