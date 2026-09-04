@@ -30803,3 +30803,18 @@ observables = [
 ]
 proof_domain = "all register/flag inputs with entry DE equality-constrained per case to the Dakutens (0x6885) or Handakutens (0x68d6) base and a valid two-character @-terminated wStringBuffer with symbolic bytes; every table-match position and the not-found terminator path are covered on both tables"
 decoder = "the native port calls the real proven port_calc_string_length and port_is_in_array with the entry-DE table pointer and $2 stride, then stores the dakuten variant on the found path; angr executes the complete linked body and both real callees with audited CP, INC, ADD HL, AND A, SCF, and LD [a16],A semantics"
+
+[[function]]
+assembly_symbol = "PrintAlphabet"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_print_alphabet"
+c_source = "verification/ports/print_alphabet.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "destination tilemap region (hlcoord 2,5 grid)",
+    "hAutoBGTransferEnabled",
+    "PlaceString and DelayFrames call-site input snapshots",
+]
+proof_domain = "all register/flag inputs, arbitrary wAlphabetCase byte covering both zero (upper) and nonzero (lower) paths, arbitrary initial destination-region and hAutoBGTransferEnabled bytes, and concrete linked LowerCase/UpperCaseAlphabet tables; both proven callee contracts applied as arbitrary matching transitions at their call-site boundaries"
+decoder = "exact 47-byte linked body checked; SM83 XOR/LDH/LD(a16)/AND/LD[HL+]/DEC shims with all other encodings generic Z80; Delay3 ld c,3 and jp DelayFrames execute for real into the DelayFrames-entry boundary; native C invokes real port_place_string and port_delay3, verified by firing hooks on both"
