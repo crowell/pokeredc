@@ -51,11 +51,8 @@ FIELDS = (
     "mode",
     "animation_id",
     "frame_delay",
-    "frame_y",
-    "frame_x",
-    "frame_tile",
-    "frame_flags",
 )
+FRAME_FIELDS = ("frame_y", "frame_x", "frame_tile", "frame_flags")
 
 class LoadFramePointer(angr.SimProcedure):
     def __init__(self, high: bool, next_address: int) -> None:
@@ -219,14 +216,26 @@ class Endpoint:
 
 
 
-def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
+def _inputs(
+    prefix: str, frame_count: int = 1
+) -> dict[str, claripy.ast.BV]:
     values = symbolic_registers(prefix)
     for field in FIELDS:
         values[field] = claripy.BVS(f"{prefix}_{field}", 8)
+    for index in range(frame_count):
+        for field in FRAME_FIELDS:
+            values[f"{field}_{index}"] = claripy.BVS(
+                f"{prefix}_{field}_{index}", 8
+            )
     return values
 
 
-def _store_memory(state: angr.SimState, base: int, values: dict[str, claripy.ast.BV]) -> None:
+def _store_memory(
+    state: angr.SimState,
+    base: int,
+    values: dict[str, claripy.ast.BV],
+    frame_count: int,
+) -> None:
     state.memory.store(base + W_BASE_COORD_X, values["base_x"])
     state.memory.store(base + W_BASE_COORD_Y, values["base_y"])
     state.memory.store(base + W_FB_TILE_COUNTER, values["tile_counter"])
@@ -237,15 +246,22 @@ def _store_memory(state: angr.SimState, base: int, values: dict[str, claripy.ast
     state.memory.store(base + W_FB_MODE, values["mode"])
     state.memory.store(base + W_ANIMATION_ID, values["animation_id"])
     state.memory.store(base + W_SUBANIM_FRAME_DELAY, values["frame_delay"])
-    state.memory.store(base + FRAME, claripy.BVV(1, 8))
-    state.memory.store(base + FRAME + 1, values["frame_y"])
-    state.memory.store(base + FRAME + 2, values["frame_x"])
-    state.memory.store(base + FRAME + 3, values["frame_tile"])
-    state.memory.store(base + FRAME + 4, values["frame_flags"])
+    state.memory.store(base + FRAME, claripy.BVV(frame_count, 8))
+    for index in range(frame_count):
+        entry = FRAME + 1 + index * 4
+        for offset, field in enumerate(FRAME_FIELDS):
+            state.memory.store(
+                base + entry + offset, values[f"{field}_{index}"]
+            )
 
 
-def _memory_endpoint(state: angr.SimState, base: int) -> claripy.ast.BV:
-    addresses = (
+def _memory_endpoint(
+    state: angr.SimState,
+    base: int,
+    frame_count: int,
+    include_oam: bool,
+) -> claripy.ast.BV:
+    addresses = [
         W_BASE_COORD_X,
         W_BASE_COORD_Y,
         W_FB_TILE_COUNTER,
@@ -256,20 +272,20 @@ def _memory_endpoint(state: angr.SimState, base: int) -> claripy.ast.BV:
         W_FB_MODE,
         W_ANIMATION_ID,
         W_SUBANIM_FRAME_DELAY,
-        FRAME,
-        FRAME + 1,
-        FRAME + 2,
-        FRAME + 3,
-        FRAME + 4,
-        DESTINATION,
-        DESTINATION + 1,
-        DESTINATION + 2,
-        DESTINATION + 3,
-    )
+    ]
+    addresses.extend(FRAME + offset for offset in range(1 + frame_count * 4))
+    addresses.extend(DESTINATION + offset for offset in range(frame_count * 4))
+    if include_oam:
+        addresses.extend(W_SHADOW_OAM + offset for offset in range(160))
     return claripy.Concat(*(state.memory.load(base + address, 1) for address in addresses))
 
 
-def _assembly(values: dict[str, claripy.ast.BV], mode: int = 2) -> list[Endpoint]:
+def _assembly(
+    values: dict[str, claripy.ast.BV],
+    mode: int = 2,
+    frame_count: int = 1,
+    include_oam: bool = False,
+) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "DrawFrameBlock")
     project = angr.Project(
         rom_window(ROM, location.bank),
@@ -365,23 +381,32 @@ def _assembly(values: dict[str, claripy.ast.BV], mode: int = 2) -> list[Endpoint
     state.regs.bc = claripy.BVV(FRAME, 16)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(DONE, 16), endness="Iend_LE")
-    _store_memory(state, 0, values)
+    _store_memory(state, 0, values, frame_count)
     state.solver.add(values["mode"] == mode)
     returned = collect_returns(project, state, DONE)
     return [
-        Endpoint(**assembly_registers(end), memory=_memory_endpoint(end, 0), constraints=tuple(end.solver.constraints))
+        Endpoint(
+            **assembly_registers(end),
+            memory=_memory_endpoint(end, 0, frame_count, include_oam),
+            constraints=tuple(end.solver.constraints),
+        )
         for end in returned
     ]
 
 
-def _native(values: dict[str, claripy.ast.BV], mode: int = 2) -> list[Endpoint]:
+def _native(
+    values: dict[str, claripy.ast.BV],
+    mode: int = 2,
+    frame_count: int = 1,
+    include_oam: bool = False,
+) -> list[Endpoint]:
     project = angr.Project(NATIVE_ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_draw_frame_block")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
     state.memory.store(NATIVE_STATE + 8, claripy.BVV(FRAME, 16), endness="Iend_LE")
-    _store_memory(state, NATIVE_MEMORY, values)
+    _store_memory(state, NATIVE_MEMORY, values, frame_count)
     state.solver.add(values["mode"] == mode)
     manager = project.factory.simulation_manager(state)
     manager.run()
@@ -389,20 +414,26 @@ def _native(values: dict[str, claripy.ast.BV], mode: int = 2) -> list[Endpoint]:
     return [
         Endpoint(
             **native_registers(end, NATIVE_STATE),
-            memory=_memory_endpoint(end, NATIVE_MEMORY),
+            memory=_memory_endpoint(end, NATIVE_MEMORY, frame_count, include_oam),
             constraints=tuple(end.solver.constraints),
         )
         for end in manager.deadended
     ]
 
-
-@pytest.mark.parametrize("transform", [0, 1, 2, 3])
+@pytest.mark.parametrize(
+    ("transform", "frame_count"),
+    [
+        (transform, frame_count)
+        for frame_count in (1, 2)
+        for transform in range(4)
+    ],
+)
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_draw_frame_block_mode02_each_transformation_pathwise_equivalence(
-    transform: int,
+    transform: int, frame_count: int
 ) -> None:
-    values = _inputs(f"draw_frame_block_{transform}")
+    values = _inputs(f"draw_frame_block_{transform}_{frame_count}", frame_count)
     for register in REGISTERS:
         values[register] = claripy.BVV(0, 8)
     values["mode"] = claripy.BVV(2, 8)
@@ -410,31 +441,26 @@ def test_draw_frame_block_mode02_each_transformation_pathwise_equivalence(
     values["dest_low"] = claripy.BVV(DESTINATION & 0xFF, 8)
     values["transform"] = claripy.BVV(transform, 8)
     values["b"] = claripy.BVV(FRAME >> 8, 8)
-    values["c"] = claripy.BVV(FRAME & 0xFF, 8)
-    assert_pathwise_equivalent(_assembly(values), _native(values), (*REGISTERS, "memory"))
-@pytest.mark.parametrize("mode", [3, 4])
-@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
-@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_draw_frame_block_delay_modes_pathwise_equivalence(mode: int) -> None:
-    values = _inputs(f"draw_frame_block_mode_{mode}")
-    for register in REGISTERS:
-        values[register] = claripy.BVV(0, 8)
-    values["mode"] = claripy.BVV(mode, 8)
-    values["animation_id"] = claripy.BVV(0, 8)
-    values["frame_delay"] = claripy.BVV(1, 8)
-    values["dest_high"] = claripy.BVV(DESTINATION >> 8, 8)
-    values["dest_low"] = claripy.BVV(DESTINATION & 0xFF, 8)
-    values["transform"] = claripy.BVV(0, 8)
-    values["b"] = claripy.BVV(FRAME >> 8, 8)
-    values["c"] = claripy.BVV(FRAME & 0xFF, 8)
+    if transform == 0 and frame_count == 1:
+        location = symbol_location(SYMBOLS, "DrawFrameBlock")
+        assert linked_bytes(ROM, location, 0xF1) == bytes.fromhex(
+            "69602aea89d0fa9dd05ffa9cd057afea84d0fa84d03cea84d0fa8bd03d28343dca88403d280cfa82d086122313fa81d01812fa82d0473e889086122313fa81d0473ea890861223132ac63112132a1213c3ae40fa82d086473e8890122313fa81d086473ea8901223132ac63112132aa70660280efe2006402808fe40062028020600781213c3ae40fa82d086c628122313fa81d086473ea8901223132ac63112132acb6f2004cbef1802cbaf1213fa84d04ffa89d0b9c21240fa9ed0fe022828fa86d04fcd3937fa9ed0fe03281afe04281efa7cd0fe2d2803cdc84e2100c37dea9dd07cea9cd0c97bea9dd07aea9cd0c9"
+        )
     assert_pathwise_equivalent(
-        _assembly(values, mode), _native(values, mode), (*REGISTERS, "memory")
+        _assembly(values, frame_count=frame_count),
+        _native(values, frame_count=frame_count),
+        (*REGISTERS, "memory"),
     )
-@pytest.mark.parametrize("mode", [0, 1])
+@pytest.mark.parametrize(
+    ("mode", "frame_count"),
+    [(mode, frame_count) for mode in (3, 4) for frame_count in (1, 2)],
+)
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
-def test_draw_frame_block_cleanup_modes_pathwise_equivalence(mode: int) -> None:
-    values = _inputs(f"draw_frame_block_cleanup_{mode}")
+def test_draw_frame_block_delay_modes_pathwise_equivalence(
+    mode: int, frame_count: int
+) -> None:
+    values = _inputs(f"draw_frame_block_mode_{mode}_{frame_count}", frame_count)
     for register in REGISTERS:
         values[register] = claripy.BVV(0, 8)
     values["mode"] = claripy.BVV(mode, 8)
@@ -446,7 +472,34 @@ def test_draw_frame_block_cleanup_modes_pathwise_equivalence(mode: int) -> None:
     values["b"] = claripy.BVV(FRAME >> 8, 8)
     values["c"] = claripy.BVV(FRAME & 0xFF, 8)
     assert_pathwise_equivalent(
-        _assembly(values, mode), _native(values, mode), (*REGISTERS, "memory")
+        _assembly(values, mode, frame_count),
+        _native(values, mode, frame_count),
+        (*REGISTERS, "memory"),
+    )
+@pytest.mark.parametrize(
+    ("mode", "frame_count"),
+    [(mode, frame_count) for mode in (0, 1) for frame_count in (1, 2)],
+)
+@pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
+@pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
+def test_draw_frame_block_cleanup_modes_pathwise_equivalence(
+    mode: int, frame_count: int
+) -> None:
+    values = _inputs(f"draw_frame_block_cleanup_{mode}_{frame_count}", frame_count)
+    for register in REGISTERS:
+        values[register] = claripy.BVV(0, 8)
+    values["mode"] = claripy.BVV(mode, 8)
+    values["animation_id"] = claripy.BVV(0, 8)
+    values["frame_delay"] = claripy.BVV(1, 8)
+    values["dest_high"] = claripy.BVV(DESTINATION >> 8, 8)
+    values["dest_low"] = claripy.BVV(DESTINATION & 0xFF, 8)
+    values["transform"] = claripy.BVV(0, 8)
+    values["b"] = claripy.BVV(FRAME >> 8, 8)
+    values["c"] = claripy.BVV(FRAME & 0xFF, 8)
+    assert_pathwise_equivalent(
+        _assembly(values, mode, frame_count, True),
+        _native(values, mode, frame_count, True),
+        (*REGISTERS, "memory"),
     )
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")

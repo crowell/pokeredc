@@ -22028,8 +22028,8 @@ observables = [
     "frame-block source bytes",
     "destination OAM bytes",
 ]
-proof_domain = "one frame-block tile with each transform type (0, 1, 2, 3), FRAMEBLOCKMODE_02, FRAMEBLOCKMODE_03, FRAMEBLOCKMODE_04, cleanup modes 0 and 1, and the GROWL cleanup exception; fixed source/destination pointers, one-frame delay, arbitrary base coordinates and tile bytes"
-decoder = "complete routine body is ported; linked assembly executes the real loop and all transform/mode branches with individual SM83 load/store, pair, arithmetic, and compare shims; DelayFrames and AnimationCleanOAM are proven callee boundaries; loop count remains one tile in this proof"
+proof_domain = "frame blocks with one and two tiles, each transform type (0, 1, 2, 3), FRAMEBLOCKMODE_02, FRAMEBLOCKMODE_03, FRAMEBLOCKMODE_04, cleanup modes 0 and 1, and the GROWL cleanup exception; fixed source/destination pointers, one-frame delay, arbitrary base coordinates and symbolic tile bytes"
+decoder = "complete routine body is ported; linked assembly executes the real loop and all transform/mode branches with individual SM83 load/store, pair, arithmetic, and compare shims; DelayFrames and AnimationCleanOAM are proven callee boundaries; the functional equivalence test also asserts the exact linked 241-byte body"
 
 [[function]]
 assembly_symbol = "PlayAnimation"
