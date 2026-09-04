@@ -30494,6 +30494,21 @@ proof_domain = "all general-register and canonical-flag inputs plus symbolic spi
 decoder = "the exact complete 29-byte linked body cd1747fa3dcd4ffa04c181ea04c14ffa3ecdb9c8fa3fcd4fcd393718e3 executes through its real back edge; the complete proven SpinPlayerSprite and DelayFrames transitions are composed at their call sites, while production C calls real port_spin_player_sprite and port_delay_frames and executes the loop"
 
 [[function]]
+assembly_symbol = "DoFlyAnimation"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_do_fly_animation"
+c_source = "verification/ports/do_fly_animation.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wFlyAnimUsingCoordList, wFlyAnimCounter, and wFlyAnimBirdSpriteImageIndex",
+    "wSpritePlayerStateData1ImageIndex, YPixels, and XPixels (including untouched adjacent Y byte)",
+    "the four input coordinate-list bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs except DE, which is fixed to an arbitrary symbolic four-byte coordinate list when the non-$ff coordinate-copy path is selected; both coordinate modes ($ff skip and non-$ff copy) through one and two complete animation iterations, with arbitrary preexisting animation/player bytes"
+decoder = "the exact complete 41-byte linked body fa3fcdee01ea3fcdea02c1cdd73dfa3dcdfeff280a2104c11a1322231a1377fa3ecd3dea3ecd20d8c9 executes through its real back edge; individual SM83 absolute loads/stores, XOR/CP/DEC flag operations, coordinate loads, HLI store, and both conditional branches are modeled explicitly, while the complete independently proven Delay3 transition is composed at its real call site and production C calls real port_delay3"
+
+[[function]]
 assembly_symbol = "InitFacingDirectionList"
 assembly_source = "engine/overworld/player_animations.asm"
 c_symbol = "port_init_facing_direction_list"
