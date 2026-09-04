@@ -20801,6 +20801,25 @@ proof_domain = "full 8-register equivalence incl. F (LD B,imm / JP nn are flag-n
 decoder = "5-byte body checked (0603c3d635: ld b,$03; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "DisplayIntroNameTextBox"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_display_intro_name_text_box"
+c_source = "verification/ports/display_intro_name_text_box.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "wCurrentMenuItem",
+    "wLastMenuItem",
+    "wTopMenuItemX",
+    "wMenuWatchedKeys",
+    "wTopMenuItemY",
+    "wMaxMenuItem",
+]
+proof_domain = "all general-register and canonical-flag inputs, a concrete NAME-terminated intro name, and UpdateSprites disabled on entry; final menu initialization through the HandleMenuInput dispatch boundary"
+decoder = "exact 55-byte linked body checked; TextBoxBorder, both PlaceString calls, and UpdateSprites are explicit compositional call boundaries, while the SM83 XOR/INC and absolute stores execute under individual shims"
+
+[[function]]
 assembly_symbol = "DisplayTitleScreen.doClearSaveDialogue"
 assembly_source = "engine/movie/title.asm"
 c_symbol = "port_display_title_screen_do_clear_save_dialogue"
