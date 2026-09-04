@@ -21743,8 +21743,8 @@ observables = [
     "frame-block source bytes",
     "destination OAM bytes",
 ]
-proof_domain = "one frame-block tile, FRAMEBLOCKMODE_02, no transformation (wSubAnimTransform=0), fixed source and destination pointers, arbitrary base coordinates and tile bytes"
-decoder = "entry prologue and one-tile no-transformation body checked with explicit SM83 absolute-load/store shims; native implementation includes all four coordinate/flag transformation formulas but mode-02 completion is the proved path"
+proof_domain = "one frame-block tile with each transform type (0, 1, 2, 3), FRAMEBLOCKMODE_02, FRAMEBLOCKMODE_03, FRAMEBLOCKMODE_04, cleanup modes 0 and 1, and the GROWL cleanup exception; fixed source/destination pointers, one-frame delay, arbitrary base coordinates and tile bytes"
+decoder = "complete routine body is ported; linked assembly executes the real loop and all transform/mode branches with individual SM83 load/store, pair, arithmetic, and compare shims; DelayFrames and AnimationCleanOAM are proven callee boundaries; loop count remains one tile in this proof"
 
 [[function]]
 assembly_symbol = "PlayAnimation"
