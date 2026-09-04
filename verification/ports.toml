@@ -30818,3 +30818,21 @@ observables = [
 ]
 proof_domain = "all register/flag inputs, arbitrary wAlphabetCase byte covering both zero (upper) and nonzero (lower) paths, arbitrary initial destination-region and hAutoBGTransferEnabled bytes, and concrete linked LowerCase/UpperCaseAlphabet tables; both proven callee contracts applied as arbitrary matching transitions at their call-site boundaries"
 decoder = "exact 47-byte linked body checked; SM83 XOR/LDH/LD(a16)/AND/LD[HL+]/DEC shims with all other encodings generic Z80; Delay3 ld c,3 and jp DelayFrames execute for real into the DelayFrames-entry boundary; native C invokes real port_place_string and port_delay3, verified by firing hooks on both"
+
+[[function]]
+assembly_symbol = "PrintNicknameAndUnderscores"
+assembly_source = "engine/menus/naming_screen.asm"
+c_symbol = "port_print_nickname_and_underscores"
+c_source = "verification/ports/print_nickname_and_underscores.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wNamingScreenNameLength",
+    "tilemap name row (10, 2) 1x10 bytes",
+    "tilemap underscore row (10, 3) 10 bytes",
+    "wTopMenuItemX",
+    "wCurrentMenuItem",
+    "menu-cursor target byte",
+]
+proof_domain = "concrete '@'-terminated name bytes across 7 type/length configurations (player-partial len 3, player-full len 7, rival-partial len 2, mon-partial len 5, mon-full len 10, mon-empty len 0, above-range type-3 len 4 taking the mon branch); all general-register and canonical-flag inputs, arbitrary initial tilemap/name-length/cursor/menu-item bytes (untouched tail cells fixed to prove preservation), and fixed wStatusFlags5 text-delay-disabled bit with a concrete wMenuCursorLocation pointer; single terminal path per case compared against the real linked body"
+decoder = "exact 99-byte linked body checked; real CalcStringLength/ClearScreenArea/PlaceString/EraseMenuCursor callees execute inline with only individual SM83 seams shimmed (EA/FA loads/stores, LD [HL+],A, CP/AND/BIT/DEC/INC/ADD-HL flag shims, software PUSH/POP, conditional RET forks, flag-preserving tail loads); production C calls the real proven ports with real loops and preserved call ordering"
