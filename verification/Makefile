@@ -33,7 +33,7 @@ inventory:
 $(BUILD):
 	mkdir -p $@
 
-$(BUILD)/%.o: ports/%.c include/port_state.h | $(BUILD)
+$(BUILD)/%.o: ports/%.c include/port_state.h include/bank.h | $(BUILD)
 	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
 
 
