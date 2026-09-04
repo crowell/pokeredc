@@ -20184,6 +20184,35 @@ proof_domain = "full 8-register equivalence incl. F (LD rr,nn / LD r,imm / JP nn
 decoder = "6-byte body checked (010b00c3b500: ld bc,$000b; jp $00b5); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "PrepareTitleScreen"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_prepare_title_screen"
+c_source = "verification/ports/prepare_title_screen.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+    "wPlayerName",
+    "wRivalName",
+    "hWY",
+    "wLetterPrintingDelayFlags",
+    "wStatusFlags6",
+    "wStatusFlags7",
+    "wElite4Flags",
+    "wAudioROMBank",
+    "wAudioSavedROMBank",
+    "fallthrough DisplayTitleScreen",
+]
+proof_domain = "all general-register and canonical-flag inputs plus arbitrary 11-byte debug-name source data; the deterministic setup prefix through the DisplayTitleScreen fallthrough boundary"
+decoder = "exact 38-byte linked body checked; CopyDebugName calls are modeled as the already-proven 11-byte copy tail, SM83 XOR A, LDH [hWY],A, LD [a16],A, LD [HL+],A, and final fallthrough are explicitly shimmed"
+
+[[function]]
 assembly_symbol = "LoadEDTile"
 assembly_source = "engine/menus/naming_screen.asm"
 c_symbol = "port_load_ed_tile"
