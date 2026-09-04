@@ -30355,6 +30355,19 @@ proof_domain = "all general-register and canonical-flag inputs, an arbitrary 3-b
 decoder = "exact 30-byte linked body e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b verified; SM83 HL+ loads and LDH stores are shimmed, the recursive processor call is replaced by a returning boundary, and the final jp NextTextCommand is the terminal sentinel"
 
 [[function]]
+assembly_symbol = "LoadCopyrightTiles"
+assembly_source = "engine/movie/title.asm"
+c_symbol = "port_load_copyright_tiles"
+c_source = "verification/ports/load_copyright_tiles.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "copyright tilemap writes",
+]
+proof_domain = "all general-register and canonical-flag inputs with the fixed CopyrightTextString source, two-row text layout, and fixed title-screen VRAM/tilemap destinations; CopyVideoData and PlaceString execute as proven callee boundaries"
+decoder = "exact 23-byte linked body verified; DE/HL/BC setup, real CopyVideoData transfer boundary, title tilemap cursor/source setup, and tail PlaceString transition are ported; graphics bytes remain the hardware transfer boundary and the single-spaced layout branch is not yet covered"
+
+[[function]]
 assembly_symbol = "LoadTitleMonSprite"
 assembly_source = "engine/movie/title.asm"
 c_symbol = "port_load_title_mon_sprite"
