@@ -59,7 +59,12 @@ class AndA(angr.SimProcedure):
         self.next_address = next_address
 
     def run(self) -> None:  # type: ignore[override]
-        self.state.regs.f = claripy.BVV(0x50, 8)  # Z80-layout H|Z
+        a = self.state.regs.a
+        self.state.regs.f = claripy.If(
+            a == 0,
+            claripy.BVV(0x50, 8),
+            claripy.BVV(0x10, 8),
+        )
         self.jump(self.next_address)
 
 
