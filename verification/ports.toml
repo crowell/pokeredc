@@ -19608,9 +19608,12 @@ c_source = "verification/ports/check_warps_collision.c"
 status = "partial"
 observables = [
     "all registers and flags",
+    "wDestinationWarpID and hWarpDestinationMap",
+    "wWarpedFromWhichWarp and wWarpedFromWhichMap",
+    "matched warp-entry source pointer",
 ]
-proof_domain = "the 7-byte CheckWarpsCollision prefix through the initial wWarpEntries pointer, with wNumberOfWarps=3 and symbolic initial registers; the warp-entry comparison loop and WarpFound2 dispatch remain outside this proof"
-decoder = "exact 7-byte linked prefix checked; the absolute warp-count load and HL immediate use individual audited shims, while the setup LD C,A executes in the linked body and native C mirrors the same setup"
+proof_domain = "all symbolic register and canonical-flag inputs across matches at warp-entry indices 0, 1, and 2 in a three-entry table; the complete coordinate scan, destination stores, and independently proven WarpFound2 transition are compared pathwise"
+decoder = "exact 41-byte linked body checked; absolute loads/stores, high-memory store, HL+ loads, CP B, and DEC C use individual SM83 shims, the retry loop executes natively, and the real port_warp_found2 transition composes at the match boundary; the no-match jump back to OverworldLoop and larger warp tables remain outside this proof"
 [[function]]
 assembly_symbol = "CheckWarpsNoCollision"
 assembly_source = "home/overworld.asm"
