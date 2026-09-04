@@ -109,7 +109,7 @@ class XorImmediate(angr.SimProcedure):
 
     def run(self) -> None:  # type: ignore[override]
         self.state.regs.a = self.state.regs.a ^ self.value
-        self.state.regs.f = claripy.If(self.state.regs.a == 0, claripy.BVV(0x80, 8), claripy.BVV(0, 8))
+        self.state.regs.f = claripy.If(self.state.regs.a == 0, claripy.BVV(0x40, 8), claripy.BVV(0, 8))
         self.jump(self.next_address)
 
 
@@ -133,21 +133,23 @@ class CheckInterruptionSummary(angr.SimProcedure):
         state = self.state
         state.memory.store(H_VBLANK_OCCURRED, claripy.BVV(0, 8))
         if self.mode == "held":
+            state.memory.store(H_JOY5, claripy.BVV(0x46, 8))
+            state.memory.store(H_FRAMECOUNTER, claripy.BVV(5, 8))
             state.regs.a = claripy.BVV(0x46, 8)
-            state.regs.f = claripy.BVV(0x90, 8)
+            state.regs.f = claripy.BVV(0x41, 8)
             self.jump(DONE)
             return
         if self.mode == "button":
             state.memory.store(H_JOY5, claripy.BVV(1, 8))
             state.memory.store(H_FRAMECOUNTER, claripy.BVV(30, 8))
             state.regs.a = claripy.BVV(1, 8)
-            state.regs.f = claripy.BVV(0x10, 8)
+            state.regs.f = claripy.BVV(0x01, 8)
             self.jump(DONE)
             return
         state.memory.store(H_JOY5, claripy.BVV(0, 8))
         state.memory.store(H_FRAMECOUNTER, claripy.BVV(5, 8))
         state.regs.a = claripy.BVV(0, 8)
-        state.regs.f = claripy.BVV(0xA0, 8)
+        state.regs.f = claripy.BVV(0x50, 8)
         self.jump(self.next_address)
 
 
@@ -158,7 +160,7 @@ class ReturnCarry(angr.SimProcedure):
         self.carry_f = carry_f
 
     def run(self) -> None:  # type: ignore[override]
-        carry = int(self.state.solver.eval(self.state.regs.f & 0x10)) != 0
+        carry = int(self.state.solver.eval(self.state.regs.f & 0x01)) != 0
         if carry:
             self.state.regs.f = claripy.BVV(self.carry_f, 8)
         self.jump(DONE if carry else self.next_address)
@@ -238,7 +240,7 @@ def _assembly(values: dict[str, claripy.ast.BV], mode: str) -> list[Endpoint]:
     project.hook(base + 0x15, StoreMemoryA(R_OBP1, base + 0x17), length=2)
     project.hook(base + 0x17, SetRegisterImmediate("c", 3, base + 0x19), length=2)
     project.hook(base + 0x19, CheckInterruptionSummary(base + 0x1C, mode), length=3)
-    carry_flags = {"held": 0x90, "button": 0x10, "timeout": 0xA0}
+    carry_flags = {"held": 0x41, "button": 0x01, "timeout": 0x50}
     project.hook(base + 0x1C, ReturnCarry(base + 0x1D, carry_flags[mode]), length=1)
     project.hook(base + 0x20, ReturnDone(), length=1)
     state = project.factory.blank_state(addr=base)
@@ -282,7 +284,7 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 @pytest.mark.parametrize("count", (1, 2))
-@pytest.mark.parametrize("mode", ("timeout",))
+@pytest.mark.parametrize("mode", ("held", "button", "timeout"))
 def test_move_down_small_stars_pathwise_equivalence(count: int, mode: str) -> None:
     values = _inputs(count, mode)
     assert_pathwise_equivalent(_assembly(values, mode), _native(values), (*REGISTERS, "memory"))
