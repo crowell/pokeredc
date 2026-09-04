@@ -22134,8 +22134,8 @@ observables = [
     "L",
     "wSubAnimCounter",
 ]
-proof_domain = "terminal frame path with wSubAnimCounter=1, after DrawFrameBlock and DoSpecialEffectByAnimationId boundaries"
-decoder = "DEC/store/RET-Z terminal sequence checked through an explicit branch summary; downstream frame-loop continuation is not modeled"
+proof_domain = "terminal frame path with wSubAnimCounter=1, arbitrary incoming registers and canonical flags, after DrawFrameBlock and DoSpecialEffectByAnimationId boundaries"
+decoder = "linked assembly executes the terminal LD/DEC/STORE/RET-Z sequence with individual SM83 load/store/DEC shims, and the functional equivalence test asserts the exact eight-byte terminal body; downstream frame-loop continuation remains outside this proof"
 
 [[function]]
 assembly_symbol = "AnimationCleanOAM"
