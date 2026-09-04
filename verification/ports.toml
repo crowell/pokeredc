@@ -20270,6 +20270,21 @@ proof_domain = "all general-register inputs with C in {1, 2}, arbitrary initial 
 decoder = "exact 27-byte linked body checked; DelayFrame, JoypadLowSensitivity, both loop branches, and both RET exits are modeled, while native C calls the real DelayFrame and JoypadLowSensitivity ports"
 
 [[function]]
+assembly_symbol = "MoveDownSmallStars"
+assembly_source = "engine/movie/splash.asm"
+c_symbol = "port_move_down_small_stars"
+c_source = "verification/ports/move_down_small_stars.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "rOBP1",
+    "hMoveDownSmallStarsOAMCount, hJoyPressed, hJoyHeld, hJoy5, hJoy6, hJoy7, hFrameCounter, hVBlankOccurred",
+    "the complete wShadowOAM region",
+]
+proof_domain = "all general-register inputs with one- and two-entry OAM counts, zero-interruption joypad state, and symbolic initial rOBP1 and wShadowOAM; CheckForUserInterruption executes through its complete proven boundary"
+decoder = "exact 33-byte linked body checked; all setup instructions and the complete eight-iteration OAM/palette loop execute, with the zero-interruption CheckForUserInterruption call and RET boundary modeled. Native C calls the real port_check_for_user_interruption."
+
+[[function]]
 assembly_symbol = "PlayIntro"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_play_intro"
