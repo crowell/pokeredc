@@ -19587,6 +19587,20 @@ proof_domain = "all register/flag inputs and every 16-bit HL; HL is incremented 
 decoder = "exact 5-byte body checked (2323c3b507); the INC HL instructions are run natively and the JP 0x7b5 tail is an explicit boundary. Pathwise equivalence proven against port_check_warps_no_collision_retry2 across all register/flag inputs."
 
 [[function]]
+assembly_symbol = "WarpFound1"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_warp_found1"
+c_source = "verification/ports/warp_found1.c"
+status = "proven"
+observables = [
+    "all registers and flags",
+    "wDestinationWarpID",
+    "hWarpDestinationMap",
+    "advanced HL source pointer",
+]
+proof_domain = "all register/flag inputs with HL fixed to a two-byte warp-entry source containing destination warp ID and destination map bytes; both transfer instructions and the final HL are compared"
+decoder = "exact 7-byte linked body checked; SM83 LD A,[HL+], absolute store, and high-memory store use individual instruction shims, while native C performs both ordered transfers"
+[[function]]
 assembly_symbol = "CheckWarpsCollision"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_check_warps_collision"
