@@ -406,17 +406,11 @@ c_symbol = "port_get_player_teleport_anim_frame_delay"
 c_source = "verification/ports/teleport_delay.c"
 status = "proven"
 observables = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
-    "H",
-    "L",
+    "all registers and canonical flags",
     "wOnSGB",
 ]
 proof_domain = "all general-register, canonical-flag, and wOnSGB byte inputs"
-decoder = "machine bytes verified; SM83 FA absolute load and both INC A operations shimmed"
+decoder = "the exact 8-byte linked body fa1bcfee013c3cc9 executes under angr; the SM83 FA absolute load and both INC A operations are shimmed, while native C uses the real CPU-and-memory ABI and reads wOnSGB directly"
 
 
 
