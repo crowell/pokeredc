@@ -15913,6 +15913,20 @@ decoder = "the exact complete 18-byte dispatcher executes under angr across both
 
 
 [[function]]
+assembly_symbol = "OakSpeechSlidePicLeft"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_oak_speech_slide_pic_left"
+c_source = "verification/ports/oak_speech_slide_left.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags at OakSpeechSlidePicCommon",
+    "the complete 12-by-11 cleared name-list text-box region",
+    "the complete 11-byte copied name at the caller DE destination",
+]
+proof_domain = "all general-register and canonical-flag inputs with DE fixed to the caller-valid wPlayerName destination, arbitrary 11-byte wNameBuffer contents, and the real ClearScreenArea, DelayFrames, and CopyData transitions"
+decoder = "exact 38-byte linked entry checked; PUSH/POP DE, 12-by-11 ClearScreenArea writes, two DelayFrames calls, fixed-length CopyData, common-entry cursor/geometry, and final A/$ff are modeled, while native production C calls the real proven helper ports"
+
+[[function]]
 assembly_symbol = "OakSpeechSlidePicRight"
 assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
 c_symbol = "port_oak_speech_slide_pic_right"
