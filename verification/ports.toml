@@ -20285,6 +20285,23 @@ proof_domain = "all general-register inputs with one- and two-entry OAM counts, 
 decoder = "exact 33-byte linked body checked; all setup instructions and the complete eight-iteration OAM/palette loop execute, with the held-command, button-command, and timeout CheckForUserInterruption exits modeled. Native C calls the real port_check_for_user_interruption."
 
 [[function]]
+assembly_symbol = "AnimateShootingStar"
+assembly_source = "engine/movie/splash.asm"
+c_symbol = "port_animate_shooting_star"
+c_source = "verification/ports/animate_shooting_star.c"
+status = "partial"
+observables = [
+    "all registers and canonical flags",
+    "rOBP0 and rOBP1",
+    "wNewSoundID, wAudioROMBank, wAudioSavedROMBank, wAudioFadeOutControl, wAudioFadeReload, wAudioFadeCounter, wLastMusicSoundID, wChannelSoundIDs",
+    "hSavedROMBank, hLoadedROMBank, rROMB",
+    "hMoveDownSmallStarsOAMCount, hJoyPressed, hJoyHeld, hJoy5, hJoy6, hJoy7, hFrameCounter, hVBlankOccurred",
+    "the complete wShadowOAM region",
+]
+proof_domain = "representative held-command and button-command early exits after the big-star movement; fixed ROM graphics and joypad state; LoadShootingStarGraphics, PlaySound, CheckForUserInterruption, and the big-star instruction path execute at complete boundaries"
+decoder = "exact linked AnimateShootingStar body checked from AnimateShootingStar through SmallStarsOAM; both big-star interruption exits are exercised with complete dependency summaries. Native C calls the real graphics, sound, interruption, small-star movement, and copy ports; the uninterrupted flash and small-star tail remains unproven."
+
+[[function]]
 assembly_symbol = "PlayIntro"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_play_intro"
