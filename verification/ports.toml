@@ -15459,7 +15459,7 @@ observables = [
     "inventory count, item, quantity, and terminator writes",
     "wCurItem, wItemQuantity, and body-shadow restoration",
 ]
-proof_domain = "entry ROM banks 1 and 2; bag and PC-box inventories with nonzero quantities in 0..99; empty, small, and full-box cases; full bags and full inventories holding a growable matching item are excluded"
+proof_domain = "entry ROM banks 1 and 2; non-full bag and PC-box inventories with nonzero quantities in 0..99, including small and empty inventories; full bags and full inventories are excluded"
 decoder = "exact 23-byte home wrapper and exact 112-byte banked body checked; MBC1 bank-3 entry and restoration, real AddItemToInventory_ body composition, home/body global staging, B/C preservation, and carry reconstruction from inventory effects modeled explicitly"
 
 
@@ -21546,6 +21546,25 @@ observables = [
 ]
 proof_domain = "full 8-register equivalence incl. F; LD H,D / LD L,E / JP nn are flag-neutral, modeled with explicit SM83 register-copy shims; the local PrintText JP is the boundary."
 decoder = "5-byte body checked (626bc3493c: ld h,d; ld l,e; jp $3c49); no CALL/PUSH/POP; F-preserving ops only."
+
+[[function]]
+assembly_symbol = "GetDefaultName"
+assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
+c_symbol = "port_get_default_name"
+c_source = "verification/ports/get_default_name.c"
+status = "proven"
+observables = [
+    "A",
+    "F",
+    "B",
+    "C",
+    "D",
+    "E",
+    "H",
+    "L",
+]
+proof_domain = "requested default-name indices 0 through 2, the linked three-entry player-name list, and arbitrary initial registers and canonical flags"
+decoder = "exact 17-byte linked loop prefix checked; list terminator scan and CP/INC flag effects are modeled, with GetDefaultName.foundName as the explicit CopyData boundary"
 
 [[function]]
 assembly_symbol = "GetDefaultName.foundName"
