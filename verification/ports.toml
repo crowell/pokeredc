@@ -30479,6 +30479,21 @@ proof_domain = "all general-register and canonical-flag inputs, arbitrary tilema
 decoder = "the exact complete 58-byte linked body executes under angr; only individual XOR/store/load instructions and seven independently proven callee boundaries are shimmed, while production C calls real port_text_box_border, port_place_string, port_print_num_badges, port_print_num_owned_mons, port_print_play_time, and port_delay_frames"
 
 [[function]]
+assembly_symbol = "PlayerSpinWhileMovingUpOrDown"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_player_spin_while_moving_up_or_down"
+c_source = "verification/ports/player_spin_while_moving.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "wPlayerSpinWhileMovingUpOrDownAnimDeltaY, MaxY, and FrameDelay",
+    "wSpritePlayerStateData1YPixels and ImageIndex",
+    "all four wFacingDirectionList bytes",
+]
+proof_domain = "all general-register and canonical-flag inputs plus symbolic spin-source/image/list bytes over the four terminating gameplay motion configurations: delta +16 to max 60 and delta -16 to max 236, each with one-step and two-step paths; arbitrary configurations are excluded because the original loop intentionally runs until Y exactly equals MaxY"
+decoder = "the exact complete 29-byte linked body cd1747fa3dcd4ffa04c181ea04c14ffa3ecdb9c8fa3fcd4fcd393718e3 executes through its real back edge; the complete proven SpinPlayerSprite and DelayFrames transitions are composed at their call sites, while production C calls real port_spin_player_sprite and port_delay_frames and executes the loop"
+
+[[function]]
 assembly_symbol = "InitFacingDirectionList"
 assembly_source = "engine/overworld/player_animations.asm"
 c_symbol = "port_init_facing_direction_list"
