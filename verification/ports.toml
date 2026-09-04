@@ -30509,6 +30509,21 @@ proof_domain = "all general-register and canonical-flag inputs except DE, which 
 decoder = "the exact complete 41-byte linked body fa3fcdee01ea3fcdea02c1cdd73dfa3dcdfeff280a2104c11a1322231a1377fa3ecd3dea3ecd20d8c9 executes through its real back edge; individual SM83 absolute loads/stores, XOR/CP/DEC flag operations, coordinate loads, HLI store, and both conditional branches are modeled explicitly, while the complete independently proven Delay3 transition is composed at its real call site and production C calls real port_delay3"
 
 [[function]]
+assembly_symbol = "LoadBirdSpriteGraphics"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_load_bird_sprite_graphics"
+c_source = "verification/ports/load_bird_sprite_graphics.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "hAutoBGTransferEnabled, hLoadedROMBank, hROMBankTemp, and rROMB",
+    "hVBlankCopySource, hVBlankCopyDest, hVBlankCopySize, and hVBlankOccurred",
+    "the complete ordered states of all four DelayFrame calls made by the two 12-tile transfers",
+]
+proof_domain = "all general-register and canonical-flag inputs and all relevant video-transfer hardware inputs; both fixed 12-tile BirdSprite transfers execute their complete two-chunk CopyVideoData loops"
+decoder = "the exact complete 28-byte linked body 11804d210080010c05cd481811404e210088010c05c34818 and each real 62-byte CopyVideoData body execute under angr; only individual unsupported SM83 hardware load/store, XOR/CP/SUB instructions and the independently proved DelayFrame boundary are shimmed, while native C calls real port_copy_video_data twice"
+
+[[function]]
 assembly_symbol = "InitFacingDirectionList"
 assembly_source = "engine/overworld/player_animations.asm"
 c_symbol = "port_init_facing_direction_list"
