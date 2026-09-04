@@ -21,7 +21,8 @@ void port_play_sound(struct play_sound_state *);
 static void
 and_a(struct cpu_register_state *r)
 {
-	r->f = (port_u8)(r->a == 0u ? PORT_FLAG_Z : 0u);
+	r->f = (port_u8)(PORT_FLAG_H |
+	    (r->a == 0u ? PORT_FLAG_Z : 0u));
 }
 
 static void

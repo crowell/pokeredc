@@ -361,9 +361,9 @@ port_advance_scripted_npc_anim_frame_counter(
 	state->registers.a = state->animation_frame_counter;
 	state->registers.a++;
 	state->registers.a &= 3;
-	state->registers.f = 0;
+	state->registers.f = PORT_FLAG_H;
 	if (state->registers.a == 0)
-		state->registers.f = PORT_FLAG_Z;
+		state->registers.f |= PORT_FLAG_Z;
 	state->animation_frame_counter = state->registers.a;
 	state->output_frame_counter = state->registers.a;
 }

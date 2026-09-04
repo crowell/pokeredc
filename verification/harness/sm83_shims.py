@@ -14,11 +14,11 @@ class Sm83AndImmediate(angr.SimProcedure):
 
     def run(self) -> None:  # type: ignore[override]
         self.state.regs.a = self.state.regs.a & self._immediate
-        # SM83 AND n: Z from result; C, N, H always cleared.
+        # SM83 AND n: Z from result; H set, C and N always cleared.
         self.state.regs.f = claripy.If(
             self.state.regs.a == 0,
-            claripy.BVV(0x40, 8),
-            claripy.BVV(0, 8),
+            claripy.BVV(0x50, 8),
+            claripy.BVV(0x10, 8),
         )
         self.jump(self._next_address)
 
@@ -74,8 +74,8 @@ class Sm83AndRegister(angr.SimProcedure):
         )
         self.state.regs.f = claripy.If(
             self.state.regs.a == 0,
-            claripy.BVV(0x40, 8),
-            claripy.BVV(0, 8),
+            claripy.BVV(0x50, 8),
+            claripy.BVV(0x10, 8),
         )
         self.jump(self._next_address)
 
