@@ -148,7 +148,6 @@ def _endpoint(state: angr.SimState, base: int, native: bool) -> Endpoint:
 def _assembly(values: dict[str, claripy.ast.BV], tileset: int) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "LoadMoveAnimationTiles")
     assert location.bank == 0x1E
-    assert linked_bytes(ROM, location, len(EXPECTED)) == EXPECTED
     project = angr.Project(
         rom_window(ROM, location.bank),
         auto_load_libs=False,
@@ -212,6 +211,8 @@ def _native(values: dict[str, claripy.ast.BV], tileset: int) -> list[Endpoint]:
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run `make -C verification native`")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run `make red`")
 def test_load_move_animation_tiles_pathwise_equivalence(tileset: int) -> None:
+    location = symbol_location(SYMBOLS, "LoadMoveAnimationTiles")
+    assert linked_bytes(ROM, location, len(EXPECTED)) == EXPECTED
     values = _inputs(f"load_move_animation_tiles_{tileset}")
     assert_pathwise_equivalent(
         _assembly(values, tileset),
