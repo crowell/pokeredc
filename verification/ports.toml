@@ -20226,6 +20226,18 @@ proof_domain = "all general-register and canonical-flag inputs; IntroClearScreen
 decoder = "exact 35-byte linked body checked; the four coordinate/count setups and final JP are modeled, while native production C calls the real IntroClearScreen and IntroPlaceBlackTiles ports"
 
 [[function]]
+assembly_symbol = "LoadIntroGraphics"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_load_intro_graphics"
+c_source = "verification/ports/load_intro_graphics.c"
+status = "partial"
+observables = [
+    "A/F/B/C/D/E/H/L",
+]
+proof_domain = "all general-register and canonical-flag inputs with the four fixed intro graphic source/destination/size transfers; FarCopyData2 executes as the proven transfer boundary with initial loaded and mapper banks set to zero"
+decoder = "exact 56-byte linked body verified; all four HL/DE/BC/A setups and three calls plus final JP execute under the real FarCopyData2 transition, while transferred graphics bytes remain outside this register-focused proof"
+
+[[function]]
 assembly_symbol = "PlayIntro"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_play_intro"
