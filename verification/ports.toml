@@ -19587,6 +19587,17 @@ proof_domain = "all register/flag inputs and every 16-bit HL; HL is incremented 
 decoder = "exact 5-byte body checked (2323c3b507); the INC HL instructions are run natively and the JP 0x7b5 tail is an explicit boundary. Pathwise equivalence proven against port_check_warps_no_collision_retry2 across all register/flag inputs."
 
 [[function]]
+assembly_symbol = "CheckWarpsCollision"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_check_warps_collision"
+c_source = "verification/ports/check_warps_collision.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+]
+proof_domain = "the 7-byte CheckWarpsCollision prefix through the initial wWarpEntries pointer, with wNumberOfWarps=3 and symbolic initial registers; the warp-entry comparison loop and WarpFound2 dispatch remain outside this proof"
+decoder = "exact 7-byte linked prefix checked; the absolute warp-count load and HL immediate use individual audited shims, while the setup LD C,A executes in the linked body and native C mirrors the same setup"
+[[function]]
 assembly_symbol = "CheckWarpsNoCollision"
 assembly_source = "home/overworld.asm"
 c_symbol = "port_check_warps_no_collision"
