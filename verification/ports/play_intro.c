@@ -17,6 +17,7 @@ void port_delay_frame(struct delay_frame_state *, const port_u8 *);
 #define SHADOW_OAM_SIZE 1024u
 
 void port_check_for_user_interruption(struct cpu_register_state *, port_u8 *);
+void port_delay_frames(struct delay_frame_state *, const port_u8 *);
 void port_update_intro_nidorino_oam(struct intro_nidorino_oam_state *);
 
 static void
@@ -35,6 +36,57 @@ intro_update_nidorino_oam(struct cpu_register_state *state, port_u8 *memory)
 	for (unsigned i = 0; i < SHADOW_OAM_SIZE; ++i)
 		memory[W_SHADOW_OAM + i] = oam.oam[i];
 	*state = oam.registers;
+}
+
+/* Port of AnimateIntroNidorino in engine/movie/intro.asm. */
+__attribute__((noinline, used)) void
+port_animate_intro_nidorino(struct cpu_register_state *state,
+	port_u8 *memory, const port_u8 *animation)
+{
+	static const port_u8 acknowledged_vblank[] = { 0 };
+	const port_u8 *cursor = animation;
+
+	for (;;) {
+		port_u8 y = *cursor;
+
+		state->a = y;
+		if (y == 80u) {
+			state->f = PORT_FLAG_Z | PORT_FLAG_N;
+			return;
+		}
+		memory[W_BASE_COORD_Y] = y;
+		cursor++;
+		memory[W_BASE_COORD_X] = *cursor;
+		state->a = memory[W_BASE_COORD_X];
+		{
+			port_u8 saved_d = state->d;
+			port_u8 saved_e = state->e;
+
+			intro_update_nidorino_oam(state, memory);
+			state->d = saved_d;
+			state->e = saved_e;
+		}
+		{
+			struct delay_frame_state delay;
+			port_u8 saved_d = state->d;
+			port_u8 saved_e = state->e;
+
+			delay.registers = *state;
+			delay.registers.c = 5;
+			port_delay_frames(&delay, acknowledged_vblank);
+			*state = delay.registers;
+			state->d = saved_d;
+			state->e = saved_e;
+		}
+		cursor++;
+		{
+			port_u16 de = (port_u16)(((port_u16)state->d << 8) |
+				state->e);
+			de = (port_u16)(de + 2u);
+			state->d = (port_u8)(de >> 8);
+			state->e = (port_u8)de;
+		}
+	}
 }
 
 /* Port of IntroMoveMon in engine/movie/intro.asm. */

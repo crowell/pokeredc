@@ -11683,6 +11683,20 @@ decoder = "exact 16-byte body and both global addresses checked; initializer/fin
 
 
 [[function]]
+assembly_symbol = "AnimateIntroNidorino"
+assembly_source = "engine/movie/intro.asm"
+c_symbol = "port_animate_intro_nidorino"
+c_source = "verification/ports/play_intro.c"
+status = "partial"
+observables = [
+    "all registers and flags",
+    "wBaseCoordY and wBaseCoordX",
+    "the 36-entry updated intro OAM buffer",
+]
+proof_domain = "the complete IntroNidorinoAnimation1 table, including signed -1 movement and ANIMATION_END=80, with no user interruption; compares all registers, flags, coordinates, and 36 OAM entries after the loop"
+decoder = "exact 27-byte linked body checked; table reads, terminal comparison, coordinate stores, UpdateIntroNidorinoOAM and DelayFrames boundaries, DE preservation/increment, loop, and return are modeled. Other animation tables and interruption paths remain outside this proof"
+
+[[function]]
 assembly_symbol = "IntroMoveMon"
 assembly_source = "engine/movie/intro.asm"
 c_symbol = "port_intro_move_mon"
