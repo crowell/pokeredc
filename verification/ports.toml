@@ -21201,6 +21201,20 @@ proof_domain = "all initial registers/canonical flags and bank/function/callback
 decoder = "the exact complete 50-byte body executes under angr; BIT/RES, zero-table exit, DEC/ADD index arithmetic, all three linked pointer entries, bank save/switch/restore, the independently proven CallFunctionInTable transition, and the proven PlayerStepOutFromDoor far-jump boundary compose explicitly. Native C calls both real ports."
 
 [[function]]
+assembly_symbol = "RunMapScript"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_run_map_script"
+c_source = "verification/ports/run_map_script.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "boulder flags, current map/script pointer, bank-switch scratch, loaded/saved/map/mapper banks, and an arbitrary map-script memory-output marker",
+    "ordered complete-input transitions for TryPushingBoulder, optional DoBoulderDustAnimation, RunNPCMovementScript, SwitchToMapRomBank, and the indirect map-script callback",
+]
+proof_domain = "all initial registers/canonical flags and arbitrary proven callee register/bank transitions on both no-dust and dust paths; arbitrary current map and final map-script callback register/memory result"
+decoder = "the exact complete 50-byte body executes under angr; both farcall register/bank contracts, the dust BIT branch, saved BC/DE/HL restoration, all four proven callees, little-endian wCurMapScriptPtr load, synthetic return address, and indirect tail callback compose explicitly. Native C calls every real port and invokes a host-supplied map-script callback."
+
+[[function]]
 assembly_symbol = "RunNPCMovementScript.playerStepOutFromDoor"
 assembly_source = "home/npc_movement.asm"
 c_symbol = "port_run_npc_movement_script_player_step_out_from_door"
