@@ -25608,12 +25608,16 @@ assembly_symbol = "DisplayDexRating"
 assembly_source = "engine/events/pokedex_rating.asm"
 c_symbol = "port_display_dex_rating_private"
 c_source = "verification/ports/display_dex_rating_private.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and flags",
+    "wNumSetBits, hDexRatingNumMonsSeen, hDexRatingNumMonsOwned, and the Hall of Fame event bit",
+    "wTextBoxID, hLoadedROMBank, rROMB, and the complete seven-byte Hall of Fame rating destination",
+    "all audio/rating-sound and terminating text-scroll boundary state",
+    "the complete input to both CountSetBits calls",
 ]
-proof_domain = "all register/flag inputs through seen-Pokedex CountSetBits setup"
-decoder = "wPokedexSeen pointer and bitmap-length setup are modeled exactly; seen/owned counting, rating-table lookup, text, sound, event reset, and continuation paths remain beyond the explicit boundary"
+proof_domain = "all register/flag and boundary-state inputs; every one of the 16 valid owned-Pokedex rating tiers (0 through 151) in both ordinary and EVENT_HALL_OF_FAME_DEX_RATING modes; a representative seen bitmap is used because its count is data-only and independently exercised by the same complete proven CountSetBits transition"
+decoder = "the exact complete 99-byte linked body 210ad30613cd7f2bfa1ed1e0db21f7d20613cd7f2bfa1ed1e0dc21d1412a47f0dcb83804232318f52a666ffa47d7cb5fcb9fea47d72016e521cc41cd493ce1cd493c061f213b51cdd635c36538115bccf0db1213f0dc12132afe502804121318f712c9 executes under angr through both bitmap counts, the real rating-table loop, event test/reset, ordinary text/sound/wait tail, and Hall of Fame copy loop; only the independently proven CountSetBits calls and individual SM83 instructions absent or incorrect in the Z80 p-code backend are shimmed; production C calls the real CountSetBits, PrintText, PlayPokedexRatingSfx, and WaitForTextScrollButtonPress ports"
 
 [[function]]
 assembly_symbol = "DisplayPokemartDialogue_"
