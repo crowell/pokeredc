@@ -11,7 +11,7 @@ from archinfo import ArchPcode
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
     REGISTERS, assembly_registers, native_registers, set_assembly_registers,
-    store_native_registers,
+    store_native_registers, symbolic_registers,
 )
 from verification.harness.rom import collect_returns, linked_bytes, rom_window, symbol_location
 from verification.harness.sm83_shims import (
@@ -263,28 +263,35 @@ def _setup(state: angr.SimState, base: int, *, enabled: int,
            priority: bool = False, unchanging: bool = False,
            second_sprite: bool = False, ledge: bool = False,
            alternate_facing: bool = False, four_tile_sprite: bool = False,
-           image_value: int | None = None) -> None:
+           image_value: int | None = None, active_offset: int = 0,
+           initial_oam: claripy.ast.BV | None = None,
+           screen_y: claripy.ast.BV | int = 0x2C,
+           screen_x: claripy.ast.BV | int = 0x3D) -> None:
+    screen_y_value = screen_y if isinstance(screen_y, claripy.ast.BV) else claripy.BVV(screen_y, 8)
+    screen_x_value = screen_x if isinstance(screen_x, claripy.ast.BV) else claripy.BVV(screen_x, 8)
     state.memory.store(base + W_UPDATE, claripy.BVV(enabled, 8))
     state.memory.store(base + H_MOVEMENT_FLAGS,
                        claripy.BVV(0x40 if ledge else 0, 8))
-    state.memory.store(base + W_SPRITE_STATE_DATA2 + 7,
-                       claripy.BVV(0x80 if priority else 0, 8))
     for address, value in ((H_SPRITE_OFFSET, 0x31), (H_OAM_OFFSET, 0x42),
                            (0xFF91, 0x53), (0xFF92, 0x64), (0xFF94, 0x75)):
         state.memory.store(base + address, claripy.BVV(value, 8))
-    for offset in range(0, 0x100, 0x10):
+    for offset in range(0x100):
         state.memory.store(base + W_SPRITE_STATE_DATA1 + offset,
+                           claripy.BVV(0, 8))
+        state.memory.store(base + W_SPRITE_STATE_DATA2 + offset,
                            claripy.BVV(0, 8))
     for offset, value in ((2, 0x22), (4, 0x33), (6, 0x44),
                           (10, 0x55), (11, 0x66)):
-        state.memory.store(base + W_SPRITE_STATE_DATA1 + offset,
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset + offset,
                            claripy.BVV(value, 8))
+    state.memory.store(base + W_SPRITE_STATE_DATA2 + active_offset + 7,
+                       claripy.BVV(0x80 if priority else 0, 8))
     state.memory.store(base + W_SAVED_IMAGE, claripy.BVV(0x77, 8))
     if offscreen:
-        state.memory.store(base + W_SPRITE_STATE_DATA1, claripy.BVV(1, 8))
-        state.memory.store(base + W_SPRITE_STATE_DATA1 + 2, claripy.BVV(0xFF, 8))
-        state.memory.store(base + W_SPRITE_STATE_DATA1 + 4, claripy.BVV(0x2C, 8))
-        state.memory.store(base + W_SPRITE_STATE_DATA1 + 6, claripy.BVV(0x3D, 8))
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset, claripy.BVV(1, 8))
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset + 2, claripy.BVV(0xFF, 8))
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset + 4, screen_y_value)
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset + 6, screen_x_value)
     if visible:
         image = image_value if image_value is not None else (
             0xB0 if four_tile_sprite else 0xA0 if unchanging else
@@ -293,11 +300,11 @@ def _setup(state: angr.SimState, base: int, *, enabled: int,
         table_index = image & 0x0f
         if image >= 0xa0:
             table_index += 0x10
-        state.memory.store(base + W_SPRITE_STATE_DATA1, claripy.BVV(1, 8))
-        state.memory.store(base + W_SPRITE_STATE_DATA1 + 2,
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset, claripy.BVV(1, 8))
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset + 2,
                            claripy.BVV(image, 8))
-        state.memory.store(base + W_SPRITE_STATE_DATA1 + 4, claripy.BVV(0x2C, 8))
-        state.memory.store(base + W_SPRITE_STATE_DATA1 + 6, claripy.BVV(0x3D, 8))
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset + 4, screen_y_value)
+        state.memory.store(base + W_SPRITE_STATE_DATA1 + active_offset + 6, screen_x_value)
         for offset, value in enumerate((0x80, 0x40, 0x98, 0x40)):
             state.memory.store(base + SPRITE_TABLE + table_index * 4 + offset,
                                claripy.BVV(value, 8))
@@ -319,8 +326,11 @@ def _setup(state: angr.SimState, base: int, *, enabled: int,
                                claripy.BVV(0x4D, 8))
             state.memory.store(base + W_SPRITE_STATE_DATA2 + 0x17,
                                claripy.BVV(0x80 if priority else 0, 8))
-    for i in range(160):
-        state.memory.store(base + W_SHADOW_OAM + i, claripy.BVV((i * 7 + 3) & 0xff, 8))
+    if initial_oam is None:
+        for i in range(160):
+            state.memory.store(base + W_SHADOW_OAM + i, claripy.BVV((i * 7 + 3) & 0xff, 8))
+    else:
+        state.memory.store(base + W_SHADOW_OAM, initial_oam)
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
@@ -328,8 +338,8 @@ def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
               for address in (W_UPDATE, H_SPRITE_OFFSET, H_OAM_OFFSET,
                               H_SCREEN_X, H_SCREEN_Y, H_PRIORITY,
                               H_MOVEMENT_FLAGS, W_SAVED_IMAGE)]
-    pieces.extend(state.memory.load(base + W_SPRITE_STATE_DATA1 + offset, 1)
-                  for offset in (0, 2, 4, 6, 10, 11))
+    pieces.append(state.memory.load(base + W_SPRITE_STATE_DATA1, 0x100))
+    pieces.append(state.memory.load(base + W_SPRITE_STATE_DATA2, 0x100))
     pieces.append(state.memory.load(base + W_SHADOW_OAM, 160))
     return claripy.Concat(*pieces)
 
@@ -345,7 +355,10 @@ def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
               offscreen: bool, visible: bool, priority: bool,
               unchanging: bool, second_sprite: bool, ledge: bool,
               alternate_facing: bool, four_tile_sprite: bool = False,
-              image_value: int | None = None) -> list[Endpoint]:
+              image_value: int | None = None, active_offset: int = 0,
+              initial_oam: claripy.ast.BV | None = None,
+              screen_y: claripy.ast.BV | int = 0x2C,
+              screen_x: claripy.ast.BV | int = 0x3D) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "PrepareOAMData")
     tail = symbol_location(SYMBOLS, "GetSpriteScreenXY")
     assert linked_bytes(ROM, location, tail.address - location.address) == bytes.fromhex(
@@ -435,7 +448,8 @@ def _assembly(values: dict[str, claripy.ast.BV], *, enabled: int,
            priority=priority, unchanging=unchanging,
            second_sprite=second_sprite, ledge=ledge,
            alternate_facing=alternate_facing, four_tile_sprite=four_tile_sprite,
-           image_value=image_value)
+           image_value=image_value, active_offset=active_offset,
+           initial_oam=initial_oam, screen_y=screen_y, screen_x=screen_x)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     return [_endpoint(end, native=False, base=0)
             for end in collect_returns(project, state, RETURN)]
@@ -445,7 +459,10 @@ def _native(values: dict[str, claripy.ast.BV], *, enabled: int,
             offscreen: bool, visible: bool, priority: bool,
             unchanging: bool, second_sprite: bool, ledge: bool,
             alternate_facing: bool, four_tile_sprite: bool = False,
-            image_value: int | None = None) -> list[Endpoint]:
+            image_value: int | None = None, active_offset: int = 0,
+            initial_oam: claripy.ast.BV | None = None,
+            screen_y: claripy.ast.BV | int = 0x2C,
+            screen_x: claripy.ast.BV | int = 0x3D) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_prepare_oam_data")
     assert function is not None
@@ -455,7 +472,8 @@ def _native(values: dict[str, claripy.ast.BV], *, enabled: int,
            visible=visible, priority=priority, unchanging=unchanging,
            second_sprite=second_sprite, ledge=ledge,
            alternate_facing=alternate_facing, four_tile_sprite=four_tile_sprite,
-           image_value=image_value)
+           image_value=image_value, active_offset=active_offset,
+           initial_oam=initial_oam, screen_y=screen_y, screen_x=screen_x)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
@@ -523,5 +541,73 @@ def test_prepare_oam_data_high_normal_sprite_pathwise_equivalence() -> None:
         _native(values, enabled=1, offscreen=False, visible=True,
                 priority=False, unchanging=False, second_sprite=False,
                 ledge=False, alternate_facing=False, image_value=0x8F),
+        (*REGISTERS, "memory"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+@pytest.mark.parametrize("active_offset", range(0, 0x100, 0x10))
+def test_prepare_oam_data_visible_sprite_all_slots_pathwise_equivalence(
+    active_offset: int,
+) -> None:
+    values = symbolic_registers(f"prepare_oam_slot_{active_offset:02x}")
+    initial_oam = claripy.BVS(
+        f"prepare_oam_slot_{active_offset:02x}_initial_oam", 160 * 8
+    )
+    screen_y = claripy.BVS(f"prepare_oam_slot_{active_offset:02x}_y", 8)
+    screen_x = claripy.BVS(f"prepare_oam_slot_{active_offset:02x}_x", 8)
+    arguments = dict(
+        enabled=1, offscreen=False, visible=True, priority=False,
+        unchanging=False, second_sprite=False, ledge=False,
+        alternate_facing=False, image_value=0,
+        active_offset=active_offset, initial_oam=initial_oam,
+        screen_y=screen_y, screen_x=screen_x,
+    )
+    assert_pathwise_equivalent(
+        _assembly(values, **arguments),
+        _native(values, **arguments),
+        (*REGISTERS, "memory"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+@pytest.mark.parametrize("enabled", (0, 1), ids=("hide", "empty_scan"))
+def test_prepare_oam_data_symbolic_terminal_paths(enabled: int) -> None:
+    values = symbolic_registers(f"prepare_oam_terminal_{enabled}")
+    initial_oam = claripy.BVS(
+        f"prepare_oam_terminal_{enabled}_initial_oam", 160 * 8
+    )
+    arguments = dict(
+        enabled=enabled, offscreen=False, visible=False, priority=False,
+        unchanging=False, second_sprite=False, ledge=False,
+        alternate_facing=False, initial_oam=initial_oam,
+    )
+    assert_pathwise_equivalent(
+        _assembly(values, **arguments),
+        _native(values, **arguments),
+        (*REGISTERS, "memory"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+@pytest.mark.parametrize("active_offset", range(0, 0x100, 0x10))
+def test_prepare_oam_data_offscreen_sprite_all_slots_pathwise_equivalence(
+    active_offset: int,
+) -> None:
+    values = symbolic_registers(f"prepare_oam_offscreen_{active_offset:02x}")
+    screen_y = claripy.BVS(f"prepare_oam_offscreen_{active_offset:02x}_y", 8)
+    screen_x = claripy.BVS(f"prepare_oam_offscreen_{active_offset:02x}_x", 8)
+    arguments = dict(
+        enabled=1, offscreen=True, visible=False, priority=False,
+        unchanging=False, second_sprite=False, ledge=False,
+        alternate_facing=False, active_offset=active_offset,
+        screen_y=screen_y, screen_x=screen_x,
+    )
+    assert_pathwise_equivalent(
+        _assembly(values, **arguments),
+        _native(values, **arguments),
         (*REGISTERS, "memory"),
     )
