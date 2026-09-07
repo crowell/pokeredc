@@ -679,6 +679,9 @@ def scripted_reload_assembly(
     project.hook(qw + 83, LoadRegisterAtHL("b", qw + 84), length=1); project.hook(qw + 84, StoreAtHL(None, qw + 85, increment=True), length=1)
     project.hook(qw + 85, Sm83IncRegister("l", qw + 86), length=1); project.hook(qw + 86, LoadRegisterAtHL("c", qw + 87), length=1)
     project.hook(qw + 87, StoreAtHL(None, qw + 88), length=1); project.hook(qw + 88, ReturnTo(RET), length=1)
+    try_walking = symbol_location(SYMBOLS, "TryWalking")
+    assert linked_bytes(ROM, try_walking, 51) == bytes.fromhex("e526c1f0dac6096f71f0dac6036f722c2c73e1d54ecd6e51d1d826c2f0dac6046f7e82227e8377f0da6f3610252c3603c35751")
+    project.hook(try_walking.address, TerminalBoundary(False), length=1)
     state = project.factory.blank_state(addr=q); set_assembly_registers(state, values); scripted_reload_setup(state, 0, offset, check, init, first_direction, walk_counter, movement_status, face, font, movement_byte, movement_delay, walking)
     if isinstance(walk_counter, claripy.ast.BV): state.solver.add(walk_counter != 0)
     if isinstance(movement_status, claripy.ast.BV): state.solver.add((movement_status & 0x80) != 0)
@@ -737,6 +740,21 @@ def test_update_npc_sprite_scripted_end_pathwise_equivalence(offset: int) -> Non
     init = symbolic_registers(f"update_npc_scripted_end_{offset:02x}_init")
     init["screen_y"] = claripy.BVS(f"update_npc_scripted_end_{offset:02x}_screen_y", 8); init["screen_x"] = claripy.BVS(f"update_npc_scripted_end_{offset:02x}_screen_x", 8)
     assert_pathwise_equivalent(scripted_reload_assembly(values, offset, check, init, 0xFF), scripted_reload_native(values, offset, check, init, 0xFF), (*REGISTERS, "state"))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_update_npc_sprite_scripted_change_facing_pathwise_equivalence(offset: int) -> None:
+    prefix = f"update_npc_scripted_change_facing_{offset:02x}"
+    values = symbolic_registers(prefix)
+    check = symbolic_registers(f"{prefix}_check")
+    check["f"] = claripy.Concat(claripy.BVS(f"{prefix}_check_znh", 3), claripy.BVV(0, 5))
+    check["image"] = claripy.BVS(f"{prefix}_image", 8); check["grass"] = claripy.BVS(f"{prefix}_grass", 8)
+    init = symbolic_registers(f"{prefix}_init")
+    init["screen_y"] = claripy.BVS(f"{prefix}_screen_y", 8); init["screen_x"] = claripy.BVS(f"{prefix}_screen_x", 8)
+    assembly_paths = scripted_reload_assembly(values, offset, check, init, 0xE0)
+    native_paths = scripted_reload_native(values, offset, check, init, 0xE0)
+    assert_pathwise_equivalent(assembly_paths, native_paths, (*REGISTERS, "state"))
 
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
