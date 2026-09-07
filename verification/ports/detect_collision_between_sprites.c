@@ -1,6 +1,7 @@
 #include "port_state.h"
 
 #define W_SPRITE_STATE_DATA1 0xc100u
+#define SPRITE_COLLISION_BIT_TABLE 0x4d85u
 #define H_COLLIDING_SPRITE_OFFSET 0xff8fu
 #define H_COLLIDING_SPRITE_TEMP_Y 0xff90u
 #define H_COLLIDING_SPRITE_TEMP_X 0xff91u
@@ -279,9 +280,14 @@ port_detect_collision_between_sprites(struct cpu_register_state *r,
 		i = (port_u16)(i + 2u);
 		{
 			port_u16 bit = (port_u16)(1u << slot);
+			port_u16 table = (port_u16)(SPRITE_COLLISION_BIT_TABLE +
+				(port_u16)(slot * 2u) + 1u);
+
 			memory[i] |= (port_u8)(bit >> 8);
 			memory[(port_u16)(i + 1u)] |= (port_u8)bit;
 			r->l = (port_u8)(i + 1u);
+			r->d = (port_u8)(table >> 8);
+			r->e = (port_u8)table;
 		}
 
 next:

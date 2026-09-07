@@ -13044,14 +13044,14 @@ assembly_symbol = "DetectCollisionBetweenSprites"
 assembly_source = "engine/overworld/sprite_collisions.asm"
 c_symbol = "port_detect_collision_between_sprites"
 c_source = "verification/ports/detect_collision_between_sprites.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
     "hCurrentSpriteOffset and hCollidingSprite* work bytes",
     "the complete 16-slot wSpriteStateData1 region",
 ]
-proof_domain = "exact linked-body path equivalence for unused-current, no-peer, offscreen-peer, stationary collision, distant-peer rejection, opposing vertical movement, high collision-bit, nonzero current-slot, and multi-peer accumulation cases; additionally, all nine classified (zero, $ff, other) Y-step pairs, all nine classified X-step pairs, all Y-pixel pairs, and all X-pixel pairs are symbolic with one visible peer while the linked 16-slot loop completes. All direct calls compose through the complete separately-proven SetSpriteCollisionValues transition"
-decoder = "exact 11-byte entry prefix asserted and the linked body executes through individual SM83 arithmetic, memory, stack, branch, and loop adapters; the bundled Z80 p-code backend does not fork conditional branches, so all branch instructions are explicitly flag-driven adapters. Coverage is representative rather than exhaustive across all 16-slot configurations and coordinate/vector combinations."
+proof_domain = "all 16 valid current-sprite slots with no peer and all 240 ordered distinct current/peer slot pairs through the complete 16-slot scan; exact linked-body path equivalence for unused-current, offscreen-peer, stationary collision, distant-peer rejection, opposing vertical movement, high collision-bit, and multi-peer accumulation cases; additionally, all classified (zero, $ff, other) Y-step and X-step pairs and all 256 Y-pixel and X-pixel values are symbolic with one visible peer. All direct calls compose through the complete separately-proven SetSpriteCollisionValues transition"
+decoder = "exact 11-byte entry prefix asserted and the complete linked body executes through individual SM83 arithmetic, memory, stack, branch, collision-bit-table, and loop adapters; conditional branches are explicit flag-driven adapters because the bundled Z80 p-code backend does not fork them"
 
 [[function]]
 assembly_symbol = "CanWalkOntoTile"

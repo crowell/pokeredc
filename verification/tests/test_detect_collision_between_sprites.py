@@ -759,3 +759,46 @@ def test_detect_collision_between_sprites_additional_pathwise_equivalence(
         _native(values, bytes(sprite_data), current_offset),
         (*REGISTERS, "current_offset", "sprite_data", "collision_work"),
     )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+@pytest.mark.parametrize("current_offset", range(0, 0x100, 0x10))
+def test_detect_collision_between_sprites_all_current_slots_pathwise_equivalence(
+    current_offset: int,
+) -> None:
+    """Exercise the complete scan from every valid current-sprite slot."""
+    values = {register: claripy.BVV(0, 8) for register in REGISTERS}
+    sprite_data = bytearray(256)
+    sprite_data[current_offset] = 1
+    assert_pathwise_equivalent(
+        _assembly(values, bytes(sprite_data), current_offset),
+        _native(values, bytes(sprite_data), current_offset),
+        (*REGISTERS, "current_offset", "sprite_data", "collision_work"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+@pytest.mark.parametrize(
+    ("current_offset", "peer_offset"),
+    [
+        (current_offset, peer_offset)
+        for current_offset in range(0, 0x100, 0x10)
+        for peer_offset in range(0, 0x100, 0x10)
+        if peer_offset != current_offset
+    ],
+)
+def test_detect_collision_between_sprites_all_slot_pairs_pathwise_equivalence(
+    current_offset: int, peer_offset: int,
+) -> None:
+    """Exercise collision recording for every ordered pair of valid slots."""
+    values = {register: claripy.BVV(0, 8) for register in REGISTERS}
+    sprite_data = bytearray(256)
+    sprite_data[current_offset] = 1
+    sprite_data[peer_offset] = 1
+    assert_pathwise_equivalent(
+        _assembly(values, bytes(sprite_data), current_offset),
+        _native(values, bytes(sprite_data), current_offset),
+        (*REGISTERS, "current_offset", "sprite_data", "collision_work"),
+    )
