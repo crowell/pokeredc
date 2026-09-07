@@ -30979,15 +30979,15 @@ assembly_symbol = "PlayerSpinWhileMovingUpOrDown"
 assembly_source = "engine/overworld/player_animations.asm"
 c_symbol = "port_player_spin_while_moving_up_or_down"
 c_source = "verification/ports/player_spin_while_moving.c"
-status = "partial"
+status = "proven"
 observables = [
     "A/F/B/C/D/E/H/L",
-    "wPlayerSpinWhileMovingUpOrDownAnimDeltaY, MaxY, and FrameDelay",
-    "wSpritePlayerStateData1YPixels and ImageIndex",
-    "all four wFacingDirectionList bytes",
+    "all animation parameters, all five bytes written by SpinPlayerSprite including wFacingDirectionList-1, and adjacent guards",
+    "player image, Y position, and neighboring sprite state",
+    "complete ordered DelayFrame register inputs and player image/Y/delay/facing-list state at every wait, with exact frame count",
 ]
-proof_domain = "all general-register and canonical-flag inputs plus symbolic spin-source/image/list bytes over the four terminating gameplay motion configurations: delta +16 to max 60 and delta -16 to max 236, each with one-step and two-step paths; arbitrary configurations are excluded because the original loop intentionally runs until Y exactly equals MaxY"
-decoder = "the exact complete 29-byte linked body cd1747fa3dcd4ffa04c181ea04c14ffa3ecdb9c8fa3fcd4fcd393718e3 executes through its real back edge; the complete proven SpinPlayerSprite and DelayFrames transitions are composed at their call sites, while production C calls real port_spin_player_sprite and port_delay_frames and executes the loop"
+proof_domain = "all initial registers/canonical flags and symbolic animation/list/player bytes at every terminating gameplay motion configuration: delta +16 to max 60 and delta -16 to max 236, each with all 16 starting Y values in the target's modulo-16 class and both stock frame delays 2 and 3; every one-through-sixteen spin path including Y wraparound is executed. Other Y residues never reach the original loop's target. DelayFrame uses its independently proved acknowledged-interrupt transition."
+decoder = "the complete linked PlayerSpinWhileMovingUpOrDown, SpinPlayerSprite, CopyData, and DelayFrames bodies execute under angr; only individual SM83 load/store/arithmetic/conditional-return shims and the DelayFrame interrupt boundary are used. Native C calls real port_spin_player_sprite, port_copy_data, port_delay_frames, and port_delay_frame and executes every loop; a zero-length hook records native DelayFrame inputs without replacing its implementation."
 
 [[function]]
 assembly_symbol = "DoFlyAnimation"
