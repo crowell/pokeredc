@@ -30978,15 +30978,16 @@ assembly_symbol = "DoFlyAnimation"
 assembly_source = "engine/overworld/player_animations.asm"
 c_symbol = "port_do_fly_animation"
 c_source = "verification/ports/do_fly_animation.c"
-status = "partial"
+status = "proven"
 observables = [
     "A/F/B/C/D/E/H/L",
     "wFlyAnimUsingCoordList, wFlyAnimCounter, and wFlyAnimBirdSpriteImageIndex",
     "wSpritePlayerStateData1ImageIndex, YPixels, and XPixels (including untouched adjacent Y byte)",
-    "the four input coordinate-list bytes",
+    "all input coordinate-list bytes and neighboring animation/sprite guards",
+    "complete ordered register/counter/image/coordinate state at every DelayFrame call and the exact 3*counter frame count",
 ]
-proof_domain = "all general-register and canonical-flag inputs except DE, which is fixed to an arbitrary symbolic four-byte coordinate list when the non-$ff coordinate-copy path is selected; both coordinate modes ($ff skip and non-$ff copy) through one and two complete animation iterations, with arbitrary preexisting animation/player bytes"
-decoder = "the exact complete 41-byte linked body fa3fcdee01ea3fcdea02c1cdd73dfa3dcdfeff280a2104c11a1322231a1377fa3ecd3dea3ecd20d8c9 executes through its real back edge; individual SM83 absolute loads/stores, XOR/CP/DEC flag operations, coordinate loads, HLI store, and both conditional branches are modeled explicitly, while the complete independently proven Delay3 transition is composed at its real call site and production C calls real port_delay3"
+proof_domain = "all register/canonical-flag and animation/player byte inputs at every stock EnterMapAnim/_LeaveMapAnim call configuration: eight in-place flaps with arbitrary DE, twelve coordinate copies from FlyAnimationEnterScreenCoords, twelve from FlyAnimationScreenCoords1, and eleven from FlyAnimationScreenCoords2. Every coordinate byte is symbolic at its actual linked list address. Additional one- and two-iteration cases exercise early return and loop boundaries; arbitrary caller counters and aliased source pointers are outside this gameplay proof."
+decoder = "the exact complete 41-byte DoFlyAnimation body and real linked Delay3/DelayFrames bodies execute under angr through every animation and delay iteration. Only individual SM83 instruction shims and the independently proved acknowledged-interrupt DelayFrame boundary are used. Native C executes all real callees and loops; a zero-length observation hook records each native DelayFrame input without replacing its instructions."
 
 [[function]]
 assembly_symbol = "LoadBirdSpriteGraphics"
