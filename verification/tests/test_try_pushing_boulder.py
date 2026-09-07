@@ -11,7 +11,7 @@ from archinfo import ArchPcode
 from verification.harness.equivalence import assert_pathwise_equivalent
 from verification.harness.registers import (
     REGISTERS, assembly_registers, native_registers, set_assembly_registers,
-    store_native_registers,
+    store_native_registers, symbolic_registers,
 )
 from verification.harness.rom import collect_returns, linked_bytes, rom_window, symbol_location
 from verification.harness.sm83_shims import Sm83BitAtHl, Sm83BitRegister, Sm83LoadAImmediate, Sm83XorA
@@ -134,7 +134,7 @@ def _native(values: dict[str, claripy.ast.BV], *, status: int, misc: int,
 @pytest.mark.parametrize("status,misc,sprites", ((0, 0, 0), (1, 2, 0)))
 def test_try_pushing_boulder_pathwise_equivalence(status: int, misc: int,
                                                    sprites: int) -> None:
-    values = {register: claripy.BVV(0, 8) for register in REGISTERS}
+    values = symbolic_registers(f"try_push_early_{status}_{misc}_{sprites}")
     assert_pathwise_equivalent(
         _assembly(values, status=status, misc=misc, sprites=sprites),
         _native(values, status=status, misc=misc, sprites=sprites),

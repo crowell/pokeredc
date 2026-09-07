@@ -31147,14 +31147,16 @@ assembly_symbol = "TryPushingBoulder"
 assembly_source = "engine/overworld/push_boulder.asm"
 c_symbol = "port_try_pushing_boulder"
 c_source = "verification/ports/try_pushing_boulder.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
-    "hSpriteIndex, wBoulderSpriteIndex, wMiscFlags, and wTileInFrontOfBoulderAndBoulderCollisionResult",
-    "the complete sprite movement destination region and PlaySound state on a push",
+    "hSpriteIndex, wPlayerDirection, wBoulderSpriteIndex, wMiscFlags, and wTileInFrontOfBoulderAndBoulderCollisionResult",
+    "all valid sprite-state movement-status and movement-byte destinations",
+    "the selected two-byte movement table and complete PlaySound state on a push",
+    "ordered full-input transitions for sprite lookup, movement pointer lookup, boulder collision, MoveSprite, ResetBoulderPushFlags, and PlaySound",
 ]
-proof_domain = "strength-inactive and boulder-dust early exits plus the active-strength no-boulder lookup/reset path with complete register/flag/memory comparison; movement-byte rejection, the two-attempt gate, directional held-input exits, collision reset, and push-side effects are implemented behind the existing helper seams but remain follow-up composition paths"
-decoder = "the exact complete 144-byte linked body is checked through the DoBoulderDustAnimation boundary; the focused equivalence executes the real assembly through instruction-level load/bit shims and the zero-sprite lookup boundary, while native C preserves the complete downstream state machine and calls the real sprite, collision, movement, reset, and sound ports"
+proof_domain = "all initial registers/canonical flags on strength-inactive, existing-dust, and active-strength no-boulder paths; the complete found-boulder state machine covers movement-byte rejection, first-attempt and no-held-input gates, collision reset, all four directional BIT rejection paths, all four successful pushes, and every valid sprite index 1 through 15 with complete possible indexed destination regions and arbitrary matching proven-callee post-states"
+decoder = "the exact complete 144-byte linked body, including all four movement records, is checked; every wrapper branch executes from entry to its real RET/tail reset, individual unsupported SM83 loads/stores/SWAP/arithmetic/BIT/SET/RES operations are shimmed, and independently proven callees compose at full-input ordered boundaries. Native C calls every real port and now preserves the sprite-front globals, SWAP/ADD-HL register contract, AND/BIT flags, wMiscFlags HL loads, movement dispatch, sound, and final dust flag."
 
 [[function]]
 assembly_symbol = "PrepareOAMData"

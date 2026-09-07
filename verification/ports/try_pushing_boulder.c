@@ -9,6 +9,7 @@
 #define W_FACING 0xc109u
 #define W_TILE_BOULDER_RESULT 0xd71cu
 #define W_NUM_SPRITES 0xd4e1u
+#define W_PLAYER_DIRECTION 0xd52au
 #define W_CHANNEL_SOUND_IDS 0xc026u
 #define W_NEW_SOUND_ID 0xc0eeu
 #define W_AUDIO_ROM_BANK 0xc0efu
@@ -59,6 +60,23 @@ cp_immediate(struct cpu_register_state *r, port_u8 value)
 }
 
 static void
+add_hl_de(struct cpu_register_state *r)
+{
+	port_u16 left = (port_u16)(((port_u16)r->h << 8) | r->l);
+	port_u16 right = (port_u16)(((port_u16)r->d << 8) | r->e);
+	unsigned long wide = (unsigned long)left + right;
+	port_u8 flags = r->f & PORT_FLAG_Z;
+
+	if ((left & 0x0fffu) + (right & 0x0fffu) > 0x0fffu)
+		flags |= PORT_FLAG_H;
+	if (wide > 0xffffu)
+		flags |= PORT_FLAG_C;
+	r->f = flags;
+	r->h = (port_u8)(wide >> 8);
+	r->l = (port_u8)wide;
+}
+
+static void
 reset_flags(struct cpu_register_state *r, port_u8 *memory)
 {
 	struct misc_flags_state state = {0};
@@ -82,6 +100,7 @@ find_boulder(struct cpu_register_state *r, port_u8 *memory)
 	port_is_sprite_in_front_of_player2(&state, memory);
 	*r = state.registers;
 	memory[H_SPRITE_INDEX] = state.text_id;
+	memory[W_PLAYER_DIRECTION] = state.player_direction;
 }
 
 static port_u16
@@ -170,12 +189,18 @@ port_try_pushing_boulder(struct cpu_register_state *r, port_u8 *memory)
 	sprite = memory[H_SPRITE_INDEX];
 	memory[W_BOULDER_INDEX] = sprite;
 	r->a = sprite;
+	r->f = sprite == 0 ? PORT_FLAG_Z : 0;
 	if (sprite == 0) {
 		reset_flags(r, memory);
 		return;
 	}
 	r->h = 0xc1;
-	r->l = (port_u8)(0x01u + ((port_u8)((sprite << 4) | (sprite >> 4))));
+	r->l = 0x01;
+	r->d = 0;
+	r->a = (port_u8)((sprite << 4) | (sprite >> 4));
+	r->f = r->a == 0 ? PORT_FLAG_Z : 0;
+	r->e = r->a;
+	add_hl_de(r);
 	memory[(port_u16)(((port_u16)r->h << 8) | r->l)] &= 0x7fu;
 	pointer = movement_byte2_pointer(r, memory);
 	r->a = memory[pointer];
@@ -186,6 +211,8 @@ port_try_pushing_boulder(struct cpu_register_state *r, port_u8 *memory)
 	}
 	{
 		port_u8 old = memory[W_MISC_FLAGS];
+		r->h = (port_u8)(W_MISC_FLAGS >> 8);
+		r->l = (port_u8)W_MISC_FLAGS;
 		bit_memory(r, old, 6);
 		memory[W_MISC_FLAGS] = (port_u8)(old | 0x40u);
 		if ((r->f & PORT_FLAG_Z) != 0)
@@ -199,6 +226,7 @@ port_try_pushing_boulder(struct cpu_register_state *r, port_u8 *memory)
 		return;
 	port_check_for_collision_when_pushing_boulder(r, memory);
 	r->a = memory[W_TILE_BOULDER_RESULT];
+	r->f = r->a == 0 ? PORT_FLAG_Z : 0;
 	if (r->a != 0) {
 		reset_flags(r, memory);
 		return;
@@ -207,24 +235,27 @@ port_try_pushing_boulder(struct cpu_register_state *r, port_u8 *memory)
 	r->a = memory[W_FACING];
 	cp_immediate(r, 4);
 	if ((r->f & PORT_FLAG_Z) != 0) {
+		bit_memory(r, held, 2);
 		if ((held & 0x04u) == 0) {
-			r->f = (port_u8)((r->f & PORT_FLAG_C) | PORT_FLAG_H | PORT_FLAG_Z);
 			return;
 		}
 		move_boulder(r, memory, 0x72adu);
 	} else {
 		cp_immediate(r, 8);
 		if ((r->f & PORT_FLAG_Z) != 0) {
+			bit_memory(r, held, 1);
 			if ((held & 0x02u) == 0)
 				return;
 			move_boulder(r, memory, 0x72b1u);
 		} else {
 			cp_immediate(r, 12);
 			if ((r->f & PORT_FLAG_Z) != 0) {
+				bit_memory(r, held, 0);
 				if ((held & 0x01u) == 0)
 					return;
 				move_boulder(r, memory, 0x72b3u);
 			} else {
+				bit_memory(r, held, 3);
 				if ((held & 0x08u) == 0)
 					return;
 				move_boulder(r, memory, 0x72afu);
@@ -232,5 +263,7 @@ port_try_pushing_boulder(struct cpu_register_state *r, port_u8 *memory)
 		}
 	}
 	play_push_sound(r, memory);
+	r->h = (port_u8)(W_MISC_FLAGS >> 8);
+	r->l = (port_u8)W_MISC_FLAGS;
 	memory[W_MISC_FLAGS] |= 0x02u;
 }
