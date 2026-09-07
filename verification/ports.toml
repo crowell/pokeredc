@@ -31183,6 +31183,21 @@ proof_domain = "all register and canonical-flag inputs with the fixed four-itera
 decoder = "exact 20-byte body checked; the real four-iteration PUSH/POP loop, TILE_SIZE HL advancement, DEC C termination, and LoadSmokeTile call boundary execute pathwise, while native C calls the real port_load_smoke_tile on every iteration"
 
 [[function]]
+assembly_symbol = "AnimateBoulderDust"
+assembly_source = "engine/overworld/dust_smoke.asm"
+c_symbol = "port_animate_boulder_dust"
+c_source = "verification/ports/animate_boulder_dust.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wWhichAnimationOffsets, wUpdateSpritesEnabled, rOBP1, hLoadedROMBank, and rROMB",
+    "wCoordAdjustmentAmount and the complete possible sprite-36 OAM adjustment region including the preceding bug-write byte",
+    "complete ordered callee inputs and post-states for smoke upload, banked OAM setup, eight adjustment/delay iterations, and final player graphics reload",
+]
+proof_domain = "all initial registers/canonical flags and symbolic relevant memory/OAM state for each of the four valid facing directions 0, 4, 8, and 12; the complete fixed eight-step loop executes. The independently proven smoke/OAM setup, X/Y adjustment, Delay3, and player graphics transitions are composed, with arbitrary matching post-states at their full inputs."
+decoder = "the exact complete 62-byte linked body executes through all eight backedges; only individual SM83 load/store/XOR/DEC/stack instructions, the proven bank-switch/callee transition, and independently proven callee boundaries are shimmed. Native C calls every real port, executes its real loop, preserves the Bankswitch and PUSH/POP BC contracts, and its adjustment adapter is checked at every iteration."
+
+[[function]]
 assembly_symbol = "WriteCutOrBoulderDustAnimationOAMBlock"
 assembly_source = "engine/overworld/cut.asm"
 c_symbol = "port_write_cut_or_boulder_dust_animation_oam_block"
