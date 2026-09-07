@@ -14,10 +14,9 @@
  *   channel 4 15/7-bit LFSR noise
  *   length counters, volume envelopes, NR50 gain, and NR51 routing
  *
- * FIDELITY_BOUNDARY(audio-sequencer): Audio1_UpdateMusic and its command
- * readers are not C-ported yet.  Until they are, this file faithfully plays
- * register writes but cannot turn the ROM's music bytecode into those writes.
- * See verification/INTRO_MAIN_LOOP_PORTING.md.
+ * music.c supplies register writes from the upstream sequencer ports.
+ * TODO(apu-fidelity): cycle-level trigger/length quirks, stereo output and
+ * analog filtering are not yet modeled by this sample-based mixer.
  */
 
 #define APU_SAMPLE_RATE 44100.0
@@ -319,7 +318,7 @@ noise_sample(struct mac_apu *apu, const uint8_t *memory, double dt)
 
 	if (!apu->enabled[3] || shift >= 14u)
 		return 0;
-	hz /= (double)(1u << (shift + 1u));
+	hz /= (double)(1u << shift);
 	apu->noise_phase += hz * dt;
 	while (apu->noise_phase >= 1.0) {
 		unsigned feedback = (apu->noise_lfsr ^ (apu->noise_lfsr >> 1)) & 1u;
@@ -347,6 +346,11 @@ apu_render(struct mac_apu *apu, uint8_t *memory, int16_t *out, size_t frames)
 	const double dt = 1.0 / APU_SAMPLE_RATE;
 
 	consume_triggers(apu, memory);
+	/* Turning a DAC off immediately disables its channel, without a trigger. */
+	if (!(memory[R_NR12] & 0xf8)) apu->enabled[0] = 0;
+	if (!(memory[R_NR22] & 0xf8)) apu->enabled[1] = 0;
+	if (!(memory[R_NR30] & 0x80)) apu->enabled[2] = 0;
+	if (!(memory[R_NR42] & 0xf8)) apu->enabled[3] = 0;
 	for (size_t i = 0; i < frames; i++) {
 		int channel[4];
 		int left = 0;

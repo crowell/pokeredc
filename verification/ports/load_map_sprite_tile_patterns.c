@@ -20,7 +20,7 @@
 #define R_ROMB 0x2000u
 #define SPRITE_SHEET_POINTER_TABLE 0x7b27u
 #define V_SPRITES 0x8000u
-#define V_NPC_SPRITES 0x8800u
+#define V_NPC_SPRITES 0x8000u
 #define SPRITE_STATE_LENGTH 0x10u
 #define NUM_SPRITE_STATE_STRUCTS 16u
 #define FIRST_STILL_SPRITE 0x3du
@@ -112,6 +112,7 @@ port_load_map_sprite_tile_patterns(struct cpu_register_state *r, port_u8 *memory
 
 	for (unsigned slot_index = 1; slot_index <= 15 && r->c != 0;
 		slot_index++, r->c--) {
+		port_u8 remaining = r->c;
 		port_u16 current = (port_u16)(W_SPRITE_PLAYER_STATE_DATA2_IMAGE_BASE_OFFSET +
 			slot_index * SPRITE_STATE_LENGTH);
 		port_u8 picture_id = memory[current];
@@ -173,12 +174,14 @@ port_load_map_sprite_tile_patterns(struct cpu_register_state *r, port_u8 *memory
 			if ((memory[W_FONT_LOADED] & FONT_LOADED_MASK) == 0) {
 				r->a = sheet.registers.a;
 				r->b = 0;
-				set_pair(&r->h, &r->l, destination);
+				set_pair(&r->h, &r->l, pair(sheet.registers.d, sheet.registers.e));
+				set_pair(&r->d, &r->e, destination);
 				far_copy(r, memory);
 			}
 
 			if (image_slot < 11) {
-				port_u16 walking_table = (port_u16)(table + 4u);
+				/* The assembly restores the SAME table entry from the stack. */
+				port_u16 walking_table = table;
 				load_sheet(r, memory, walking_table, &sheet);
 				/* The walking frame follows the standing frame in the sheet. */
 				set_pair(&r->d, &r->e,
@@ -187,6 +190,9 @@ port_load_map_sprite_tile_patterns(struct cpu_register_state *r, port_u8 *memory
 					(port_u16)(destination + 0x800u));
 				if ((memory[W_FONT_LOADED] & FONT_LOADED_MASK) == 0) {
 					r->a = sheet.registers.a;
+					port_u16 src = pair(r->d, r->e);
+					set_pair(&r->d, &r->e, pair(r->h, r->l));
+					set_pair(&r->h, &r->l, src);
 					far_copy(r, memory);
 				} else {
 					r->b = sheet.registers.a;
@@ -197,6 +203,7 @@ port_load_map_sprite_tile_patterns(struct cpu_register_state *r, port_u8 *memory
 		}
 
 	next_sprite:
+		r->c = remaining;
 		hl = (port_u16)(current + SPRITE_STATE_LENGTH);
 		set_pair(&r->h, &r->l, hl);
 	}

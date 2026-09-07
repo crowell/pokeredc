@@ -67,11 +67,24 @@ void port_add_item_to_inventory_home(struct cpu_register_state *state,
 void port_prepare_for_special_warp(struct cpu_register_state *state,
 	port_u8 *memory);
 void port_enter_map(struct cpu_register_state *state, port_u8 *memory);
+void port_clear_variables_on_enter_map(struct cpu_register_state *, port_u8 *);
+port_u8 port_is_player_facing_edge_of_map(struct cpu_register_state *, port_u8 *);
+void port_get_tile_and_coords_in_front(struct cpu_register_state *state,
+	port_u8 *memory);
+void port_update_sprites(struct cpu_register_state *state, port_u8 *memory);
+void port_is_sprite_in_front_of_player2(
+	struct sprite_in_front_state *state, port_u8 *memory);
+void port_is_player_standing_on_door_tile_or_warp_tile(
+	struct cpu_register_state *state, port_u8 *memory);
+void port_is_warp_tile_in_front_of_player(
+	struct cpu_register_state *state, port_u8 *memory);
+void port_collision_check_on_water(struct cpu_register_state *state,
+	port_u8 *memory);
 void port_overworld_loop(struct cpu_register_state *state);
 void port_overworld_loop_less_delay(struct cpu_register_state *state,
 	port_u8 *memory);
-void port_update_sprite_in_walking_animation(
-	struct cpu_register_state *state, port_u8 *memory);
+void port_display_text_id(struct display_text_id_state *state,
+	port_u8 *memory);
 void port_reset_player_sprite_data(struct cpu_register_state *state,
 	port_u8 *memory);
 void port_prepare_oam_data(struct cpu_register_state *state, port_u8 *memory);
@@ -154,10 +167,15 @@ void port_start_new_game_debug(struct start_new_game_debug_mirror *state);
 void port_init_player_data2(struct init_player_data2_state *state, port_u8 *memory);
 
 #define SRC_GAMEFREAK_LOGO_GFX 0x61F8u /* 9 tiles */
-#define BANK_LOGOS 4u /* NintendoCopyright/GameFreak/Pokemon logo gfx */
+#define BANK_LOGOS 4u
 #define SRC_NINTENDO_COPYRIGHT_GFX 0x60C8u /* 5 tiles */
 #define W_DEFAULT_MAP 0xD07Cu
 #define W_DESTINATION_MAP 0xD71Au
+#define W_DESTINATION_WARP_ID 0xD42Fu
+#define W_CUR_MAP 0xD35Eu
+#define W_LAST_MAP 0xD365u
+#define W_NUMBER_OF_WARPS 0xD3AEu
+#define W_WARP_ENTRIES 0xD3AFu
 #define W_CUR_ITEM 0xCF91u
 #define W_ITEM_QUANTITY 0xCF96u
 #define W_NUM_BAG_ITEMS 0xD31Du
@@ -167,6 +185,63 @@ void port_init_player_data2(struct init_player_data2_state *state, port_u8 *memo
 #define SRC_VERSION_GFX 0x402Fu /* $50 1bpp bytes */
 #define BANK_TEXT 1u
 #define BANK_RED_SPRITE 5u
+#define W_CHECK_FOR_180_DEGREE_TURN 0xCC4Bu
+#define W_PLAYER_LAST_STOP_DIRECTION 0xD529u
+#define W_MOVEMENT_FLAGS 0xD736u
+#define W_STATUS_FLAGS2 0xD72Cu
+#define W_STATUS_FLAGS3 0xD72Du
+#define W_STATUS_FLAGS4 0xD72Eu
+#define W_STATUS_FLAGS5 0xD730u
+#define W_STATUS_FLAGS6 0xD732u
+#define W_STATUS_FLAGS7 0xD733u
+#define W_CUR_MAP_TILESET 0xD367u
+#define W_CURRENT_MAP_HEIGHT2 0xD524u
+#define W_CURRENT_MAP_WIDTH2 0xD525u
+#define W_WEST_CONNECTED_MAP 0xD387u
+#define W_WEST_CONNECTED_MAP_WIDTH 0xD38Du
+#define W_WEST_CONNECTED_MAP_Y_ALIGNMENT 0xD38Eu
+#define W_WEST_CONNECTED_MAP_X_ALIGNMENT 0xD38Fu
+#define W_WEST_CONNECTED_MAP_VIEW_POINTER 0xD390u
+#define W_EAST_CONNECTED_MAP 0xD392u
+#define W_EAST_CONNECTED_MAP_WIDTH 0xD398u
+#define W_EAST_CONNECTED_MAP_Y_ALIGNMENT 0xD399u
+#define W_EAST_CONNECTED_MAP_X_ALIGNMENT 0xD39Au
+#define W_EAST_CONNECTED_MAP_VIEW_POINTER 0xD39Bu
+#define W_NORTH_CONNECTED_MAP 0xD371u
+#define W_NORTH_CONNECTED_MAP_Y_ALIGNMENT 0xD378u
+#define W_NORTH_CONNECTED_MAP_X_ALIGNMENT 0xD379u
+#define W_NORTH_CONNECTED_MAP_VIEW_POINTER 0xD37Au
+#define W_SOUTH_CONNECTED_MAP 0xD37Cu
+#define W_SOUTH_CONNECTED_MAP_Y_ALIGNMENT 0xD383u
+#define W_SOUTH_CONNECTED_MAP_X_ALIGNMENT 0xD384u
+#define W_SOUTH_CONNECTED_MAP_VIEW_POINTER 0xD385u
+#define W_NUM_SIGNS 0xD4B0u
+#define W_SIGN_COORDS 0xD4B1u
+#define W_SIGN_TEXT_IDS 0xD4D1u
+#define W_TEXT_ID 0xFF8Cu
+#define W_MISC_FLAGS 0xCD60u
+#define W_CUR_OPPONENT 0xD059u
+#define W_IS_IN_BATTLE 0xD057u
+#define W_STEP_COUNTER 0xD13Bu
+#define W_NO_RANDOM_BATTLE_STEPS 0xD13Cu
+#define W_OUT_OF_BATTLE_BLACKOUT 0xD12Du
+#define W_WALK_BIKE_SURF_STATE 0xD700u
+#define W_WARPED_FROM_WHICH_WARP 0xD73Bu
+#define W_WARPED_FROM_WHICH_MAP 0xD73Cu
+#define H_WARP_DESTINATION_MAP 0xFF8Bu
+#define W_SAFARI_GAME_OVER 0xDA46u
+#define BIT_STANDING_ON_WARP 2u
+#define BIT_FORCED_WARP 2u
+#define BIT_SCRIPTED_MOVEMENT_STATE 7u
+#define BIT_UNKNOWN_5_2 2u
+#define BIT_TURNING 2u
+#define BIT_LEDGE_OR_FISHING 6u
+#define BIT_SPINNING 7u
+#define BIT_WILD_ENCOUNTER_COOLDOWN 0u
+#define BIT_BATTLE_OVER_OR_BLACKOUT 5u
+#define BIT_FLY_WARP 3u
+#define BIT_DUNGEON_WARP 4u
+#define PAD_CTRL_PAD (PAD_UP | PAD_DOWN | PAD_LEFT | PAD_RIGHT)
 #define SRC_RED_SPRITE 0x4180u
 #define TX_FAR 0x17u
 #define SRC_NEW_GAME_TEXT 0x5D87u /* "NEW GAME@" */
@@ -305,49 +380,6 @@ place_rom_string(struct mac_kernel *kernel, uint8_t *memory,
 	port_place_string(&regs, memory);
 }
 
-/* Runs the real TextCommandProcessor for a ROM text stream. The GB mapper
- * exposes only one switchable bank at $4000-$7fff; FAR text therefore needs
- * its root command staged after the target bank is mapped. */
-static void
-process_rom_text(struct mac_kernel *kernel, uint8_t *memory,
-	const struct mac_rom *rom, unsigned x, unsigned y, unsigned src_addr)
-{
-	struct cpu_register_state regs = { 0 };
-	port_u8 saved_bank = memory[H_LOADED_ROM_BANK];
-	port_u8 root[5];
-	unsigned i;
-
-	memory[H_LOADED_ROM_BANK] = BANK_TEXT;
-	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
-	hlcoord(&regs, x, y);
-	regs.b = regs.h;
-	regs.c = regs.l;
-	regs.h = (port_u8)(src_addr >> 8);
-	regs.l = (port_u8)(src_addr & 0xFFu);
-
-	if (memory[src_addr] == TX_FAR) {
-		for (i = 0; i < sizeof(root); i++)
-			root[i] = memory[src_addr + i];
-		memory[H_LOADED_ROM_BANK] = root[3];
-		rom_sync_window(memory, rom, &kernel->cached_rom_bank);
-		for (i = 0; i < sizeof(root); i++)
-			memory[src_addr + i] = root[i];
-	}
-
-
-	port_text_command_processor(&regs, memory);
-
-	memory[H_LOADED_ROM_BANK] = saved_bank;
-	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
-	/* PrintText's three-frame delay lets VBlank commit the newly drawn box
-	 * before the caller presents the next frame. */
-	for (i = 0; i < 3u; i++)
-		kernel_vblank(kernel, memory, rom);
-	/* Keep the host framebuffer at the same post-call boundary as the ROM. */
-	sync_bg_map0(memory);
-	/* OakSpeech uses the BG map for its text box, not the title window. */
-	memory[R_LCDC] &= (uint8_t)~0x20u;
-}
 
 static const uint8_t *
 rom_address(const struct mac_rom *rom, unsigned bank, unsigned address,
@@ -403,21 +435,9 @@ copy_intro_tilemap(uint8_t *memory, const struct mac_rom *rom,
 static void
 intro_sound(uint8_t *memory, unsigned cue)
 {
-	/* These register writes make every intro cue audible through the real
-	 * four-channel host APU.  They are intentionally isolated from the ROM
-	 * sequencer so replacing them with Audio1_UpdateMusic is mechanical.
-	 * FIDELITY_BOUNDARY(audio-sequencer): cue pitches/envelopes remain a
-	 * host fallback, not a decoding of the original sound bytecode. */
-	static const unsigned pitch[] = { 880, 392, 523, 659, 196, 784 };
-	unsigned selected = cue < sizeof(pitch) / sizeof(pitch[0]) ? cue : 0;
-
-	apu_test_tone(memory, pitch[selected], cue == 0 ? 500u : 120u);
-	if (cue == 0 || cue == 4) {
-		memory[0xFF21u] = cue == 0 ? 0xF2u : 0xC1u;
-		memory[0xFF22u] = cue == 0 ? 0x35u : 0x54u;
-		memory[0xFF23u] = 0xC0u;
-		memory[0xFF25u] |= 0x88u;
-	}
+	/* Header indices, (symbol - SFX_Headers_3) / 3, from pokered.sym. */
+	static const uint8_t sounds[] = {0xc2, 0xb9, 0xba, 0xbb, 0xbc, 0xb8};
+	if (cue < sizeof(sounds)) music_play(memory, 0x1f, sounds[cue]);
 }
 
 static void
@@ -442,7 +462,7 @@ setup_copyright(struct mac_kernel *kernel, uint8_t *memory,
 	memory[H_SCX] = 0;
 	memory[H_SCY] = 0;
 	memory[H_WY] = 0;
-	memory[R_BGP] = 0x1Bu;
+	memory[R_BGP] = 0xE4u;
 	memory[R_OBP0] = 0xE4u;
 	memory[R_OBP1] = 0xE4u;
 	memory[R_LCDC] = 0xE3u;
@@ -466,6 +486,15 @@ setup_shooting_star(struct mac_kernel *kernel, uint8_t *memory,
 		memory[0x2000u] = saved_bank;
 		rom_sync_window(memory, rom, &kernel->cached_rom_bank);
 	}
+	memory[H_AUTO_BG_TRANSFER_DEST] = 0;
+	memory[H_AUTO_BG_TRANSFER_DEST + 1] = 0x9Cu;
+	memory[R_LCDC] = 0xCBu;
+}
+
+static void
+load_shooting_star_graphics(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom)
+{
 	far_copy2(kernel, memory, rom, BANK_MOVE_ANIMATIONS, SRC_STAR_TOP_GFX,
 	    V_CHARS1 + 0x200u, 16u);
 	far_copy2(kernel, memory, rom, BANK_MOVE_ANIMATIONS,
@@ -504,9 +533,9 @@ start_intro_fight(uint8_t *memory, const struct mac_rom *rom)
 
 	clear_shadow_sprites(memory);
 	copy_intro_tilemap(memory, rom, SRC_GENGAR_TILEMAP1);
-	memory[R_BGP] = 0x1Bu;
-	memory[R_OBP0] = 0x1Bu;
-	memory[R_OBP1] = 0x1Bu;
+	memory[R_BGP] = 0xE4u;
+	memory[R_OBP0] = 0xE4u;
+	memory[R_OBP1] = 0xE4u;
 	memory[H_SCX] = 0;
 	memory[W_BASE_COORD_X] = 0;
 	memory[W_BASE_COORD_Y] = 80u;
@@ -545,6 +574,7 @@ game_boot(struct mac_kernel *kernel, uint8_t *memory,
 
 	memset(game, 0, sizeof(*game));
 	port_init(&init_regs, memory); /* cold-start observable state */
+	music_play(memory, 0x1f, 0xff);
 
 	/* REQUIRED: GBPalNormal (home/palettes.asm) - inlined palette op */
 	memory[R_BGP] = 0xE4;
@@ -691,9 +721,7 @@ game_enter_title(struct mac_kernel *kernel, uint8_t *memory,
 	memory[R_OBP0] = 0xE4;
 	memory[R_OBP1] = 0xE4;
 
-	/* LoadTitleMonSprite head: starter species into wCurPartySpecies/
-	 * wCurSpecies + GetMonHeader. The front-pic transfer half is still
-	 * REQUIRED (port_load_front_sprite_by_mon_index is a boundary). */
+	/* LoadTitleMonSprite including the full decompression/VRAM continuation. */
 	memory[W_CUR_PARTY_SPECIES] = SPECIES_CHARMANDER;
 	memory[W_CUR_SPECIES] = SPECIES_CHARMANDER;
 	{
@@ -702,11 +730,12 @@ game_enter_title(struct mac_kernel *kernel, uint8_t *memory,
 		regs.a = SPECIES_CHARMANDER;
 		port_get_mon_header(&regs, memory);
 	}
+	picture_mon(memory, W_TILE_MAP + 10 * 20 + 5, 0);
 
 	/* REQUIRED: TitleScreenAnimateBallIfStarterOut,
 	 * TitleScreenPickNewMon,
-	 * PlaySound(Music_TitleScreen)/PlayCry/WaitForSoundToFinish -
-	 * starter-mon visuals and title music are not composable yet. */
+	 * PlayCry/WaitForSoundToFinish on title exit. Title music already runs
+	 * through the original ROM stream and C audio handlers. */
 
 	/* TitleScreenCopyTileMapToVRAM: AutoBGTransferDest high + Delay3. */
 	{
@@ -734,6 +763,17 @@ game_enter_menu(struct mac_kernel *kernel, uint8_t *memory,
 	game->boundary_shown = 0;
 	port_clear_screen(&regs, memory);
 	clear_shadow_sprites(memory);
+	/* DisplayTitleScreen.finishedWaiting restores window drawing before
+	 * MainMenu: both BG maps cleared, auto-transfer destination BG1, WY=0.
+	 * Disabling LCDC's window bit here used to leave all later text drawing
+	 * into the scrolling overworld background. TODO: title-cry/fade waits. */
+	memory[H_WY] = 0;
+	memory[R_WX] = 7;
+	memory[H_SCX] = memory[H_SCY] = 0;
+	memory[H_AUTO_BG_TRANSFER_ENABLED] = 1;
+	memory[H_AUTO_BG_TRANSFER_DEST] = 0;
+	memory[H_AUTO_BG_TRANSFER_DEST + 1] = 0x9c;
+	memory[R_LCDC] = 0xe3;
 
 	/* MainMenu head through CheckForPlayerNameInSRAM dispatch, via the
 	 * ported composition (InitOptions modeled, save-file status = 1). */
@@ -785,9 +825,8 @@ game_enter_menu(struct mac_kernel *kernel, uint8_t *memory,
 
 	place_rom_string(kernel, memory, rom, 2, 2, SRC_NEW_GAME_TEXT);
 	sync_bg_map0(memory);
-	memory[R_LCDC] &= (uint8_t)~0x20u;
 
-	/* REQUIRED: UpdateSprites - sprite engine not composed yet. */
+	/* TODO(menu-frame-timing): preserve MainMenu's sprite update/wait order. */
 }
 
 /* ------------------------------------------------------------------ */
@@ -844,10 +883,6 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	 * below must run AFTER it for the new-file state to persist. */
 	port_prepare_oak_speech(&regs, memory);
 
-	/* GetMonHeader for Nidorino ($A7), feeding later picture loads. */
-	regs.a = 0xA7;
-	port_get_mon_header(&regs, memory);
-
 	/* InitPlayerData2 through its port: seeds RNG from TIMA/DIV samples
 	 * (captured here as host values), then fills player ID, the party/
 	 * box/bag empty lists, money, badges, and the progress-flag block.
@@ -869,8 +904,9 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 	 * the dialogue. Both operations are now available as real ports. */
 	memory[W_CUR_ITEM] = POTION;
 	memory[W_ITEM_QUANTITY] = 1;
-	regs.h = (port_u8)(W_NUM_BAG_ITEMS >> 8);
-	regs.l = (port_u8)W_NUM_BAG_ITEMS;
+	/* Oak puts the initial Potion in the player's PC, not the bag. */
+	regs.h = 0xd5;
+	regs.l = 0x3a; /* wNumBoxItems */
 	port_add_item_to_inventory_home(&regs, memory);
 	memory[W_DESTINATION_MAP] = memory[W_DEFAULT_MAP];
 	{
@@ -885,6 +921,8 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 		rom_sync_window(memory, rom, &kernel->cached_rom_bank);
 	}
 	port_reset_player_sprite_data(&regs, memory);
+	music_play(memory, 0x1f, 0xff);
+	music_play(memory, 2, 0xef); /* MUSIC_ROUTES2 */
 	clear_shadow_sprites(memory);
 
 	/* LoadTextBoxTilePatterns (LCD-off synchronous branch). */
@@ -901,141 +939,389 @@ game_enter_newgame(struct mac_kernel *kernel, uint8_t *memory,
 		rom_sync_window(memory, rom, &kernel->cached_rom_bank);
 	}
 
-	/* Message box + first Oak line. TextCommandProcessor is now ported;
-	 * process the bank-1 FAR pointer and its bank-22 text payload through
-	 * the real dispatcher and handlers. */
-	{
-		struct text_box_border_state border;
-
-		memset(&border, 0, sizeof(border));
-		hlcoord(&border.registers, 0, 12);
-		border.registers.b = 6;
-		border.registers.c = 18;
-		port_text_box_border(&border, memory);
-	}
-	process_rom_text(kernel, memory, rom, 2, 14, SRC_OAK_SPEECH_TEXT1);
-
-	/* FadeInIntroPic through its port: the six-step background-palette
-	 * fade (DelayFrames consumed per proof observation). The picture
-	 * display routine itself is still REQUIRED below. */
-	port_fade_in_intro_pic(&regs, memory);
-
-	/* Still REQUIRED to finish the Oak intro: PlayMusic,
-	 * IntroDisplayPicCenteredOrUpperRight, the picture pipeline
-	 * (LoadFlippedFrontSpriteByMonIndex is still a stub, so the mon
-	 * does not actually render), MovePicLeft + oak_speech_slide pair,
-	 * and ChoosePlayerName/ChooseRivalName. */
-}
-static void
-update_overworld_player_animation(uint8_t *memory)
-{
-	if (memory[W_WALK_COUNTER] != 0) {
-		uint8_t intra = (uint8_t)(memory[W_PLAYER_INTRA_ANIM_FRAME] + 1u);
-
-		if (intra >= 4u) {
-			intra = 0;
-			memory[W_PLAYER_ANIM_FRAME] =
-				(uint8_t)((memory[W_PLAYER_ANIM_FRAME] + 1u) & 3u);
-		}
-		memory[W_PLAYER_INTRA_ANIM_FRAME] = intra;
-	} else {
-		memory[W_PLAYER_INTRA_ANIM_FRAME] = 0;
-		memory[W_PLAYER_ANIM_FRAME] = 0;
-	}
-	memory[W_PLAYER_IMAGE] =
-		(uint8_t)(memory[W_PLAYER_FACING] + memory[W_PLAYER_ANIM_FRAME]);
+	oak_begin(game);
 }
 
 static void
-overworld_player_step(uint8_t *memory)
+overworld_update_sprites(uint8_t *memory)
 {
-	struct cpu_register_state regs = { 0 };
-	uint8_t held = memory[H_JOYHELD];
-	uint8_t y_step = 0;
-	uint8_t x_step = 0;
-	uint8_t direction = 0;
-	uint8_t facing = 0;
+	struct cpu_register_state registers = { 0 };
 
-	if (memory[W_WALK_COUNTER] != 0) {
-		struct advance_player_sprite_state advance;
+	port_update_sprites(&registers, memory);
+}
 
-		memset(&advance, 0, sizeof(advance));
-		advance.registers = regs;
-		advance.y_step = memory[W_PLAYER_Y_STEP];
-		advance.x_step = memory[W_PLAYER_X_STEP];
-		advance.walk_counter = memory[W_WALK_COUNTER];
-		advance.y_coord = memory[W_Y_COORD];
-		advance.x_coord = memory[W_X_COORD];
-		advance.map_view_vram_low = memory[W_MAP_VIEW_VRAM_POINTER];
-		advance.map_view_vram_high = memory[W_MAP_VIEW_VRAM_POINTER + 1u];
-		advance.x_block_coord = memory[W_X_BLOCK_COORD];
-		advance.y_block_coord = memory[W_Y_BLOCK_COORD];
-		advance.x_special_warp_offset = memory[W_X_SPECIAL_OFFSET];
-		advance.y_special_warp_offset = memory[W_Y_SPECIAL_OFFSET];
-		advance.map_view_pointer_low = memory[W_CURRENT_MAP_VIEW_POINTER];
-		advance.map_view_pointer_high =
-			memory[W_CURRENT_MAP_VIEW_POINTER + 1u];
-		advance.map_width = memory[W_CUR_MAP_WIDTH];
-		advance.scroll_y = memory[H_SCY];
-		advance.scroll_x = memory[H_SCX];
-		advance.num_sprites = memory[W_NUM_SPRITES];
-		advance.tileset_bank = memory[W_TILESET_BANK];
-		advance.loaded_rom_bank = memory[H_LOADED_ROM_BANK];
-		advance.mapper_bank = memory[R_ROMB];
-		advance.tileset_blocks_low = memory[W_TILESET_BLOCKS_POINTER];
-		advance.tileset_blocks_high =
-			memory[W_TILESET_BLOCKS_POINTER + 1u];
-		port_advance_player_sprite(&advance, memory);
-		memory[W_WALK_COUNTER] = advance.walk_counter;
-		memory[W_Y_COORD] = advance.y_coord;
-		memory[W_X_COORD] = advance.x_coord;
-		memory[W_MAP_VIEW_VRAM_POINTER] = advance.map_view_vram_low;
-		memory[W_MAP_VIEW_VRAM_POINTER + 1u] = advance.map_view_vram_high;
-		memory[W_X_BLOCK_COORD] = advance.x_block_coord;
-		memory[W_Y_BLOCK_COORD] = advance.y_block_coord;
-		memory[W_X_SPECIAL_OFFSET] = advance.x_special_warp_offset;
-		memory[W_Y_SPECIAL_OFFSET] = advance.y_special_warp_offset;
-		memory[W_CURRENT_MAP_VIEW_POINTER] =
-			advance.map_view_pointer_low;
-		memory[W_CURRENT_MAP_VIEW_POINTER + 1u] =
-			advance.map_view_pointer_high;
-		memory[H_SCY] = advance.scroll_y;
-		memory[H_SCX] = advance.scroll_x;
-		return;
-	}
-
+static int
+overworld_direction(uint8_t held, uint8_t *direction, uint8_t *facing,
+	uint8_t *y_step, uint8_t *x_step)
+{
 	if ((held & PAD_DOWN) != 0) {
-		y_step = 1; direction = 4; facing = 0;
+		*direction = 4;
+		*facing = 0;
+		*y_step = 1;
+		*x_step = 0;
 	} else if ((held & PAD_UP) != 0) {
-		y_step = (uint8_t)-1; direction = 8; facing = 4;
+		*direction = 8;
+		*facing = 4;
+		*y_step = (uint8_t)-1;
+		*x_step = 0;
 	} else if ((held & PAD_LEFT) != 0) {
-		x_step = (uint8_t)-1; direction = 2; facing = 8;
+		*direction = 2;
+		*facing = 8;
+		*y_step = 0;
+		*x_step = (uint8_t)-1;
 	} else if ((held & PAD_RIGHT) != 0) {
-		x_step = 1; direction = 1; facing = 12;
+		*direction = 1;
+		*facing = 12;
+		*y_step = 0;
+		*x_step = 1;
 	} else {
+		return 0;
+	}
+	return 1;
+}
+
+static int
+overworld_is_180_degree_turn(uint8_t old_direction, uint8_t new_direction)
+{
+	return (old_direction == 4 && new_direction == 8) ||
+	    (old_direction == 8 && new_direction == 4) ||
+	    (old_direction == 1 && new_direction == 2) ||
+	    (old_direction == 2 && new_direction == 1);
+}
+
+static void
+overworld_handle_no_direction(uint8_t *memory)
+{
+	uint8_t moving = memory[W_PLAYER_MOVING_DIRECTION];
+
+	memory[W_MISC_FLAGS] &= (uint8_t)~(1u << BIT_TURNING);
+	overworld_update_sprites(memory);
+	memory[W_CHECK_FOR_180_DEGREE_TURN] = 1;
+	if (moving != 0) {
+		memory[W_PLAYER_LAST_STOP_DIRECTION] = moving;
 		memory[W_PLAYER_MOVING_DIRECTION] = 0;
+	}
+}
+
+static void
+overworld_handle_direction(uint8_t *memory, uint8_t held)
+{
+	uint8_t direction;
+	uint8_t facing;
+	uint8_t y_step;
+	uint8_t x_step;
+	uint8_t old_direction;
+
+	if (!overworld_direction(held, &direction, &facing, &y_step, &x_step)) {
+		overworld_handle_no_direction(memory);
 		return;
 	}
-
+	memory[W_PLAYER_DIRECTION] = direction;
+	if ((memory[W_STATUS_FLAGS5] &
+	    (1u << BIT_SCRIPTED_MOVEMENT_STATE)) == 0 &&
+	    memory[W_CHECK_FOR_180_DEGREE_TURN] != 0) {
+		old_direction = memory[W_PLAYER_LAST_STOP_DIRECTION];
+		if (old_direction != direction &&
+		    overworld_is_180_degree_turn(old_direction, direction)) {
+			memory[W_PLAYER_MOVING_DIRECTION] =
+			    old_direction == 4 ? 2 :
+			    old_direction == 8 ? 1 :
+			    old_direction == 1 ? 4 : 8;
+			memory[W_MISC_FLAGS] |= (1u << BIT_TURNING);
+			memory[W_CHECK_FOR_180_DEGREE_TURN] = 0;
+			overworld_update_sprites(memory);
+			memory[W_PLAYER_MOVING_DIRECTION] = direction;
+			return;
+		}
+	}
+	memory[W_PLAYER_MOVING_DIRECTION] = direction;
+	memory[W_PLAYER_FACING] = facing;
 	memory[W_PLAYER_Y_STEP] = y_step;
 	memory[W_PLAYER_X_STEP] = x_step;
-	memory[W_PLAYER_FACING] = facing;
-	memory[W_PLAYER_DIRECTION] = direction;
-	memory[W_PLAYER_MOVING_DIRECTION] = direction;
-	regs.c = facing;
-	regs.d = y_step;
-	regs.e = x_step;
-	port_collision_check_on_land(&regs, memory);
-	if ((regs.f & PORT_FLAG_C) != 0)
-		return;
-	regs.c = facing;
-	regs.d = y_step;
-	regs.e = x_step;
-	regs.h = (port_u8)(W_TILE_IN_FRONT >> 8);
-	regs.l = (port_u8)W_TILE_IN_FRONT;
-	port_try_walking(&regs, memory);
-	if ((regs.f & PORT_FLAG_C) == 0)
-		memory[W_WALK_COUNTER] = 8;
+	overworld_update_sprites(memory);
+}
+
+static int
+overworld_find_warp_at(const uint8_t *memory, uint8_t y, uint8_t x,
+	uint8_t *warp_id, uint8_t *destination_map)
+{
+	uint8_t count = memory[W_NUMBER_OF_WARPS];
+
+	for (uint8_t i = 0; i < count; i++) {
+		uint16_t entry = (uint16_t)(W_WARP_ENTRIES + 4u * i);
+
+		if (memory[entry] == y && memory[entry + 1u] == x) {
+			*warp_id = memory[entry + 2u];
+			*destination_map = memory[entry + 3u];
+			return (int)i;
+		}
+	}
+	return -1;
+}
+
+static int
+overworld_warp_is_allowed(uint8_t *memory, uint8_t held, int collision)
+{
+	struct cpu_register_state registers = { 0 };
+
+	if (!collision) {
+		registers.d = memory[W_Y_COORD];
+		registers.e = memory[W_X_COORD];
+		port_is_player_standing_on_door_tile_or_warp_tile(
+		    &registers, memory);
+		if ((registers.f & PORT_FLAG_C) != 0)
+			return 1;
+	}
+	/* ExtraWarpCheck selects its two existing C callees by map/tileset. */
+	uint8_t map = memory[W_CUR_MAP], tileset = memory[W_CUR_MAP_TILESET];
+	int use_tile = map != 0x61 && (map == 0xc7 || map == 0xc8 ||
+	    map == 0xca || map == 0x52 || tileset == 0 || tileset == 13 ||
+	    tileset == 14 || tileset == 23);
+	uint8_t bank = memory[H_LOADED_ROM_BANK];
+	port_switch_rom_bank(memory, 3);
+	if (use_tile) port_is_warp_tile_in_front_of_player(&registers, memory);
+	else (void)port_is_player_facing_edge_of_map(&registers, memory);
+	port_switch_rom_bank(memory, bank);
+	if (!(registers.f & PORT_FLAG_C)) return 0;
+	return collision || (memory[W_STATUS_FLAGS7] & (1u << BIT_FORCED_WARP)) ||
+	    (held & PAD_CTRL_PAD);
+}
+
+static int
+overworld_queue_warp(struct mac_game *game, uint8_t *memory, int warp_index,
+	uint8_t warp_id, uint8_t destination_map)
+{
+	uint8_t current_map = memory[W_CUR_MAP];
+
+	memory[W_WARPED_FROM_WHICH_WARP] = (uint8_t)warp_index;
+	memory[W_WARPED_FROM_WHICH_MAP] = current_map;
+	memory[W_DESTINATION_MAP] = destination_map;
+	memory[W_DESTINATION_WARP_ID] = warp_id;
+	memory[H_WARP_DESTINATION_MAP] = destination_map;
+	if (memory[W_CUR_MAP_TILESET] == 0 ||
+	    memory[W_CUR_MAP_TILESET] == 23) {
+		memory[W_LAST_MAP] = current_map;
+		memory[W_CUR_MAP] = destination_map;
+	} else {
+		if (destination_map == 0xffu)
+			memory[W_CUR_MAP] = memory[W_LAST_MAP];
+		else
+			memory[W_CUR_MAP] = destination_map;
+		memory[W_MOVEMENT_FLAGS] &= (uint8_t)~((1u << 0) | (1u << 1));
+	}
+	memory[W_MOVEMENT_FLAGS] |= (1u << 0);
+	game->warp_pending = 1;
+	game->warp_id = warp_id;
+	game->phase = MAC_PHASE_ENTER_MAP;
+	return 1;
+}
+
+static int
+overworld_check_warps(struct mac_game *game, uint8_t *memory,
+	uint8_t held, int collision)
+{
+	uint8_t warp_id;
+	uint8_t destination_map;
+	int warp_index;
+
+	warp_index = overworld_find_warp_at(memory, memory[W_Y_COORD],
+	    memory[W_X_COORD], &warp_id, &destination_map);
+	if (warp_index < 0)
+		return 0;
+	memory[W_MOVEMENT_FLAGS] |= (1u << BIT_STANDING_ON_WARP);
+	if (!overworld_warp_is_allowed(memory, held, collision))
+		return 0;
+	return overworld_queue_warp(game, memory, warp_index, warp_id,
+	    destination_map);
+}
+
+static int
+overworld_check_map_connections(struct mac_game *game, uint8_t *memory)
+{
+	uint8_t coordinate;
+	uint8_t alignment;
+	uint16_t pointer;
+
+	if (memory[W_X_COORD] == 0xffu &&
+	    memory[W_WEST_CONNECTED_MAP] != 0xffu) {
+		memory[W_CUR_MAP] = memory[W_WEST_CONNECTED_MAP];
+		memory[W_X_COORD] = memory[W_WEST_CONNECTED_MAP_X_ALIGNMENT];
+		memory[W_Y_COORD] += memory[W_WEST_CONNECTED_MAP_Y_ALIGNMENT];
+		pointer = (uint16_t)(memory[W_WEST_CONNECTED_MAP_VIEW_POINTER] |
+		    ((uint16_t)memory[W_WEST_CONNECTED_MAP_VIEW_POINTER + 1u] << 8));
+		coordinate = memory[W_Y_COORD];
+		alignment = memory[W_WEST_CONNECTED_MAP_WIDTH] + 6u;
+		pointer = (uint16_t)(pointer + (coordinate >> 1) * alignment);
+		goto changed;
+	}
+	if (memory[W_X_COORD] == memory[W_CURRENT_MAP_WIDTH2] &&
+	    memory[W_EAST_CONNECTED_MAP] != 0xffu) {
+		memory[W_CUR_MAP] = memory[W_EAST_CONNECTED_MAP];
+		memory[W_X_COORD] = memory[W_EAST_CONNECTED_MAP_X_ALIGNMENT];
+		memory[W_Y_COORD] += memory[W_EAST_CONNECTED_MAP_Y_ALIGNMENT];
+		pointer = (uint16_t)(memory[W_EAST_CONNECTED_MAP_VIEW_POINTER] |
+		    ((uint16_t)memory[W_EAST_CONNECTED_MAP_VIEW_POINTER + 1u] << 8));
+		coordinate = memory[W_Y_COORD];
+		alignment = memory[W_EAST_CONNECTED_MAP_WIDTH] + 6u;
+		pointer = (uint16_t)(pointer + (coordinate >> 1) * alignment);
+		goto changed;
+	}
+	if (memory[W_Y_COORD] == 0xffu &&
+	    memory[W_NORTH_CONNECTED_MAP] != 0xffu) {
+		memory[W_CUR_MAP] = memory[W_NORTH_CONNECTED_MAP];
+		memory[W_Y_COORD] = memory[W_NORTH_CONNECTED_MAP_Y_ALIGNMENT];
+		memory[W_X_COORD] += memory[W_NORTH_CONNECTED_MAP_X_ALIGNMENT];
+		pointer = (uint16_t)(memory[W_NORTH_CONNECTED_MAP_VIEW_POINTER] |
+		    ((uint16_t)memory[W_NORTH_CONNECTED_MAP_VIEW_POINTER + 1u] << 8));
+		pointer = (uint16_t)(pointer + (memory[W_X_COORD] >> 1));
+		goto changed;
+	}
+	if (memory[W_Y_COORD] == memory[W_CURRENT_MAP_HEIGHT2] &&
+	    memory[W_SOUTH_CONNECTED_MAP] != 0xffu) {
+		memory[W_CUR_MAP] = memory[W_SOUTH_CONNECTED_MAP];
+		memory[W_Y_COORD] = memory[W_SOUTH_CONNECTED_MAP_Y_ALIGNMENT];
+		memory[W_X_COORD] += memory[W_SOUTH_CONNECTED_MAP_X_ALIGNMENT];
+		pointer = (uint16_t)(memory[W_SOUTH_CONNECTED_MAP_VIEW_POINTER] |
+		    ((uint16_t)memory[W_SOUTH_CONNECTED_MAP_VIEW_POINTER + 1u] << 8));
+		pointer = (uint16_t)(pointer + (memory[W_X_COORD] >> 1));
+		goto changed;
+	}
+	return 0;
+
+changed:
+	memory[W_CURRENT_MAP_VIEW_POINTER] = (uint8_t)pointer;
+	memory[W_CURRENT_MAP_VIEW_POINTER + 1u] =
+	    (uint8_t)(pointer >> 8);
+	game->warp_pending = 0;
+	game->phase = MAC_PHASE_ENTER_MAP;
+	return 1;
+}
+
+static int
+overworld_find_front_text_id(uint8_t *memory)
+{
+	struct sprite_in_front_state sprite = { 0 };
+
+	sprite.registers.d = 0x10;
+	sprite.facing_direction = memory[W_PLAYER_FACING];
+	sprite.num_sprites = memory[W_NUM_SPRITES];
+	port_is_sprite_in_front_of_player2(&sprite, memory);
+	if (sprite.text_id != 0) {
+		memory[W_TEXT_ID] = sprite.text_id;
+		return sprite.text_id;
+	}
+	{
+		struct cpu_register_state front = { 0 };
+		port_get_tile_and_coords_in_front(&front, memory);
+		for (uint8_t i = 0; i < memory[W_NUM_SIGNS]; i++) {
+			uint16_t coordinate = (uint16_t)(W_SIGN_COORDS + 2u * i);
+
+			if (memory[coordinate] == front.d &&
+			    memory[coordinate + 1u] == front.e) {
+				memory[W_TEXT_ID] = memory[W_SIGN_TEXT_IDS + i];
+				return memory[W_TEXT_ID];
+			}
+		}
+	}
+	return 0;
+}
+
+static void
+overworld_display_text_id(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom, struct mac_game *game, uint8_t text_id)
+{
+	(void)map_text_open(memory, game, text_id);
+	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
+}
+
+static void
+overworld_display_action(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom, struct mac_game *game)
+{
+	int text_id = overworld_find_front_text_id(memory);
+
+	if (text_id != 0)
+		overworld_display_text_id(kernel, memory, rom, game, (uint8_t)text_id);
+}
+
+static void
+overworld_display_start_menu(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom, struct mac_game *game)
+{
+	/* DisplayTextID(TEXT_START_MENU) is a real dispatch boundary. Its
+	 * downstream MainMenu continuation remains outside this loop port. */
+	overworld_display_text_id(kernel, memory, rom, game, 0);
+}
+
+static void
+overworld_advance(uint8_t *memory)
+{
+	struct advance_player_sprite_state advance = { 0 };
+
+	advance.y_step = memory[W_PLAYER_Y_STEP];
+	advance.x_step = memory[W_PLAYER_X_STEP];
+	advance.walk_counter = memory[W_WALK_COUNTER];
+	advance.y_coord = memory[W_Y_COORD];
+	advance.x_coord = memory[W_X_COORD];
+	advance.map_view_vram_low = memory[W_MAP_VIEW_VRAM_POINTER];
+	advance.map_view_vram_high = memory[W_MAP_VIEW_VRAM_POINTER + 1u];
+	advance.x_block_coord = memory[W_X_BLOCK_COORD];
+	advance.y_block_coord = memory[W_Y_BLOCK_COORD];
+	advance.x_special_warp_offset = memory[W_X_SPECIAL_OFFSET];
+	advance.y_special_warp_offset = memory[W_Y_SPECIAL_OFFSET];
+	advance.map_view_pointer_low = memory[W_CURRENT_MAP_VIEW_POINTER];
+	advance.map_view_pointer_high = memory[W_CURRENT_MAP_VIEW_POINTER + 1u];
+	advance.map_width = memory[W_CUR_MAP_WIDTH];
+	advance.scroll_y = memory[H_SCY];
+	advance.scroll_x = memory[H_SCX];
+	advance.num_sprites = memory[W_NUM_SPRITES];
+	advance.tileset_bank = memory[W_TILESET_BANK];
+	advance.loaded_rom_bank = memory[H_LOADED_ROM_BANK];
+	advance.mapper_bank = memory[R_ROMB];
+	advance.tileset_blocks_low = memory[W_TILESET_BLOCKS_POINTER];
+	advance.tileset_blocks_high = memory[W_TILESET_BLOCKS_POINTER + 1u];
+	advance.redraw_mode = memory[H_REDRAW_ROW_OR_COLUMN_MODE];
+	advance.redraw_dest_low = memory[H_REDRAW_ROW_OR_COLUMN_DEST];
+	advance.redraw_dest_high = memory[H_REDRAW_ROW_OR_COLUMN_DEST + 1];
+	port_advance_player_sprite(&advance, memory);
+	memory[W_WALK_COUNTER] = advance.walk_counter;
+	memory[W_Y_COORD] = advance.y_coord;
+	memory[W_X_COORD] = advance.x_coord;
+	memory[W_MAP_VIEW_VRAM_POINTER] = advance.map_view_vram_low;
+	memory[W_MAP_VIEW_VRAM_POINTER + 1u] = advance.map_view_vram_high;
+	memory[W_X_BLOCK_COORD] = advance.x_block_coord;
+	memory[W_Y_BLOCK_COORD] = advance.y_block_coord;
+	memory[W_X_SPECIAL_OFFSET] = advance.x_special_warp_offset;
+	memory[W_Y_SPECIAL_OFFSET] = advance.y_special_warp_offset;
+	memory[W_CURRENT_MAP_VIEW_POINTER] = advance.map_view_pointer_low;
+	memory[W_CURRENT_MAP_VIEW_POINTER + 1u] = advance.map_view_pointer_high;
+	memory[H_SCY] = advance.scroll_y;
+	memory[H_SCX] = advance.scroll_x;
+	memory[H_REDRAW_ROW_OR_COLUMN_MODE] = advance.redraw_mode;
+	memory[H_REDRAW_ROW_OR_COLUMN_DEST] = advance.redraw_dest_low;
+	memory[H_REDRAW_ROW_OR_COLUMN_DEST + 1] = advance.redraw_dest_high;
+}
+
+static int
+overworld_try_step(uint8_t *memory)
+{
+	struct cpu_register_state registers = { 0 };
+	uint8_t surfing = memory[W_WALK_BIKE_SURF_STATE] == 2u;
+
+	registers.c = memory[W_PLAYER_FACING];
+	registers.d = memory[W_PLAYER_Y_STEP];
+	registers.e = memory[W_PLAYER_X_STEP];
+	if (surfing)
+		port_collision_check_on_water(&registers, memory);
+	else
+		port_collision_check_on_land(&registers, memory);
+	if ((registers.f & PORT_FLAG_C) != 0)
+		return 0;
+	/* TryWalking belongs to NPC movement, not OverworldLoop.noCollision. */
+	memory[W_MISC_FLAGS] &= (uint8_t)~(1u << BIT_TURNING);
+	memory[W_WALK_COUNTER] = 8;
+	overworld_advance(memory);
+	return 1;
 }
 
 static void
@@ -1043,26 +1329,124 @@ game_enter_map(struct mac_kernel *kernel, uint8_t *memory,
 	const struct mac_rom *rom, struct mac_game *game)
 {
 	struct cpu_register_state regs = { 0 };
+	memory[W_MOVEMENT_FLAGS] &= (uint8_t)~(1u << BIT_STANDING_ON_WARP);
 
 	/* EnterMap and its LoadMapData composition now cover the map-loader
 	 * prefix. Keep the host ROM window synchronized around the call. */
 	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
 	port_enter_map(&regs, memory);
-	/* LoadMapData's CopyVideoData calls schedule VBlank work. The Mac
-	 * frame service is outside that synchronous port call, so complete
-	 * both RedSprite copies here before the first overworld frame. */
-	far_copy2(kernel, memory, rom, BANK_RED_SPRITE, SRC_RED_SPRITE,
-	    0x8000u, 0xC0u);
-	far_copy2(kernel, memory, rom, BANK_RED_SPRITE, SRC_RED_SPRITE,
-	    0x8800u, 0xC0u);
+	/* LoadTilesetHeader -> LoadDestinationWarpPosition applies the ROM's
+	 * pointer AND coordinates before LoadCurrentMapView draws the new map. */
+	port_clear_variables_on_enter_map(&regs, memory);
+	/* TODO(enter-map-continuations): MapEntryAfterBattle, forced cycling,
+	 * fly/dungeon entry animations and their waits still need composition. */
+	memory[0xcd6b] = 0; /* EnterMap releases wJoyIgnore after setup. */
+	memory[0xd126] |= 0x60; /* BIT_CUR_MAP_LOADED_1 / _2. */
+	if (memory[0xcfca] != memory[0xd35b] || memory[0xc0ef] != memory[0xd35c]) {
+		music_play(memory, memory[0xc0ef], 0xff);
+		music_play(memory, memory[0xd35c], memory[0xd35b]);
+		memory[0xcfca] = memory[0xd35b];
+	}
 	memory[W_PLAYER_IMAGE] = 0;
 	prepare_overworld_oam(kernel, memory, rom);
 	rom_sync_window(memory, rom, &kernel->cached_rom_bank);
+	game->warp_pending = 0;
 	game->phase = MAC_PHASE_OVERWORLD;
 	game->frames_in_phase = 0;
 	game->action = 0;
 	game->action_frame = 0;
 }
+static void
+overworld_finish_step(uint8_t *memory)
+{
+	if ((memory[W_STATUS_FLAGS5] &
+	    (1u << BIT_SCRIPTED_MOVEMENT_STATE)) == 0) {
+		memory[W_STEP_COUNTER]--;
+		if ((memory[W_STATUS_FLAGS2] &
+		    (1u << BIT_WILD_ENCOUNTER_COOLDOWN)) != 0) {
+			if (--memory[W_NO_RANDOM_BATTLE_STEPS] == 0)
+				memory[W_STATUS_FLAGS2] &= (uint8_t)~(
+				    1u << BIT_WILD_ENCOUNTER_COOLDOWN);
+		}
+	}
+}
+
+static void
+overworld_loop_tick(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom, struct mac_game *game)
+{
+	struct cpu_register_state registers = { 0 };
+	uint8_t held;
+	uint8_t pressed;
+
+	/* These are the two real DelayFrame call boundaries at the head of
+	 * OverworldLoop/OverworldLoopLessDelay. */
+	port_overworld_loop(&registers);
+	port_overworld_loop_less_delay(&registers, memory);
+
+	if ((memory[W_WALK_COUNTER] & 0xffu) != 0) {
+		overworld_update_sprites(memory);
+		overworld_advance(memory);
+		if (memory[W_WALK_COUNTER] != 0) {
+			(void)overworld_check_map_connections(game, memory);
+			return;
+		}
+		overworld_finish_step(memory);
+		held = memory[H_JOYHELD];
+		if (overworld_check_warps(game, memory, held, 0))
+			return;
+		(void)overworld_check_map_connections(game, memory);
+		return;
+	}
+
+	/* JoypadOverworld clears the movement vectors before running scripts
+	 * and polling the joypad. The VBlank service has already performed the
+	 * real Joypad diff for this host frame. */
+	memory[W_PLAYER_Y_STEP] = 0;
+	memory[W_PLAYER_X_STEP] = 0;
+	map_script_tick(memory, game);
+	held = memory[H_JOYHELD];
+	pressed = (memory[W_STATUS_FLAGS5] &
+	    (1u << BIT_SCRIPTED_MOVEMENT_STATE)) != 0 ?
+	    held : memory[H_JOYPRESSED];
+
+	if ((memory[W_SAFARI_GAME_OVER] & 0xffu) != 0)
+		return;
+	if ((memory[W_STATUS_FLAGS6] &
+	    ((1u << BIT_FLY_WARP) | (1u << BIT_DUNGEON_WARP))) != 0) {
+		game->phase = MAC_PHASE_ENTER_MAP;
+		return;
+	}
+	if (memory[W_CUR_OPPONENT] != 0)
+		return;
+
+	if ((pressed & PAD_START) != 0) {
+		overworld_display_start_menu(kernel, memory, rom, game);
+		return;
+	}
+	if ((pressed & PAD_A) != 0 &&
+	    (memory[W_STATUS_FLAGS5] & (1u << BIT_UNKNOWN_5_2)) == 0 &&
+	    (memory[W_STATUS_FLAGS5] &
+		(1u << BIT_SCRIPTED_MOVEMENT_STATE)) == 0) {
+		overworld_display_action(kernel, memory, rom, game);
+		return;
+	}
+
+	overworld_handle_direction(memory, held);
+	if ((memory[W_MISC_FLAGS] & (1u << BIT_TURNING)) != 0 &&
+	    memory[W_CHECK_FOR_180_DEGREE_TURN] != 0)
+		return;
+	if ((held & PAD_CTRL_PAD) == 0)
+		return;
+	if (overworld_try_step(memory))
+		return;
+	if ((memory[W_MOVEMENT_FLAGS] & (1u << BIT_STANDING_ON_WARP)) &&
+	    overworld_check_warps(game, memory, held, 1))
+		return;
+	if (overworld_check_map_connections(game, memory))
+		return;
+}
+
 
 
 enum intro_action_kind {
@@ -1125,8 +1509,7 @@ intro_interrupted(const uint8_t *memory)
 	uint8_t held = memory[H_JOYINPUT];
 
 	return (memory[H_JOYPRESSED] & (PAD_A | PAD_START)) != 0 ||
-	    (held & (PAD_UP | PAD_SELECT | PAD_B)) ==
-		(PAD_UP | PAD_SELECT | PAD_B);
+	    held == (PAD_UP | PAD_SELECT | PAD_B);
 }
 
 static void
@@ -1154,6 +1537,14 @@ tick_intro_fight(uint8_t *memory, const struct mac_rom *rom,
 
 		switch (entry->kind) {
 		case INTRO_ACTION_MOVE:
+			if (intro_interrupted(memory)) {
+				/* Only the first IntroMoveMon call has a caller RET C;
+				 * later calls continue at their following animation/wait. */
+				if (!game->action) return 1;
+				game->action++;
+				game->action_frame = 0;
+				continue;
+			}
 			if ((game->action_frame & 1u) == 0) {
 				if (entry->argument == INTRO_MOVE_NIDORINO_RIGHT) {
 					update_intro_nidorino(memory, 0, 2);
@@ -1190,6 +1581,7 @@ tick_intro_fight(uint8_t *memory, const struct mac_rom *rom,
 		}
 
 		case INTRO_ACTION_WAIT:
+			if (intro_interrupted(memory)) return 1;
 			if (++game->action_frame >= entry->value) {
 				game->action++;
 				game->action_frame = 0;
@@ -1235,9 +1627,12 @@ tick_intro(struct mac_kernel *kernel, uint8_t *memory,
 		{ 0x68, 0x3C, 0x68, 0x5C, 0x68, 0x6C, 0x68, 0x74 },
 	};
 
-	if (game->scene >= 2 && game->scene <= 7 &&
+	if (game->scene >= 2 && game->scene <= 4 &&
 	    intro_interrupted(memory)) {
-		start_intro_fade(game);
+		/* PlayShootingStar skips only its trailing delay. PlayIntro still
+		 * calls PlayIntroScene; it must not jump directly to the title. */
+		game->scene = 5;
+		game->timer = 1;
 		return;
 	}
 
@@ -1252,6 +1647,7 @@ tick_intro(struct mac_kernel *kernel, uint8_t *memory,
 
 	case 1: /* black bars + loaded intro graphics; DelayFrames 64 */
 		if (--game->timer == 0) {
+			load_shooting_star_graphics(kernel, memory, rom);
 			intro_sound(memory, 0);
 			game->scene = 2;
 			game->action_frame = 0;
@@ -1263,7 +1659,7 @@ tick_intro(struct mac_kernel *kernel, uint8_t *memory,
 			memory[W_SHADOW_OAM + sprite * 4u] += 4;
 			memory[W_SHADOW_OAM + sprite * 4u + 1u] -= 4;
 		}
-		if (++game->action_frame >= 40u) {
+		if (++game->action_frame >= 36u) {
 			for (unsigned sprite = 0; sprite < 4; sprite++)
 				memory[W_SHADOW_OAM + sprite * 4u] = 160u;
 			game->scene = 3;
@@ -1305,7 +1701,7 @@ tick_intro(struct mac_kernel *kernel, uint8_t *memory,
 		game->action_frame++;
 		if (game->action_frame % 24u == 0)
 			memmove(memory + W_SHADOW_OAM,
-			    memory + W_SHADOW_OAM + 4u, 20u * 4u);
+			    memory + W_SHADOW_OAM + 16u, 20u * 4u);
 		if (game->action_frame >= 144u) {
 			game->scene = 5;
 			game->timer = 40;
@@ -1317,8 +1713,7 @@ tick_intro(struct mac_kernel *kernel, uint8_t *memory,
 		if (--game->timer == 0) {
 			struct cpu_register_state regs = { 0 };
 
-			/* SFX bytecode must eventually replace this held cue. */
-			intro_sound(memory, 3);
+			music_play(memory, 0x1f, 0xdc); /* MUSIC_INTRO_BATTLE */
 			port_intro_clear_middle_of_screen(&regs, memory);
 			clear_shadow_sprites(memory);
 			game->scene = 6;
@@ -1342,7 +1737,7 @@ tick_intro(struct mac_kernel *kernel, uint8_t *memory,
 
 	case 8: { /* GBFadeOutToWhite: three palettes, eight frames each */
 		static const uint8_t fade[3][3] = {
-			{ 0x06, 0x02, 0x06 }, { 0x01, 0x01, 0x01 },
+			{ 0x90, 0x80, 0x90 }, { 0x40, 0x40, 0x40 },
 			{ 0x00, 0x00, 0x00 },
 		};
 		unsigned step = game->action_frame / 8u;
@@ -1417,7 +1812,7 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 			}
 		} else if (game->action == 7u) {
 			if (--game->timer == 0) {
-				intro_sound(memory, 5);
+				music_play(memory, 0x1f, 0xbd); /* SFX_INTRO_WHOOSH */
 				game->action = 8;
 				game->action_frame = 0;
 				memory[H_WY] = 144;
@@ -1444,13 +1839,10 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 				port_place_string(&vregs, memory);
 			}
 			game->version_shown = 1;
-			/* FIDELITY_BOUNDARY(audio-sequencer): MUSIC_TITLE_SCREEN is
-			 * requested here in the ROM.  Use an audible register-level
-			 * cue until Audio1_UpdateMusic is ported. */
-			intro_sound(memory, 3);
+			music_play(memory, 0x1f, 0xc3); /* MUSIC_TITLE_SCREEN */
 		}
 		/* REQUIRED: CheckForUserInterruption - direct edge read. */
-		if ((pressed & (PAD_A | PAD_B | PAD_START)) != 0 &&
+		if ((pressed & (PAD_A | PAD_START)) != 0 &&
 		    game->version_shown != 0)
 			game_enter_menu(kernel, memory, rom, game);
 		break;
@@ -1484,27 +1876,26 @@ game_tick(struct mac_kernel *kernel, uint8_t *memory,
 		}
 		break;
 	case MAC_PHASE_NEWGAME:
-		/* The ported OakSpeech prefix leaves the first dialogue visible.
-		 * A advances to the now-ported EnterMap/LoadMapData prefix. */
-		if ((pressed & (PAD_A | PAD_START)) != 0)
-			game->phase = MAC_PHASE_ENTER_MAP;
+		oak_tick(kernel, memory, rom, game);
 		break;
 
 	case MAC_PHASE_ENTER_MAP:
 		game_enter_map(kernel, memory, rom, game);
 		break;
 	case MAC_PHASE_OVERWORLD:
-		{
-			struct cpu_register_state overworld = { 0 };
-
-			/* DelayFrame and palette loading remain real port calls;
-			 * this driver dispatches player movement and animation,
-			 * then refreshes the host OAM mirror each frame. */
-			port_overworld_loop(&overworld);
-			port_overworld_loop_less_delay(&overworld, memory);
-			overworld_player_step(memory);
-			update_overworld_player_animation(memory);
-			sync_bg_map0(memory);
+		if (game->map_text_state) {
+			map_text_tick(memory, game);
+			prepare_overworld_oam(kernel, memory, rom);
+			break;
+		}
+		game->overworld_pressed |= pressed;
+		/* Two DelayFrame calls per normal OverworldLoop iteration. */
+		if ((game->frames_in_phase & 1u) != 0)
+			break;
+		memory[H_JOYPRESSED] = game->overworld_pressed;
+		game->overworld_pressed = 0;
+		overworld_loop_tick(kernel, memory, rom, game);
+		if (game->phase == MAC_PHASE_OVERWORLD) {
 			rom_sync_window(memory, rom, &kernel->cached_rom_bank);
 			prepare_overworld_oam(kernel, memory, rom);
 		}

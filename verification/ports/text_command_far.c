@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 /* Port of TextCommand_FAR in home/text.asm.
  *
@@ -41,6 +44,9 @@ port_text_command_far(struct cpu_register_state *state, port_u8 *memory)
 
 	memory[H_LOADED_ROM_BANK] = bank;
 	memory[R_ROMB] = bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, bank);
+#endif
 
 	state->e = ptr_low;
 	state->d = ptr_high;
@@ -59,4 +65,7 @@ port_text_command_far(struct cpu_register_state *state, port_u8 *memory)
 
 	memory[H_LOADED_ROM_BANK] = old_bank;
 	memory[R_ROMB] = old_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, old_bank);
+#endif
 }

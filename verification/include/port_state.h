@@ -48,6 +48,18 @@ struct cpu_register_state {
 	port_u8 l;
 };
 
+/* Cooperative PlaceString continuation. Original synchronous entry points
+ * retain their existing contracts. The host resumes this after actual input
+ * and frame waits; the composed continuation proof is pending. */
+struct place_string_resume_state {
+	struct cpu_register_state registers;
+	port_u16 saved_cursor;
+	port_u8 acknowledge;
+	port_u8 waiting;
+	port_u8 done;
+	port_u8 token;
+};
+
 /* State for the DisplayTextID text-script entry.  The complete dialogue
  * dispatcher continues into many interactive handlers; this port carries
  * the register/bank state through its shared initialization prefix. */

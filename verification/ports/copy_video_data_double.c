@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 /* Port of CopyVideoDataDouble in home/copy2.asm.
  *
@@ -56,6 +59,24 @@ copy_video_data_double_delay_frame(struct cpu_register_state *state,
 {
 	static const port_u8 acknowledged_vblank[] = { 0 };
 	struct delay_frame_state delay;
+#ifdef PORT_PLATFORM_RUNTIME
+	/* The DelayFrame proof observation is not the VBlank memory transfer.
+	 * Execute its port here, preserving the advanced pointers across chunks.
+	 * TODO(runtime-frame-yield): present/audio-clock these transfer frames. */
+	void port_vblank_copy_double(struct vblank_copy_double_state *, port_u8 *);
+	struct vblank_copy_double_state copy = {0};
+	copy.size = memory[H_VBLANK_COPY_DOUBLE_SIZE];
+	copy.source_low = memory[H_VBLANK_COPY_DOUBLE_SOURCE];
+	copy.source_high = memory[H_VBLANK_COPY_DOUBLE_SOURCE + 1];
+	copy.dest_low = memory[H_VBLANK_COPY_DOUBLE_DEST];
+	copy.dest_high = memory[H_VBLANK_COPY_DOUBLE_DEST + 1];
+	port_vblank_copy_double(&copy, memory);
+	memory[H_VBLANK_COPY_DOUBLE_SIZE] = copy.size;
+	memory[H_VBLANK_COPY_DOUBLE_SOURCE] = copy.source_low;
+	memory[H_VBLANK_COPY_DOUBLE_SOURCE + 1] = copy.source_high;
+	memory[H_VBLANK_COPY_DOUBLE_DEST] = copy.dest_low;
+	memory[H_VBLANK_COPY_DOUBLE_DEST + 1] = copy.dest_high;
+#endif
 
 	delay.registers = *state;
 	delay.vblank_occurred = memory[H_VBLANK_OCCURRED];
@@ -75,6 +96,9 @@ port_copy_video_data_double(struct cpu_register_state *state, port_u8 *memory)
 	memory[H_ROM_BANK_TEMP] = saved_bank;
 	memory[H_LOADED_ROM_BANK] = state->b;
 	memory[R_ROMB] = state->b;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, state->b);
+#endif
 
 	/* Set up VBlank copy source (DE) */
 	memory[0xFFCC] = state->e;  /* hVBlankCopyDoubleSource = E */
@@ -103,6 +127,9 @@ port_copy_video_data_double(struct cpu_register_state *state, port_u8 *memory)
 
 	memory[H_LOADED_ROM_BANK] = saved_bank;
 	memory[R_ROMB] = saved_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, saved_bank);
+#endif
 	memory[H_AUTO_BG_TRANSFER_ENABLED] = saved_auto;
 	state->a = saved_auto;
 	state->f = saved_f;

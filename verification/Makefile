@@ -40,6 +40,14 @@ MAC_OBJECTS := $(patsubst ports/%.c,$(MAC_BUILD)/%.o,$(PORT_SOURCES)) \
 
 mac: $(MAC_BUILD)/pokered-mac
 
+# Integration checks exercise real composed ports, not proof call-boundary mocks.
+.PHONY: mac-test
+mac-test: $(MAC_BUILD)/runtime-tests
+	$(MAC_BUILD)/runtime-tests
+
+$(MAC_BUILD)/runtime-tests: runtime_tests/runtime_tests.c $(filter-out $(MAC_BUILD)/main_sdl.o,$(MAC_OBJECTS))
+	$(CC) $(MAC_CFLAGS) -Iplatform $^ $(SDL_LIBS) -o $@
+
 run-mac: mac
 	$(MAC_BUILD)/pokered-mac --rom $(ROOT)/pokered.gbc
 

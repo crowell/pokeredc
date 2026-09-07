@@ -150,12 +150,25 @@ demo_tick(uint8_t *memory)
 	spr[3] = 0x00;
 }
 
+static void
+print_usage(const char *program)
+{
+	printf("usage: %s [--rom FILE] [--scale N] [--run FRAMES]\n"
+	    "       %s --frames N [--pad FIRST:END:HEX_MASK] [--out FILE.ppm] [--dump FILE.bin]\n"
+	    "       --smoke runs a short headless check; --demo uses the synthetic test screen\n"
+	    "       --pad may repeat; frame indices are zero-based and END is exclusive\n\n"
+	    "controls: arrows or WASD move; X/K/Space/Enter = A; Z/J = B; "
+	    "Enter also starts menus; Backspace/Right Shift = Select; Escape quits\n",
+	    program, program);
+}
+
 static port_u8
 read_pad(const uint8_t *keys)
 {
 	port_u8 pad = 0;
 
-	if (keys[SDL_SCANCODE_X] || keys[SDL_SCANCODE_K])
+	if (keys[SDL_SCANCODE_X] || keys[SDL_SCANCODE_K] ||
+	    keys[SDL_SCANCODE_SPACE] || keys[SDL_SCANCODE_RETURN])
 		pad |= PAD_A;
 	if (keys[SDL_SCANCODE_Z] || keys[SDL_SCANCODE_J])
 		pad |= PAD_B;
@@ -184,6 +197,21 @@ struct smoke_checks {
 	uint32_t rgba_snapshot[GB_SCREEN_W * GB_SCREEN_H];
 };
 
+/* Deterministic held-key intervals; frame numbers are zero-based.  Releasing
+ * between intervals exercises the same Joypad edge logic as the SDL shell. */
+struct pad_interval { unsigned first, last, mask; };
+static struct pad_interval replay[256];
+static unsigned replay_count;
+
+static unsigned replay_pad(unsigned frame)
+{
+	unsigned pad = 0;
+	for (unsigned i = 0; i < replay_count; ++i)
+		if (frame >= replay[i].first && frame < replay[i].last)
+			pad |= replay[i].mask;
+	return pad;
+}
+
 static void
 run_smoke_frames(struct mac_kernel *kernel, uint8_t *memory,
 	const struct mac_rom *rom, struct mac_game *game, unsigned frames,
@@ -194,26 +222,38 @@ run_smoke_frames(struct mac_kernel *kernel, uint8_t *memory,
 	struct mac_apu apu;
 
 	apu_init(&apu);
+	out->audible = 0;
 	for (unsigned f = 0; f < frames; f++) {
-		memory[H_JOYINPUT] = 0;
+		unsigned old_phase = game->phase;
+		memory[H_JOYINPUT] = (uint8_t)replay_pad(f);
 		kernel_vblank(kernel, memory, rom);
+		if (!demo_mode) music_tick(memory);
 		if (demo_mode)
 			demo_tick(memory);
 		else
 			game_tick(kernel, memory, rom, game);
 		video_render(memory, rgba);
+		/* Render real game audio throughout the run. Never inject a test tone
+		 * into a gameplay check: that previously hid the missing sequencer. */
+		size_t samples = (size_t)((f + 1.0) * SAMPLE_RATE / FRAME_RATE_HZ) -
+		    (size_t)(f * SAMPLE_RATE / FRAME_RATE_HZ);
+		apu_render(&apu, memory, audio, samples);
+		for (size_t i = 0; i < samples; ++i)
+			out->audible += audio[i] != 0;
+		if (old_phase != (unsigned)game->phase)
+			printf("trace: frame=%u phase=%u map=%02x y=%u x=%u\n", f,
+			    (unsigned)game->phase, memory[0xd35e], memory[0xd361],
+			    memory[0xd362]);
 	}
-	apu_test_tone(memory, 440, 40);
-	apu_render(&apu, memory, audio, (size_t)(SAMPLE_RATE / FRAME_RATE_HZ));
 
 	out->ink = 0;
-	out->audible = 0;
 	out->logo_mismatches = 0;
 	for (unsigned i = 0; i < GB_SCREEN_W * GB_SCREEN_H; i++)
 		if (rgba[i] != dmg_palette[0])
 			out->ink++;
-	for (unsigned i = 0; i < SAMPLE_RATE / 30; i++)
-		out->audible += audio[i] != 0;
+	printf("trace: final phase=%u scene=%u map=%02x y=%u x=%u walk=%u\n",
+	    (unsigned)game->phase, game->scene, memory[0xd35e], memory[0xd361],
+	    memory[0xd362], memory[0xcfc5]);
 
 	if (rom->data != NULL &&
 	    rom->size >= 4u * 0x4000u + (0x5380u - 0x4000u) + 96u * 16u) {
@@ -245,6 +285,10 @@ main(int argc, char **argv)
 	int demo_mode = 0;
 
 	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--help") == 0) {
+			print_usage(argv[0]);
+			return 0;
+		}
 		if (strcmp(argv[i], "--rom") == 0 && i + 1 < argc)
 			rom_path = argv[++i];
 		else if (strcmp(argv[i], "--scale") == 0 && i + 1 < argc)
@@ -261,6 +305,17 @@ main(int argc, char **argv)
 			dump_path = argv[++i];
 		else if (strcmp(argv[i], "--demo") == 0)
 			demo_mode = 1;
+		else if (strcmp(argv[i], "--pad") == 0 && i + 1 < argc) {
+			struct pad_interval p;
+			char extra;
+			if (replay_count == 256 || sscanf(argv[++i], "%u:%u:%x%c",
+			    &p.first, &p.last, &p.mask, &extra) != 3 ||
+			    p.first >= p.last || p.mask > 255) {
+				fprintf(stderr, "--pad expects FIRST:END:HEX_MASK (end exclusive)\n");
+				return 2;
+			}
+			replay[replay_count++] = p;
+		}
 	}
 
 	if (rom_load(&rom, rom_path) != 0) {
@@ -292,9 +347,9 @@ main(int argc, char **argv)
 		printf("smoke: logo_byte_mismatches=%u/1536\n",
 		    checks.logo_mismatches);
 		printf("smoke: frames=%u ink=%u/%d "
-		    "audible_samples=%u/%d\n",
+		    "audible_samples=%u\n",
 		    smoke_frames, checks.ink, GB_SCREEN_W * GB_SCREEN_H,
-		    checks.audible, SAMPLE_RATE / 30);
+		    checks.audible);
 		if (dump_path != NULL) {
 			FILE *d = fopen(dump_path, "wb");
 
@@ -334,13 +389,26 @@ main(int argc, char **argv)
 	SDL_Window *window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED,
 	    SDL_WINDOWPOS_CENTERED, GB_SCREEN_W * scale, GB_SCREEN_H * scale,
 	    SDL_WINDOW_RESIZABLE);
+	if (!window) {
+		fprintf(stderr, "pokered-mac: SDL_CreateWindow: %s\n", SDL_GetError());
+		SDL_Quit(); rom_unload(&rom); return 1;
+	}
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1,
 	    SDL_RENDERER_ACCELERATED);
 	if (renderer == NULL)
 		renderer = SDL_CreateRenderer(window, -1, 0);
+	if (!renderer) {
+		fprintf(stderr, "pokered-mac: SDL_CreateRenderer: %s\n", SDL_GetError());
+		SDL_DestroyWindow(window); SDL_Quit(); rom_unload(&rom); return 1;
+	}
 	SDL_Texture *texture = SDL_CreateTexture(renderer,
 	    SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, GB_SCREEN_W,
 	    GB_SCREEN_H);
+	if (!texture) {
+		fprintf(stderr, "pokered-mac: SDL_CreateTexture: %s\n", SDL_GetError());
+		SDL_DestroyRenderer(renderer); SDL_DestroyWindow(window);
+		SDL_Quit(); rom_unload(&rom); return 1;
+	}
 
 	SDL_AudioSpec want = { 0 }, have;
 	want.freq = SAMPLE_RATE;
@@ -353,10 +421,10 @@ main(int argc, char **argv)
 	apu_init(&apu);
 	if (audio_dev != 0)
 		SDL_PauseAudioDevice(audio_dev, 0);
+	else
+		fprintf(stderr, "pokered-mac: audio unavailable: %s\n", SDL_GetError());
 
 	static uint32_t rgba[GB_SCREEN_W * GB_SCREEN_H];
-	const size_t samples_per_frame =
-	    (size_t)(SAMPLE_RATE / FRAME_RATE_HZ + 0.5);
 	static int16_t frame_audio[SAMPLE_RATE / 30];
 
 	memset(&game, 0, sizeof(game));
@@ -382,6 +450,7 @@ main(int argc, char **argv)
 		memory[H_JOYINPUT] = read_pad(keys);
 
 		kernel_vblank(&kernel, memory, &rom);
+		if (!demo_mode) music_tick(memory);
 
 		if (demo_mode) {
 			port_u8 pressed = memory[H_JOYPRESSED];
@@ -403,6 +472,9 @@ main(int argc, char **argv)
 		SDL_RenderCopy(renderer, texture, NULL, NULL);
 		SDL_RenderPresent(renderer);
 
+		const size_t samples_per_frame =
+		    (size_t)((frame_no + 1.0) * SAMPLE_RATE / FRAME_RATE_HZ) -
+		    (size_t)(frame_no * SAMPLE_RATE / FRAME_RATE_HZ);
 		apu_render(&apu, memory, frame_audio, samples_per_frame);
 		if (audio_dev != 0)
 			SDL_QueueAudio(audio_dev, frame_audio,

@@ -25,6 +25,7 @@ void port_vblank_copy(struct vblank_copy_state *state, port_u8 *memory);
 void port_vblank_copy_double(struct vblank_copy_double_state *state,
 	port_u8 *memory);
 void port_joypad(struct joypad_update_state *state, port_u8 *memory);
+void port_redraw_row_or_column(struct redraw_row_column_state *, port_u8 *);
 
 
 void
@@ -68,8 +69,14 @@ kernel_vblank(struct mac_kernel *k, uint8_t *memory, const struct mac_rom *rom)
 		memory[H_VBLANK_COPY_BG_SOURCE + 1] = 0;
 	}
 
-	/* RedrawRowOrColumn is not composed yet: no current port schedules it
-	 * in this layer's demo path. Left as future glue work. */
+	{
+		struct redraw_row_column_state redraw = {0};
+		redraw.mode = memory[H_REDRAW_ROW_OR_COLUMN_MODE];
+		redraw.dest_low = memory[H_REDRAW_ROW_OR_COLUMN_DEST];
+		redraw.dest_high = memory[H_REDRAW_ROW_OR_COLUMN_DEST + 1];
+		port_redraw_row_or_column(&redraw, memory);
+		memory[H_REDRAW_ROW_OR_COLUMN_MODE] = redraw.mode;
+	}
 
 	/* VBlankCopy: 16-byte units, source may be ROM (window must match
 	 * [hLoadedROMBank], which rom_sync_window guarantees per frame). */
@@ -83,7 +90,11 @@ kernel_vblank(struct mac_kernel *k, uint8_t *memory, const struct mac_rom *rom)
 		k->copy.dest_low = memory[H_VBLANK_COPY_DEST];
 		k->copy.dest_high = memory[H_VBLANK_COPY_DEST + 1];
 		port_vblank_copy(&k->copy, memory);
-		memory[H_VBLANK_COPY_SIZE] = 0;
+		memory[H_VBLANK_COPY_SIZE] = k->copy.size;
+		memory[H_VBLANK_COPY_SOURCE] = k->copy.source_low;
+		memory[H_VBLANK_COPY_SOURCE + 1] = k->copy.source_high;
+		memory[H_VBLANK_COPY_DEST] = k->copy.dest_low;
+		memory[H_VBLANK_COPY_DEST + 1] = k->copy.dest_high;
 	}
 
 	/* VBlankCopyDouble: 1bpp -> 2bpp expansion, 8-byte units. */
@@ -101,8 +112,7 @@ kernel_vblank(struct mac_kernel *k, uint8_t *memory, const struct mac_rom *rom)
 	}
 
 	/* OAM DMA mirror: hDMARoutine copies wShadowOAM into OAM each frame.
-	 * PrepareOAMData (hide/sort processing) is not ported yet; sprites
-	 * render straight from the shadow buffer's final layout. */
+	 * The game driver composes PrepareOAMData before the next transfer. */
 	memcpy(memory + OAM_START, memory + W_SHADOW_OAM, OAM_SIZE);
 
 	/* ReadJoedy equivalent: the shell has already stored the polled byte

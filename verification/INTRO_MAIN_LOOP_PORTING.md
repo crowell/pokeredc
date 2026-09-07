@@ -1,147 +1,204 @@
-# Intro and Main-Loop C Port Handoff
+# macOS C-port handoff — 2026-09-07
 
-This document is the integration contract for reaching a byte-for-byte-faithful opening and the first controllable frame in Red's House 2F. It supplements the generated, repository-wide [PORTING_BACKLOG.md](PORTING_BACKLOG.md); regenerate that file with `make -C verification backlog` after changing `verification/ports.toml`.
+## Current acceptance result
 
-## What the macOS runtime now does
+This is **not yet a playable-through or proven 1:1 port**. The runtime uses
+native C and original ROM assets; it does not execute the game's SM83 code.
 
-`verification/platform/game.c` starts from `Init`, enters a frame-resumable C implementation of the real `PlayIntro` order, and then enters the title screen. The runtime uses ROM data rather than replacement art for:
+Work is in the independent checkout `.worktrees/ds_port`, branch `dsp2`.
+Upstream `ds4` commit `03b235366cf2cade298cde09a0a97b687148bc9b` is already
+included. Preserve existing uncommitted work; no new commit/push was made.
 
-- all three copyright lines;
-- Game Freak logo and shooting-star graphics/OAM;
-- Gengar, Nidorino, and all seven Nidorino movement arrays;
-- the three Gengar tilemaps;
-- the title logos, player OAM, copyright row, version graphics, and title bounce table.
+Build/run from that checkout:
 
-`verification/platform/apu.c` synthesizes all four DMG channels, including channel-1 sweep, pulse envelopes, wave RAM, LFSR noise, length counters, and NR50/NR51 routing. `verification/platform/video.c` now uses hardware OAM, WX-7 window positioning, and correct vertically-flipped 8x16 sprite tile selection.
+```sh
+make -C verification mac
+verification/build-mac/pokered-mac --rom pokered.gbc
+make -C verification mac-test
+```
 
-The runtime implementation remains an integration scaffold, not a substitute
-for proof-porting every assembly label below. Unresolved integration points are
-marked `FIDELITY_BOUNDARY(name)` in C.
+The integration test now exercises:
 
-## Runtime memory model
+- 353 original compressed pictures against their uncompressed bytes;
+  both normal and mirrored alignment/interlace/VRAM transfers;
+- synthetic mode-0 zero-run streams in both buffer orders;
+- GetMonHeader's actual BaseStats bank and restored caller bank;
+- every font-transfer chunk and all three window tilemap thirds;
+- DMG sprite selection/overlap, raw-color priority, 8x16 flipping,
+  ordinary window clipping and BG/window disable behavior;
+- a complete 88-frame music fade followed by a queued bank change;
+- interruption of the shooting star followed by the battle intro;
+- Oak's original dialogue through 25 actual A/B acknowledgments,
+  default player name and custom rival name, and arrival in the bedroom;
+- the bedroom's initial-facing script and house map-script dispatch;
+- Mom's pre-starter dialogue and TV text with manual acknowledgments,
+  window configuration and map restoration; a branched fixture also walks
+  to Mom with real D-pad input and dispatches her dialogue with A;
+- walking from the bedroom through downstairs into Pallet Town.
 
-The PC runtime keeps the 64 KiB CPU address space and adds bank-aware ROM/SRAM
-backing storage. `verification/include/bank.h` synchronizes the `$4000-$7fff`
-window when a composed port switches `hLoadedROMBank`/`rROMB`. Native proof
-ports retain their fixed-memory ABI; the PC platform exercises the backing bus.
+These are regression tests, not an end-to-end SM83 equivalence proof.
+AddressSanitizer/UndefinedBehaviorSanitizer runs cover this opening route.
+Do not infer battle, saving, menus, other map scripts, or later-map correctness.
+The native SDL application also completed a 330-frame macOS launch with no
+window/audio initialization error. This required display access outside the
+filesystem sandbox; the sandboxed launch correctly reported no available display.
 
-The current acceptance scope is the title flow, OakSpeech prefix, player-data
-initialization, starter Potion insertion, special-warp preparation, the
-`EnterMap`/`LoadMapData` prefix, and the first playable overworld frame with
-player movement/collision and OAM refresh. Full naming, map-entry animation,
-warp/script dispatch, and complete overworld fidelity remain separate
-boundaries.
+## Implemented runtime work
 
-## Team A: exact intro orchestration
+- `platform/music.c` adapts the existing Audio1/2/3 handler snapshots to
+  live WRAM, ROM command bytes and NRxx registers. It resumes all eight
+  channels, calls FadeOutAudio and the battle engine's low-health alarm.
+  `platform/apu.c` renders all four channels. Smoke tests no longer inject
+  a test tone into game audio.
+- `ports/uncompress_sprite_data.c` completes the two compressed bit planes
+  through existing bit-reader/writer and unpacking ports.
+  `ports/load_mon_front_sprite.c` and `platform/pictures.c` complete
+  front-picture alignment and VRAM/tilemap placement.
+- `platform/dialogue.c` retains text bank/command/character continuations.
+  `port_place_string_resume` reuses the existing PlaceString handlers but
+  returns at NextChar and waits for actual button edges at prompts.
+  FAR commands no longer require overwriting bytes in a ROM window.
+- `platform/oak.c` follows OakSpeech's ROM call/text order, including the
+  original Nidorina cry with the displayed Nidorino, picture fades,
+  default/custom names, case switching, name deletion and submission.
+- The overworld composes real sprite updates, land/water collision,
+  AdvancePlayerSprite, row/column redraw, map loading, stairs/door warps,
+  and map music. Its tested route ends in Pallet Town.
+- `platform/map_flow.c` dispatches the two house scripts by original
+  bank/address. RedsHouse2FDefaultScript has a complete 14-byte leaf proof.
+  Mom's pre-starter and TV text-ASM selectors resume original ROM text;
+  DisplayTextIDInit and CloseTextDisplay now execute their tile/font
+  transfers, bank changes and waits for actual input. Healing is missing.
+- Title exit restores the window and BG1 auto-transfer destination. Leaving
+  those in the title's old state caused later dialogue to overwrite the
+  scrolling map. Visual captures now show dialogue and restored map views.
 
-Port these labels as resumable, one-frame-at-a-time C routines. Do not encode their output as a pre-rendered movie.
+## Verification corrections and limits
 
-| Function | Source | Required behavior |
-| --- | --- | --- |
-| `PlayIntro` | `engine/movie/intro.asm:8` | Top-level order, interruption result, fade, cleanup. |
-| `PlayShootingStar` | `engine/movie/intro.asm:305` | Copyright delay, LCD transition, graphics loads, star animation, music handoff. |
-| `PlayIntroScene` | `engine/movie/intro.asm:23` | Exact Gengar/Nidorino script and interruption windows. |
-| `AnimateIntroNidorino` | `engine/movie/intro.asm:143` | Consume ROM coordinate pairs with five-frame waits. |
-| `IntroMoveMon` | `engine/movie/intro.asm:235` | Two-pixel movement every two frames and carry propagation. |
-| `IntroCopyTiles` | `engine/movie/intro.asm:272` | Compose the tile-ID-list predef, not only its destination pointer. |
-| `CopyTileIDsFromList` | `engine/battle/animations.asm:2545` | Complete the existing partial port and preserve base-tile behavior. |
-| `AnimateShootingStar` | `engine/movie/splash.asm:22` | Big star, logo flashes, six small-star waves. |
-| `MoveDownSmallStars` | `engine/movie/splash.asm:122` | Reverse OAM traversal, palette toggle, interruption carry. |
-| `CheckForUserInterruption` | `home/overworld.asm:2394` | Up+Select+B held or Start/A edge, over exactly C frames. |
+Do not equate `status = "proven"` with a complete runtime function.
 
-Acceptance tests:
+1. `UncompressSpriteFromDE` was proved only through its tail jump; runtime
+   previously never decompressed anything. The newly composed decoder and
+   LoadMonFrontSprite are explicitly `implemented_unproven` in ports.toml.
+2. XorSpriteChunks and UnpackSpriteMode2, and their fixtures, read
+   `d0a9` (unpack mode) instead of `d0a8` (load flags). Corrected from the
+   actual ROM symbols. Their dependent ResetSpriteBufferPointers contract
+   still must be independently audited, not merely assumed.
+   The full corrected XOR matrix was interrupted after over an hour:
+   UnpackSpriteMode2 and XOR 40-b1, 40-b2, 48-b1 had passed. XorSpriteChunks
+   is downgraded pending completion of the larger cases; an interrupted
+   test is not evidence of either a successful proof or a semantic mismatch.
+   A focused 48-b2 retry was also interrupted; its stack trace remained in
+   native angr/Z3 constraint solving. Keep its proof domain unchanged when
+   improving harness performance; do not substitute a C-matching oracle.
+3. OakSpeechSlidePicCommon's test hooks the **entire** assembly function
+   with a handwritten model. Both it and C had wrong HRAM addresses and a
+   left-copy no-op. Fixed behavior; renamed the check a symbolic model
+   regression and downgraded its ledger status. An instruction-level proof
+   is still required.
+4. LoadMapData's old whole-copy-loop model repeated a C bug: it advanced
+   the source by 32 instead of 20 and added another 12 to final DE.
+   The test now executes the linked loop with individual SM83 instruction
+   shims. Helper calls are still explicit boundaries.
+5. TextCommandProcessor declared TextCommand_SOUND's 24-byte state as an
+   8-byte register pointer. Added a typed adapter to prevent stack
+   corruption. Audit other cross-file declarations for the same problem.
+6. Runtime bank mapping is additional behavior not covered by legacy
+   flat-memory proofs. In particular test nested farcalls and predefs with
+   distinct bytes at the same address in different banks.
+7. Shared Sm83LoadAFromImmediate/Sm83LoadAFromRegister adapters incorrectly
+   cleared flags. They now preserve flags, as LD requires. Regression tests
+   cover arbitrary source bytes and flags. The dependent rerun exposed
+   CalcDSquared's incorrect F=0; it now preserves XOR A's Z flag. Its proof
+   was strengthened with a linked-byte assertion and passes after the fix;
+   the other 27 dependent cases passed. Never treat an older "proven" label
+   as overriding a failure under corrected instruction semantics.
+8. CopyVideoDataDouble and CopyScreenTileBufferToVRAM previously acknowledged
+   fake waits without executing each scheduled chunk/third. Their runtime
+   paths now call the VBlank transfer ports before proceeding. Host-frame
+   timing is still synchronous and needs resumable integration.
 
-1. Record `(frame, SCX, BGP, OBP0, OBP1, shadow OAM[0..159], tilemap)` from the ROM and C runtime at every VBlank.
-2. Compare without timing normalization from copyright frame 0 through the final intro fade.
-3. Repeat with A pressed during the big star, each scripted wait, and title wait; the transition frame must match.
+## Next team: map scripts and first playable battle
 
-## Team B: title screen
+The next mandatory gate is **PalletTown_Script** (`06:4e5b`).
+The runtime now reaches RunMapScript dispatch but only the two house scripts
+are connected. Unknown callbacks are logged once per bank/address; they do
+not constitute executed game logic or validated progression.
+Port and wire these in gameplay order:
 
-| Function | Source | Status/action |
-| --- | --- | --- |
-| `PrepareTitleScreen` | `engine/movie/title.asm:5` | Missing orchestration port. |
-| `DisplayTitleScreen` | `engine/movie/title.asm:28` | Missing resumable orchestration port. |
-| `LoadTitleMonSprite` | `engine/movie/title.asm:397` | Existing port does not complete front-pic rendering. |
-| `LoadFrontSpriteByMonIndex` | `home/picture.asm` | Complete the current continuation boundary. |
-| `TitleScreenScrollInMon` | `engine/movie/title.asm:282` | Existing port must compose the far `TitleScroll` call. |
-| `TitleScreenAnimateBallIfStarterOut` | `engine/movie/title2.asm:90` | Missing. |
-| `TitleScreenPickNewMon` | `engine/movie/title.asm:271` | Missing random selection/load/scroll composition. |
-| `ScrollTitleScreenGameVersion` | `engine/movie/title.asm:288` | Needs scanline-aware PPU scheduling at LY=64 and LY=d. |
+1. `JoypadOverworld` / `RunMapScript` / `CallFunctionInTable`:
+   extend the original banked map-script C dispatch in `map_flow.c`.
+   Supply TryPushingBoulder, DoBoulderDustAnimation and RunNPCMovementScript
+   preludes, plus original simulated-joypad indexing/override behavior.
+   Do not interpret SM83 or treat an unimplemented callback as success.
+2. Complete `RedsHouse1FMomHealScript`: text, fade, ReloadMapData, HealParty,
+   healing music completion, map music restoration, fade-in and final text.
+   Initial-facing/default/no-op and pre-starter Mom/TV paths are connected.
+3. PalletTown's complete script table:
+   `PalletTownDefaultScript`, `PalletTownOakHeyWaitScript`,
+   `PalletTownOakWalksToPlayerScript`,
+   `PalletTownOakNotSafeComeWithMeScript`,
+   `PalletTownPlayerFollowsOakScript`, Daisy/no-op.
+   Respect event flags, ShowObject/HideObject, joy-ignore masks and music.
+4. Compose `MoveSprite`, `CalcPositionOfPlayerRelativeToNPC`,
+   `FindPathToPlayer`, `ConvertNPCMovementDirectionsToJoypadMasks`,
+   `StartSimulatingJoypadStates`, `PlayerStepOutFromDoor` and
+   `PalletMovementScript_{OakMoveLeft,PlayerMoveLeft,WaitAndWalkToLab,
+   WalkToLab,Done}`. Use the two original WalkToLab RLE lists through
+   DecodeRLEList. Finish ShowObject/HideObject beyond callback snapshots.
+   Implement PalletTownOakText's text-ASM tail: ten-frame delay,
+   EmotionBubble, facing change and TextScriptEnd. An NPC walk and the
+   60-frame emotion bubble must run for real frames while the player is locked.
+5. OaksLab script table and text-ASM callbacks, choosing each starter,
+   declining/confirming, party insertion, nickname flow, rival selection.
+6. `NewBattle` / `InitBattle` through the actual turn/menu loop:
+   send-out, move selection, damage, fainting, rewards, win/loss,
+   cleanup and return to map scripts. Do not stop at dispatch flags.
+7. Pallet/Route 1/Viridian progression, wild encounters and catching,
+   healing, Oak's Parcel and Pokédex event chain.
+8. Start-menu navigation, party/bag/player screens, options, PC storage,
+   save/continue and persistent SRAM. No save path is currently validated.
 
-The macOS title bounce already uses the ROM's exact signed deltas and counts. The title-version raster reveal remains marked `FIDELITY_BOUNDARY(scanline-title-version)` because the compositor currently samples one SCX value for the whole frame.
+Acceptance: scripted playthroughs for all three starters, first battle
+win/loss, parcel delivery, catch/heal/save/quit/continue. Compare WRAM,
+VRAM, OAM, bank state and game-visible transitions with the original ROM.
 
-Acceptance test: compare frame hashes and title-mon species sequence for 2,000 frames using identical DIV/TIMA/random seed inputs.
+## Remaining opening/hardware fidelity work
 
-## Team C: audio command engine
-
-The APU is no longer the blocker. The missing layer is the ROM command interpreter that writes it. Port the complete Engine 1 call cluster from `audio/engine_1.asm`, preserving four-channel shared state and per-frame order:
-
-- `Audio1_PlaySound`, `Audio1_UpdateMusic`, `Audio1_ApplyMusicAffects`, `Audio1_PlayNextNote`;
-- `Audio1_sound_ret`, `Audio1_sound_call`, `Audio1_sound_loop`;
-- `Audio1_note_type`, `Audio1_toggle_perfect_pitch`, `Audio1_vibrato`, `Audio1_pitch_slide`;
-- `Audio1_duty_cycle`, `Audio1_tempo`, `Audio1_stereo_panning`, `Audio1_unknownmusic0xef`, `Audio1_duty_cycle_pattern`, `Audio1_volume`, `Audio1_execute_music`, `Audio1_octave`;
-- `Audio1_sfx_note`, `Audio1_pitch_sweep`, `Audio1_note`, `Audio1_note_length`, `Audio1_note_pitch`;
-- `Audio1_EnableChannelOutput`, `Audio1_ApplyDutyCycleAndSoundLength`, `Audio1_ApplyWavePatternAndFrequency`, `Audio1_SetSfxTempo`, `Audio1_ApplyFrequencyModifier`;
-- `Audio1_GoBackOneCommandIfCry`, `Audio1_IsCry`, `Audio1_ApplyPitchSlide`, `Audio1_InitPitchSlideVars`, `Audio1_ApplyDutyCyclePattern`;
-- `Audio1_GetNextMusicByte`, `Audio1_GetRegisterPointer`, `Audio1_MultiplyAdd`, `Audio1_CalculateFrequency`.
-
-Then replace `intro_sound()` in `platform/game.c` with calls through the ported `PlaySound`/`PlayMusic` path. The required opening assets are `SFX_Shooting_Star`, `Music_IntroBattle`, all intro move SFX, `Music_TitleScreen`, cries, `Music_Routes2`, shrink SFX, and `Music_PalletTown`.
-
-Acceptance test: log every write to NR10-NR52 and wave RAM from both implementations with cycle/frame stamps. Register traces must match before comparing PCM output.
-
-## Team D: Oak speech and naming
-
-The runtime now composes the ported OakSpeech prefix, `InitPlayerData2`,
-`AddItemToInventory`, and `PrepareForSpecialWarp`. The naming screens and
-remaining picture/audio choreography stay outside the frame-driven path.
-
-Acceptance test: exercise the OakSpeech prefix, confirm the starter Potion and
-special-warp state are initialized, and compare the resulting WRAM against the
-ROM before map entry.
-
-## Team E: first map load
-
-The PC driver composes the available map-entry prefix in this order:
-
-1. `PrepareForSpecialWarp`
-2. `EnterMap`
-3. `LoadMapData`
-4. `LoadMapHeader`
-5. `InitMapSprites`
-6. `LoadMapSpriteTilePatterns`
-7. `LoadTileBlockMap`
-8. `LoadTilesetTilePatternData`
-9. `LoadCurrentMapView`
-10. `LoadPlayerSpriteGraphics`
-11. `CheckForceBikeOrSurf`
-
-Runtime ROM-window synchronization covers the bank switches used by these
-ports. `EnterMap` is triggered by A/Start from the OakSpeech prefix.
-
-Acceptance test: at map entry, compare the entire `$c000-$dfff` WRAM range,
-VRAM, OAM, IO registers, current ROM bank, and first rendered frame against
-the ROM.
-
-## Team F: minimum interactive overworld loop
-
-These are all required before claiming that the player is in a 1:1 interactive overworld:
-
-- `OverworldLoop`, `OverworldLoopLessDelay`, `JoypadOverworld`, `RunMapScript`;
-- `UpdatePlayerSprite`, `UpdateNPCSprite`, and a completed `UpdateSprites`;
-- `CanWalkOntoTile`, `CollisionCheckOnLand`, `CollisionCheckOnWater`;
-- `CheckWarpsNoCollision`, `CheckWarpsCollision`, `WarpFound2`, `CheckMapConnections`, `ExtraWarpCheck`;
-- `IsSpriteOrSignInFrontOfPlayer`, `DisplayTextID`, `PrintText_NoCreatingTextBox`;
-- `TryDoWildEncounter`, `NewBattle`, `SafariZoneCheck`, and poison/step bookkeeping called by `OverworldLoopLessDelay`;
-- start-menu dispatch reached by Start, including a clean close back into the same loop;
-- map-script dispatch for Red's House 2F and Red's House 1F.
-
-The exhaustive dependencies and every other missing/partial function remain in `PORTING_BACKLOG.md`; this handoff intentionally stops at the first faithful, controllable overworld frame.
+- CopyVideoData and CopyVideoDataDouble still service their fake DelayFrame
+  observations synchronously; expose these waits to the host frame pump.
+- Text scrolling currently performs both row copies before its ten-frame
+  wait; show the intermediate row at five frames. Substitutions print as
+  a group. Support all text commands and resumable text-ASM C callbacks.
+- Naming slides currently perform six passes synchronously and then wait.
+  Preserve the three-frame display after each pass. Complete the Oak
+  shrinking-to-overworld OAM timing against the ROM; sprite tiles and the
+  50-frame PrepareOAMData continuation now execute.
+- Title monster rotation/ball animation/cry and the scanline-specific
+  version reveal are not complete. Intro interruption windows are closer,
+  but no per-VBlank ROM trace has established exact timing.
+- PPU is frame-based. The ten-sprites-per-line selection, DMG X/OAM ordering,
+  raw-background-color priority and ordinary window clipping now have
+  regression tests based on [Pan Docs OAM](https://github.com/gbdev/pandocs/blob/master/src/OAM.md)
+  and [LCDC](https://github.com/gbdev/pandocs/blob/master/src/LCDC.md).
+  Raster writes, pixel-fetch timing, window-row progression and WX=0/166
+  hardware quirks still need independent reference traces.
+- APU PCM is approximate mono: compare per-frame NR10–NR52/wave-RAM
+  traces first, then envelope/sweep/length/DAC timing and stereo output.
+  Finish home PlaySound SFX suppression during pending fades.
+- DIV/TIMA/RNG, play time, frame pacing and SRAM banking need broader
+  hardware equivalence checks.
+- Test every warp/connection and battle-return path; the bedroom-to-town
+  route does not establish correctness across all tilesets.
 
 ## Integration rules
 
-- A function is not complete if it sets `*_called`, `dispatch_called`, or callback state instead of invoking the callee or yielding a resumable call request.
-- Delay routines must yield frame-by-frame; consuming an abstract observation in a tight loop is acceptable for proofs but not runtime composition.
-- Use only ROM assets and tables. Do not redraw screens, substitute fonts, approximate map data, or bypass naming/map initialization.
-- Preserve register flags, bank state, HRAM shadows, and side effects needed by callers.
-- Add each finished function to `verification/ports.toml`, add differential tests, regenerate `PORTING_BACKLOG.md`, and remove only the matching `FIDELITY_BOUNDARY` marker.
-- A visual match is necessary but not sufficient. State and audio-register traces are the acceptance oracle.
+- Keep original assets, tables and game behavior, including original bugs.
+- A `*_called`/dispatch flag is a continuation request, not a completed call.
+- Carry real bank state, predef registers, flags and WRAM effects across calls.
+- Do not alter expected results merely to match C. Identify the linked
+  instructions/symbols that justify a correction; remove self-confirming models.
+- Maintain separate evidence for runtime regressions, memory safety,
+  symbolic call-boundary contracts and full instruction equivalence.
+- Record new functions without proofs as unproven; never upgrade the
+  whole game based on passing leaf tests.

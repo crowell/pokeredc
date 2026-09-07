@@ -63,6 +63,9 @@ class Boundary(angr.SimProcedure):
 def _assembly(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     loc = symbol_location(SYMBOLS, "CalcDSquared")
     base = loc.address
+    multiply = symbol_location(SYMBOLS, "Multiply")
+    expected = bytes.fromhex("af e0 96 e0 97 7a e0 98 e0 99 c3") + multiply.address.to_bytes(2, "little")
+    assert linked_bytes(ROM, loc, len(expected)) == expected
     project = angr.Project(
         rom_window(ROM, loc.bank),
         auto_load_libs=False,
@@ -77,7 +80,7 @@ def _assembly(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     # xor a                     ; clears A, sets Z
     # ldh [hMultiplicand], a    ; hMultiplicand   = 0
     # ldh [hMultiplicand+1], a  ; hMultiplicand+1 = 0
-    # ld a, d                   ; A = d, flags cleared
+    # ld a, d                   ; A = d, flags preserved
     # ldh [hMultiplicand+2], a  ; hMultiplicand+2 = d
     # ldh [hMultiplier], a      ; hMultiplier     = d
     # jp Multiply               ; boundary

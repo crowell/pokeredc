@@ -31,16 +31,20 @@ make red
 make -C verification run-mac
 ```
 
-The default mode drives pokered's actual boot flow (see
-`platform/game.c`): `Init` port, font/text-box tile uploads through
-`VBlankCopyDouble`, `DisplayTitleScreen` composed from ROM logo graphics,
-`MainMenu` with working NEW GAME selection, and the `StartNewGame`/
-`OakSpeech` prefix. Every function that is not ported yet is logged in
-`verification/REQUIRED.md` with a matching `REQUIRED:` comment at its call
-site in `platform/game.c`; the driver shows an on-screen "PORT BOUNDARY"
-marker where composition currently stops.
+The default mode runs the copyright/star/battle intro, title, NEW GAME,
+Oak's original dialogue and pictures, default/custom name selection, and
+arrival in the bedroom. The tested walking route continues downstairs and
+outside to Pallet Town; house-script dispatch and Mom's pre-starter/TV
+dialogue now work with manual input and restore the map afterward.
+Audio uses the original ROM command streams through
+the existing C audio handlers, not a synthetic replacement tune.
 
-Controls: arrows/WASD = D-pad, X/K = A, Z/J = B, Return = Start,
+**This is not yet a playable-through or proven 1:1 port.** Pallet Town and later map scripts,
+starter selection, battles, overworld menus and saving/continuing still need
+integration. See [the current handoff](INTRO_MAIN_LOOP_PORTING.md) for the
+function-level work list, known timing differences and proof limitations.
+
+Controls: arrows/WASD = D-pad, X/K/Space = A, Z/J = B, Return = Start+A,
 Backspace/Right-Shift = Select, Esc quits.
 
 `--demo` keeps the earlier synthetic glue-test screen (APU tones, cursor
@@ -58,9 +62,19 @@ verification/build-mac/pokered-mac --rom pokered.gbc --smoke \
     --out /tmp/smoke.ppm --dump /tmp/mem.bin
 ```
 
-The smoke run checks the font upload byte-for-byte against the ROM
-(`font_byte_mismatches`), samples known-blank background pixels, counts
-non-audio-silent samples, and writes the final frame as PPM.
+Smoke mode samples pixels/audio and writes a final PPM. Its logo-byte check
+is only meaningful while those tiles are loaded; later scenes reuse VRAM.
+For deterministic held-key input, repeat `--pad FIRST:END:HEX_MASK` with
+zero-based, end-exclusive frame intervals. A/B/Select/Start are 01/02/04/08;
+Right/Left/Up/Down are 10/20/40/80.
+
+Run the composed opening/graphics/audio/warp regression tests with:
+
+```sh
+make -C verification mac-test
+```
+
+These tests do not replace assembly equivalence proofs.
 
 Layer map:
 
@@ -69,19 +83,21 @@ Layer map:
 - `platform/video.c` - software DMG PPU: BG/window/sprites,
   `$8000`/`$8800` tile addressing (pokered boots in `$8800` mode),
   BGP/OBP palettes
-- `platform/apu.c` - pulse-channel synth (duty/envelope/length/frequency)
-  driven by the NR register file; wave/noise channels pending
+- `platform/apu.c` - four-channel synth driven by NR registers
+- `platform/music.c` - bank-aware Audio1/2/3 continuations and fade/alarm updates
+- `platform/map_flow.c` - banked house scripts and resumable overworld dialogue
+- `platform/pictures.c` - complete sprite decompression/VRAM adapters
+- `platform/dialogue.c`, `platform/oak.c` - resumable text and Oak/name flow
 - `platform/kernel.c` - VBlank service composed of ported routines, plus
   `kernel_copy_video_data_double()`, which supplies the vblank interleaving
   that `CopyVideoDataDouble` gets from real interrupts on hardware (the
   freestanding ports model those interleavings symbolically)
 - `platform/main_sdl.c` - SDL2 shell, input mapping, frame pacing, demo
 
-Known divergences from hardware while the port is incomplete:
-`PrepareOAMData` is not composed yet, so sprites render straight from the
-shadow OAM layout; `RedrawRowOrColumn` is not serviced; audio plays only
-what glue/demo code writes into the NR registers until the audio-engine
-ports are chained end-to-end.
+The kernel now services row/column redraw and OAM DMA. The PPU remains
+frame-based and the APU is approximate mono. Synchronous transfer waits,
+scanline effects and several animation continuations still differ from
+hardware; see the handoff before claiming timing or playthrough equivalence.
 
 ## Build and test
 

@@ -109,7 +109,8 @@ ps_coord(port_u8 x, port_u8 y)
 
 static void
 place_string_from_saved_cursor(struct cpu_register_state *state,
-	port_u8 *memory, port_u16 saved_hl)
+	port_u8 *memory, port_u16 saved_hl,
+	struct place_string_resume_state *resume)
 {
 	port_u16 dest = (port_u16)(((port_u16)state->h << 8) | state->l);
 	port_u16 src = (port_u16)(((port_u16)state->d << 8) | state->e);
@@ -118,6 +119,17 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 	for (;;) {
 		c = memory[src];
 		state->a = c;
+		if (resume) {
+			resume->token = c;
+			resume->waiting = c == TX_PARA || c == TX_PAGE ||
+				c == TX__CONT || c == TX_CONT || c == TX_PROMPT;
+			if (resume->waiting && !resume->acknowledge) {
+				memory[ARROW_SLOT] = 0xee;
+				return;
+			}
+			resume->waiting = 0;
+			resume->acknowledge = 0;
+		}
 		if (c == TX_END) {
 			state->a = c;
 			state->b = (port_u8)(dest >> 8);
@@ -138,13 +150,13 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			dest = (port_u16)(saved_hl + adv);
 			saved_hl = dest;
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_LINE) {
 			dest = ps_coord(1, 16);
 			saved_hl = dest;
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_PARA) {
 			port_u16 entry_de = src;
@@ -185,7 +197,7 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			state->e = (port_u8)entry_de;
 			dest = ps_coord(1, 14);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_PAGE) {
 			port_u16 entry_de = src;
@@ -229,7 +241,7 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			saved_hl = ps_coord(1, 11);
 			dest = saved_hl;
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX__CONT) {
 			port_u16 entry_de;
@@ -270,7 +282,7 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			state->d = (port_u8)(entry_de >> 8);
 			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_SCROLL) {
 			port_u16 entry_de = src;
@@ -280,7 +292,7 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			state->d = (port_u8)(entry_de >> 8);
 			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_CONT) {
 			port_u16 entry_de = src;
@@ -299,7 +311,7 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			state->d = (port_u8)(entry_de >> 8);
 			state->e = (port_u8)entry_de;
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_PROMPT) {
 			struct manual_text_scroll_state mts;
@@ -358,12 +370,12 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 		if (c == TX_PLAYER) {
 			ps_copy_name(memory, &dest, W_PLAYER_NAME);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_RIVAL) {
 			ps_copy_name(memory, &dest, W_RIVAL_NAME);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_POUND) { /* # -> "POKé" */
 			ps_emit(memory, &dest, 0x8f);
@@ -371,25 +383,25 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			ps_emit(memory, &dest, 0x8a);
 			ps_emit(memory, &dest, 0xba);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_PKMN) { /* "<PK><MN>" */
 			ps_emit(memory, &dest, 0xe1);
 			ps_emit(memory, &dest, 0xe2);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_PC) { /* "PC" */
 			ps_emit(memory, &dest, 0x8f);
 			ps_emit(memory, &dest, 0x82);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_TM) { /* "TM" */
 			ps_emit(memory, &dest, 0x93);
 			ps_emit(memory, &dest, 0x8c);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_TRAINER) { /* "TRAINER" */
 			ps_emit(memory, &dest, 0x93);
@@ -400,7 +412,7 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			ps_emit(memory, &dest, 0x84);
 			ps_emit(memory, &dest, 0x91);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_ROCKET) { /* "ROCKET" */
 			ps_emit(memory, &dest, 0x91);
@@ -410,13 +422,13 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			ps_emit(memory, &dest, 0x84);
 			ps_emit(memory, &dest, 0x93);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_SIXDOTS) { /* "……" (two ellipsis glyphs) */
 			ps_emit(memory, &dest, 0x75);
 			ps_emit(memory, &dest, 0x75);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_TARGET) {
 			port_u8 t = (port_u8)(memory[H_WHOSE_TURN] ^ 1);
@@ -425,7 +437,7 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			else
 				ps_copy_enemy_name(memory, &dest);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 		if (c == TX_USER) {
 			port_u8 t = memory[H_WHOSE_TURN];
@@ -434,20 +446,30 @@ place_string_from_saved_cursor(struct cpu_register_state *state,
 			else
 				ps_copy_enemy_name(memory, &dest);
 			src = (port_u16)(src + 1);
-			continue;
+			goto next_token;
 		}
 
 		/* Ordinary character: copy verbatim and advance both pointers. */
 		ps_emit(memory, &dest, c);
 		src = (port_u16)(src + 1);
+next_token:
+		if (resume) {
+			state->h = (port_u8)(dest >> 8);
+			state->l = (port_u8)dest;
+			state->d = (port_u8)(src >> 8);
+			state->e = (port_u8)src;
+			resume->saved_cursor = saved_hl;
+			return;
+		}
 	}
+	if (resume) resume->done = 1;
 }
 
 __attribute__((noinline, used)) void
 port_place_string(struct cpu_register_state *state, port_u8 *memory)
 {
 	port_u16 cursor = (port_u16)(((port_u16)state->h << 8) | state->l);
-	place_string_from_saved_cursor(state, memory, cursor);
+	place_string_from_saved_cursor(state, memory, cursor, 0);
 }
 
 /* Port of the PlaceNextChar entry in home/text.asm.  PlaceString enters this
@@ -460,5 +482,15 @@ port_place_next_char(struct place_next_char_state *state, port_u8 *memory)
 {
 	port_u16 saved_hl = (port_u16)(((port_u16)state->saved_h << 8) |
 	    state->saved_l);
-	place_string_from_saved_cursor(&state->registers, memory, saved_hl);
+	place_string_from_saved_cursor(&state->registers, memory, saved_hl, 0);
+}
+
+/* Same character/control handlers, with the live cursor and source retained
+ * at each NextChar boundary. No fabricated input acknowledges a prompt. */
+__attribute__((noinline, used)) void
+port_place_string_resume(struct place_string_resume_state *state, port_u8 *memory)
+{
+	if (!state->done)
+		place_string_from_saved_cursor(&state->registers, memory,
+			state->saved_cursor, state);
 }

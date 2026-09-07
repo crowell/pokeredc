@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 #define CRY_DATA 0x5446u
 #define CRY_DATA_BANK 0x0eu
@@ -99,6 +102,9 @@ port_get_cry_data(struct cpu_register_state *state, port_u8 *memory)
 	pointer = (port_u16)(((port_u16)state->h << 8) | state->l);
 	state->a = CRY_DATA_BANK;
 	cry_bankswitch_home(state, memory);
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, memory[H_LOADED_ROM_BANK]);
+#endif
 	state->a = memory[pointer++];
 	state->h = (port_u8)(pointer >> 8);
 	state->l = (port_u8)pointer;
@@ -110,6 +116,9 @@ port_get_cry_data(struct cpu_register_state *state, port_u8 *memory)
 	state->a = memory[pointer];
 	memory[W_TEMPO_MODIFIER] = state->a;
 	cry_bankswitch_back(state, memory);
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, memory[H_LOADED_ROM_BANK]);
+#endif
 	state->a = state->b;
 	state->c = CRY_SFX_START;
 	state->f = (port_u8)((state->a & 0x80u) ? PORT_FLAG_C : 0);

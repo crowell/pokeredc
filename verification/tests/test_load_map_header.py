@@ -27,6 +27,9 @@ class MarkTown(angr.SimProcedure):
     def __init__(self, target: int) -> None: super().__init__(); self.target = target
     def run(self) -> None:
         self.state.memory.store(TOWN_VISITED, self.state.memory.load(TOWN_VISITED, 1) | claripy.BVV(1, 8))
+        # The Divide continuation leaves the global object offset in C,
+        # even when the first record is the terminator.
+        self.state.regs.c = claripy.BVV(((SOURCE - 0x4AEA) // 3) & 0xFF, 8)
         self.state.regs.a = claripy.BVV(0xff, 8); self.state.regs.f = claripy.BVV(0x42, 8); self.state.regs.hl = claripy.BVV(SOURCE + 1, 16); self.state.regs.de = claripy.BVV(TOGGLE_LIST, 16); self.state.memory.store(TOGGLE_LIST, claripy.BVV(0xff, 8)); self.jump(self.target)
 
 class SwitchBank(angr.SimProcedure):

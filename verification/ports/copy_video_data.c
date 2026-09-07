@@ -59,6 +59,25 @@ copy_video_data_delay_frame(struct cpu_register_state *state,
 {
 	static const port_u8 acknowledged_vblank[] = { 0 };
 	struct delay_frame_state delay;
+#ifdef PORT_PLATFORM_RUNTIME
+	/* Service the scheduled transfer before acknowledging its VBlank. The
+	 * proof's observation alone does not copy bytes or advance pointers.
+	 * TODO(runtime-frame-yield): expose this wait to the host frame pump so
+	 * LCD-on callers also present/audio-clock every transfer frame. */
+	void port_vblank_copy(struct vblank_copy_state *, port_u8 *);
+	struct vblank_copy_state copy = {0};
+	copy.size = memory[H_VBLANK_COPY_SIZE];
+	copy.source_low = memory[H_VBLANK_COPY_SOURCE];
+	copy.source_high = memory[H_VBLANK_COPY_SOURCE + 1];
+	copy.dest_low = memory[H_VBLANK_COPY_DEST];
+	copy.dest_high = memory[H_VBLANK_COPY_DEST + 1];
+	port_vblank_copy(&copy, memory);
+	memory[H_VBLANK_COPY_SIZE] = copy.size;
+	memory[H_VBLANK_COPY_SOURCE] = copy.source_low;
+	memory[H_VBLANK_COPY_SOURCE + 1] = copy.source_high;
+	memory[H_VBLANK_COPY_DEST] = copy.dest_low;
+	memory[H_VBLANK_COPY_DEST + 1] = copy.dest_high;
+#endif
 
 	delay.registers = *state;
 	delay.vblank_occurred = memory[H_VBLANK_OCCURRED];

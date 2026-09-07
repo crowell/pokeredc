@@ -1,5 +1,15 @@
 # REQUIRED — unported functions hit by the macOS game-flow driver
 
+> Current status (2026-09-07): see [the updated implementation/proof handoff](INTRO_MAIN_LOOP_PORTING.md).
+> The older inventory below is retained for context and has stale statuses:
+> pictures, audio, interactive Oak dialogue and naming are now connected.
+> Arrival in the bedroom, house scripts, pre-starter Mom/TV dialogue and walking
+> downstairs/outside are integration-tested. Pallet Town and later map scripts,
+> starter/battle flow, working overworld menus and save/continue
+> remain incomplete. New runtime composition is not an end-to-end proof.
+> In particular, the old "proven" label on a call-boundary snapshot must not
+> be used as evidence that its continuations execute correctly.
+
 `platform/game.c` composes the real boot flow (title screen → main menu →
 new game → first map load) from functions ported in `verification/ports/`.
 The driver advances from the OakSpeech prefix into `EnterMap`/`LoadMapData`
@@ -78,16 +88,22 @@ Ported intro fragments remain available for later naming and picture fidelity:
 `EnterMap`, `LoadMapData`, `InitMapSprites`, `LoadMapSpriteTilePatterns`,
 `LoadCurrentMapView`, `LoadPlayerSpriteGraphics`, and
 `CheckForceBikeOrSurf` are ported and composed after the opening dialogue.
-The macOS runtime now calls the `OverworldLoop` and
-`OverworldLoopLessDelay` prefixes once per frame, dispatches the player
-direction/collision/advance path, progresses the player walking animation
-frames, and refreshes `PrepareOAMData` into the host OAM mirror.
+`platform/game.c:overworld_loop_tick` now follows the assembly order:
+the two frame delays, walk-animation advancement, joypad edge selection,
+direction/facing updates including the 180-degree turn path, sprite update,
+land/water collision, walking, step bookkeeping, warp dispatch, and map
+connection dispatch.
 
-Remaining blockers for the full original overworld loop are
-`JoypadOverworld`, `RunMapScript`, collision/warp dispatch beyond the basic
-land movement path, NPC movement, and the complete wild-encounter path.
-These are available as partial/proven ports where listed in
-`PORTING_BACKLOG.md`, but are not yet safe to claim as a 1:1 game loop.
+The previous driver incorrectly replaced this sequence with a host-side
+`overworld_player_step` and treated A/START as a warp request. That was not
+the assembly behavior: A dispatches `DisplayTextID`, while warps are checked
+after movement through `CheckWarpsNoCollision`/`CheckWarpsCollision`.
+
+The remaining fidelity boundaries are the downstream `RunMapScript`,
+`NewBattle`, Safari/blackout handling, full NPC movement, and the interactive
+Start-menu continuation after `DisplayTextID(TEXT_START_MENU)`. These are
+explicit boundaries; the C dispatcher no longer pretends they are movement or
+warp logic.
 
 ## Battle — future phase
 

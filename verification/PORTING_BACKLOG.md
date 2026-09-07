@@ -7,25 +7,17 @@ This is a conservative static-call-graph backlog, not a claim that every label i
 ## Snapshot
 
 - Static call/jump candidates: 1467
-- Proven catalog entries excluded: 820
-- Existing partial ports to complete: 321
-- Missing C ports: 326
+- Proven catalog entries excluded: 819
+- Existing partial ports to complete: 324
+- Missing C ports: 324
 
 ## Runtime prerequisite
 
-The macOS runtime now allocates a 64 KiB CPU window plus bank-aware ROM/SRAM
-backing storage. `include/bank.h` synchronizes the active ROM window for
-runtime ports that switch `hLoadedROMBank`/`rROMB`; the native proof harness
-continues to use its fixed memory image.
+Before composing these functions into the macOS game, replace the current flat 64 KiB proof-memory ROM model with bank-aware reads and writes (including MBC1 ROM/RAM banking). Several ports switch `hLoadedROMBank`/`rROMB` internally; remapping only between C calls cannot execute the real control flow correctly.
 
 ## Boot-to-overworld critical path
 
-The PC driver composes the proven title setup, inventory initialization,
-special-warp preparation, and the `EnterMap`/`LoadMapData` prefix after the
-player advances the opening dialogue. It now renders the loaded map, refreshes
-player OAM, progresses walking animation frames, and accepts basic land
-movement with collision checks. Full naming, interactive overworld dispatch,
-and map scripts remain partial.
+Complete the non-proven entries in this dependency order to boot, finish the opening flow, load Red's initial map, and run the first interactive overworld frame.
 
 | Function | Current status | Assembly source |
 | --- | --- | --- |
@@ -662,6 +654,10 @@ and map scripts remain partial.
 
 - `MoveSprite` — assembly line 10; callers: `BillsHouseBillExitsMachineScript`, `BillsHousePokemonWalkToMachineScript`, `CeruleanCityDefaultScript`, `CeruleanCityRivalDefeatedScript`, `ChampionsRoomOakArrivesScript`, `ChampionsRoomOakComeWithMeScript`, `CinnabarGymDefaultScript`, `GameCornerRocketBattleScript`, `MtMoonB2FMoveSuperNerdScript`, `OaksLabChoseStarterScript`, `OaksLabOakEntersLabScript`, `OaksLabOakGivesPokedexScript`, `OaksLabRivalArrivesAtOaksRequestScript`, `OaksLabRivalChallengesPlayerScript`, `OaksLabRivalStartsExitScript`, `PalletMovementScript_OakMoveLeft`, `PalletTownOakWalksToPlayerScript`, `PewterCitySuperNerd1ShowsPlayerMuseumScript`, `PewterCityYoungsterShowsPlayerGymScript`, `PokemonTower2FDefeatedRivalScript`, `PokemonTower7FRocketLeaveMovementScript`, `Route22MoveRival1`, `Route22MoveRival2`, `Route22MoveRivalRightScript`, `SSAnne2FDefaultScript`, `SSAnne2FRivalAfterBattleScript`, `SilphCo11FDefaultScript`, `SilphCo7FDefaultScript`, `SilphCo7FRivalAfterBattleScript`, `TryPushingBoulder`; status: **partial** — `verification/ports/move_sprite.c`
 
+### `home/pics.asm`
+
+- `LoadMonFrontSprite` — assembly line 49; callers: `DisplayMonFrontSpriteInBox`, `EnemySendOutFirstMon`, `InitWildBattle`, `LoadFrontSpriteByMonIndex`, `PartyMenuOrRockOrRun`; status: **implemented_unproven** — `verification/ports/load_mon_front_sprite.c`
+
 ### `home/predef_text.asm`
 
 - `PrintPredefTextID` — assembly line 1; callers: `AbleToPlaySlotsCheck`, `DisplayOakLabRightPoster`, `GymStatues`, `GymTrashScript`, `HiddenCoins`, `PrintBenchGuyText`, `PrintBlackboardLinkCableText`, `PrintBookshelfText`, `PrintCardKeyText`, `PrintNotebookText`, `StartSlotMachine`; status: **partial** — `verification/ports/print_predef_text_id.c`
@@ -673,6 +669,11 @@ and map scripts remain partial.
 ### `home/textbox.asm`
 
 - `DisplayTextBoxID` — assembly line 5; callers: `AbandonLearning`, `AddAmountSoldToMoney`, `AskName`, `DaycareGentlemanText`, `DisplayBattleMenu`, `DisplayListMenuID`, `DisplayMonFrontSpriteInBox`, `DisplayMoneyBox`, `DisplayPokemartDialogue_`, `DisplayYesNoChoice`, `DoBuySellQuitMenu`, `DoClearSaveDialogue`, `DoUseNextMonDialogue`, `EnemySendOutFirstMon`, `ItemUseTMHM`, `MainSlotMachineLoop`, `MtMoonPokecenterMagikarpSalesmanText`, `Museum1FScientist1Text`, `PartyMenuOrRockOrRun`, `PrintText`, `SafariZoneGateSafariZoneWorker1WouldYouLikeToJoinText`, `SaveTheGame_YesOrNo`, `SlidePlayerAndEnemySilhouettesOnScreen`, `StartMenu_Item`, `StartMenu_Pokemon`, `SubtractAmountPaidFromMoney_`, `TossItem_`, `TradeCenter_Trade`, `TryingToLearn`, `TwoOptionMenu`, `VendingMachineMenu`; status: **partial** — `verification/ports/display_text_box_id_wrapper.c`
+
+### `home/uncompress.asm`
+
+- `UncompressSpriteData` — assembly line 8; callers: `UncompressMonSprite`, `UncompressSpriteFromDE`; status: **implemented_unproven** — `verification/ports/uncompress_sprite_data.c`
+- `XorSpriteChunks` — assembly line 470; callers: `UnpackSprite`, `UnpackSpriteMode2`; status: **implemented_unproven** — `verification/ports/xor_sprite_chunks.c`
 
 ### `home/update_sprites.asm`
 
@@ -1068,7 +1069,6 @@ and map scripts remain partial.
 ### `home/pics.asm`
 
 - `UncompressMonSprite` — assembly line 4; callers: `LoadMonBackPic`, `LoadMonFrontSprite`; status: **missing**
-- `LoadMonFrontSprite` — assembly line 49; callers: `DisplayMonFrontSpriteInBox`, `EnemySendOutFirstMon`, `InitWildBattle`, `LoadFrontSpriteByMonIndex`, `PartyMenuOrRockOrRun`; status: **missing**
 
 ### `home/pokemon.asm`
 
@@ -1117,7 +1117,6 @@ and map scripts remain partial.
 
 ### `home/uncompress.asm`
 
-- `UncompressSpriteData` — assembly line 8; callers: `UncompressMonSprite`, `UncompressSpriteFromDE`; status: **missing**
 - `_UncompressSpriteData` — assembly line 26; callers: `UncompressSpriteData`; status: **missing**
 - `UncompressSpriteDataLoop` — assembly line 63; callers: `MoveToNextBufferPosition`; status: **missing**
 - `MoveToNextBufferPosition` — assembly line 153; callers: `UncompressSpriteDataLoop`; status: **missing**

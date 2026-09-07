@@ -1,4 +1,24 @@
 [[function]]
+assembly_symbol = "UncompressSpriteData"
+assembly_source = "home/uncompress.asm"
+c_symbol = "port_uncompress_sprite_data"
+c_source = "verification/ports/uncompress_sprite_data.c"
+status = "implemented_unproven"
+observables = ["sprite buffers", "input pointer", "bank restoration"]
+proof_domain = "No composed proof yet. Runtime regression compares 353 original assets and their normal/mirrored VRAM output; synthetic mode-0 streams exercise both buffer orders."
+decoder = "TODO: independently execute the linked SM83 plane loops and stack-unwind exits."
+
+[[function]]
+assembly_symbol = "LoadMonFrontSprite"
+assembly_source = "home/pics.asm"
+c_symbol = "port_load_mon_front_sprite"
+c_source = "verification/ports/load_mon_front_sprite.c"
+status = "implemented_unproven"
+observables = ["sprite pointer and bank selection", "aligned 7x7 VRAM picture"]
+proof_domain = "Runtime continuation only. Existing decoding/alignment/interlace ports are composed, but their caller is not yet proved end-to-end."
+decoder = "TODO: composed bank-aware UncompressMonSprite/LoadMonFrontSprite proof."
+
+[[function]]
 assembly_symbol = "StringCmp"
 assembly_source = "home/compare.asm"
 c_symbol = "port_string_cmp"
@@ -15962,14 +15982,14 @@ assembly_symbol = "OakSpeechSlidePicCommon"
 assembly_source = "engine/movie/oak_speech/oak_speech2.asm"
 c_symbol = "port_oak_speech_slide_pic_common"
 c_source = "verification/ports/oak_speech_slide_common.c"
-status = "proven"
+status = "implemented_unproven"
 observables = [
     "all registers and canonical flags after the six-pass loop",
     "hSlideDirection, hSlideAmount, hSlidingRegionSize, and hAutoBGTransferEnabled",
     "the complete affected tilemap window",
 ]
 proof_domain = "both caller-valid directions (0 and $ff), fixed six-pass/0x7d-byte intro geometry, all other general-register and canonical-flag inputs, and arbitrary initial bytes in the affected tilemap window"
-decoder = "exact 83-byte linked body checked; the six 0x7d-byte directional copy passes, zero-fill on left slides, Delay3 boundaries, HRAM state, stack register restoration, and final DEC flags are modeled in the proof, while native production C calls the real DelayFrames port"
+decoder = "NOT an assembly-equivalence proof: the test replaces the entire 83-byte assembly routine with a handwritten model. Incorrect left-copy semantics and HRAM addresses were shared by the old model and C. Both are corrected, with a passing symbolic model regression, but independent instruction execution is still required."
 
 [[function]]
 assembly_symbol = "OakSpeechSlidePicLeft"
@@ -30386,7 +30406,7 @@ assembly_symbol = "XorSpriteChunks"
 assembly_source = "home/uncompress.asm"
 c_symbol = "port_xor_sprite_chunks"
 c_source = "verification/ports/xor_sprite_chunks.c"
-status = "proven"
+status = "implemented_unproven"
 observables = [
     "all registers and canonical flags",
     "wSpriteCurPosX, wSpriteCurPosY, wSpriteWidth, wSpriteHeight, wSpriteLoadFlags, wSpriteFlipped, wSpriteOutputPtr, wSpriteOutputPtrCached, and both decode-table pointers",
@@ -30394,8 +30414,8 @@ observables = [
     "the complete SpriteDifferentialDecode call-input register/global/buffer state",
     "exact ResetSpriteBufferPointers, SpriteDifferentialDecode, and ReverseNybble call counts, plus every ReverseNybble fetched byte",
 ]
-proof_domain = "all initial register/canonical-flag, relevant-global, and complete two-buffer inputs; arbitrary matching complete post-state from the independently proven SpriteDifferentialDecode; both gameplay buffer selections; all three statically linked square gameplay dimensions (40, 48, and 56 pixels); and both symbolic flip paths"
-decoder = "the exact complete 112-byte linked body and 16-byte NybbleReverseTable execute under angr through both flip paths and the real nested row/column loops (200/288/392 XOR writes); only individual SM83 instructions and the independently proven complete ResetSpriteBufferPointers, SpriteDifferentialDecode, and ReverseNybble transitions are shimmed; native C executes both real pointer resets, the real differential decode, every loop iteration, and zero or 400/576/784 real nybble-reversal calls"
+proof_domain = "Target domain: all initial register/canonical-flag, relevant-global, and complete two-buffer inputs; arbitrary matching SpriteDifferentialDecode post-state; both buffer selections at square dimensions 40, 48, and 56 pixels and symbolic flip paths. Full rerun after correcting wSpriteLoadFlags to d0a8 is incomplete: 40-b1, 40-b2 and 48-b1 passed; the longer run was interrupted after over an hour. Runtime normal/mirrored asset checks pass, but are not this symbolic proof."
+decoder = "The harness checks the exact 112-byte linked body and 16-byte table and executes row/column loops. Individual SM83 instructions are shimmed; ResetSpriteBufferPointers, SpriteDifferentialDecode and ReverseNybble are matched call-boundary summaries on both assembly and native sides, not inlined callee proofs. Their contracts require independent validation. Pointer-expression optimization uses eval_one to prove uniqueness under the already-present selected-buffer constraint."
 
 [[function]]
 assembly_symbol = "UnpackSpriteMode2"
@@ -31321,3 +31341,12 @@ observables = [
 ]
 proof_domain = "all register inputs, arbitrary 10-byte mon names, and the three naming branches (type 0, type 1, and type 2-or-higher representative); sprite lookup/OAM and mon-name generation are supplied at their proven call boundaries"
 decoder = "exact linked body through the final JP PlaceString checked; branch selection, species handoff, sprite call continuation, named-object handoff, two name placements, and leftover blank tile are modeled with audited instruction seams and compositional dependency summaries"
+[[function]]
+assembly_symbol = "RedsHouse2FDefaultScript"
+assembly_source = "scripts/RedsHouse2F.asm"
+c_symbol = "port_reds_house2_f_default_script"
+c_source = "verification/ports/reds_house2_f_default_script.c"
+status = "proven"
+observables = ["all registers and canonical flags", "hJoyHeld", "wPlayerMovingDirection", "wRedsHouse2FCurScript"]
+proof_domain = "all general register and canonical flag inputs and arbitrary initial values of the three written bytes; complete 14-byte leaf through RET; excludes the banked runtime dispatcher"
+decoder = "test_reds_house2_f_default_script.py checks exact linked bytes and executes XOR, both flag-preserving LD A,n instructions and RET under angr; only individual SM83 EA/E0 stores are shimmed; no callee or whole-function model"

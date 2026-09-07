@@ -198,23 +198,33 @@ port_load_map_header(struct cpu_register_state *r, port_u8 *memory)
 			else { memory[extra] = 0; memory[extra + 1u] = 0; }
 			state1 = (port_u16)(state1 + SPRITE_STATE1_LENGTH);
 		}
+		set_hl(r, source); /* HL now addresses the destination-warp table. */
 	}
 finish:
 	map_bank = memory[H_LOADED_ROM_BANK];
 #ifdef PORT_PLATFORM_RUNTIME
+	/* The predef trampoline saves the caller's registers and parent bank.
+	 * LoadTilesetHeader retrieves HL to find the map's warp-to records. */
+	memory[0xcc4f] = r->h; memory[0xcc50] = r->l;
+	memory[0xcc51] = r->d; memory[0xcc52] = r->e;
+	memory[0xcc53] = r->b; memory[0xcc54] = r->c;
+	memory[0xcf12] = map_bank;
 	/* LoadTilesetHeader, LoadWildData, and MapSongBanks are fixed-bank
 	 * data accesses in the original predef/farcall sequence. Restore the
 	 * map bank before LoadTileBlockMap consumes wCurMapDataPtr. */
 	port_sync_rom_window(memory, 3);
 #endif
 	port_load_tileset_header(r, memory);
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, 3);
+#endif
 	port_load_wild_data(r, memory);
 	set_hl(r, saved_hl);
 	memory[0xd524u] = (port_u8)(memory[W_CUR_MAP_HEADER + 1u] << 1);
 	memory[0xd525u] = (port_u8)(memory[W_CUR_MAP_HEADER + 2u] << 1);
 	r->a = memory[W_CUR_MAP]; r->c = r->a; r->b = 0;
 	memory[H_LOADED_ROM_BANK] = 3; memory[R_ROMB] = 3;
-	set_hl(r, (port_u16)(MAP_SONG_BANKS + (port_u16)map * 2u)); add_hl(r, pair(r->b, r->c)); add_hl(r, pair(r->b, r->c));
+	set_hl(r, MAP_SONG_BANKS); add_hl(r, pair(r->b, r->c)); add_hl(r, pair(r->b, r->c));
 	r->a = memory[pair(r->h, r->l)]; memory[0xd35bu] = r->a; set_hl(r, (port_u16)(pair(r->h, r->l) + 1u)); r->a = memory[pair(r->h, r->l)]; memory[0xd35cu] = r->a;
 	memory[H_LOADED_ROM_BANK] = map_bank; memory[R_ROMB] = map_bank;
 #ifdef PORT_PLATFORM_RUNTIME

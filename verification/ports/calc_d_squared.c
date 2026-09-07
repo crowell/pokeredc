@@ -21,5 +21,6 @@ port_calc_d_squared(struct cpu_register_state *state, port_u8 *memory)
     memory[CDS_H_MULTIPLICAND_2] = d;
     memory[CDS_H_MULTIPLIER] = d;
     state->a = d;
-    state->f = 0;
+    /* XOR A sets Z; the following loads/stores preserve those flags. */
+    state->f = PORT_FLAG_Z;
 }

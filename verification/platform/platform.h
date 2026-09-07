@@ -29,6 +29,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+void picture_mon(uint8_t *memory, unsigned tilemap, int flipped);
+void picture_trainer(uint8_t *memory, unsigned bank, unsigned source);
+
 /* ------------------------------------------------------------------ */
 /* Memory map constants                                                */
 /* ------------------------------------------------------------------ */
@@ -146,6 +149,11 @@ extern const uint32_t dmg_palette[4];
  * matching SDL_PIXELFORMAT_ABGR8888). Pure function of memory. */
 void video_render(const uint8_t *memory, uint32_t *rgba);
 
+/* ROM sequencer, composed from the upstream Audio1/2/3 handler ports. */
+void music_play(uint8_t *memory, unsigned bank, uint8_t sound);
+void music_fade(uint8_t *memory, unsigned bank, uint8_t sound, uint8_t ticks);
+void music_tick(uint8_t *memory);
+
 /* ------------------------------------------------------------------ */
 /* apu.c                                                               */
 /* ------------------------------------------------------------------ */
@@ -227,6 +235,17 @@ enum mac_game_phase {
 	MAC_PHASE_OVERWORLD,
 };
 
+struct mac_text {
+	struct place_string_resume_state string;
+	unsigned pointer, bank, destination;
+	unsigned return_pointer[8], return_bank[8], depth;
+	unsigned delay, active, in_string, sound_wait;
+	port_u8 saved_flags;
+};
+
+void text_begin(struct mac_text *text, uint8_t *memory, unsigned bank, unsigned pointer);
+void text_tick(struct mac_text *text, uint8_t *memory, uint8_t pressed, uint8_t held);
+
 struct mac_game {
 	enum mac_game_phase phase;
 	unsigned frames_in_phase;
@@ -242,7 +261,21 @@ struct mac_game {
 	port_u8 menu_item;
 	unsigned version_shown;
 	unsigned boundary_shown;
+	port_u8 warp_pending;
+	port_u8 warp_id;
+	port_u8 overworld_pressed;
+	struct mac_text text;
+	unsigned oak_step, oak_timer, oak_effect, naming, naming_rival;
+	unsigned map_text_state, map_text_bank, missing_map_script;
 };
+
+void map_script_tick(uint8_t *memory, struct mac_game *game);
+int map_text_open(uint8_t *memory, struct mac_game *game, unsigned id);
+void map_text_tick(uint8_t *memory, struct mac_game *game);
+
+void oak_begin(struct mac_game *game);
+void oak_tick(struct mac_kernel *kernel, uint8_t *memory,
+	const struct mac_rom *rom, struct mac_game *game);
 
 /* game.c - real game-flow driver                                      */
 /* ------------------------------------------------------------------ */

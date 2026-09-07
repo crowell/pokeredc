@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 #define W_OVERWORLD_MAP 0xc6e8u
 #define W_OVERWORLD_MAP_END 0xcbfcu
@@ -56,6 +59,9 @@ static void switch_map(struct cpu_register_state *registers, port_u8 *memory,
 	*registers = state.registers;
 	memory[H_LOADED_BANK] = state.loaded_rom_bank;
 	memory[R_ROMB] = state.loaded_rom_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, state.loaded_rom_bank);
+#endif
 }
 
 static void copy_connection(struct cpu_register_state *registers, port_u8 *memory,

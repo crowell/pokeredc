@@ -14,10 +14,26 @@ void port_delay_frame(struct delay_frame_state *state,
 void port_get_row_col_address_bg_map(struct cpu_register_state *state);
 
 static void
-copy_screen_delay_frame(struct cpu_register_state *state)
+copy_screen_delay_frame(struct cpu_register_state *state, port_u8 *memory)
 {
 	static const port_u8 acknowledged_vblank[] = { 0 };
 	struct delay_frame_state delay;
+#ifdef PORT_PLATFORM_RUNTIME
+	/* Service each scheduled third before the next setup overwrites it.
+	 * TODO(runtime-frame-yield): expose each DelayFrame to the host. */
+	void port_vblank_copy_bg_map(struct vblank_copy_bg_state *, port_u8 *);
+	struct vblank_copy_bg_state copy = {0};
+	copy.source_low = memory[H_VBLANK_COPY_BG_SOURCE];
+	copy.source_high = memory[H_VBLANK_COPY_BG_SOURCE + 1];
+	copy.dest_low = memory[H_VBLANK_COPY_BG_DEST];
+	copy.dest_high = memory[H_VBLANK_COPY_BG_DEST + 1];
+	copy.num_rows = memory[H_VBLANK_COPY_BG_NUM_ROWS];
+	port_vblank_copy_bg_map(&copy, memory);
+	memory[H_VBLANK_COPY_BG_SOURCE] = 0;
+	memory[H_VBLANK_COPY_BG_SOURCE + 1] = 0;
+#else
+	(void)memory;
+#endif
 
 	delay.registers = *state;
 	delay.vblank_occurred = 0;
@@ -53,19 +69,19 @@ port_copy_screen_tile_buffer_to_vram(struct cpu_register_state *state,
 	state->d = 0xC3;
 	state->e = 0xA0;
 	copy_screen_setup(state, memory);
-	copy_screen_delay_frame(state);
+	copy_screen_delay_frame(state, memory);
 
 	state->h = SCREEN_HEIGHT / 3;
 	state->l = 0;
 	state->d = 0xC4;
 	state->e = 0x18;
 	copy_screen_setup(state, memory);
-	copy_screen_delay_frame(state);
+	copy_screen_delay_frame(state, memory);
 
 	state->h = 2 * SCREEN_HEIGHT / 3;
 	state->l = 0;
 	state->d = 0xC4;
 	state->e = 0x90;
 	copy_screen_setup(state, memory);
-	copy_screen_delay_frame(state);
+	copy_screen_delay_frame(state, memory);
 }
