@@ -21187,6 +21187,20 @@ proof_domain = "full 8-register equivalence incl. F (LD HL,nn / LD B,imm / JP nn
 decoder = "8-byte body checked (0607218a49c3d635: ld b,$07; ld hl,$498a; jp $35d6); no CALL/PUSH/POP; F-preserving ops only."
 
 [[function]]
+assembly_symbol = "RunNPCMovementScript"
+assembly_source = "home/npc_movement.asm"
+c_symbol = "port_run_npc_movement_script"
+c_source = "verification/ports/run_npc_movement_script.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wMovementFlags, wNPCMovementScriptPointerTableNum, wNPCMovementScriptBank, wNPCMovementScriptFunctionNum, hLoadedROMBank, and rROMB",
+    "selected pointer-table address and complete CallFunctionInTable input/output boundary",
+]
+proof_domain = "all initial registers/canonical flags and bank/function/callback bytes; standing-on-door tail, inactive zero-table return, and each caller-valid movement-script pointer table number 1 through 3"
+decoder = "the exact complete 50-byte body executes under angr; BIT/RES, zero-table exit, DEC/ADD index arithmetic, all three linked pointer entries, bank save/switch/restore, the independently proven CallFunctionInTable transition, and the proven PlayerStepOutFromDoor far-jump boundary compose explicitly. Native C calls both real ports."
+
+[[function]]
 assembly_symbol = "RunNPCMovementScript.playerStepOutFromDoor"
 assembly_source = "home/npc_movement.asm"
 c_symbol = "port_run_npc_movement_script_player_step_out_from_door"
