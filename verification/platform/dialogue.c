@@ -10,6 +10,7 @@ void port_text_command_bcd(struct cpu_register_state *, port_u8 *);
 void port_text_command_move(struct cpu_register_state *, port_u8 *);
 void port_text_command_box(struct cpu_register_state *, port_u8 *);
 void port_text_command_low(struct cpu_register_state *, port_u8 *);
+void port_text_command_prompt_button(struct cpu_register_state *, port_u8 *);
 
 static void text_finish(struct mac_text *t, uint8_t *m)
 {
@@ -69,6 +70,19 @@ void text_tick(struct mac_text *t, uint8_t *m, uint8_t pressed, uint8_t held)
 	if (t->sound_wait) {
 		if (m[0xc02a] || m[0xc02b] || m[0xc02d]) return;
 		t->sound_wait = 0;
+	}
+	if (t->command_wait == 0x06) {
+		struct cpu_register_state r = {
+			.b = (port_u8)(t->destination >> 8),
+			.c = (port_u8)t->destination,
+			.h = (port_u8)(t->pointer >> 8),
+			.l = (port_u8)t->pointer,
+		};
+		if (m[0xd12b] != 4 && !(pressed & (PAD_A | PAD_B))) return;
+		port_text_command_prompt_button(&r, m);
+		t->pointer = r.h * 256u + r.l;
+		t->destination = r.b * 256u + r.c;
+		t->command_wait = 0;
 	}
 	/* Bounded command processing catches invalid streams without hanging
 	 * the application. Normal text yields after a single character. */
@@ -205,6 +219,13 @@ void text_tick(struct mac_text *t, uint8_t *m, uint8_t pressed, uint8_t held)
 			port_text_command_low(&r, m);
 			t->pointer = r.h * 256u + r.l;
 			t->destination = r.b * 256u + r.c;
+		} else if (command == 0x06) {
+			t->command_wait = command;
+			if (m[0xd12b] == 4)
+				t->delay = 65;
+			else
+				m[0xc4f2] = 0xee;
+			return;
 		} else if (command >= 0x14 && command <= 0x16) {
 			/* Preserve the original OakSpeechText2 Nidorina cry, even though
 			 * the displayed picture is Nidorino. */

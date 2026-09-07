@@ -239,7 +239,7 @@ struct mac_text {
 	struct place_string_resume_state string;
 	unsigned pointer, bank, destination;
 	unsigned return_pointer[8], return_bank[8], depth;
-	unsigned delay, active, in_string, sound_wait;
+	unsigned delay, active, in_string, sound_wait, command_wait;
 	port_u8 saved_flags;
 };
 

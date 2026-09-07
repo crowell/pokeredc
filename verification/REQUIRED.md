@@ -75,7 +75,7 @@ Ported and available for deeper composition: `port_scroll_title_screen_game_vers
 
 Text-engine progress: `TextCommandProcessor` and all command handlers are
 now ported. The resumable host loop composes `TX_START`, `TX_RAM`, `TX_BCD`,
-`TX_MOVE`, `TX_BOX`, `TX_LOW`, `TX_FAR`, `TX_END`, and the three cry commands; the remaining handler integrations are
+`TX_MOVE`, `TX_BOX`, `TX_LOW`, `TX_PROMPT_BUTTON`, `TX_FAR`, `TX_END`, and the three cry commands; the remaining handler integrations are
 still diagnosed explicitly instead of being skipped. Oak's bank-1-to-bank-22
 `TX_FAR` stream and its RAM-backed received-Pokemon name now execute through
 the real ports. `DisplayTextBoxID_` / message-box setup, naming flow, and
