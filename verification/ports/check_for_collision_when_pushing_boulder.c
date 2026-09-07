@@ -11,6 +11,8 @@
 #define W_BOULDER_INDEX 0xd718u
 #define W_NUM_SPRITES 0xd4e1u
 #define H_PLAYER_FACING 0xffdbu
+#define H_PLAYER_Y 0xffdcu
+#define H_PLAYER_X 0xffddu
 #define SPRITE_DATA2_MAP_Y 0xc214u
 #define PORT_FLAG_C 0x10u
 #define PORT_FLAG_N 0x40u
@@ -54,6 +56,7 @@ load_two_steps(struct cpu_register_state *r, port_u8 *memory)
 	state.tile_right = memory[map + 9u * 20u + 12u];
 	port_get_tile_two_steps_in_front_of_player(&state);
 	*r = state.registers;
+	memory[H_PLAYER_FACING] = state.player_facing_bits;
 	memory[W_TILE_BOULDER_RESULT] = state.collision_result;
 	memory[W_TILE_IN_FRONT] = state.tile_in_front;
 }
@@ -93,6 +96,8 @@ check_boulder_sprites(struct cpu_register_state *r, port_u8 *memory)
 	state.facing = memory[H_PLAYER_FACING];
 	port_check_for_boulder_collision_with_sprites(&state, memory);
 	*r = state.registers;
+	memory[H_PLAYER_Y] = state.player_y;
+	memory[H_PLAYER_X] = state.player_x;
 }
 
 /* Port of CheckForCollisionWhenPushingBoulder in player_state.asm. */

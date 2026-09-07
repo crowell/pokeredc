@@ -15681,14 +15681,16 @@ assembly_symbol = "CheckForCollisionWhenPushingBoulder"
 assembly_source = "engine/overworld/player_state.asm"
 c_symbol = "port_check_for_collision_when_pushing_boulder"
 c_source = "verification/ports/check_for_collision_when_pushing_boulder.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
-    "two-step tile and boulder collision result globals",
+    "two-step tile and boulder collision result globals plus hPlayerFacing and hPlayerYCoord/hPlayerXCoord",
+    "wTilePlayerStandingOn and the full GetTileTwoStepsInFrontOfPlayer adapter output",
     "collision-table pointer traversal and tile-pair state",
+    "complete boulder-versus-sprite scan outputs for collision and no-collision paths",
 ]
-proof_domain = "two-steps-ahead tile lookup followed by collision-table sentinel and nonmatching scans, a matching passable tile with no tile-pair collision, a tile-pair elevation collision, stairs termination, and both no-collision and collision outcomes from the composed boulder-sprite scan"
-decoder = "exact 43-byte linked body checked; the complete two-step lookup, collision-table pointer traversal, CP/branch back-edge, tile-pair carry gate, stairs comparison, sentinel terminal path, and boulder-sprite call return are exercised under angr"
+proof_domain = "all initial registers/canonical flags and all four valid player facings; collision scans exercise every match position and the sentinel miss across 0 through 19 entries, the maximum game collision-table length, plus elevation collision, stairs termination, and both collision outcomes from the independently proven boulder-sprite scan"
+decoder = "the exact complete 43-byte linked body executes through every terminal branch and every game-reachable collision-table loop depth; only individual SM83 pointer/load/compare/store/branch instructions and independently proven GetTileTwoStepsInFrontOfPlayer, CheckForTilePairCollisions2, and CheckForBoulderCollisionWithSprites transitions are shimmed. Native C calls the real ports, and the proof checks their complete wrapper inputs/outputs including the HRAM coordinate/facing writes."
 
 [[function]]
 assembly_symbol = "CheckForBoulderCollisionWithSprites"
