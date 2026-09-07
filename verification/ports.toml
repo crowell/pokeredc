@@ -31391,14 +31391,15 @@ assembly_symbol = "_UpdateSprites"
 assembly_source = "engine/overworld/sprite_collisions.asm"
 c_symbol = "port_update_sprites_private"
 c_source = "verification/ports/update_sprites.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
     "the 16 wSpriteStateData2 image-base bytes and hCurrentSpriteOffset",
-    "all callback-driven sprite/global state on active slots",
+    "the exact ordered callback kind and complete call-input register state for every active slot",
+    "arbitrary matching complete UpdatePlayerSprite and UpdateNonPlayerSprite post-states",
 ]
-proof_domain = "all general-register and canonical-flag inputs with all sixteen image-base bytes zero. The proof executes the real complete 16-iteration scan and observes every image-base location and the final current-sprite offset; player, NPC, scripted-NPC, and active-slot callback paths are implemented through their real C ports but remain outside this first composition proof."
-decoder = "exact 40-byte linked _UpdateSprites body checked inside the functional test. SM83 INC/SUB/AND/ADD/CP flags, FF00+n store, loads, loop branches, and final RET run at individual seams; the all-unused proof executes every loop iteration without summarizing the scan. Native C uses the actual 16-slot loop and calls the real player, NPC, and scripted-NPC ports on active slots."
+proof_domain = "all general-register and canonical-flag inputs; the complete all-unused 16-iteration scan; a symbolic active image byte in each of all sixteen slots across both player and non-player dispatch classes; and an ordered player-then-non-player two-callback scan. UpdatePlayerSprite and the now-proven UpdateNonPlayerSprite compose with arbitrary matching complete register post-states after their full call inputs are proved equal; the per-slot matrix and ordered scan establish the loop step and repeated-callback composition for arbitrary active-slot configurations."
+decoder = "the exact complete 40-byte linked body executes under angr through every load, arithmetic/flag operation, HRAM store, stack save/restore, callback CALL, local CP/JP dispatch, loop backedge, and RET. The native C executes its actual 16-slot loop and calls the real port_update_player_sprite or port_update_non_player_sprite symbols; independently proven callback transitions are applied only at those callee boundaries, with exact ordered callback inputs recorded and compared."
 
 [[function]]
 assembly_symbol = "MapEntryAfterBattle"
