@@ -279,7 +279,7 @@ class RegisterBoundary(angr.SimProcedure):
     def __init__(self, values: dict[str, claripy.ast.BV], next_address: int, kind: int) -> None:
         super().__init__(); self.values = values; self.next_address = next_address; self.kind = kind
     def run(self) -> None:  # type: ignore[override]
-        offset = self.state.memory.load(OFFSET, 1)
+        offset = claripy.ZeroExt(8, self.state.memory.load(OFFSET, 1))
         for register in REGISTERS:
             value = self.values[register]
             if register == "f": value = sm83_flags_to_z80(value)
@@ -287,7 +287,7 @@ class RegisterBoundary(angr.SimProcedure):
         if self.kind == 1:
             self.state.memory.store(S1 + offset + 2, self.values["image"])
             self.state.memory.store(S2 + offset + 7, self.values["grass"])
-        else:
+        elif self.kind == 2:
             self.state.memory.store(S1 + offset + 4, self.values["screen_y"])
             self.state.memory.store(S1 + offset + 6, self.values["screen_x"])
         self.state.memory.store(TRACE + self.kind, claripy.BVV(self.kind, 8)); self.jump(self.next_address)
@@ -302,7 +302,7 @@ class NativeRegisterBoundary(angr.SimProcedure):
         if self.kind == 1:
             self.state.memory.store(NM + S1 + offset + 2, self.values["image"])
             self.state.memory.store(NM + S2 + offset + 7, self.values["grass"])
-        else:
+        elif self.kind == 2:
             self.state.memory.store(pointer + 13, self.values["screen_y"])
             self.state.memory.store(pointer + 14, self.values["screen_x"])
         self.state.memory.store(NM + TRACE + self.kind, claripy.BVV(self.kind, 8))
@@ -400,7 +400,9 @@ class RandomBoundary(angr.SimProcedure):
     def __init__(self, next_address: int) -> None: super().__init__(); self.next_address = next_address
     def run(self) -> None:  # type: ignore[override]
         add0 = self.state.memory.load(RANDOM_ADD, 1); sub0 = self.state.memory.load(RANDOM_SUB, 1); div = self.state.memory.load(DIV, 1)
-        wide = claripy.ZeroExt(1, add0) + claripy.ZeroExt(1, div); add = wide[7:0]; carry = claripy.ZeroExt(7, wide[8])
+        carry_in = self.state.regs.f & 1
+        wide = claripy.ZeroExt(1, add0) + claripy.ZeroExt(1, div) + claripy.ZeroExt(1, carry_in)
+        add = wide[7:0]; carry = claripy.ZeroExt(7, wide[8])
         sub = (claripy.ZeroExt(1, sub0) - claripy.ZeroExt(1, div) - claripy.ZeroExt(8, wide[8]))[7:0]
         self.state.regs.a = add
         self.state.regs.f = (claripy.BVV(2, 8)
@@ -531,7 +533,7 @@ def scripted_reload_setup(
         (LOADED_BANK, 0 if walking is None else walking["loaded_bank"]),
         (ROM_BANK, 0 if walking is None else walking["rom_bank"]),
         (STATUS5, 0xFF), (SIMULATED_INDEX, 0x66), (OVERRIDE_INDEX, 0x77),
-        (TRACE, 0), (TRACE + 1, 0), (TRACE + 2, 0), (TRACE + 3, 0),
+        (TRACE, 0), (TRACE + 1, 0), (TRACE + 2, 0), (TRACE + 3, 0), (TRACE + 4, 0),
     ):
         state.memory.store(base + address, value if isinstance(value, claripy.ast.BV) else claripy.BVV(value, 8))
     state.memory.store(base + S1 + offset + 2, check["image"])
@@ -555,7 +557,7 @@ def scripted_reload_endpoint(state: angr.SimState, native_side: bool, offset: in
         DIRECTIONS + 0x20, DIRECTIONS + 0xFE, STATUS5,
         STATUS3, PLAYER_DIRECTION, PLAYER_TILE,
         RANDOM_ADD, RANDOM_SUB, DIV, LOADED_BANK, ROM_BANK,
-        SIMULATED_INDEX, OVERRIDE_INDEX, TRACE, TRACE + 1, TRACE + 2, TRACE + 3,
+        SIMULATED_INDEX, OVERRIDE_INDEX, TRACE, TRACE + 1, TRACE + 2, TRACE + 3, TRACE + 4,
     )
     return E(**registers, state=claripy.Concat(*(state.memory.load(base + address, 1) for address in watched)), constraints=tuple(state.solver.constraints))
 
@@ -572,6 +574,8 @@ def scripted_reload_assembly(
     movement_delay: int | claripy.ast.BV = 0,
     walking: dict[str, claripy.ast.BV] | None = None,
     movement2: int | claripy.ast.BV = 0xD0,
+    random_path: bool = False,
+    tile: dict[str, claripy.ast.BV] | None = None,
 ) -> list[E]:
     location = symbol_location(SYMBOLS, "UpdateNPCSprite")
     assert linked_bytes(ROM, location, len(BODY)) == BODY
@@ -616,6 +620,9 @@ def scripted_reload_assembly(
     project.hook(q + 122, Sm83CpImmediate(0xfe, q + 124), length=2); project.hook(q + 124, BranchFlag(0x40, False, q + 142, q + 126), length=2)
     project.hook(q + 126, StoreAtHL(1, q + 128), length=2); project.hook(q + 128, PairTo("de", DIRECTIONS, q + 131), length=3)
     project.hook(q + 131, ComputedLoadBoundary(q + 134, False), length=3); project.hook(q + 134, Jump(q + 142), length=2)
+    tile_stands_on = symbol_location(SYMBOLS, "GetTileSpriteStandsOn")
+    assert linked_bytes(ROM, tile_stands_on, 40) == bytes.fromhex("26c1f0dac6046f2ac604e6f0cb3f4f06002c7ecb3fcb3fcb3fc61416005f21a0c3090909090919c9")
+    project.hook(q + 136, RegisterBoundary(tile or init, q + 139, 4), length=3); project.hook(q + 139, RandomBoundary(q + 142), length=3)
     project.hook(q + 142, Reg("b", "a", q + 143), length=1); project.hook(q + 143, LoadAbsoluteA(CUR_MOVEMENT2, q + 146), length=3)
     project.hook(q + 146, Sm83CpImmediate(0xd0, q + 148), length=2); project.hook(q + 148, BranchFlag(0x40, True, q + 174, q + 150), length=2)
     project.hook(q + 150, Sm83CpImmediate(0xd1, q + 152), length=2); project.hook(q + 152, BranchFlag(0x40, True, q + 197, q + 154), length=2)
@@ -715,6 +722,7 @@ def scripted_reload_assembly(
     if isinstance(walk_counter, claripy.ast.BV): state.solver.add(walk_counter != 0)
     if isinstance(movement_status, claripy.ast.BV): state.solver.add((movement_status & 0x80) != 0)
     if isinstance(font, claripy.ast.BV): state.solver.add((font & 1) != 0)
+    if random_path: state.solver.add(claripy.UGE(movement_byte, 0xfe))
     state.regs.sp = claripy.BVV(STACK, 16); state.memory.store(STACK, claripy.BVV(RET, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state); manager.explore(find=RET, num_find=32)
     assert not manager.errored and manager.found
@@ -733,18 +741,22 @@ def scripted_reload_native(
     movement_delay: int | claripy.ast.BV = 0,
     walking: dict[str, claripy.ast.BV] | None = None,
     movement2: int | claripy.ast.BV = 0xD0,
+    random_path: bool = False,
+    tile: dict[str, claripy.ast.BV] | None = None,
 ) -> list[E]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_update_npc_sprite"); availability = project.loader.find_symbol("port_check_sprite_availability")
-    initialize = project.loader.find_symbol("port_initialize_sprite_screen_position"); load = project.loader.find_symbol("port_load_de_plus_a"); try_walking = project.loader.find_symbol("port_try_walking")
-    assert function and availability and initialize and load and try_walking
+    initialize = project.loader.find_symbol("port_initialize_sprite_screen_position"); load = project.loader.find_symbol("port_load_de_plus_a"); try_walking = project.loader.find_symbol("port_try_walking"); tile_stands_on = project.loader.find_symbol("port_get_tile_sprite_stands_on")
+    assert function and availability and initialize and load and try_walking and tile_stands_on
     project.hook(availability.rebased_addr, NativeRegisterBoundary(check, 1)); project.hook(initialize.rebased_addr, NativeRegisterBoundary(init, 2))
     project.hook(load.rebased_addr, ComputedLoadBoundary(0, True)); project.hook(try_walking.rebased_addr, TerminalBoundary(True))
+    project.hook(tile_stands_on.rebased_addr, NativeRegisterBoundary(tile or init, 4))
     state = project.factory.call_state(function.rebased_addr, NS, NM); store_native_registers(state, NS, values); scripted_reload_setup(state, NM, offset, check, init, first_direction, walk_counter, movement_status, face, font, movement_byte, movement_delay, walking, movement2)
     if isinstance(first_direction, claripy.ast.BV): state.solver.add(first_direction != 0xe0, first_direction != 0xfe, first_direction != 0xff)
     if isinstance(walk_counter, claripy.ast.BV): state.solver.add(walk_counter != 0)
     if isinstance(movement_status, claripy.ast.BV): state.solver.add((movement_status & 0x80) != 0)
     if isinstance(font, claripy.ast.BV): state.solver.add((font & 1) != 0)
+    if random_path: state.solver.add(claripy.UGE(movement_byte, 0xfe))
     manager = project.factory.simulation_manager(state); manager.run(); assert not manager.errored and manager.deadended
     return [scripted_reload_endpoint(item, True, offset) for item in manager.deadended]
 
@@ -802,6 +814,28 @@ def test_update_npc_sprite_scripted_direction_matrix_pathwise_equivalence(offset
     movement2 = claripy.BVS(f"{prefix}_movement2", 8)
     assembly_paths = scripted_reload_assembly(values, offset, check, init, direction, movement2=movement2)
     native_paths = scripted_reload_native(values, offset, check, init, direction, movement2=movement2)
+    assert_pathwise_equivalent(assembly_paths, native_paths, (*REGISTERS, "state"))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_update_npc_sprite_random_direction_matrix_pathwise_equivalence(offset: int) -> None:
+    prefix = f"update_npc_random_direction_matrix_{offset:02x}"
+    values = symbolic_registers(prefix)
+    check = symbolic_registers(f"{prefix}_check")
+    check["f"] = claripy.Concat(claripy.BVS(f"{prefix}_check_znh", 3), claripy.BVV(0, 5))
+    check["image"] = claripy.BVS(f"{prefix}_image", 8); check["grass"] = claripy.BVS(f"{prefix}_grass", 8)
+    init = symbolic_registers(f"{prefix}_init")
+    init["screen_y"] = claripy.BVS(f"{prefix}_screen_y", 8); init["screen_x"] = claripy.BVS(f"{prefix}_screen_x", 8)
+    walking = {name: claripy.BVS(f"{prefix}_{name}", 8) for name in (
+        "y_step", "y_pixels", "x_step", "x_pixels", "intra_frame", "animation",
+        "walk_counter", "random_add", "random_sub", "div", "loaded_bank", "rom_bank",
+    )}
+    movement_byte = claripy.BVS(f"{prefix}_movement_byte", 8)
+    movement2 = claripy.BVS(f"{prefix}_movement2", 8)
+    tile = symbolic_registers(f"{prefix}_tile")
+    assembly_paths = scripted_reload_assembly(values, offset, check, init, movement_byte=movement_byte, walking=walking, movement2=movement2, random_path=True, tile=tile)
+    native_paths = scripted_reload_native(values, offset, check, init, movement_byte=movement_byte, walking=walking, movement2=movement2, random_path=True, tile=tile)
     assert_pathwise_equivalent(assembly_paths, native_paths, (*REGISTERS, "state"))
 
 
