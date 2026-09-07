@@ -68,7 +68,7 @@ get_tile_sprite_stands_on(struct cpu_register_state *r, port_u8 *memory)
 	state.registers = *r;
 	state.current_sprite_offset = offset;
 	state.y_pixels = memory[sprite_address(W_SPRITE_STATE_DATA1, offset, 4)];
-	state.x_pixels = memory[sprite_address(W_SPRITE_STATE_DATA1, offset, 5)];
+	state.x_pixels = memory[sprite_address(W_SPRITE_STATE_DATA1, offset, 6)];
 	port_get_tile_sprite_stands_on(&state);
 	*r = state.registers;
 }

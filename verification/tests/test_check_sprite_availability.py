@@ -359,25 +359,51 @@ class UpdateImageBoundary(angr.SimProcedure):
         self.jump(self.next_address)
 
 
-def setup(state: angr.SimState, base: int, *, hidden: bool, movement: int, map_y: int,
-          tiles: tuple[int, int, int, int], walk: int) -> None:
-    for address in (*range(S1, S1 + 10), *range(S2, S2 + 8)):
+def setup(state: angr.SimState, base: int, *, hidden: bool,
+          movement: claripy.ast.BV | int, map_y: claripy.ast.BV | int,
+          tiles: tuple[claripy.ast.BV | int, ...],
+          walk: claripy.ast.BV | int, map_x: claripy.ast.BV | int = 0,
+          player_y: claripy.ast.BV | int = 0,
+          player_x: claripy.ast.BV | int = 0,
+          grass: claripy.ast.BV | int = 0x33, y_pixels: int = 0,
+          x_pixels: int = 0, block_unshifted_tile: bool = False,
+          offset: int = 0) -> None:
+    def byte(value: claripy.ast.BV | int) -> claripy.ast.BV:
+        return value if isinstance(value, claripy.ast.BV) else claripy.BVV(value, 8)
+
+    for address in (*range(S1 + offset, S1 + offset + 10),
+                    *range(S2 + offset, S2 + offset + 8)):
         state.memory.store(base + address, claripy.BVV(0, 8))
-    for address, value in ((OFFSET, 0), (TILE, 0x20), (WALK, walk), (Y, 0), (X, 0),
-                           (GRASS, 0x33), (S1 + 2, 0x55), (S1 + 4, 0), (S1 + 5, 0),
-                           (S1 + 8, 2), (S1 + 9, 4), (S2 + 4, map_y), (S2 + 5, 0),
-                           (S2 + 6, movement), (S2 + 7, 0), (LIST, 0 if hidden else 0xff),
+    for address, value in ((OFFSET, offset), (TILE, 0x20), (WALK, walk),
+                           (Y, player_y), (X, player_x), (GRASS, grass),
+                           (S1 + offset + 2, 0x55),
+                           (S1 + offset + 4, y_pixels),
+                           (S1 + offset + 5, 0),
+                           (S1 + offset + 6, x_pixels),
+                           (S1 + offset + 8, 2), (S1 + offset + 9, 4),
+                           (S2 + offset + 4, map_y),
+                           (S2 + offset + 5, map_x),
+                           (S2 + offset + 6, movement),
+                           (S2 + offset + 7, 0), (LIST, 0 if hidden else 0xff),
                            (LIST + 1, 0), (LIST + 2, 0xff), (FLAGS, 1 if hidden else 0),
                            (HIDDEN, 0x55)):
-        state.memory.store(base + address, claripy.BVV(value, 8))
-    for address, value in zip((TILEMAP + 20, TILEMAP + 21, TILEMAP, TILEMAP + 1), tiles):
-        state.memory.store(base + address, claripy.BVV(value, 8))
+        state.memory.store(base + address, byte(value))
+    tile_pointer = (TILEMAP + 20 + ((((y_pixels + 4) & 0xf0) >> 1) * 5)
+                    + (x_pixels >> 3))
+    for address in (TILEMAP, TILEMAP + 1, TILEMAP + 20, TILEMAP + 21):
+        state.memory.store(base + address, claripy.BVV(0, 8))
+    if block_unshifted_tile:
+        state.memory.store(base + TILEMAP + 20, claripy.BVV(0x60, 8))
+    for address, value in zip((tile_pointer, tile_pointer + 1,
+                               tile_pointer - 20, tile_pointer - 19), tiles):
+        state.memory.store(base + address, byte(value))
 
 
-def endpoint(state: angr.SimState, native: bool) -> E:
+def endpoint(state: angr.SimState, native: bool, offset: int = 0) -> E:
     base = NM if native else 0
     registers = native_registers(state, NS) if native else assembly_registers(state)
-    watched = (*range(S1, S1 + 10), *range(S2, S2 + 8), TILEMAP, TILEMAP + 1,
+    watched = (*range(S1 + offset, S1 + offset + 10),
+               *range(S2 + offset, S2 + offset + 8), TILEMAP, TILEMAP + 1,
                TILEMAP + 20, TILEMAP + 21, LIST, LIST + 1, LIST + 2, FLAGS,
                WALK, Y, X, GRASS, TILE, OFFSET, HIDDEN)
     return E(**registers, state=claripy.Concat(*(state.memory.load(base + x, 1) for x in watched)), constraints=tuple(state.solver.constraints))
@@ -459,11 +485,10 @@ def assembly(values: dict[str, claripy.ast.BV], **case: object) -> list[E]:
     project.hook(q + 110, LoadA(GRASS, q + 113), length=3)
     project.hook(q + 113, Cp("c", q + 114), length=1)
     project.hook(q + 114, Imm("a", 0, q + 116), length=2)
-    project.hook(q + 116, Branch(q + 118, q + 117, 0x40, False), length=2)
-    project.hook(q + 117, Imm("a", 0x80, q + 119), length=2)
-    project.hook(q + 119, StoreAtHL(None, q + 120), length=1)
-    project.hook(q + 120, AndA(q + 121), length=1)
-    project.hook(q + 121, Return(), length=1)
+    project.hook(q + 116, Branch(q + 120, q + 118, 0x40, False), length=2)
+    project.hook(q + 118, Imm("a", 0x80, q + 120), length=2)
+    project.hook(q + 120, StoreAtHL(None, q + 121), length=1)
+    project.hook(q + 121, AndA(q + 122), length=1)
     project.hook(q + 122, Return(), length=1)
     state = project.factory.blank_state(addr=q)
     set_assembly_registers(state, values)
@@ -471,9 +496,9 @@ def assembly(values: dict[str, claripy.ast.BV], **case: object) -> list[E]:
     state.regs.sp = claripy.BVV(STACK, 16)
     state.memory.store(STACK, claripy.BVV(RET, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
-    manager.explore(find=RET, num_find=10)
+    manager.explore(find=RET, num_find=64)
     assert not manager.errored and manager.found
-    return [endpoint(x, False) for x in manager.found]
+    return [endpoint(x, False, int(case.get("offset", 0))) for x in manager.found]
 
 
 def native(values: dict[str, claripy.ast.BV], **case: object) -> list[E]:
@@ -486,7 +511,7 @@ def native(values: dict[str, claripy.ast.BV], **case: object) -> list[E]:
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
-    return [endpoint(x, True) for x in manager.deadended]
+    return [endpoint(x, True, int(case.get("offset", 0))) for x in manager.deadended]
 
 
 CASES = [
@@ -495,6 +520,19 @@ CASES = [
     dict(hidden=False, movement=0, map_y=0, tiles=(0x60, 0x11, 0x12, 0x33), walk=0),
     dict(hidden=False, movement=0, map_y=0, tiles=(0x10, 0x11, 0x12, 0x33), walk=0),
     dict(hidden=False, movement=0, map_y=0, tiles=(0x10, 0x11, 0x12, 0x33), walk=1),
+    dict(hidden=False, movement=0, map_y=0, tiles=(0x10, 0x11, 0x12, 0x33), walk=0,
+         x_pixels=0x10, block_unshifted_tile=True),
+    dict(hidden=False, movement=0, map_y=0, map_x=10, player_x=0,
+         tiles=(0x10, 0x11, 0x12, 0x33), walk=0),
+    dict(hidden=False, movement=0, map_y=0, player_y=1,
+         tiles=(0x10, 0x11, 0x12, 0x33), walk=0),
+    dict(hidden=False, movement=0, map_y=0, map_x=0, player_x=1,
+         tiles=(0x10, 0x11, 0x12, 0x33), walk=0),
+    dict(hidden=False, movement=0, map_y=0, tiles=(0x10, 0x60, 0x12, 0x33), walk=0),
+    dict(hidden=False, movement=0, map_y=0, tiles=(0x10, 0x11, 0x60, 0x33), walk=0),
+    dict(hidden=False, movement=0, map_y=0, tiles=(0x10, 0x11, 0x12, 0x60), walk=0),
+    dict(hidden=False, movement=0, map_y=0, tiles=(0x10, 0x11, 0x12, 0x33), walk=0,
+         grass=0x44),
 ]
 
 
@@ -503,3 +541,17 @@ CASES = [
 def test_check_sprite_availability_pathwise_equivalence(case: dict[str, object]) -> None:
     values = symbolic_registers("sprite_availability")
     assert_pathwise_equivalent(assembly(values, **case), native(values, **case), (*REGISTERS, "state"))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_check_sprite_availability_all_slots_pathwise_equivalence(
+    offset: int,
+) -> None:
+    values = symbolic_registers(f"sprite_availability_slot_{offset:02x}")
+    case = dict(hidden=False, movement=0, map_y=0,
+                tiles=(0x10, 0x11, 0x12, 0x33), walk=0, offset=offset)
+    assert_pathwise_equivalent(
+        assembly(values, **case), native(values, **case), (*REGISTERS, "state")
+    )
