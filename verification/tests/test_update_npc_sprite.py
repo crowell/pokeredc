@@ -17,7 +17,7 @@ from verification.harness.rom import linked_bytes, rom_window, symbol_location
 from verification.harness.registers import sm83_flags_to_z80
 from verification.harness.sm83_shims import (
     Sm83AddHlRegisterPair, Sm83BitRegister, Sm83CpImmediate, Sm83DecAtHl,
-    Sm83DecRegister, Sm83IncRegister,
+    Sm83DecRegister, Sm83IncRegister, Sm83ResAtHl,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -339,6 +339,18 @@ class Jump(angr.SimProcedure):
         self.jump(self.next_address)
 
 
+class XorA(angr.SimProcedure):
+    def __init__(self, next_address: int) -> None: super().__init__(); self.next_address = next_address
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.a = claripy.BVV(0, 8); self.state.regs.f = claripy.BVV(0x40, 8); self.jump(self.next_address)
+
+
+class ReturnTo(angr.SimProcedure):
+    def __init__(self, target: int) -> None: super().__init__(); self.target = target
+    def run(self) -> None:  # type: ignore[override]
+        self.state.regs.sp += 2; self.jump(self.target)
+
+
 def setup(state: angr.SimState, base: int, uninitialized: bool) -> None:
     for item in (*range(S1, S1 + 16), *range(S2, S2 + 16)):
         state.memory.store(base + item, claripy.BVV(0, 8))
@@ -423,6 +435,7 @@ def test_update_npc_sprite_hidden_slot_pathwise_equivalence() -> None:
 def scripted_reload_setup(
     state: angr.SimState, base: int, offset: int,
     check: dict[str, claripy.ast.BV], init: dict[str, claripy.ast.BV],
+    first_direction: int = 0xFE,
 ) -> None:
     for address in (*range(S1, S1 + 0x100), *range(S2, S2 + 0x100)):
         state.memory.store(base + address, claripy.BVV(0, 8))
@@ -435,7 +448,7 @@ def scripted_reload_setup(
         (S2 + offset + 6, 0x20), (S2 + offset + 7, 0),
         (FONT, 0), (WALK_COUNTER, 0), (SCRIPTED_STEPS, 5),
         (0xD361, 4), (0xD362, 6),
-        (DIRECTIONS + 0x20, 0xFE), (DIRECTIONS + 0xFE, 0x55),
+        (DIRECTIONS + 0x20, first_direction), (DIRECTIONS + 0xFE, 0x55),
         (STATUS5, 0xFF), (SIMULATED_INDEX, 0x66), (OVERRIDE_INDEX, 0x77),
         (TRACE, 0), (TRACE + 1, 0), (TRACE + 2, 0), (TRACE + 3, 0),
     ):
@@ -462,6 +475,7 @@ def scripted_reload_endpoint(state: angr.SimState, native_side: bool, offset: in
 def scripted_reload_assembly(
     values: dict[str, claripy.ast.BV], offset: int,
     check: dict[str, claripy.ast.BV], init: dict[str, claripy.ast.BV],
+    first_direction: int = 0xFE,
 ) -> list[E]:
     location = symbol_location(SYMBOLS, "UpdateNPCSprite")
     assert linked_bytes(ROM, location, len(BODY)) == BODY
@@ -499,6 +513,10 @@ def scripted_reload_assembly(
     project.hook(q + 93, PairTo("de", DIRECTIONS, q + 96), length=3); project.hook(q + 96, ComputedLoadBoundary(q + 99, False), length=3)
     project.hook(q + 99, Sm83CpImmediate(0xe0, q + 101), length=2); project.hook(q + 101, BranchFlag(0x40, True, 0x4fc8, q + 104), length=3)
     project.hook(q + 104, Sm83CpImmediate(0xff, q + 106), length=2); project.hook(q + 106, BranchFlag(0x40, False, q + 122, q + 108), length=2)
+    project.hook(q + 108, StoreAtHL(None, q + 109), length=1); project.hook(q + 109, Pair(STATUS5, q + 112), length=3)
+    project.hook(q + 112, Sm83ResAtHl(0, q + 114), length=2); project.hook(q + 114, XorA(q + 115), length=1)
+    project.hook(q + 115, StoreAbsoluteA(SIMULATED_INDEX, q + 118), length=3); project.hook(q + 118, StoreAbsoluteA(OVERRIDE_INDEX, q + 121), length=3)
+    project.hook(q + 121, ReturnTo(RET), length=1)
     project.hook(q + 122, Sm83CpImmediate(0xfe, q + 124), length=2); project.hook(q + 124, BranchFlag(0x40, False, q + 142, q + 126), length=2)
     project.hook(q + 126, StoreAtHL(1, q + 128), length=2); project.hook(q + 128, PairTo("de", DIRECTIONS, q + 131), length=3)
     project.hook(q + 131, ComputedLoadBoundary(q + 134, False), length=3); project.hook(q + 134, Jump(q + 142), length=2)
@@ -507,7 +525,7 @@ def scripted_reload_assembly(
     project.hook(q + 174, PairTo("de", 40, q + 177), length=3); project.hook(q + 177, Sm83AddHlRegisterPair("de", q + 178), length=1)
     project.hook(q + 178, PairTo("de", 0x0100, q + 181), length=3); project.hook(q + 181, PairTo("bc", 0x0400, q + 184), length=3)
     project.hook(q + 184, TerminalBoundary(False), length=2)
-    state = project.factory.blank_state(addr=q); set_assembly_registers(state, values); scripted_reload_setup(state, 0, offset, check, init)
+    state = project.factory.blank_state(addr=q); set_assembly_registers(state, values); scripted_reload_setup(state, 0, offset, check, init, first_direction)
     state.regs.sp = claripy.BVV(STACK, 16); state.memory.store(STACK, claripy.BVV(RET, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state); manager.explore(find=RET, num_find=4)
     assert not manager.errored and manager.found
@@ -517,6 +535,7 @@ def scripted_reload_assembly(
 def scripted_reload_native(
     values: dict[str, claripy.ast.BV], offset: int,
     check: dict[str, claripy.ast.BV], init: dict[str, claripy.ast.BV],
+    first_direction: int = 0xFE,
 ) -> list[E]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_update_npc_sprite"); availability = project.loader.find_symbol("port_check_sprite_availability")
@@ -524,7 +543,7 @@ def scripted_reload_native(
     assert function and availability and initialize and load and walking
     project.hook(availability.rebased_addr, NativeRegisterBoundary(check, 1)); project.hook(initialize.rebased_addr, NativeRegisterBoundary(init, 2))
     project.hook(load.rebased_addr, ComputedLoadBoundary(0, True)); project.hook(walking.rebased_addr, TerminalBoundary(True))
-    state = project.factory.call_state(function.rebased_addr, NS, NM); store_native_registers(state, NS, values); scripted_reload_setup(state, NM, offset, check, init)
+    state = project.factory.call_state(function.rebased_addr, NS, NM); store_native_registers(state, NS, values); scripted_reload_setup(state, NM, offset, check, init, first_direction)
     manager = project.factory.simulation_manager(state); manager.run(); assert not manager.errored and manager.deadended
     return [scripted_reload_endpoint(item, True, offset) for item in manager.deadended]
 
@@ -539,3 +558,15 @@ def test_update_npc_sprite_scripted_walk_reload_pathwise_equivalence(offset: int
     init = symbolic_registers(f"update_npc_scripted_reload_{offset:02x}_init")
     init["screen_y"] = claripy.BVS(f"update_npc_scripted_reload_{offset:02x}_screen_y", 8); init["screen_x"] = claripy.BVS(f"update_npc_scripted_reload_{offset:02x}_screen_x", 8)
     assert_pathwise_equivalent(scripted_reload_assembly(values, offset, check, init), scripted_reload_native(values, offset, check, init), (*REGISTERS, "state"))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_update_npc_sprite_scripted_end_pathwise_equivalence(offset: int) -> None:
+    values = symbolic_registers(f"update_npc_scripted_end_{offset:02x}")
+    check = symbolic_registers(f"update_npc_scripted_end_{offset:02x}_check")
+    check["f"] = claripy.Concat(claripy.BVS(f"update_npc_scripted_end_{offset:02x}_check_znh", 3), claripy.BVV(0, 5))
+    check["image"] = claripy.BVS(f"update_npc_scripted_end_{offset:02x}_image", 8); check["grass"] = claripy.BVS(f"update_npc_scripted_end_{offset:02x}_grass", 8)
+    init = symbolic_registers(f"update_npc_scripted_end_{offset:02x}_init")
+    init["screen_y"] = claripy.BVS(f"update_npc_scripted_end_{offset:02x}_screen_y", 8); init["screen_x"] = claripy.BVS(f"update_npc_scripted_end_{offset:02x}_screen_x", 8)
+    assert_pathwise_equivalent(scripted_reload_assembly(values, offset, check, init, 0xFF), scripted_reload_native(values, offset, check, init, 0xFF), (*REGISTERS, "state"))

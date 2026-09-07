@@ -429,6 +429,8 @@ port_update_npc_sprite(struct cpu_register_state *r, port_u8 *memory)
 	cp_a(r, 0xffu);
 	if (r->f & PORT_FLAG_Z) {
 		memory[address(W_SPRITE_STATE_DATA2, offset, 6)] = r->a;
+		r->h = (port_u8)(W_STATUS_FLAGS5 >> 8);
+		r->l = (port_u8)W_STATUS_FLAGS5;
 		memory[W_STATUS_FLAGS5] &= 0xfeu;
 		r->a = 0;
 		r->f = PORT_FLAG_Z;
