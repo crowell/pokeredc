@@ -2,9 +2,9 @@
 
 void port_delay_frames(struct delay_frame_state *, const port_u8 *);
 
-#define H_SLIDE_AMOUNT 0xffebu
-#define H_SLIDING_REGION_SIZE 0xffecu
-#define H_SLIDE_DIRECTION 0xffedu
+#define H_SLIDE_AMOUNT 0xff8bu
+#define H_SLIDING_REGION_SIZE 0xff8cu
+#define H_SLIDE_DIRECTION 0xff8du
 #define H_AUTO_BG_TRANSFER_ENABLED 0xffbau
 #define SLIDE_AMOUNT 6u
 #define SLIDE_REGION_SIZE 0x7du
@@ -49,8 +49,8 @@ port_oak_speech_slide_pic_common(struct cpu_register_state *state, port_u8 *memo
 				hl--;
 				hl--;
 			} else {
+				value = memory[hl]; /* LD A,[HLD] reads before decrement. */
 				hl--;
-				value = memory[hl];
 				memory[hl] = value;
 				hl++;
 				hl++;

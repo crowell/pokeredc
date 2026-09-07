@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 /* Port of GetMonHeader in home/pokemon.asm:
  *
@@ -79,6 +82,9 @@ port_get_mon_header(struct cpu_register_state *state, port_u8 *memory)
 
 	memory[H_LOADED_ROM_BANK] = BANK_BASE_STATS;
 	memory[R_ROMB] = BANK_BASE_STATS;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, BANK_BASE_STATS);
+#endif
 	memory[W_POKEDEX_NUM] = species;
 
 	if (species == FOSSIL_KABUTOPS || species == MON_GHOST ||
@@ -153,6 +159,9 @@ port_get_mon_header(struct cpu_register_state *state, port_u8 *memory)
 	memory[W_POKEDEX_NUM] = saved_dex;
 	memory[H_LOADED_ROM_BANK] = saved_bank;
 	memory[R_ROMB] = saved_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, saved_bank);
+#endif
 	/* the second `pop af` restores the saved bank byte into A (pushed right
 	 * after `ldh a, [hLoadedROMBank]`) together with the entry F */
 	*state = entry;

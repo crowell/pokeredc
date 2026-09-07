@@ -155,32 +155,6 @@ class MoveAToE(angr.SimProcedure):
         self.jump(self.target)
 
 
-class CopyMapView(angr.SimProcedure):
-    """Execute the fixed 18x20 transfer as one concrete bounded adapter."""
-
-    def __init__(self, target: int) -> None:
-        super().__init__()
-        self.target = target
-
-    def run(self) -> None:  # type: ignore[override]
-        source = W_CURRENT_MAP_VIEW
-        destination = V_BG_MAP0
-        for _ in range(18):
-            for column in range(20):
-                self.state.memory.store(
-                    destination + column,
-                    self.state.memory.load(source + column, 1),
-                )
-            source += 32
-            destination += 32
-        self.state.regs.hl = source
-        self.state.regs.de = destination + 12
-        self.state.regs.b = 0
-        self.state.regs.c = 0
-        self.state.regs.f = claripy.BVV(0x42, 8)
-        self.jump(self.target)
-
-
 class BranchFlag(angr.SimProcedure):
     def __init__(self, bit: int, taken: int, fallthrough: int, set_: bool = True) -> None:
         super().__init__()
@@ -296,10 +270,18 @@ def _assembly(*, status_flags6: int, status_flags7: int) -> list[Endpoint]:
     project.hook(base + 0x6E, Skip(base + 0x71), length=3)
     project.hook(base + 0x71, Skip(base + 0x74), length=3)
     project.hook(base + 0x5D, Skip(base + 0x60), length=3)
-    # Summarize the fixed 18x20 transfer in one concrete adapter.  The
-    # orchestration before and after it remains the linked body; this keeps
-    # the proof bounded under the current p-code backend.
-    project.hook(base + 0x36, CopyMapView(base + 0x50), length=0x1A)
+    # Execute the linked copy loop. The old whole-loop model advanced the
+    # WRAM source by 32 instead of 20 and masked the production C bug.
+    # Only individual SM83 instructions need shims; branches/loads remain
+    # the linked bytes, so the two strides are independently observed.
+    project.hook(base + 0x40, Sm83LoadAAtHlIncrement(base + 0x41), length=1)
+    project.hook(base + 0x41, StoreAAtDE(base + 0x42), length=1)
+    project.hook(base + 0x42, Sm83IncRegister("e", base + 0x43), length=1)
+    project.hook(base + 0x43, Sm83DecRegister("c", base + 0x44), length=1)
+    project.hook(base + 0x48, Sm83AddRegister("e", base + 0x49), length=1)
+    project.hook(base + 0x49, MoveAToE(base + 0x4A), length=1)
+    project.hook(base + 0x4C, Sm83IncRegister("d", base + 0x4D), length=1)
+    project.hook(base + 0x4D, Sm83DecRegister("b", base + 0x4E), length=1)
     state = project.factory.blank_state(addr=base)
     state.options.add(angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY)
     set_assembly_registers(state, {register: claripy.BVV(0, 8) for register in REGISTERS})

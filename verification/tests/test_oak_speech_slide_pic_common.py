@@ -1,4 +1,9 @@
-"""Proof for the six-pass OakSpeechSlidePicCommon animation."""
+"""Symbolic model regression, NOT an assembly-execution proof.
+
+The assembly endpoint currently hooks the entire routine with SlideCommon.
+TODO: replace that model with instruction execution before claiming SM83
+equivalence. ROM byte and symbol checks alone do not prove this model.
+"""
 
 from __future__ import annotations
 
@@ -29,9 +34,9 @@ NATIVE_MEMORY = 0x200000
 COMMON_BASE = 0xC3F0
 COMMON_WINDOW = 0x0100
 DONE = 0xEFFF
-H_SLIDE_AMOUNT = 0xFFEB
-H_SLIDING_REGION_SIZE = 0xFFEC
-H_SLIDE_DIRECTION = 0xFFED
+H_SLIDE_AMOUNT = 0xFF8B
+H_SLIDING_REGION_SIZE = 0xFF8C
+H_SLIDE_DIRECTION = 0xFF8D
 H_AUTO_BG_TRANSFER_ENABLED = 0xFFBA
 EXPECTED = bytes.fromhex(
     "e5d5c5e08d7ae08b7be08c4ff08da72003160019545dafe0baf08da720"
@@ -78,8 +83,8 @@ class SlideCommon(angr.SimProcedure):
                     self.state.memory.store(hl, value)
                     hl = (hl - 2) & 0xFFFF
                 else:
-                    hl = (hl - 1) & 0xFFFF
                     value = self.state.memory.load(hl, 1)
+                    hl = (hl - 1) & 0xFFFF
                     self.state.memory.store(hl, value)
                     hl = (hl + 2) & 0xFFFF
                 count -= 1
@@ -179,7 +184,7 @@ def _native(inputs: dict[str, claripy.ast.BV]) -> list[Endpoint]:
 
 @pytest.mark.skipif(not NATIVE_ELF.exists(), reason="run make -C verification native")
 @pytest.mark.skipif(not ROM.exists() or not SYMBOLS.exists(), reason="run make red")
-def test_oak_speech_slide_pic_common_pathwise_equivalence() -> None:
+def test_oak_speech_slide_pic_common_symbolic_model_regression() -> None:
     inputs = symbolic_registers("oak_slide_common")
     assert_pathwise_equivalent(
         _assembly(inputs),

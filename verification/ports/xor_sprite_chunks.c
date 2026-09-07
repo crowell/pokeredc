@@ -4,7 +4,7 @@
 #define W_SPRITE_CUR_POS_Y 0xd0a2u
 #define W_SPRITE_WIDTH 0xd0a3u
 #define W_SPRITE_HEIGHT 0xd0a4u
-#define W_SPRITE_LOAD_FLAGS 0xd0a9u
+#define W_SPRITE_LOAD_FLAGS 0xd0a8u
 #define W_SPRITE_FLIPPED 0xd0aau
 #define W_SPRITE_OUTPUT_PTR 0xd0adu
 #define W_SPRITE_OUTPUT_PTR_CACHED 0xd0afu

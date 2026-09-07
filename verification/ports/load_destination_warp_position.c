@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 #define W_PREDEF_PARENT_BANK 0xcf12u
 #define H_LOADED_ROM_BANK 0xffb8u
@@ -21,6 +24,9 @@ port_load_destination_warp_position(struct cpu_register_state *registers,
 
 	memory[H_LOADED_ROM_BANK] = memory[W_PREDEF_PARENT_BANK];
 	memory[R_ROMB] = memory[H_LOADED_ROM_BANK];
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, memory[H_LOADED_ROM_BANK]);
+#endif
 	source = (port_u16)(source + (port_u16)registers->a * 4u);
 	destination = W_CURRENT_TILE_BLOCK_MAP_VIEW_POINTER;
 	copy.h = (port_u8)(source >> 8);
@@ -35,4 +41,7 @@ port_load_destination_warp_position(struct cpu_register_state *registers,
 	registers->f = saved_f;
 	memory[H_LOADED_ROM_BANK] = saved_bank;
 	memory[R_ROMB] = saved_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, saved_bank);
+#endif
 }

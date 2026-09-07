@@ -57,8 +57,8 @@ class LoadSpecialWarpData(angr.SimProcedure):
             self.state.memory.store(W_CUR_MAP + offset, claripy.BVV(value, 8))
         self.state.memory.store(W_CUR_MAP_TILESET, claripy.BVV(0x04, 8))
         self.state.memory.store(0xD42F, claripy.BVV(0xFF, 8))
-        self.state.memory.store(0xD370, claripy.BVV(0, 8))
-        self.state.memory.store(0xD371, claripy.BVV(0, 8))
+        self.state.memory.store(0xD4E2, claripy.BVV(0, 8))
+        self.state.memory.store(0xD4E3, claripy.BVV(0, 8))
         self.state.regs.a = claripy.BVV(0, 8)
         self.state.regs.f = claripy.BVV(0x40, 8)
         self.jump(self.state.addr + 3)
@@ -73,8 +73,8 @@ class NativeLoadSpecialWarpData(angr.SimProcedure):
             self.state.memory.store(base + W_CUR_MAP + offset, claripy.BVV(value, 8))
         self.state.memory.store(base + W_CUR_MAP_TILESET, claripy.BVV(0x04, 8))
         self.state.memory.store(base + 0xD42F, claripy.BVV(0xFF, 8))
-        self.state.memory.store(base + 0xD370, claripy.BVV(0, 8))
-        self.state.memory.store(base + 0xD371, claripy.BVV(0, 8))
+        self.state.memory.store(base + 0xD4E2, claripy.BVV(0, 8))
+        self.state.memory.store(base + 0xD4E3, claripy.BVV(0, 8))
         self.state.memory.store(registers + 0, claripy.BVV(0, 8))
         self.state.memory.store(registers + 1, claripy.BVV(0x80, 8))
         self.state.memory.store(registers + 20, claripy.BVV(0, 8))
@@ -229,14 +229,14 @@ def _setup(state: angr.SimState, base: int, status3: int, status6: int, destinat
     state.memory.store(base + W_CUR_MAP_TILESET, claripy.BVV(0, 8))
     state.memory.store(base + W_CURRENT_BLOCK_PTR, claripy.BVV(0, 16), endness="Iend_LE")
     state.memory.store(base + 0xD42F, claripy.BVV(0, 8))
-    state.memory.store(base + 0xD370, claripy.BVV(0x99, 8))
-    state.memory.store(base + 0xD371, claripy.BVV(0x88, 8))
+    state.memory.store(base + 0xD4E2, claripy.BVV(0x99, 8))
+    state.memory.store(base + 0xD4E3, claripy.BVV(0x88, 8))
 
 
 def _memory(state: angr.SimState, base: int) -> claripy.ast.BV:
     return claripy.Concat(*(state.memory.load(base + address, 1) for address in (
         W_CUR_MAP, W_CURRENT_BLOCK_PTR, W_CUR_MAP_TILESET, W_LAST_MAP,
-        W_STATUS_FLAGS3, W_STATUS_FLAGS6, 0xD370, 0xD371, 0xD42F,
+        W_STATUS_FLAGS3, W_STATUS_FLAGS6, 0xD4E2, 0xD4E3, 0xD42F,
     )))
 
 

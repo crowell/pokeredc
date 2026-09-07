@@ -42,10 +42,38 @@ void port_text_command_scroll(struct cpu_register_state *, port_u8 *);
 void port_text_command_start_asm(struct cpu_register_state *, port_u8 *);
 void port_text_command_num(struct cpu_register_state *, port_u8 *);
 void port_text_command_pause(struct cpu_register_state *, port_u8 *);
-void port_text_command_sound(struct cpu_register_state *, port_u8 *);
+void port_text_command_sound(struct play_sound_state *, port_u8 *);
 void port_text_command_dots(struct cpu_register_state *, port_u8 *);
 void port_text_command_wait_button(struct cpu_register_state *, port_u8 *);
 void port_text_command_far(struct cpu_register_state *, port_u8 *);
+
+static void text_sound(struct cpu_register_state *r, port_u8 *m)
+{
+	/* The sound port takes a 24-byte snapshot, not an 8-byte register
+	 * pointer. The old declaration let it overwrite the caller's stack. */
+	struct play_sound_state sound = {0};
+	sound.registers = *r;
+	sound.new_sound_id = m[0xc0ee];
+	sound.audio_rom_bank = m[0xc0ef];
+	sound.audio_saved_rom_bank = m[0xc0f0];
+	sound.loaded_rom_bank = m[0xffb8];
+	sound.rom_bank = m[0x2000];
+	sound.fade_control = m[0xcfc7];
+	sound.fade_reload = m[0xcfc8];
+	sound.fade_counter = m[0xcfc9];
+	sound.last_music_sound_id = m[0xcfca];
+	sound.low_health_alarm = m[0xd083];
+	for (unsigned i = 0; i < 4; ++i) sound.channel_sound_ids[i] = m[0xc02a + i];
+	port_text_command_sound(&sound, m);
+	*r = sound.registers;
+	m[0xc0ee] = sound.new_sound_id;
+	m[0xcfc7] = sound.fade_control;
+	m[0xcfc8] = sound.fade_reload;
+	m[0xcfc9] = sound.fade_counter;
+	m[0xcfca] = sound.last_music_sound_id;
+	/* Audio dispatch/wait remains a boundary here. The resumable runtime
+	 * text driver clocks the real channel engine until the sound finishes. */
+}
 
 static void
 next_text_command_loop(struct cpu_register_state *state, port_u8 *memory,
@@ -70,7 +98,7 @@ next_text_command_loop(struct cpu_register_state *state, port_u8 *memory,
 			continue;
 		}
 		if (cmd >= TX_SOUND_POKEDEX_RATING) {
-			port_text_command_sound(state, memory);
+			text_sound(state, memory);
 			continue;
 		}
 		switch (cmd) {
@@ -108,7 +136,7 @@ next_text_command_loop(struct cpu_register_state *state, port_u8 *memory,
 			port_text_command_pause(state, memory);
 			break;
 		case 0x0bu:
-			port_text_command_sound(state, memory);
+			text_sound(state, memory);
 			break;
 		case 0x0cu:
 			port_text_command_dots(state, memory);

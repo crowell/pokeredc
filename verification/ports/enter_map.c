@@ -1,6 +1,6 @@
 #include "port_state.h"
 
-#define W_JOY_IGNORE 0x416bu
+#define W_JOY_IGNORE 0xcd6bu
 #define H_LOADED_ROM_BANK 0xffb8u
 
 void port_load_map_data(struct reload_map_data_state *, port_u8 *);

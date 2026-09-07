@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 #define W_CUR_MAP 0xd35eu
 #define W_MAP_PAL_OFFSET 0xd35du
@@ -102,7 +105,8 @@ load_current_view(struct cpu_register_state *r, port_u8 *memory)
 	view.mapper_bank = memory[R_ROMB];
 	view.map_view_pointer_low = (port_u8)map_view;
 	view.map_view_pointer_high = (port_u8)(map_view >> 8);
-	view.map_width = memory[H_MAP_WIDTH];
+	/* LoadCurrentMapView starts with wCurMapWidth, not aliased hTextID. */
+	view.map_width = memory[0xd369u];
 	view.y_block_coord = memory[W_Y_BLOCK_COORD];
 	view.x_block_coord = memory[W_X_BLOCK_COORD];
 	view.tileset_blocks_low = (port_u8)blocks;
@@ -156,6 +160,9 @@ port_close_text_display(struct close_text_display_state *state,
 	state->registers.a = INIT_MAP_SPRITES_BANK;
 	memory[H_LOADED_ROM_BANK] = INIT_MAP_SPRITES_BANK;
 	memory[R_ROMB] = INIT_MAP_SPRITES_BANK;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, INIT_MAP_SPRITES_BANK);
+#endif
 	port_init_map_sprites(&state->registers, memory);
 	state->registers.h = (port_u8)(W_FONT_LOADED >> 8);
 	state->registers.l = (port_u8)W_FONT_LOADED;
@@ -171,5 +178,8 @@ port_close_text_display(struct close_text_display_state *state,
 	state->registers.f = state->saved_f;
 	memory[H_LOADED_ROM_BANK] = state->saved_a;
 	memory[R_ROMB] = state->saved_a;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, state->saved_a);
+#endif
 	port_update_sprites(&state->registers, memory);
 }

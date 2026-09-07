@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+port_u8 port_uncompress_sprite_data(struct cpu_register_state *, port_u8 *);
+#endif
 
 /*
  * UncompressSpriteFromDE: 21 abd0 73 23 72 c3 fd24
@@ -20,4 +23,9 @@ void port_uncompress_sprite_from_de(struct cpu_register_state *state, port_u8 *m
 	memory[0xd0ac] = state->d;
 	state->h = 0xd0;
 	state->l = 0xac;
+#ifdef PORT_PLATFORM_RUNTIME
+	/* The legacy proof ends at JP UncompressSpriteData. Runtime must
+	 * execute its continuation; its composed proof is still pending. */
+	port_uncompress_sprite_data(state, memory);
+#endif
 }

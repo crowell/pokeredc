@@ -1,0 +1,125 @@
+# REQUIRED — unported functions hit by the macOS game-flow driver
+
+> Current status (2026-09-07): see [the updated implementation/proof handoff](INTRO_MAIN_LOOP_PORTING.md).
+> The older inventory below is retained for context and has stale statuses:
+> pictures, audio, interactive Oak dialogue and naming are now connected.
+> Arrival in the bedroom, house scripts, pre-starter Mom/TV dialogue and walking
+> downstairs/outside are integration-tested. Pallet Town and later map scripts,
+> starter/battle flow, working overworld menus and save/continue
+> remain incomplete. New runtime composition is not an end-to-end proof.
+> In particular, the old "proven" label on a call-boundary snapshot must not
+> be used as evidence that its continuations execute correctly.
+
+`platform/game.c` composes the real boot flow (title screen → main menu →
+new game → first map load) from functions ported in `verification/ports/`.
+The driver advances from the OakSpeech prefix into `EnterMap`/`LoadMapData`
+when the player presses A or Start. Remaining asm labels that block full
+naming or interactive overworld behavior are listed here.
+Driver call sites carry a matching `/* REQUIRED: <label> */` comment where
+the driver still uses an inline approximation.
+
+Ports are added by translating the asm into `verification/ports/<name>.c`
+following the existing conventions (state struct + flat `memory`, see
+`verification/ports.toml` for the authoritative ledger). Once a function is
+ported, delete its row here and replace the driver's approximation/comment
+with the real call.
+
+## Legend
+
+- **gates** = what becomes visible/interactive once this exists
+- *(inlined)* = driver currently fakes it with a trivial memory/hardware op
+
+## Title screen — `DisplayTitleScreen` (engine/movie/title.asm)
+
+| asm label | defined at | gates |
+|---|---|---|
+| `GBPalWhiteOut` | home/palettes.asm | palette fade-in on title appearance *(inlined: BGP/OBPx := $FF)* |
+| `EnableLCD` / `DisableLCD` tail commit | home/lcd.asm | LCD toggle around tile uploads *(inlined: rLCDC write; `port_disable_lcd` covers flag semantics)* |
+| `SaveScreenTilesToBuffer2` | home/window.asm | screen buffer swap before logo draw *(inlined memcpy wTileMap↔wTileMapBackup $C508)* |
+| `LoadScreenTilesFromBuffer1/2` | home/window.asm | same swap-back *(inlined memcpy)* |
+| ~~`DrawPlayerCharacter`~~ | engine/movie/title.asm | **PORTED & composed** (`port_draw_player_character`; host mirrors `state->sprites.oam[]` into wShadowOAM) |
+| `LoadTitleMonSprite` | engine/movie/title.asm | starter mon picture shown on logo |
+| ~~`ScrollTitleScreenPokemonLogo`~~ | engine/movie/title.asm | **PORTED** (`port_scroll_title_screen_pokemon_logo`) - consumes all DelayFrames in one call; driver keeps frame-paced hSCY until pacing is host-driven |
+| ~~`ScrollTitleScreenGameVersion`~~ | engine/movie/title2.asm | **PORTED** (`port_scroll_title_screen_game_version`, takes observed LY/SCX arrays) - not yet wired into the driver |
+| `TitleScreenScrollInMon` | engine/movie/title2.asm | mon slide-in after scroll |
+
+## Main menu — `MainMenu` (engine/menus/main_menu.asm)
+
+Composed via `port_main_menu_private` (head through save-file dispatch),
+`port_start_new_game` (status-flag reset), `port_handle_menu_input_`,
+`port_text_box_border`, `port_place_string`. Remaining gaps:
+
+| asm label | defined at | gates |
+|---|---|---|
+| `TryLoadSaveFile` | home/sram.asm (predef) | CONTINUE path |
+| `RunDefaultPaletteCommand` | engine/gfx/palettes.asm | SGB/GBC palettes (no-op on DMG renderer) |
+| `UpdateSprites` | home/update_sprites.asm | sprite enable bit handling |
+| `DisplayOptionMenu`, `DisplayContinueGameInfo` | engine/menus/*.asm | OPTION item, save-file continue screen |
+| `PlaceMenuCursor` integration | home/menu.asm | port exists (`port_place_menu_cursor`, proven); driver still writes the $ED glyph inline pending wMenuCursorLocation plumbing |
+
+Ported and available for deeper composition: `port_scroll_title_screen_game_version`
+(scanline LY/SCX arrays), `port_title_scroll`, `port_get_title_ball_y`.
+
+## New game intro — `OakSpeech` (engine/movie/oak_speech/oak_speech.asm)
+
+
+| asm label | defined at | gates |
+| ~~`TextCommandProcessor`~~ | home/text.asm | **PORTED & composed** - driver now runs the real dispatcher for Oak's bank-1 `TX_FAR` pointer into bank-22 dialogue. All command handlers and FAR bank switching are proven; other message-box setup remains open |
+| `DisplayTextBoxID_` / MESSAGE_BOX template | home/textbox.asm + engine/text_box.asm | standard message-box layout (driver draws border+text manually). Composable pieces exist: `port_search_text_box_table`, `port_get_text_box_id_coords`, two-option-menu tile savers |
+| ~~`InitPlayerData2`~~ | oak_speech/init_player_data.asm | **PORTED & composed** - seeds RNG from host DIV samples, fills player ID / party / box / bag empty lists, money (¥300), badges, progress flags. Runs after `port_prepare_oak_speech` because that port bundles the `InitPlayerData` full-region reset |
+| ~~`FadeInIntroPic`~~ | engine/movie/intro.asm | **PORTED & composed** (`port_fade_in_intro_pic` six-step BGP fade); the intro picture itself still waits on the `LoadFlippedFrontSpriteByMonIndex` stub |
+| `IntroDisplayPicCenteredOrUpperRight`, `GBFadeOutToWhite`, `GBFadeInFromWhite` | engine/movie/intro.asm, home/fade.asm | Oak/Nidorino picture placement and the white fades (the pic display still blocked by the `LoadFlippedFrontSpriteByMonIndex` stub) |
+| ~~`GetMonHeader`~~ (`port_get_mon_header` composed) / `LoadFlippedFrontSpriteByMonIndex` | home/pokemon.asm, home/pics.asm | GetMonHeader done; `LoadFlippedFrontSpriteByMonIndex` is **proven in the ledger but a stub** - front-pic bytes never transfer, so the Nidorino / Oak pictures still don't render |
+| `ChoosePlayerName` / `ChooseRivalName` / naming screen | engine/menus/naming_screen.asm | naming screens (`port_choose_player_name_done`, `port_ask_name_declined_nickname`, `port_calc_string_length`, `port_load_ed_tile` are ported tails) |
+| `PlayMusic` (Music_OakSpeech) | audio/ | intro theme |
+
+Text-engine progress: `TextCommandProcessor` and all command handlers are
+now ported and the Oak driver composes the dispatcher, including its
+bank-1-to-bank-22 `TX_FAR` text stream. `DisplayTextBoxID_` / message-box
+setup, naming flow, and picture transfer remain separate gaps.
+
+Ported intro fragments remain available for later naming and picture fidelity:
+`port_move_pic_left`, `port_oak_speech_slide_pic_right`,
+`port_get_default_name_found_name`, `port_give_pokemon`,
+`port_oaks_lab_mon_choice_end`, and `port_starter_dex_private`.
+
+## Overworld — map-load and interactive loop
+
+`EnterMap`, `LoadMapData`, `InitMapSprites`, `LoadMapSpriteTilePatterns`,
+`LoadCurrentMapView`, `LoadPlayerSpriteGraphics`, and
+`CheckForceBikeOrSurf` are ported and composed after the opening dialogue.
+`platform/game.c:overworld_loop_tick` now follows the assembly order:
+the two frame delays, walk-animation advancement, joypad edge selection,
+direction/facing updates including the 180-degree turn path, sprite update,
+land/water collision, walking, step bookkeeping, warp dispatch, and map
+connection dispatch.
+
+The previous driver incorrectly replaced this sequence with a host-side
+`overworld_player_step` and treated A/START as a warp request. That was not
+the assembly behavior: A dispatches `DisplayTextID`, while warps are checked
+after movement through `CheckWarpsNoCollision`/`CheckWarpsCollision`.
+
+The remaining fidelity boundaries are the downstream `RunMapScript`,
+`NewBattle`, Safari/blackout handling, full NPC movement, and the interactive
+Start-menu continuation after `DisplayTextID(TEXT_START_MENU)`. These are
+explicit boundaries; the C dispatcher no longer pretends they are movement or
+warp logic.
+
+## Battle — future phase
+
+Post-merge (upstream `ds4`), now **proven** and ready to compose:
+`PlayApplyingAttackSound`, `CopyTempPicToMonPic`, `CopyMonsterSpriteData`,
+`AnimationShowMonPic` / `AnimationHideMonPic` /
+`ClearMonPicFromTileMap`, the full shake-screen family
+(`AnimationShakeScreen*`, `ShakeScreenVertically`,
+`ShakeScreenHorizontally{Heavy,Light,Fast,Slow,Slow2}`),
+`ScaleSpriteByTwo` + column scalers, `LoadHudTilePatterns`,
+`LoadHudAndHpBarAndStatusTilePatterns`, `LoadPartyPokeballGfx`,
+`LoadBattleTransitionTile`, and complete `CopyVideoData` /
+`CopyVideoDataDouble` semantics.
+
+Remaining blockers: `BattleCore` (whole file); partial entries for
+`MainInBattleLoop`, `ExecutePlayerMove/EnemyMove`, `CalculateDamage`,
+`CriticalHitTest`, `MoveHitTest`, `DisplayBattleMenu`,
+`MoveSelectionMenu`; faint/end-of-battle handlers; full message-box setup,
+naming/intro continuation, and the audio engine.

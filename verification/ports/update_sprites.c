@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 #define W_UPDATE_SPRITES_ENABLED 0xcfcbu
 #define W_NPC_MOVEMENT_SCRIPT_SPRITE_OFFSET 0xcf14u
@@ -162,9 +165,15 @@ port_update_sprites(struct cpu_register_state *registers, port_u8 *memory)
 	registers->a = 1;
 	memory[H_LOADED_ROM_BANK] = 1;
 	memory[R_ROMB] = 1;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, 1);
+#endif
 	port_update_sprites_private(registers, memory);
 	registers->a = saved_a;
 	registers->f = saved_f;
 	memory[H_LOADED_ROM_BANK] = saved_bank;
 	memory[R_ROMB] = saved_a;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, saved_bank);
+#endif
 }

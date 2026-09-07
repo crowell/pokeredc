@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 #define W_CUR_MAP_TILESET 0xd367u
 #define W_STANDING_TILE 0xc45cu
@@ -45,7 +48,14 @@ port_is_player_standing_on_door_tile_or_warp_tile(
 	struct computed_load_state search;
 	port_u8 found;
 
+#ifdef PORT_PLATFORM_RUNTIME
+	port_u8 bank = memory[0xffb8];
+	port_switch_rom_bank(memory, 6);
+#endif
 	port_is_player_standing_on_door_tile(registers, memory);
+#ifdef PORT_PLATFORM_RUNTIME
+	port_switch_rom_bank(memory, 3);
+#endif
 	if ((registers->f & PORT_FLAG_C) != 0)
 		goto done;
 
@@ -73,6 +83,9 @@ port_is_player_standing_on_door_tile_or_warp_tile(
 	memory[W_MOVEMENT_FLAGS] &= (port_u8)~(1u << DOOR_TILE_BIT);
 
 done:
+#ifdef PORT_PLATFORM_RUNTIME
+	port_switch_rom_bank(memory, bank);
+#endif
 	registers->b = saved_b;
 	registers->c = saved_c;
 	registers->d = (port_u8)(saved_de >> 8);

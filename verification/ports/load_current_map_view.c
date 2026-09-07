@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 void port_draw_tile_block(struct draw_tile_block_state *, port_u8 *);
 
@@ -255,6 +258,9 @@ port_load_current_map_view(
 	port_u16 address;
 
 	port_load_current_map_view_begin(state);
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, state->tileset_bank);
+#endif
 	do {
 		port_load_current_map_view_begin_render_row(state);
 		do {
@@ -277,4 +283,7 @@ port_load_current_map_view(
 		} while (state->registers.c != 0);
 	} while (port_load_current_map_view_next_copy_row(state) != 0);
 	port_load_current_map_view_finish(state);
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, state->loaded_rom_bank);
+#endif
 }

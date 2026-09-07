@@ -565,7 +565,7 @@ class Sm83LoadAImmediate(angr.SimProcedure):
 
 class Sm83LoadAFromImmediate(angr.SimProcedure):
     """Implement SM83 ``LD A, n`` (opcode 3E): load the immediate into A and
-    clear Z/N/H/C. The Z80 pcode backend sets H here, which SM83 does not."""
+    preserve flags. Loads do not clear Z/N/H/C on the SM83."""
 
     def __init__(self, immediate_address: int, next_address: int) -> None:
         super().__init__()
@@ -574,15 +574,12 @@ class Sm83LoadAFromImmediate(angr.SimProcedure):
 
     def run(self) -> None:  # type: ignore[override]
         self.state.regs.a = self.state.memory.load(self._immediate_address, 1)
-        self.state.regs.f = claripy.BVV(0, 8)
         self.jump(self._next_address)
 
 
 class Sm83LoadAFromRegister(angr.SimProcedure):
     """Implement SM83 ``LD A, r`` (opcodes 78-7F) for a register operand:
-    load the source register into A and clear Z/N/H/C. The Z80 pcode backend
-    leaves/modifies flags incorrectly (e.g. sets C) for register loads, which
-    SM83 does not do."""
+    load the source register into A without changing flags."""
 
     def __init__(self, source_register: str, next_address: int) -> None:
         super().__init__()
@@ -591,7 +588,6 @@ class Sm83LoadAFromRegister(angr.SimProcedure):
 
     def run(self) -> None:  # type: ignore[override]
         self.state.regs.a = getattr(self.state.regs, self._source_register)
-        self.state.regs.f = claripy.BVV(0, 8)
         self.jump(self._next_address)
 
 
@@ -919,8 +915,7 @@ class Sm83XorA(angr.SimProcedure):
 class Sm83LoadABytePreserveF(angr.SimProcedure):
     """Correct SM83 ``LD A,n`` (3E): A := immediate; flags unchanged.
 
-    The shared Sm83LoadAFromImmediate clears F, which is wrong when live
-    flags cross a later call boundary."""
+    Compatibility spelling retained for existing instruction harnesses."""
 
     def __init__(self, immediate_address: int, next_address: int) -> None:
         super().__init__()

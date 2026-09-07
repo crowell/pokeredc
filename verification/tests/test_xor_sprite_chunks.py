@@ -8,7 +8,7 @@ from verification.harness.registers import REGISTERS,assembly_registers,native_r
 from verification.harness.rom import linked_bytes,rom_window,symbol_location
 from verification.harness.sm83_shims import Sm83AddImmediate,Sm83AndRegister,Sm83CpRegister,Sm83IncRegister,Sm83LoadAImmediate,Sm83OrRegister,Sm83StoreAImmediate,Sm83SwapRegister,Sm83XorA
 ROOT=Path(__file__).resolve().parents[2];ELF=ROOT/'verification/build/ports.elf';ROM=ROOT/'pokered.gbc';SYMS=ROOT/'pokered.sym';NS=0x100000;NM=0x200000;DONE=0xefff;STACK=0xd800
-B1=0xa188;B2=0xa310;SIZE=392;CURX=0xd0a1;CURY=0xd0a2;WIDTH=0xd0a3;HEIGHT=0xd0a4;FLAGS=0xd0a9;FLIP=0xd0aa;OUT=0xd0ad;CACHED=0xd0af;T0=0xd0b1;T1=0xd0b3;TABLE=0x2867
+B1=0xa188;B2=0xa310;SIZE=392;CURX=0xd0a1;CURY=0xd0a2;WIDTH=0xd0a3;HEIGHT=0xd0a4;FLAGS=0xd0a8;FLIP=0xd0aa;OUT=0xd0ad;CACHED=0xd0af;T0=0xd0b1;T1=0xd0b3;TABLE=0x2867
 GLOBALS=(CURX,CURY,WIDTH,HEIGHT,FLAGS,FLIP,OUT,OUT+1,CACHED,CACHED+1,T0,T0+1,T1,T1+1)
 EXPECTED=bytes.fromhex('afeaa1d0eaa2d0cd4128faadd06ffaaed067cdd426cd4128faadd06ffaaed067faafd05ffab0d057faaad0a72816d51a47cb37e60fcd3728cb374f78e60fcd3728b1d1122a471aa81213faa2d03ceaa2d047faa4d0b820d0afeaa2d0faa1d0c608eaa1d047faa3d0b820bdafeaa1d0c9')
 REV=bytes.fromhex('0008040c020a060e0109050d030b070f')
@@ -34,7 +34,13 @@ def setup(s,v,base,dimension,selected):
  for i in range(len(GLOBALS)):s.globals[f'pg{i}']=v[f'pg{i}']
 def snap(s,base):return claripy.Concat(*(s.memory.load(base+a,1) for a in GLOBALS),s.memory.load(base+B1,SIZE),s.memory.load(base+B2,SIZE))
 def reset_transition(s,base,getregs,setregs):
- r=getregs();flag=s.memory.load(base+FLAGS,1);s.globals['reset_calls']+=1;r['a']=flag;r['f']=(r['f']&0x10)|0x20|claripy.If((flag&1)==0,claripy.BVV(0x80,8),claripy.BVV(0,8));b1=claripy.BVV(B1,16);b2=claripy.BVV(B2,16);de=claripy.If((flag&1)==0,b1,b2);hl=claripy.If((flag&1)==0,b2,b1);r['d']=de[15:8];r['e']=de[7:0];r['h']=hl[15:8];r['l']=hl[7:0];r['a']=r['l'];s.memory.store(base+OUT,r['a']);r['a']=r['h'];s.memory.store(base+OUT+1,r['a']);r['a']=r['e'];s.memory.store(base+CACHED,r['a']);r['a']=r['d'];s.memory.store(base+CACHED+1,r['a']);setregs(r)
+ r=getregs();flag=s.memory.load(base+FLAGS,1);s.globals['reset_calls']+=1;r['a']=flag;r['f']=(r['f']&0x10)|0x20|claripy.If((flag&1)==0,claripy.BVV(0x80,8),claripy.BVV(0,8));b1=claripy.BVV(B1,16);b2=claripy.BVV(B2,16);de=claripy.If((flag&1)==0,b1,b2);hl=claripy.If((flag&1)==0,b2,b1)
+ # Each test already constrains the selected buffer. Prove uniqueness before
+ # replacing its pointer expression; never pick one of several possible
+ # values. This avoids repeated symbolic-address solving on every XOR byte
+ # without reducing the symbolic buffer/flag/flip domain.
+ de=claripy.BVV(s.solver.eval_one(de),16);hl=claripy.BVV(s.solver.eval_one(hl),16)
+ r['d']=de[15:8];r['e']=de[7:0];r['h']=hl[15:8];r['l']=hl[7:0];r['a']=r['l'];s.memory.store(base+OUT,r['a']);r['a']=r['h'];s.memory.store(base+OUT+1,r['a']);r['a']=r['e'];s.memory.store(base+CACHED,r['a']);r['a']=r['d'];s.memory.store(base+CACHED+1,r['a']);setregs(r)
 def decode_transition(s,base,getregs,setregs):
  r=getregs();s.globals['decode_calls']+=1;s.globals['decode_input']=claripy.Concat(*(r[x] for x in REGISTERS),snap(s,base));s.memory.store(base+B1,s.globals['post_b1']);s.memory.store(base+B2,s.globals['post_b2']);
  for x in REGISTERS:r[x]=s.globals['post_'+x]

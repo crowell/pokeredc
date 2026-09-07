@@ -1,4 +1,7 @@
 #include "port_state.h"
+#ifdef PORT_PLATFORM_RUNTIME
+#include "bank.h"
+#endif
 
 /* LoadMapData is a home-bank orchestration routine.  The typed state is the
  * same map/view transfer state used by ReloadMapData; the additional globals
@@ -23,6 +26,7 @@ void port_play_default_music_fade_out_current(struct default_music_fade_state *,
 #define R_IE 0xffffu
 #define R_LCDC 0xff40u
 #define W_MAP_VIEW_VRAM_POINTER 0xd526u
+#define W_CURRENT_TILE_BLOCK_MAP_VIEW_POINTER 0xd35fu
 #define W_WALK_COUNTER 0xcfc5u
 #define W_UNUSED_CUR_MAP_TILESET_COPY 0xd119u
 #define W_WALK_BIKE_SURF_STATE_COPY 0xd11au
@@ -91,14 +95,24 @@ port_load_map_data(struct reload_map_data_state *state, port_u8 *memory)
 	state->mapper_bank = text.transfer.rom_bank;
 	memory[R_LCDC] = text.lcd_control;
 	sync_banks(state, memory);
-
 	port_load_map_header(&state->registers, memory);
-	/* The farcall shim loads BANK(InitMapSprites) and its entry address into
-	 * B:HL before transferring control to the banked routine. */
-	state->registers.b = 5;
-	state->registers.h = 0x78;
-	state->registers.l = 0x5b;
-	port_init_map_sprites(&state->registers, memory);
+
+	/* farcall InitMapSprites: the sheet table belongs to bank 5. */
+	{
+		port_u8 map_bank = memory[H_LOADED_ROM_BANK];
+#ifdef PORT_PLATFORM_RUNTIME
+		port_switch_rom_bank(memory, 5);
+#endif
+		state->registers.b = 5;
+		state->registers.h = 0x78;
+		state->registers.l = 0x5b;
+		port_init_map_sprites(&state->registers, memory);
+		memory[H_LOADED_ROM_BANK] = map_bank;
+		memory[R_ROMB] = map_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+		port_sync_rom_window(memory, map_bank);
+#endif
+	}
 	port_load_tile_block_map(&state->registers, memory);
 
 	tiles.copy.registers = state->registers;
@@ -119,8 +133,10 @@ port_load_map_data(struct reload_map_data_state *state, port_u8 *memory)
 	view.tileset_bank = memory[0xd52bu];
 	view.loaded_rom_bank = memory[H_LOADED_ROM_BANK];
 	view.mapper_bank = memory[R_ROMB];
-	view.map_view_pointer_low = memory[W_MAP_VIEW_VRAM_POINTER];
-	view.map_view_pointer_high = memory[W_MAP_VIEW_VRAM_POINTER + 1];
+	/* LoadCurrentMapView consumes the WRAM block-map pointer, not the
+	 * destination address used by the subsequent VRAM transfer. */
+	view.map_view_pointer_low = memory[W_CURRENT_TILE_BLOCK_MAP_VIEW_POINTER];
+	view.map_view_pointer_high = memory[W_CURRENT_TILE_BLOCK_MAP_VIEW_POINTER + 1];
 	view.map_width = memory[0xd369u];
 	view.y_block_coord = memory[0xd363u];
 	view.x_block_coord = memory[0xd364u];
@@ -168,13 +184,11 @@ port_load_map_data(struct reload_map_data_state *state, port_u8 *memory)
 		for (unsigned row = 0; row < SCREEN_HEIGHT; ++row) {
 			for (unsigned column = 0; column < SCREEN_WIDTH; ++column)
 				memory[destination++] = memory[source++];
-			source = (port_u16)(source + TILEMAP_WIDTH - SCREEN_WIDTH);
 			destination = (port_u16)(destination + TILEMAP_WIDTH - SCREEN_WIDTH);
 		}
 		/* The assembly leaves the copy-loop pointers live in DE/HL. */
 		state->registers.h = (port_u8)(source >> 8);
 		state->registers.l = (port_u8)source;
-		destination = (port_u16)(destination + TILEMAP_WIDTH - SCREEN_WIDTH);
 		state->registers.d = (port_u8)(destination >> 8);
 		state->registers.e = (port_u8)destination;
 	}
@@ -207,6 +221,9 @@ port_load_map_data(struct reload_map_data_state *state, port_u8 *memory)
 	}
 	memory[H_LOADED_ROM_BANK] = saved_bank;
 	memory[R_ROMB] = saved_bank;
+#ifdef PORT_PLATFORM_RUNTIME
+	port_sync_rom_window(memory, saved_bank);
+#endif
 	state->loaded_rom_bank = saved_bank;
 	state->mapper_bank = saved_bank;
 	state->registers.a = saved_bank;
