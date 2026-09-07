@@ -13074,15 +13074,15 @@ assembly_symbol = "UpdatePlayerSprite"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_update_player_sprite"
 c_source = "verification/ports/update_player_sprite.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
     "wSpritePlayerStateData1 image/animation/facing bytes",
     "wSpritePlayerStateData2 walk-animation counter and grass priority",
     "hTilePlayerStandingOn and hCurrentSpriteOffset",
 ]
-proof_domain = "symbolic caller registers through both nonzero walk-animation-counter terminals ($ff disable and decrement-disable), and concrete text-box suppression; stationary, down-facing rollover, font-loaded not-moving, and moving/spinning normal frames below MAP_TILESET_SIZE. Normal-frame cases execute the real linked unused-current-sprite early-return body of DetectCollisionBetweenSprites. Other facing priorities, animation-counter values, map-tile values, and visible-peer collision configurations remain outside this proof domain."
-decoder = "exact 150-byte linked body and the 11-byte DetectCollisionBetweenSprites entry prefix are asserted. The focused angr proof adapters execute each SM83 absolute/high-memory load/store, arithmetic, bit test, conditional edge, direct call/return, and the adjacent INC HL/LD A,[HL] rollover pair at audited instruction boundaries; production C calls the real detector port rather than a test boundary."
+proof_domain = "all caller registers and canonical flags at the gameplay player offset; every nonzero walk-animation counter including $ff and all decrement flag classes; every tile byte across map-tile and text-box suppression paths; and symbolic normal-frame direction, font-loaded, walk-counter, spinning, intra-frame, animation-frame, facing, grass-tile, and map-tile bytes. DetectCollisionBetweenSprites composes through its complete separately-proven transition, with the production call also exercised through the real unused-current-sprite terminal"
+decoder = "the exact 150-byte linked body and detector entry prefix are asserted; audited SM83 adapters execute every load/store, arithmetic operation, bit test, conditional edge, direct call/return, frame rollover, image calculation, and grass-priority terminal"
 
 
 [[function]]

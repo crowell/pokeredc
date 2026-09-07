@@ -221,13 +221,20 @@ def _endpoint(state: angr.SimState, native: bool) -> Endpoint:
 
 
 def _setup(state: angr.SimState, base: int, *, counter: claripy.ast.BV,
-           tile: int, direction: int = 0, font_loaded: int = 0,
-           walk_counter: int = 0, movement_flags: int = 0,
+           tile: claripy.ast.BV | int, direction: claripy.ast.BV | int = 0,
+           font_loaded: claripy.ast.BV | int = 0,
+           walk_counter: claripy.ast.BV | int = 0,
+           movement_flags: claripy.ast.BV | int = 0,
            current_offset: int = 0, intra: int = 0, animation: int = 0,
-           facing: int = 0, grass_tile: int = 0,
-           counter_nonzero: bool = False) -> None:
+           facing: int = 0, grass_tile: claripy.ast.BV | int = 0,
+           counter_nonzero: bool = False,
+           tile_below_map_size: bool = False,
+           tile_at_or_above_map_size: bool = False) -> None:
+    def byte(value: claripy.ast.BV | int) -> claripy.ast.BV:
+        return value if isinstance(value, claripy.ast.BV) else claripy.BVV(value, 8)
+
     state.memory.store(base + SPRITE2, counter)
-    state.memory.store(base + TILE, claripy.BVV(tile, 8))
+    state.memory.store(base + TILE, byte(tile))
     state.memory.store(base + H_CURRENT_SPRITE_OFFSET,
                        claripy.BVV(current_offset, 8))
     # The real detector call is deliberately composed through its linked
@@ -235,15 +242,19 @@ def _setup(state: angr.SimState, base: int, *, counter: claripy.ast.BV,
     state.memory.store(base + SPRITE1 + current_offset, claripy.BVV(0, 8))
     state.memory.store(base + SPRITE1, claripy.BVV(0, 8))
     for offset, value in ((2, 0x55), (7, intra), (8, animation), (9, facing)):
-        state.memory.store(base + SPRITE1 + offset, claripy.BVV(value, 8))
+        state.memory.store(base + SPRITE1 + offset, byte(value))
     for address, value in ((0xcfc4, font_loaded), (0xcfc5, walk_counter),
                            (0xd528, direction), (0xd535, grass_tile),
                            (0xd736, movement_flags)):
-        state.memory.store(base + address, claripy.BVV(value, 8))
+        state.memory.store(base + address, byte(value))
     state.memory.store(base + 0xc207, claripy.BVV(0, 8))
     state.memory.store(base + H_TILE_PLAYER_STANDING_ON, claripy.BVV(0, 8))
     if counter_nonzero:
         state.solver.add(counter != 0)
+    if tile_below_map_size:
+        state.solver.add(byte(tile).ULT(claripy.BVV(0x60, 8)))
+    if tile_at_or_above_map_size:
+        state.solver.add(byte(tile).UGE(claripy.BVV(0x60, 8)))
 
 
 def _hook_assembly(project: angr.Project, q: int, detector: int) -> None:
@@ -359,7 +370,7 @@ def _assembly(values: dict[str, claripy.ast.BV], **setup: object) -> list[Endpoi
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
-    manager.explore(find=RETURN)
+    manager.explore(find=RETURN, num_find=64)
     assert not manager.errored and manager.found
     return [_endpoint(result, False) for result in manager.found]
 
@@ -395,11 +406,38 @@ def test_update_player_sprite_pending_animation_pathwise_equivalence(
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
                     reason="build artifacts missing")
+def test_update_player_sprite_all_pending_counters_pathwise_equivalence() -> None:
+    """Prove both $ff and decrement-disable paths for every nonzero counter."""
+    values = symbolic_registers("update_player_pending_all")
+    counter = claripy.BVS("update_player_pending_counter", 8)
+    assert_pathwise_equivalent(
+        _assembly(values, counter=counter, tile=0, counter_nonzero=True),
+        _native(values, counter=counter, tile=0, counter_nonzero=True),
+        (*REGISTERS, "state"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
 def test_update_player_sprite_text_box_pathwise_equivalence() -> None:
     values = symbolic_registers("update_player_text_box")
     assert_pathwise_equivalent(
         _assembly(values, counter=claripy.BVV(0, 8), tile=0x60),
         _native(values, counter=claripy.BVV(0, 8), tile=0x60),
+        (*REGISTERS, "state"),
+    )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+def test_update_player_sprite_all_non_map_tiles_pathwise_equivalence() -> None:
+    values = symbolic_registers("update_player_non_map_tile")
+    tile = claripy.BVS("update_player_non_map_tile_value", 8)
+    assert_pathwise_equivalent(
+        _assembly(values, counter=claripy.BVV(0, 8), tile=tile,
+                  tile_at_or_above_map_size=True),
+        _native(values, counter=claripy.BVV(0, 8), tile=tile,
+                tile_at_or_above_map_size=True),
         (*REGISTERS, "state"),
     )
 
@@ -425,4 +463,28 @@ def test_update_player_sprite_normal_frame_pathwise_equivalence(
                   animation=animation, grass_tile=grass_tile)
     assert_pathwise_equivalent(
         _assembly(values, **kwargs), _native(values, **kwargs), (*REGISTERS, "state")
+    )
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+def test_update_player_sprite_symbolic_normal_frame_pathwise_equivalence() -> None:
+    """Cover every branch class in a normal player frame symbolically."""
+    values = symbolic_registers("update_player_symbolic_normal")
+    kwargs = dict(
+        counter=claripy.BVV(0, 8),
+        tile=claripy.BVS("update_player_tile", 8),
+        direction=claripy.BVS("update_player_direction", 8),
+        font_loaded=claripy.BVS("update_player_font", 8),
+        walk_counter=claripy.BVS("update_player_walk", 8),
+        movement_flags=claripy.BVS("update_player_movement_flags", 8),
+        intra=claripy.BVS("update_player_intra", 8),
+        animation=claripy.BVS("update_player_animation", 8),
+        facing=claripy.BVS("update_player_facing", 8),
+        grass_tile=claripy.BVS("update_player_grass", 8),
+        tile_below_map_size=True,
+    )
+    assert_pathwise_equivalent(
+        _assembly(values, **kwargs), _native(values, **kwargs),
+        (*REGISTERS, "state"),
     )
