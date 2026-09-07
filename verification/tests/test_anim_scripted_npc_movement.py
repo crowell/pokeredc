@@ -111,31 +111,36 @@ class AdvanceBoundary(angr.SimProcedure):
         done.regs.ip=claripy.BVV(self.next_address,16); again.memory.store(again.regs.hl,claripy.BVV(0,8)); again.regs.l+=1; again.regs.a=again.memory.load(again.regs.hl,1)+1; again.regs.a=again.regs.a&3; again.regs.f=claripy.If(again.regs.a==0,claripy.BVV(0x40,8),claripy.BVV(0,8)); again.memory.store(again.regs.hl,again.regs.a); again.memory.store(FRAME,again.regs.a); again.regs.ip=claripy.BVV(self.next_address,16); self.inhibit_autoret=True; self.successors.add_successor(done,self.next_address,~rollover,"Ijk_Boring"); self.successors.add_successor(again,self.next_address,rollover,"Ijk_Boring")
 
 
-def setup(state: angr.SimState, base: int, facing: int, values: dict[str, claripy.ast.BV]) -> None:
-    for address in (*range(S1,S1+16),*range(S2,S2+16)): state.memory.store(base+address,claripy.BVV(0,8))
-    state.memory.store(base+OFFSET,claripy.BVV(0,8)); state.memory.store(base+S2+14,values["vram_slot"]); state.memory.store(base+S1+9,claripy.BVV(facing,8)); state.memory.store(base+S1+7,values["intra"]); state.memory.store(base+S1+8,values["frame"]); state.memory.store(base+S1+2,values["image"]); state.memory.store(base+SLOT,values["slot_and_facing"]); state.memory.store(base+FRAME,values["output"])
+def sprite_address(page: int, offset: int, field: int) -> int:
+    return page | ((offset + field) & 0xff)
 
 
-def endpoint(state: angr.SimState, native: bool) -> E:
-    base=NM if native else 0; registers=native_registers(state,NS) if native else assembly_registers(state); watched=(*range(S1,S1+16),*range(S2,S2+16),OFFSET,SLOT,FRAME); return E(**registers,state=claripy.Concat(*(state.memory.load(base+x,1) for x in watched)),constraints=tuple(state.solver.constraints))
+def setup(state: angr.SimState, base: int, offset: int, facing: int, values: dict[str, claripy.ast.BV]) -> None:
+    for address in (*range(S1,S1+0x100),*range(S2,S2+0x100)): state.memory.store(base+address,claripy.BVV(0,8))
+    state.memory.store(base+OFFSET,claripy.BVV(offset,8)); state.memory.store(base+sprite_address(S2,offset,14),values["vram_slot"]); state.memory.store(base+sprite_address(S1,offset,9),claripy.BVV(facing,8)); state.memory.store(base+sprite_address(S1,offset,7),values["intra"]); state.memory.store(base+sprite_address(S1,offset,8),values["frame"]); state.memory.store(base+sprite_address(S1,offset,2),values["image"]); state.memory.store(base+SLOT,values["slot_and_facing"]); state.memory.store(base+FRAME,values["output"])
 
 
-def assembly(values: dict[str,claripy.ast.BV], facing: int) -> list[E]:
+def endpoint(state: angr.SimState, native: bool, offset: int) -> E:
+    base=NM if native else 0; registers=native_registers(state,NS) if native else assembly_registers(state); watched=(*(sprite_address(S1,offset,x) for x in range(16)),*(sprite_address(S2,offset,x) for x in range(16)),OFFSET,SLOT,FRAME); return E(**registers,state=claripy.Concat(*(state.memory.load(base+x,1) for x in watched)),constraints=tuple(state.solver.constraints))
+
+
+def assembly(values: dict[str,claripy.ast.BV], offset: int, facing: int) -> list[E]:
     location=symbol_location(SYMBOLS,"AnimScriptedNPCMovement"); assert linked_bytes(ROM,location,len(BODY))==BODY
     project=angr.Project(rom_window(ROM,location.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={"backend":"blob","arch":ArchPcode("z80:LE:16:default"),"base_addr":0,"entry_point":location.address}); q=location.address
     project.hook(q,Pair(0xc200,q+3),length=3); project.hook(q+3,LoadHigh(OFFSET,q+5),length=2); project.hook(q+5,AddA(14,q+7),length=2); project.hook(q+7,Reg("l","a",q+8),length=1); project.hook(q+8,LoadAtHL(q+9),length=1); project.hook(q+9,DecA(q+10),length=1); project.hook(q+10,SwapA(q+12),length=2); project.hook(q+12,Reg("b","a",q+13),length=1); project.hook(q+13,Pair(0xc100,q+16),length=3); project.hook(q+16,LoadHigh(OFFSET,q+18),length=2); project.hook(q+18,AddA(9,q+20),length=2); project.hook(q+20,Reg("l","a",q+21),length=1); project.hook(q+21,LoadAtHL(q+22),length=1)
     project.hook(q+22,CpBranch(0,q+39,q+26),length=4); project.hook(q+26,CpBranch(4,q+39,q+30),length=4); project.hook(q+30,CpBranch(8,q+39,q+34),length=4); project.hook(q+34,CpBranch(12,q+39,q+38),length=4); project.hook(q+38,Return(),length=1); project.hook(q+39,AddA("b",q+40),length=1); project.hook(q+40,Reg("b","a",q+41),length=1); project.hook(q+41,StoreHighA(SLOT,q+43),length=2); project.hook(q+43,AdvanceBoundary(q+46),length=3); project.hook(q+46,Pair(0xc100,q+49),length=3); project.hook(q+49,LoadHigh(OFFSET,q+51),length=2); project.hook(q+51,AddA(2,q+53),length=2); project.hook(q+53,Reg("l","a",q+54),length=1); project.hook(q+54,LoadHigh(SLOT,q+56),length=2); project.hook(q+56,Reg("b","a",q+57),length=1); project.hook(q+57,LoadHigh(FRAME,q+59),length=2); project.hook(q+59,AddA("b",q+60),length=1); project.hook(q+60,StoreAtHL(q+61),length=1); project.hook(q+61,Return(),length=1)
-    state=project.factory.blank_state(addr=q); set_assembly_registers(state,values); setup(state,0,facing,values); state.regs.sp=claripy.BVV(STACK,16); state.memory.store(STACK,claripy.BVV(RET,16),endness="Iend_LE"); manager=project.factory.simulation_manager(state); manager.explore(find=RET,num_find=4); assert not manager.errored and manager.found; return [endpoint(x,False) for x in manager.found]
+    state=project.factory.blank_state(addr=q); set_assembly_registers(state,values); setup(state,0,offset,facing,values); state.regs.sp=claripy.BVV(STACK,16); state.memory.store(STACK,claripy.BVV(RET,16),endness="Iend_LE"); manager=project.factory.simulation_manager(state); manager.explore(find=RET,num_find=4); assert not manager.errored and manager.found; return [endpoint(x,False,offset) for x in manager.found]
 
 
-def native(values: dict[str,claripy.ast.BV], facing: int) -> list[E]:
-    project=angr.Project(ELF,auto_load_libs=False); function=project.loader.find_symbol("port_anim_scripted_npc_movement"); assert function is not None; state=project.factory.call_state(function.rebased_addr,NS,NM); store_native_registers(state,NS,values); setup(state,NM,facing,values); manager=project.factory.simulation_manager(state); manager.run(); assert not manager.errored and manager.deadended; return [endpoint(x,True) for x in manager.deadended]
+def native(values: dict[str,claripy.ast.BV], offset: int, facing: int) -> list[E]:
+    project=angr.Project(ELF,auto_load_libs=False); function=project.loader.find_symbol("port_anim_scripted_npc_movement"); assert function is not None; state=project.factory.call_state(function.rebased_addr,NS,NM); store_native_registers(state,NS,values); setup(state,NM,offset,facing,values); manager=project.factory.simulation_manager(state); manager.run(); assert not manager.errored and manager.deadended; return [endpoint(x,True,offset) for x in manager.deadended]
 
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),reason="build artifacts missing")
+@pytest.mark.parametrize("offset",range(0,0x100,0x10))
 @pytest.mark.parametrize("facing",[0,4,8,12,1])
-def test_anim_scripted_npc_movement_pathwise_equivalence(facing: int) -> None:
-    values=symbolic_registers("anim_scripted_npc")
+def test_anim_scripted_npc_movement_pathwise_equivalence(offset: int, facing: int) -> None:
+    values=symbolic_registers(f"anim_scripted_npc_{offset:02x}_{facing:02x}")
     for field in ("vram_slot","intra","frame","image","slot_and_facing","output"):
-        values[field]=claripy.BVS(f"anim_scripted_npc_{field}",8)
-    assert_pathwise_equivalent(assembly(values,facing),native(values,facing),(*REGISTERS,"state"))
+        values[field]=claripy.BVS(f"anim_scripted_npc_{offset:02x}_{facing:02x}_{field}",8)
+    assert_pathwise_equivalent(assembly(values,offset,facing),native(values,offset,facing),(*REGISTERS,"state"))
