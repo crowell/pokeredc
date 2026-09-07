@@ -37,6 +37,14 @@ class TailAnimDown(angr.SimProcedure):
   self.state.regs.a=claripy.BVV(1,8); self.state.regs.l=claripy.BVV(7,8); self.state.memory.store(S1+7,self.state.regs.a); self.state.regs.f=claripy.BVV(0x12,8)
   self.state.regs.a=claripy.BVV(2,8); self.state.regs.l=claripy.BVV(2,8); self.state.regs.f=claripy.BVV(0,8); self.state.regs.a=self.state.memory.load(SLOT,1); self.state.regs.b=self.state.regs.a; self.state.regs.a=self.state.memory.load(FRAME,1); wide=claripy.ZeroExt(1,self.state.regs.a)+claripy.ZeroExt(1,self.state.regs.b); self.state.regs.a=wide[7:0]; self.state.regs.f=claripy.If(self.state.regs.a==0,claripy.BVV(0x40,8),claripy.BVV(0,8))|claripy.If((self.state.regs.a&15)<self.state.regs.b&15,claripy.BVV(0x10,8),claripy.BVV(0,8))|claripy.ZeroExt(7,wide[8]); self.state.memory.store(S1+2,self.state.regs.a); self.jump(RET) # type: ignore[override]
 
+
+class TailBoundary(angr.SimProcedure):
+ def run(self):self.jump(RET) # type: ignore[override]
+
+
+class NativeTailBoundary(angr.SimProcedure):
+ def run(self):return None # type: ignore[override]
+
 def setup(s:angr.SimState,b:int,v:claripy.ast.BV,o:claripy.ast.BV)->None:
  for a in (*range(S1,S1+16),*range(S2,S2+16)):s.memory.store(b+a,claripy.BVV(0,8))
  for a,x in ((OFFSET,0),(S2+14,v),(S1+9,0),(S1+7,0),(S1+8,0),(S1+2,0),(SLOT,0),(FRAME,o),(INDEX,0xaa),(COUNTER,0xbb)):s.memory.store(b+a,x if isinstance(x,claripy.ast.BV) else claripy.BVV(x,8))
@@ -46,6 +54,37 @@ def asm(v:dict[str,claripy.ast.BV])->list[E]:
  l=symbol_location(SYMBOLS,'InitScriptedNPCMovement');assert linked_bytes(ROM,l,len(BODY))==BODY;p=angr.Project(rom_window(ROM,l.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={'backend':'blob','arch':ArchPcode('z80:LE:16:default'),'base_addr':0,'entry_point':l.address});q=l.address;p.hook(q,XorA(q+1),length=1);p.hook(q+1,Store(INDEX,q+4),length=3);p.hook(q+4,Imm(8,q+6),length=2);p.hook(q+6,Store(COUNTER,q+9),length=3);p.hook(q+9,TailAnimDown(),length=3);s=p.factory.blank_state(addr=q);set_assembly_registers(s,v);setup(s,0,v['vram'],v['output']);s.regs.sp=claripy.BVV(STACK,16);s.memory.store(STACK,claripy.BVV(RET,16),endness='Iend_LE');m=p.factory.simulation_manager(s);m.explore(find=RET);assert not m.errored and m.found;return [end(x,False) for x in m.found]
 def native(v:dict[str,claripy.ast.BV])->list[E]:
  p=angr.Project(ELF,auto_load_libs=False);f=p.loader.find_symbol('port_init_scripted_npc_movement');assert f;s=p.factory.call_state(f.rebased_addr,NS,NM);store_native_registers(s,NS,v);setup(s,NM,v['vram'],v['output']);m=p.factory.simulation_manager(s);m.run();assert not m.errored and m.deadended;return [end(x,True) for x in m.deadended]
+
+
+def sprite_address(page:int,offset:int,field:int)->int:return page|((offset+field)&0xff)
+
+
+def setup_boundary(s:angr.SimState,b:int,offset:int,v:dict[str,claripy.ast.BV])->None:
+ for a in (*range(S1,S1+0x100),*range(S2,S2+0x100)):s.memory.store(b+a,claripy.BVV(0,8))
+ s.memory.store(b+OFFSET,claripy.BVV(offset,8))
+ for page,name in ((S1,'s1'),(S2,'s2')):
+  for field in range(16):s.memory.store(b+sprite_address(page,offset,field),v[f'{name}_{field}'])
+ for a,name in ((SLOT,'slot'),(FRAME,'frame'),(INDEX,'index'),(COUNTER,'counter')):s.memory.store(b+a,v[name])
+
+
+def boundary_end(s:angr.SimState,n:bool,offset:int)->E:
+ b=NM if n else 0;r=native_registers(s,NS) if n else assembly_registers(s);w=(*(sprite_address(S1,offset,x) for x in range(16)),*(sprite_address(S2,offset,x) for x in range(16)),OFFSET,SLOT,FRAME,INDEX,COUNTER);return E(**r,state=claripy.Concat(*(s.memory.load(b+x,1) for x in w)),constraints=tuple(s.solver.constraints))
+
+
+def asm_boundary(v:dict[str,claripy.ast.BV],offset:int)->list[E]:
+ l=symbol_location(SYMBOLS,'InitScriptedNPCMovement');assert linked_bytes(ROM,l,len(BODY))==BODY;p=angr.Project(rom_window(ROM,l.bank),auto_load_libs=False,rebase_granularity=0x100,main_opts={'backend':'blob','arch':ArchPcode('z80:LE:16:default'),'base_addr':0,'entry_point':l.address});q=l.address;p.hook(q,XorA(q+1),length=1);p.hook(q+1,Store(INDEX,q+4),length=3);p.hook(q+4,Imm(8,q+6),length=2);p.hook(q+6,Store(COUNTER,q+9),length=3);p.hook(q+9,TailBoundary(),length=3);s=p.factory.blank_state(addr=q);set_assembly_registers(s,v);setup_boundary(s,0,offset,v);s.regs.sp=claripy.BVV(STACK,16);s.memory.store(STACK,claripy.BVV(RET,16),endness='Iend_LE');m=p.factory.simulation_manager(s);m.explore(find=RET);assert not m.errored and m.found;return [boundary_end(x,False,offset) for x in m.found]
+
+
+def native_boundary(v:dict[str,claripy.ast.BV],offset:int)->list[E]:
+ p=angr.Project(ELF,auto_load_libs=False);f=p.loader.find_symbol('port_init_scripted_npc_movement');tail=p.loader.find_symbol('port_anim_scripted_npc_movement');assert f and tail;p.hook(tail.rebased_addr,NativeTailBoundary());s=p.factory.call_state(f.rebased_addr,NS,NM);store_native_registers(s,NS,v);setup_boundary(s,NM,offset,v);m=p.factory.simulation_manager(s);m.run();assert not m.errored and m.deadended;return [boundary_end(x,True,offset) for x in m.deadended]
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),reason='build artifacts missing')
 def test_init_scripted_npc_movement_pathwise_equivalence()->None:
  v=symbolic_registers('init_scripted_npc');v['vram']=claripy.BVS('init_scripted_vram',8);v['output']=claripy.BVS('init_scripted_output',8);assert_pathwise_equivalent(asm(v),native(v),(*REGISTERS,'state'))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),reason='build artifacts missing')
+@pytest.mark.parametrize('offset',range(0,0x100,0x10))
+def test_init_scripted_npc_movement_all_slots_compositional_boundary(offset:int)->None:
+ v=symbolic_registers(f'init_scripted_npc_boundary_{offset:02x}')
+ for name in ('slot','frame','index','counter',*(f's1_{x}' for x in range(16)),*(f's2_{x}' for x in range(16))):v[name]=claripy.BVS(f'init_scripted_npc_boundary_{offset:02x}_{name}',8)
+ assert_pathwise_equivalent(asm_boundary(v,offset),native_boundary(v,offset),(*REGISTERS,'state'))

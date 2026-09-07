@@ -31321,14 +31321,14 @@ assembly_symbol = "InitScriptedNPCMovement"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_init_scripted_npc_movement"
 c_source = "verification/ports/init_scripted_npc_movement.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
     "wNPCMovementDirections2Index and wScriptedNPCWalkCounter",
     "the active sprite's animation fields and hSpriteVRAMSlotAndFacing/hSpriteAnimFrameCounter",
 ]
-proof_domain = "all caller registers and flags with active sprite offset zero, facing down, intra-animation counter zero, and symbolic image-base/animation-output values. The initializer stores zero and eight before composing the non-rollover AnimScriptedNPCMovement transition; other facing and counter cases are covered by that callee's separate partial proof but are not yet composed here."
-decoder = "exact 12-byte linked body checked; XOR, both absolute stores, and JP tail seam execute individually. The animation tail boundary preserves the complete applicable face-down/non-rollover state transition, while native C calls the actual AnimScriptedNPCMovement port."
+proof_domain = "all caller registers and canonical flags, every valid 16-byte sprite offset, arbitrary active sprite-state slots and animation HRAM, plus a full down-facing/non-rollover end-to-end case. The initializer stores zero and eight before composing the now-proven AnimScriptedNPCMovement transition."
+decoder = "exact 12-byte linked body checked for all 16 active slots; XOR, both absolute stores, and the JP tail execute individually. AnimScriptedNPCMovement is an explicit complete compositional boundary, with an additional end-to-end transition through its down-facing/non-rollover path."
 
 [[function]]
 assembly_symbol = "GetSpriteScreenXYPointerCommon"
