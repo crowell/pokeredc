@@ -29730,6 +29730,21 @@ proof_domain = "all initial register, canonical-flag, scroll/hardware, hWY, and 
 decoder = "the exact complete 14-byte linked body executes under angr; only the independently proven Bankswitch/TitleScroll call boundary and the XOR A / LDH instruction shims are used, while production C calls real port_title_scroll and preserves the far-call bank and saved-AF-to-BC effects"
 
 [[function]]
+assembly_symbol = "TitleScreenAnimateBallIfStarterOut"
+assembly_source = "engine/movie/title2.asm"
+c_symbol = "port_title_screen_animate_ball_if_starter_out"
+c_source = "verification/ports/title_screen_animate_ball_if_starter_out.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wTitleMonSpecies",
+    "rLY, rSCX, and wShadowOAMSprite10YCoord",
+    "whether _TitleScroll is tail-called and its complete input/post-state",
+]
+proof_domain = "all initial registers, canonical flags, scroll state, and all 256 wTitleMonSpecies values, covering each of the three starter matches and the complete non-starter complement; the independently proven complete TitleScroll_WaitBall transition is composed at the starter tail call"
+decoder = "the exact complete 24-byte linked body executes under angr with only the absolute load and three CP instruction shims plus the independently proven _TitleScroll boundary; native C performs all comparisons and calls the real port_title_scroll_body only for the three starters"
+
+[[function]]
 assembly_symbol = "InitializeToggleableObjectsFlags"
 assembly_source = "engine/overworld/toggleable_objects.asm"
 c_symbol = "port_initialize_toggleable_objects_flags"
