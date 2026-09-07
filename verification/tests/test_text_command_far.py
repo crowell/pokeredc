@@ -37,6 +37,12 @@ SENTINEL = 0xFFFF
 H_LOADED_ROM_BANK = 0xFFB8
 R_ROMB = 0x2000
 TEXT_PTR = 0xD360
+FAR_TEXT_PTR = 0xD400
+
+W_LETTER_PRINTING_DELAY_FLAGS = 0xD358
+H_CLEAR_LETTER_PRINTING_DELAY_FLAGS = 0xFFF4
+W_TEXT_DEST = 0xCC3A
+TX_END = 0x50
 
 HANDLER_EXPECTED = bytes.fromhex(
     "e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b"
@@ -58,6 +64,11 @@ class Endpoint:
     far_low: claripy.ast.BV
     far_high: claripy.ast.BV
     far_bank: claripy.ast.BV
+    delay_flags: claripy.ast.BV
+    clear_delay_flags: claripy.ast.BV
+    text_dest_low: claripy.ast.BV
+    text_dest_high: claripy.ast.BV
+    far_command: claripy.ast.BV
     constraints: tuple[claripy.ast.Bool, ...]
 
 
@@ -67,9 +78,15 @@ def _inputs(prefix: str) -> dict[str, claripy.ast.BV]:
     values["l"] = claripy.BVV(TEXT_PTR & 0xFF, 8)
     values["loaded_bank"] = claripy.BVS(f"{prefix}_loaded_bank", 8)
     values["romb"] = claripy.BVS(f"{prefix}_romb", 8)
-    values["far_low"] = claripy.BVS(f"{prefix}_far_low", 8)
-    values["far_high"] = claripy.BVS(f"{prefix}_far_high", 8)
+    values["far_low"] = claripy.BVV(FAR_TEXT_PTR & 0xFF, 8)
+    values["far_high"] = claripy.BVV(FAR_TEXT_PTR >> 8, 8)
     values["far_bank"] = claripy.BVS(f"{prefix}_far_bank", 8)
+    values["delay_flags"] = claripy.BVS(f"{prefix}_delay_flags", 8)
+    values["clear_delay_flags"] = claripy.BVS(
+        f"{prefix}_clear_delay_flags", 8
+    )
+    values["text_dest_low"] = claripy.BVS(f"{prefix}_text_dest_low", 8)
+    values["text_dest_high"] = claripy.BVS(f"{prefix}_text_dest_high", 8)
     return values
 
 
@@ -84,6 +101,16 @@ def _setup(
     state.memory.store(base + TEXT_PTR, values["far_low"])
     state.memory.store(base + TEXT_PTR + 1, values["far_high"])
     state.memory.store(base + TEXT_PTR + 2, values["far_bank"])
+    state.memory.store(base + FAR_TEXT_PTR, claripy.BVV(TX_END, 8))
+    state.memory.store(
+        base + W_LETTER_PRINTING_DELAY_FLAGS, values["delay_flags"]
+    )
+    state.memory.store(
+        base + H_CLEAR_LETTER_PRINTING_DELAY_FLAGS,
+        values["clear_delay_flags"],
+    )
+    state.memory.store(base + W_TEXT_DEST, values["text_dest_low"])
+    state.memory.store(base + W_TEXT_DEST + 1, values["text_dest_high"])
 
 
 def _endpoint(state: angr.SimState, native: bool) -> Endpoint:
@@ -96,6 +123,15 @@ def _endpoint(state: angr.SimState, native: bool) -> Endpoint:
         far_low=state.memory.load(base + TEXT_PTR, 1),
         far_high=state.memory.load(base + TEXT_PTR + 1, 1),
         far_bank=state.memory.load(base + TEXT_PTR + 2, 1),
+        delay_flags=state.memory.load(
+            base + W_LETTER_PRINTING_DELAY_FLAGS, 1
+        ),
+        clear_delay_flags=state.memory.load(
+            base + H_CLEAR_LETTER_PRINTING_DELAY_FLAGS, 1
+        ),
+        text_dest_low=state.memory.load(base + W_TEXT_DEST, 1),
+        text_dest_high=state.memory.load(base + W_TEXT_DEST + 1, 1),
+        far_command=state.memory.load(base + FAR_TEXT_PTR, 1),
         constraints=tuple(state.solver.constraints),
     )
 
@@ -146,12 +182,24 @@ class CopyRegister(angr.SimProcedure):
         self.jump(self.next_address)
 
 
-class ProcessorBoundary(angr.SimProcedure):
+class ProcessorTxEndTransition(angr.SimProcedure):
+    """Complete proved TextCommandProcessor transition for a TX_END stream."""
+
     def __init__(self, next_address: int) -> None:
         super().__init__()
         self.next_address = next_address
 
     def run(self) -> None:  # type: ignore[override]
+        # The independently proved processor saves the old delay byte/F,
+        # performs its setup, consumes TX_END, restores both, and returns.
+        old_delay = self.state.memory.load(W_LETTER_PRINTING_DELAY_FLAGS, 1)
+        saved_f = self.state.regs.f
+        self.state.memory.store(W_TEXT_DEST, self.state.regs.c)
+        self.state.memory.store(W_TEXT_DEST + 1, self.state.regs.b)
+        self.state.regs.hl += 1
+        self.state.regs.a = old_delay
+        self.state.regs.f = saved_f
+        self.state.memory.store(W_LETTER_PRINTING_DELAY_FLAGS, old_delay)
         self.jump(self.next_address)
 
 
@@ -162,13 +210,6 @@ class Jump(angr.SimProcedure):
 
     def run(self) -> None:  # type: ignore[override]
         self.jump(self.target)
-
-
-class NativeProcessorBoundary(angr.SimProcedure):
-    """No-op return for the independently proved processor transition."""
-
-    def run(self) -> None:  # type: ignore[override]
-        return None
 
 
 def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
@@ -202,7 +243,11 @@ def _assembly(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     project.hook(base + 0x0E, PushPair("h", "l", base + 0x0F), length=1)
     project.hook(base + 0x0F, CopyRegister("l", "e", base + 0x10), length=1)
     project.hook(base + 0x10, CopyRegister("h", "d", base + 0x11), length=1)
-    project.hook(base + 0x11, ProcessorBoundary(base + 0x14), length=3)
+    project.hook(
+        base + 0x11,
+        ProcessorTxEndTransition(base + 0x14),
+        length=3,
+    )
     project.hook(base + 0x14, PopPair("h", "l", base + 0x15), length=1)
     project.hook(base + 0x15, PopPair("a", "f", base + 0x16), length=1)
     project.hook(base + 0x16, Sm83StoreAHighImmediate(0xB8, base + 0x18), length=2)
@@ -227,7 +272,9 @@ def _native(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
     function = project.loader.find_symbol("port_text_command_far")
     processor = project.loader.find_symbol("port_text_command_processor")
     assert function is not None and processor is not None
-    project.hook(processor.rebased_addr, NativeProcessorBoundary())
+    # Deliberately do not hook the processor: native FAR must call and execute
+    # the real C port.  The far stream's TX_END path is the independently
+    # proved processor transition instantiated above on the assembly side.
 
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
@@ -255,5 +302,10 @@ def test_text_command_far_pathwise_equivalence() -> None:
             "far_low",
             "far_high",
             "far_bank",
+            "delay_flags",
+            "clear_delay_flags",
+            "text_dest_low",
+            "text_dest_high",
+            "far_command",
         ),
     )

@@ -30720,19 +30720,14 @@ c_symbol = "port_text_command_far"
 c_source = "verification/ports/text_command_far.c"
 status = "proven"
 observables = [
-    "A",
-    "F",
-    "B",
-    "C",
-    "D",
-    "E",
-    "HL",
-    "hLoadedROMBank",
-    "rROMB",
-    "far-command argument bytes",
+    "all registers and canonical flags",
+    "hLoadedROMBank and rROMB",
+    "the three far-command argument bytes and restored advanced outer text pointer",
+    "wLetterPrintingDelayFlags, hClearLetterPrintingDelayFlags, and both wTextDest bytes",
+    "the far stream command byte and complete recursive TextCommandProcessor TX_END transition",
 ]
-proof_domain = "all general-register and canonical-flag inputs, an arbitrary 3-byte far-command argument at a fixed text pointer, and arbitrary initial hLoadedROMBank/rROMB values; the recursive TextCommandProcessor call is treated as a no-op compositional boundary, while the bank switch, D:E far pointer load, HL restoration, and bank restoration are exercised"
-decoder = "exact 30-byte linked body e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b verified; SM83 HL+ loads and LDH stores are shimmed, the recursive processor call is replaced by a returning boundary, and the final jp NextTextCommand is the terminal sentinel"
+proof_domain = "all general-register/canonical-flag, delay-control, text-destination, and bank inputs with a concrete representative far pointer whose stream contains TX_END; the assembly side composes through the complete independently proved TextCommandProcessor TX_END transition, while native C calls and executes the actual port_text_command_processor; outer pointer and bank restoration are then proved for the complete handler"
+decoder = "exact 30-byte linked body e1f0b8f52a5f2a572ae0b8ea0020e56b62cd401be1f1e0b8ea0020c3551b verified; only individual SM83 stack, HL+, LDH, and absolute-store instructions plus the independently proved recursive processor transition are shimmed on the assembly side; native FAR executes the real processor C body, including setup, TX_END fetch, delay restoration, and return, before the exact outer continuation"
 
 [[function]]
 assembly_symbol = "LoadCopyrightAndTextBoxTiles"

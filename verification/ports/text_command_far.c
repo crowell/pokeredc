@@ -15,7 +15,7 @@
  *   ld [rROMB], a
  *   push hl                      ; save ptr past the 3-byte arg
  *   ld l, e / ld h, d
- *   call TextCommandProcessor    ; recurse (proved compositional boundary)
+ *   call TextCommandProcessor    ; recurse
  *   pop hl                       ; restore ptr past the 3-byte arg
  *   pop af                       ; restore bank
  *   ldh [hLoadedROMBank], a
@@ -24,8 +24,8 @@
  *
  * In the C port the return address is the C call frame, so we keep HL as the
  * far pointer source, load the 3-byte argument, switch banks, recurse into
- * port_text_command_processor (boundary), then restore HL to just past the
- * 3-byte argument and restore the bank. */
+ * port_text_command_processor, then restore HL to just past the 3-byte
+ * argument and restore the bank. */
 
 #define H_LOADED_ROM_BANK 0xFFB8u
 #define R_ROMB 0x2000u
