@@ -364,6 +364,30 @@ static void test_text_command_move_composition(uint8_t *m,
 	puts("PASS: mac text loop composes TX_MOVE and uses its replacement cursor");
 }
 
+static void test_text_command_box_composition(uint8_t *m,
+	const struct mac_rom *rom)
+{
+	struct mac_text text;
+	unsigned stream = PORT_ROM_BACKING_BASE + 0x6000;
+
+	gb_reset_memory(m, rom);
+	m[H_LOADED_ROM_BANK] = m[R_ROMB] = 7;
+	port_sync_rom_window(m, 7);
+	/* TX_BOX $c3a0, height 2, width 3; TX_END. */
+	const uint8_t commands[] = {0x04, 0xa0, 0xc3, 0x02, 0x03, 0x50};
+	memcpy(m + stream, commands, sizeof(commands));
+	text_begin(&text, m, 1, 0x6000);
+	for (unsigned frame = 0; frame != 16 && text.active; ++frame)
+		text_tick(&text, m, 0, 0);
+	assert(!text.active);
+	assert(m[0xc3a0] == 0x79 && m[0xc3a4] == 0x7b);
+	assert(m[0xc3b4] == 0x7c && m[0xc3b8] == 0x7c);
+	assert(m[0xc3c8] == 0x7c);
+	assert(m[0xc3dc] == 0x7d && m[0xc3e0] == 0x7e);
+	assert(m[H_LOADED_ROM_BANK] == 7 && m[R_ROMB] == 7);
+	puts("PASS: mac text loop composes TX_BOX through the real border port");
+}
+
 static void test_map_dialogue(uint8_t *m, const struct mac_rom *rom,
 	struct mac_kernel *k, struct mac_game *g, unsigned id, const uint8_t *expected_tiles)
 {
@@ -516,6 +540,7 @@ int main(void)
 	test_text_command_ram_composition(memory, &rom);
 	test_text_command_bcd_composition(memory, &rom);
 	test_text_command_move_composition(memory, &rom);
+	test_text_command_box_composition(memory, &rom);
 	test_oak(memory, &rom);
 	free(memory);
 	rom_unload(&rom);
