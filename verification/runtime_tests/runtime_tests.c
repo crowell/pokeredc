@@ -388,6 +388,24 @@ static void test_text_command_box_composition(uint8_t *m,
 	puts("PASS: mac text loop composes TX_BOX through the real border port");
 }
 
+static void test_text_command_low_composition(uint8_t *m,
+	const struct mac_rom *rom)
+{
+	struct mac_text text;
+	unsigned stream = PORT_ROM_BACKING_BASE + 0x6000;
+
+	gb_reset_memory(m, rom);
+	/* TX_LOW; TX_START "C"; TX_END. */
+	const uint8_t commands[] = {0x05, 0x00, 0x82, 0x50, 0x50};
+	memcpy(m + stream, commands, sizeof(commands));
+	text_begin(&text, m, 1, 0x6000);
+	for (unsigned frame = 0; frame != 16 && text.active; ++frame)
+		text_tick(&text, m, 0, 0);
+	assert(!text.active);
+	assert(m[W_TILE_MAP + 16 * 20 + 1] == 0x82);
+	puts("PASS: mac text loop composes TX_LOW and renders on the bottom row");
+}
+
 static void test_map_dialogue(uint8_t *m, const struct mac_rom *rom,
 	struct mac_kernel *k, struct mac_game *g, unsigned id, const uint8_t *expected_tiles)
 {
@@ -541,6 +559,7 @@ int main(void)
 	test_text_command_bcd_composition(memory, &rom);
 	test_text_command_move_composition(memory, &rom);
 	test_text_command_box_composition(memory, &rom);
+	test_text_command_low_composition(memory, &rom);
 	test_oak(memory, &rom);
 	free(memory);
 	rom_unload(&rom);

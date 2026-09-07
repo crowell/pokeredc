@@ -9,6 +9,7 @@ void port_text_command_ram(struct cpu_register_state *, port_u8 *);
 void port_text_command_bcd(struct cpu_register_state *, port_u8 *);
 void port_text_command_move(struct cpu_register_state *, port_u8 *);
 void port_text_command_box(struct cpu_register_state *, port_u8 *);
+void port_text_command_low(struct cpu_register_state *, port_u8 *);
 
 static void text_finish(struct mac_text *t, uint8_t *m)
 {
@@ -194,6 +195,16 @@ void text_tick(struct mac_text *t, uint8_t *m, uint8_t pressed, uint8_t held)
 			m[H_LOADED_ROM_BANK] = (port_u8)saved_bank;
 			m[R_ROMB] = (port_u8)saved_bank;
 			port_sync_rom_window(m, (port_u8)saved_bank);
+		} else if (command == 0x05) {
+			struct cpu_register_state r = {
+				.b = (port_u8)(t->destination >> 8),
+				.c = (port_u8)t->destination,
+				.h = (port_u8)(t->pointer >> 8),
+				.l = (port_u8)t->pointer,
+			};
+			port_text_command_low(&r, m);
+			t->pointer = r.h * 256u + r.l;
+			t->destination = r.b * 256u + r.c;
 		} else if (command >= 0x14 && command <= 0x16) {
 			/* Preserve the original OakSpeechText2 Nidorina cry, even though
 			 * the displayed picture is Nidorino. */
