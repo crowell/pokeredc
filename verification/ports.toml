@@ -18069,10 +18069,14 @@ c_symbol = "port_remove_item_from_inventory_wrapper"
 c_source = "verification/ports/remove_item_from_inventory_wrapper.c"
 status = "proven"
 observables = [
-    "carry flag (clear on success, set on failure)",
+    "all registers and canonical flags",
+    "hLoadedROMBank and rROMB",
+    "wWhichPokemon, wItemQuantity, wMaxItemQuantity, and all affected list/menu globals",
+    "the complete bag or PC inventory region",
+    "the complete semantic RemoveItemFromInventory_ call input and arbitrary matching proven post-state",
 ]
-proof_domain = "all general-register and canonical-flag inputs; inner function inlined as state machine"
-decoder = "exact 10-byte linked body checked; `homecall` modeled as bank switch + call + restore; `call RemoveItemFromInventory_` inlined as state machine (port_remove_item_from_inventory); `ret` runs natively"
+proof_domain = "all general-register/canonical-flag, bank, selection, quantity, menu/global, and complete inventory inputs for both valid inventory origins: the 20-slot bag and 50-slot PC box; the independently proven RemoveItemFromInventory_ body receives an arbitrary matching complete post-state after every semantic call input is proved equal"
+decoder = "the exact complete 21-byte linked homecall wrapper f0b8f53e03e0b8ea0020cd744ef1e0b8ea0020c9 executes under angr through bank save/switch, inner call, AF restore, bank restore, and RET; native C calls the real inner symbol through a complete state adapter, writes every affected global back, uses the correct $2000 MBC1 register, and preserves the exact wrapper AF contract"
 
 
 
