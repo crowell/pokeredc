@@ -63,6 +63,7 @@ class Scenario:
     status4: int
     direction: int
     counter: int
+    index: int = 0
 
 
 SCENARIOS = (
@@ -70,6 +71,11 @@ SCENARIOS = (
     Scenario("initialize", 0x80, 0, 0, 2),
     Scenario("down_step", 0x80, 0x80, 0, 2),
     Scenario("down_counter_rollover", 0x80, 0x80, 0, 1),
+    Scenario("up_step", 0x80, 0x80, 0x40, 2),
+    Scenario("left_step", 0x80, 0x80, 0x80, 2),
+    Scenario("right_step", 0x80, 0x80, 0xc0, 2),
+    Scenario("end_marker", 0x80, 0x80, 0xff, 2),
+    Scenario("index_page_carry", 0x80, 0x80, 0, 2, 0x80),
     Scenario("unrecognized_direction", 0x80, 0x80, 1, 2),
 )
 
@@ -201,85 +207,78 @@ class BranchCarry(angr.SimProcedure):
         self.successors.add_successor(no, self.when_clear, ~condition, "Ijk_Boring")
 
 
-class PointerYBoundary(angr.SimProcedure):
-    """Complete GetSpriteScreenYPointer tail through its proven common helper."""
+class PointerBoundary(angr.SimProcedure):
+    """Complete an X/Y pointer tail through its proven common helper."""
 
-    def __init__(self, next_address: int) -> None:
+    def __init__(self, field: int, next_address: int) -> None:
         super().__init__()
+        self.field = field
         self.next_address = next_address
 
     def run(self) -> None:  # type: ignore[override]
         offset = self.state.memory.load(OFFSET, 1)
-        self.state.regs.a = offset + 4
-        self.state.regs.b = claripy.BVV(4, 8)
+        self.state.regs.a = offset + self.field
+        self.state.regs.b = claripy.BVV(self.field, 8)
         self.state.regs.h = claripy.BVV(0xc1, 8)
         self.state.regs.l = self.state.regs.a
         self.state.regs.f = claripy.If(
             self.state.regs.a == 0, claripy.BVV(0x40, 8), claripy.BVV(0, 8)
         ) | claripy.If(
-            (offset & 0x0f) + 4 > 0x0f,
+            (offset & 0x0f) + self.field > 0x0f,
             claripy.BVV(0x10, 8),
             claripy.BVV(0, 8),
-        ) | claripy.ZeroExt(7, claripy.ZeroExt(1, offset + 4)[8])
+        ) | claripy.ZeroExt(7, claripy.ZeroExt(1, offset + self.field)[8])
         self.jump(self.next_address)
 
 
-class AnimDownBoundary(angr.SimProcedure):
-    """Complete valid-facing/down, non-rollover animation transition."""
+class TailBoundary(angr.SimProcedure):
+    """A proven tail callee boundary that preserves its complete call input."""
 
     def __init__(self, next_address: int) -> None:
         super().__init__()
         self.next_address = next_address
 
     def run(self) -> None:  # type: ignore[override]
-        self.state.regs.a = claripy.BVV(0, 8)
-        self.state.regs.b = claripy.BVV(0, 8)
-        self.state.regs.h = claripy.BVV(0xc1, 8)
-        self.state.regs.l = claripy.BVV(7, 8)
-        self.state.memory.store(S1 + 7, claripy.BVV(1, 8))
-        self.state.regs.l = claripy.BVV(2, 8)
-        self.state.memory.store(S1 + 2, claripy.BVV(0, 8))
-        self.state.regs.f = claripy.BVV(0x40, 8)
         self.jump(self.next_address)
 
 
 class InitBoundary(angr.SimProcedure):
-    """Complete initializer tail in the down/non-rollover composition domain."""
+    """Proven InitScriptedNPCMovement tail boundary."""
 
     def run(self) -> None:  # type: ignore[override]
-        self.state.regs.a = claripy.BVV(0, 8)
-        self.state.memory.store(INDEX, self.state.regs.a)
-        self.state.regs.a = claripy.BVV(8, 8)
-        self.state.memory.store(COUNTER, self.state.regs.a)
-        self.state.regs.a = claripy.BVV(0, 8)
-        self.state.regs.b = claripy.BVV(0, 8)
-        self.state.regs.h = claripy.BVV(0xc1, 8)
-        self.state.regs.l = claripy.BVV(2, 8)
-        self.state.memory.store(S1 + 7, claripy.BVV(1, 8))
-        self.state.memory.store(S1 + 2, claripy.BVV(0, 8))
-        self.state.regs.f = claripy.BVV(0x40, 8)
         self.jump(RETURN)
+
+
+class NativeBoundary(angr.SimProcedure):
+    def run(self) -> None:  # type: ignore[override]
+        return None
+
+
+def sprite_address(page: int, offset: int, field: int) -> int:
+    return page | ((offset + field) & 0xff)
 
 
 def setup(
     state: angr.SimState,
     base: int,
     scenario: Scenario,
+    offset: int,
     coordinate: claripy.ast.BV,
 ) -> None:
-    for address in (*range(S1, S1 + 16), *range(S2, S2 + 16)):
+    for address in (*range(S1, S1 + 0x100), *range(S2, S2 + 0x100)):
         state.memory.store(base + address, claripy.BVV(0, 8))
     for address, value in (
-        (OFFSET, 0),
-        (S1 + 4, coordinate),
-        (S1 + 9, 0),
-        (S2 + 14, 1),
+        (OFFSET, offset),
+        (sprite_address(S1, offset, 4), coordinate),
+        (sprite_address(S1, offset, 6), coordinate),
+        (sprite_address(S1, offset, 9), 0),
+        (sprite_address(S2, offset, 14), 1),
         (SLOT, 0),
         (FRAME, 0),
         (STATUS4, scenario.status4),
         (STATUS5, scenario.status5),
-        (DIRECTIONS, scenario.direction),
-        (INDEX, 0),
+        (DIRECTIONS + scenario.index, scenario.direction),
+        (INDEX, scenario.index),
         (COUNTER, scenario.counter),
     ):
         state.memory.store(
@@ -288,7 +287,7 @@ def setup(
         )
 
 
-def endpoint(state: angr.SimState, native: bool) -> Endpoint:
+def endpoint(state: angr.SimState, native: bool, scenario: Scenario, offset: int) -> Endpoint:
     base = NATIVE_MEMORY if native else 0
     registers = (
         native_registers(state, NATIVE_STATE)
@@ -296,11 +295,11 @@ def endpoint(state: angr.SimState, native: bool) -> Endpoint:
         else assembly_registers(state)
     )
     watched = (
-        *range(S1, S1 + 16),
-        *range(S2, S2 + 16),
+        *(sprite_address(S1, offset, field) for field in range(16)),
+        *(sprite_address(S2, offset, field) for field in range(16)),
         STATUS4,
         STATUS5,
-        DIRECTIONS,
+        DIRECTIONS + scenario.index,
         INDEX,
         COUNTER,
         OFFSET,
@@ -315,7 +314,7 @@ def endpoint(state: angr.SimState, native: bool) -> Endpoint:
 
 
 def assembly(
-    inputs: dict[str, claripy.ast.BV], scenario: Scenario
+    inputs: dict[str, claripy.ast.BV], scenario: Scenario, offset: int
 ) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "DoScriptedNPCMovement")
     initializer = symbol_location(SYMBOLS, "InitScriptedNPCMovement")
@@ -345,23 +344,26 @@ def assembly(
     project.hook(start + 22, Sm83AddRegister("l", start + 23), length=1)
     project.hook(start + 24, BranchCarry(start + 26, start + 27), length=2)
     project.hook(start + 27, LoadAtHL(start + 28), length=1)
-    for offset, immediate, when_equal, when_unequal in (
+    for instruction_offset, immediate, when_equal, when_unequal in (
         (28, 0x40, start + 32, start + 41),
         (41, 0x00, start + 45, start + 54),
         (54, 0x80, start + 58, start + 67),
         (67, 0xc0, start + 71, start + 80),
     ):
         project.hook(
-            start + offset,
-            Sm83CpImmediate(immediate, start + offset + 2),
+            start + instruction_offset,
+            Sm83CpImmediate(immediate, start + instruction_offset + 2),
             length=2,
         )
         project.hook(
-            start + offset + 2,
+            start + instruction_offset + 2,
             BranchZ(when_equal, when_unequal),
             length=2,
         )
-    project.hook(start + 45, PointerYBoundary(start + 48), length=3)
+    project.hook(start + 32, PointerBoundary(4, start + 35), length=3)
+    project.hook(start + 45, PointerBoundary(4, start + 48), length=3)
+    project.hook(start + 58, PointerBoundary(6, start + 61), length=3)
+    project.hook(start + 71, PointerBoundary(6, start + 74), length=3)
     project.hook(start + 80, Sm83CpImmediate(0xff, start + 82), length=2)
     project.hook(start + 82, BranchZ(RETURN, RETURN), length=1)
     project.hook(start + 84, LoadAtHL(start + 85), length=1)
@@ -370,7 +372,7 @@ def assembly(
     project.hook(start + 87, LoadHigh(OFFSET, start + 89), length=2)
     project.hook(start + 89, Sm83AddImmediate(9, start + 91), length=2)
     project.hook(start + 93, StoreAtHL(start + 94), length=1)
-    project.hook(start + 94, AnimDownBoundary(start + 97), length=3)
+    project.hook(start + 94, TailBoundary(start + 97), length=3)
     project.hook(start + 97, Pair(COUNTER, start + 100), length=3)
     project.hook(start + 100, Sm83DecAtHl(start + 101), length=1)
     project.hook(start + 101, BranchZ(start + 102, RETURN), length=1)
@@ -380,26 +382,30 @@ def assembly(
 
     state = project.factory.blank_state(addr=start)
     set_assembly_registers(state, inputs)
-    setup(state, 0, scenario, inputs["coordinate"])
+    setup(state, 0, scenario, offset, inputs["coordinate"])
     state.regs.sp = claripy.BVV(STACK, 16)
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
     manager.explore(find=RETURN, num_find=4)
     assert not manager.errored and manager.found
-    return [endpoint(found, False) for found in manager.found]
+    return [endpoint(found, False, scenario, offset) for found in manager.found]
 
 
-def native(inputs: dict[str, claripy.ast.BV], scenario: Scenario) -> list[Endpoint]:
+def native(inputs: dict[str, claripy.ast.BV], scenario: Scenario, offset: int) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_do_scripted_npc_movement")
-    assert function is not None
+    initializer = project.loader.find_symbol("port_init_scripted_npc_movement")
+    animation = project.loader.find_symbol("port_anim_scripted_npc_movement")
+    assert function is not None and initializer is not None and animation is not None
+    project.hook(initializer.rebased_addr, NativeBoundary())
+    project.hook(animation.rebased_addr, NativeBoundary())
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, inputs)
-    setup(state, NATIVE_MEMORY, scenario, inputs["coordinate"])
+    setup(state, NATIVE_MEMORY, scenario, offset, inputs["coordinate"])
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
-    return [endpoint(deadended, True) for deadended in manager.deadended]
+    return [endpoint(deadended, True, scenario, offset) for deadended in manager.deadended]
 
 
 @pytest.mark.skipif(
@@ -407,13 +413,14 @@ def native(inputs: dict[str, claripy.ast.BV], scenario: Scenario) -> list[Endpoi
     reason="build artifacts missing",
 )
 @pytest.mark.parametrize("scenario", SCENARIOS, ids=lambda scenario: scenario.name)
-def test_do_scripted_npc_movement_pathwise_equivalence(scenario: Scenario) -> None:
-    inputs = symbolic_registers(f"scripted_npc_{scenario.name}")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_do_scripted_npc_movement_pathwise_equivalence(scenario: Scenario, offset: int) -> None:
+    inputs = symbolic_registers(f"scripted_npc_{scenario.name}_{offset:02x}")
     inputs["coordinate"] = claripy.BVS(
-        f"scripted_npc_{scenario.name}_coordinate", 8
+        f"scripted_npc_{scenario.name}_{offset:02x}_coordinate", 8
     )
     assert_pathwise_equivalent(
-        assembly(inputs, scenario),
-        native(inputs, scenario),
+        assembly(inputs, scenario, offset),
+        native(inputs, scenario, offset),
         (*REGISTERS, "state"),
     )
