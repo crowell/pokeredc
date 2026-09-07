@@ -28291,6 +28291,21 @@ proof_domain = "all register/flag inputs with the proven TextScriptEnd contract 
 decoder = "exact 3-byte linked body checked (jp TextScriptEnd); the tail composes the real port_text_script_end in one angr path-equivalence test"
 
 [[function]]
+assembly_symbol = "OaksLabScript_RemoveParcel"
+assembly_source = "scripts/OaksLab.asm"
+c_symbol = "port_oaks_lab_script_remove_parcel"
+c_source = "verification/ports/oaks_lab_remove_parcel.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "the complete 20-slot wBagItems table including count and terminator",
+    "wWhichPokemon and wItemQuantity",
+    "the complete RemoveItemFromInventory call-input state and arbitrary matching proven post-state",
+]
+proof_domain = "all caller registers and canonical flags, symbolic bag count/quantities and prior selection globals, every possible Parcel position in the 20-slot bag, and the absent $ff-terminated path; the complete proven RemoveItemFromInventory transition composes at the found tail"
+decoder = "the exact complete 33-byte linked body 211ed30100002afeffc8fe462804230c18f4211dd379ea92cf3e01ea96cfc3bb2b executes under angr through the real item/quantity scan loop, both comparisons, absent return, found index/quantity writes, and tail jump; only individual unsupported SM83 instructions and the independently proven inventory-removal transition are shimmed, while native C executes the actual loop and calls the real wrapper symbol"
+
+[[function]]
 assembly_symbol = "BlackbeltAI"
 assembly_source = "engine/battle/trainer_ai.asm"
 c_symbol = "port_blackbelt_ai"
