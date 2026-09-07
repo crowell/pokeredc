@@ -13090,15 +13090,15 @@ assembly_symbol = "UpdateSpriteInWalkingAnimation"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_update_sprite_in_walking_animation"
 c_source = "verification/ports/update_sprite_walking_animation.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
     "hCurrentSpriteOffset and the active sprite's state-data-1 bytes 3 through 8",
     "the active sprite's walk-animation counter",
     "Random adapter memory when the walking counter reaches zero",
 ]
-proof_domain = "all register inputs with H=$c1, current sprite offset zero, symbolic frame/vector/pixel bytes, and every walk-animation counter except one, so the real linked body reaches RET NZ after a nonterminal walking tick. Both intra-animation-frame branches are covered symbolically. The walking-completion scripted and Random paths, other sprite offsets, and inherited H pages are outside this current proof domain."
-decoder = "exact 43-byte linked prefix through RET NZ asserted; individual SM83 high-memory loads, arithmetic, HLI accesses, stores, frame branch, and conditional return execute under angr. The C body includes the remaining complete assembly flow and calls port_random_generate_memory at its real Random call site, but that composition is not yet included in the proof domain."
+proof_domain = "all caller registers and canonical flags with the gameplay H=$c1 page, symbolic frame/vector/pixel bytes, every nonterminal walk-animation counter, every valid sprite offset on completion, every scripted movement byte below WALK, both WALK and STAY Random completions, and symbolic hRandomAdd/hRandomSub/rDIV inputs. Random composes through its complete separately-proven transition"
+decoder = "the complete exact 89-byte linked body executes through audited SM83 adapters covering both intra-frame branches, coordinate updates, RET NZ, scripted-ready completion, Random delay initialization, vector clearing, and final B/C preservation; production calls the real proven Random adapter"
 
 
 

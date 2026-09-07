@@ -72,6 +72,32 @@ dec_a(struct cpu_register_state *r)
 		r->f |= PORT_FLAG_H;
 }
 
+static void
+dec_h(struct cpu_register_state *r)
+{
+	port_u8 before = r->h;
+
+	r->h--;
+	r->f = (port_u8)((r->f & PORT_FLAG_C) | PORT_FLAG_N);
+	if (r->h == 0)
+		r->f |= PORT_FLAG_Z;
+	if ((before & 0x0fu) == 0)
+		r->f |= PORT_FLAG_H;
+}
+
+static void
+inc_l(struct cpu_register_state *r)
+{
+	port_u8 before = r->l;
+
+	r->l++;
+	r->f &= PORT_FLAG_C;
+	if (r->l == 0)
+		r->f |= PORT_FLAG_Z;
+	if ((before & 0x0fu) == 0x0fu)
+		r->f |= PORT_FLAG_H;
+}
+
 /* Port of UpdateSpriteInWalkingAnimation in engine/overworld/movement.asm. */
 __attribute__((noinline, used)) void
 port_update_sprite_in_walking_animation(struct cpu_register_state *r,
@@ -138,7 +164,7 @@ port_update_sprite_in_walking_animation(struct cpu_register_state *r,
 		r->a = current;
 		inc_a(r);
 		r->l = r->a;
-		r->h--;
+		dec_h(r);
 		memory[(port_u16)(((port_u16)r->h << 8) | r->l)] = 1;
 		return;
 	}
@@ -150,7 +176,7 @@ port_update_sprite_in_walking_animation(struct cpu_register_state *r,
 	r->a = memory[H_RANDOM_ADD];
 	and_a(r, 0x7fu);
 	memory[(port_u16)(((port_u16)r->h << 8) | r->l)] = r->a;
-	r->h--;
+	dec_h(r);
 	r->a = current;
 	inc_a(r);
 	r->l = r->a;
@@ -162,6 +188,7 @@ port_update_sprite_in_walking_animation(struct cpu_register_state *r,
 	r->b = memory[(port_u16)(((port_u16)r->h << 8) | r->l)];
 	memory[(port_u16)(((port_u16)r->h << 8) | r->l)] = r->a;
 	r->l++;
+	inc_l(r);
 	r->c = memory[(port_u16)(((port_u16)r->h << 8) | r->l)];
 	memory[(port_u16)(((port_u16)r->h << 8) | r->l)] = r->a;
 }
