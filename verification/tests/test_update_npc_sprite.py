@@ -444,6 +444,7 @@ def scripted_reload_setup(
     walk_counter: int | claripy.ast.BV = 0,
     movement_status: int | claripy.ast.BV = 1,
     face: dict[str, claripy.ast.BV] | None = None,
+    font: int | claripy.ast.BV = 0,
 ) -> None:
     for address in (*range(S1, S1 + 0x100), *range(S2, S2 + 0x100)):
         state.memory.store(base + address, claripy.BVV(0, 8))
@@ -456,7 +457,7 @@ def scripted_reload_setup(
         (S1 + offset + 9, 0 if face is None else face["facing"]),
         (S2 + offset + 4, 7), (S2 + offset + 5, 9),
         (S2 + offset + 6, 0x20), (S2 + offset + 7, 0),
-        (FONT, 0), (WALK_COUNTER, walk_counter), (SCRIPTED_STEPS, 5),
+        (FONT, font), (WALK_COUNTER, walk_counter), (SCRIPTED_STEPS, 5),
         (0xD361, 4), (0xD362, 6),
         (DIRECTIONS + 0x20, first_direction), (DIRECTIONS + 0xFE, 0x55),
         (STATUS3, 0 if face is None else face["status"]),
@@ -493,6 +494,7 @@ def scripted_reload_assembly(
     walk_counter: int | claripy.ast.BV = 0,
     movement_status: int | claripy.ast.BV = 1,
     face: dict[str, claripy.ast.BV] | None = None,
+    font: int | claripy.ast.BV = 0,
 ) -> list[E]:
     location = symbol_location(SYMBOLS, "UpdateNPCSprite")
     assert linked_bytes(ROM, location, len(BODY)) == BODY
@@ -561,9 +563,10 @@ def scripted_reload_assembly(
     project.hook(qu + 10, AddA("b", qu + 11), length=1); project.hook(qu + 12, LoadHighA(PLAYER_TILE, qu + 14), length=2)
     project.hook(qu + 14, AddA("b", qu + 15), length=1); project.hook(qu + 16, LoadHighA(OFFSET, qu + 18), length=2)
     project.hook(qu + 18, AddA(2, qu + 20), length=2); project.hook(qu + 21, StoreAtHL("b", qu + 22), length=1)
-    state = project.factory.blank_state(addr=q); set_assembly_registers(state, values); scripted_reload_setup(state, 0, offset, check, init, first_direction, walk_counter, movement_status, face)
+    state = project.factory.blank_state(addr=q); set_assembly_registers(state, values); scripted_reload_setup(state, 0, offset, check, init, first_direction, walk_counter, movement_status, face, font)
     if isinstance(walk_counter, claripy.ast.BV): state.solver.add(walk_counter != 0)
     if isinstance(movement_status, claripy.ast.BV): state.solver.add((movement_status & 0x80) != 0)
+    if isinstance(font, claripy.ast.BV): state.solver.add((font & 1) != 0)
     state.regs.sp = claripy.BVV(STACK, 16); state.memory.store(STACK, claripy.BVV(RET, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state); manager.explore(find=RET, num_find=8)
     assert not manager.errored and manager.found
@@ -577,6 +580,7 @@ def scripted_reload_native(
     walk_counter: int | claripy.ast.BV = 0,
     movement_status: int | claripy.ast.BV = 1,
     face: dict[str, claripy.ast.BV] | None = None,
+    font: int | claripy.ast.BV = 0,
 ) -> list[E]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_update_npc_sprite"); availability = project.loader.find_symbol("port_check_sprite_availability")
@@ -584,9 +588,10 @@ def scripted_reload_native(
     assert function and availability and initialize and load and walking
     project.hook(availability.rebased_addr, NativeRegisterBoundary(check, 1)); project.hook(initialize.rebased_addr, NativeRegisterBoundary(init, 2))
     project.hook(load.rebased_addr, ComputedLoadBoundary(0, True)); project.hook(walking.rebased_addr, TerminalBoundary(True))
-    state = project.factory.call_state(function.rebased_addr, NS, NM); store_native_registers(state, NS, values); scripted_reload_setup(state, NM, offset, check, init, first_direction, walk_counter, movement_status, face)
+    state = project.factory.call_state(function.rebased_addr, NS, NM); store_native_registers(state, NS, values); scripted_reload_setup(state, NM, offset, check, init, first_direction, walk_counter, movement_status, face, font)
     if isinstance(walk_counter, claripy.ast.BV): state.solver.add(walk_counter != 0)
     if isinstance(movement_status, claripy.ast.BV): state.solver.add((movement_status & 0x80) != 0)
+    if isinstance(font, claripy.ast.BV): state.solver.add((font & 1) != 0)
     manager = project.factory.simulation_manager(state); manager.run(); assert not manager.errored and manager.deadended
     return [scripted_reload_endpoint(item, True, offset) for item in manager.deadended]
 
@@ -646,4 +651,21 @@ def test_update_npc_sprite_face_player_pathwise_equivalence(offset: int) -> None
     native_paths = scripted_reload_native(values, offset, check, init, movement_status=movement_status, face=face)
     assert len(assembly_paths) == 5
     assert len(native_paths) >= 5
+    assert_pathwise_equivalent(assembly_paths, native_paths, (*REGISTERS, "state"))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_update_npc_sprite_font_loaded_pathwise_equivalence(offset: int) -> None:
+    prefix = f"update_npc_font_loaded_{offset:02x}"
+    values = symbolic_registers(prefix)
+    check = symbolic_registers(f"{prefix}_check")
+    check["f"] = claripy.Concat(claripy.BVS(f"{prefix}_check_znh", 3), claripy.BVV(0, 5))
+    check["image"] = claripy.BVS(f"{prefix}_image", 8); check["grass"] = claripy.BVS(f"{prefix}_grass", 8)
+    init = symbolic_registers(f"{prefix}_init")
+    init["screen_y"] = claripy.BVS(f"{prefix}_screen_y", 8); init["screen_x"] = claripy.BVS(f"{prefix}_screen_x", 8)
+    face = {name: claripy.BVS(f"{prefix}_{name}", 8) for name in ("status", "direction", "tile", "animation", "facing")}
+    font = claripy.BVS(f"{prefix}_font", 8)
+    assembly_paths = scripted_reload_assembly(values, offset, check, init, face=face, font=font)
+    native_paths = scripted_reload_native(values, offset, check, init, face=face, font=font)
     assert_pathwise_equivalent(assembly_paths, native_paths, (*REGISTERS, "state"))
