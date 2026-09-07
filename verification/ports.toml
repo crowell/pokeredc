@@ -30944,6 +30944,22 @@ proof_domain = "all general-register and canonical-flag inputs, arbitrary tilema
 decoder = "the exact complete 58-byte linked body executes under angr; only individual XOR/store/load instructions and seven independently proven callee boundaries are shimmed, while production C calls real port_text_box_border, port_place_string, port_print_num_badges, port_print_num_owned_mons, port_print_play_time, and port_delay_frames"
 
 [[function]]
+assembly_symbol = "LeaveMapThroughHoleAnim"
+assembly_source = "engine/overworld/player_animations.asm"
+c_symbol = "port_leave_map_through_hole_anim"
+c_source = "verification/ports/leave_map_through_hole_anim.c"
+status = "proven"
+observables = [
+    "A/F/B/C/D/E/H/L",
+    "the entire 160-byte shadow OAM region and adjacent guards",
+    "wUpdateSpritesEnabled, player image/Y, saved facing/Y, and neighboring state",
+    "rBGP, rOBP0, rOBP1 and neighboring hardware bytes",
+    "complete ordered register/player/OAM/palette inputs at all 26 DelayFrame calls",
+]
+proof_domain = "all initial registers/canonical flags and symbolic OAM, sprite, saved-position, update-enable, and palette bytes through the complete fixed animation; the nine-byte FadePal6..FadePal8 ROM table is checked against the linked cartridge and DelayFrame uses its independently proved acknowledged-interrupt transition"
+decoder = "the exact complete 49-byte wrapper, GBFadeOutToWhite, RestoreFacingDirectionAndYScreenPos, and DelayFrames bodies execute under angr with individual SM83 absolute/HRAM loads/stores, HLI and DEC flag shims. All outer calls and loops execute on both sides; native DelayFrame is observed with a zero-length hook and executes its real C implementation. The native tail adapts the proven restore-state ABI and copies back both restored player fields."
+
+[[function]]
 assembly_symbol = "PlayerSpinWhileMovingDown"
 assembly_source = "engine/overworld/player_animations.asm"
 c_symbol = "port_player_spin_while_moving_down"
