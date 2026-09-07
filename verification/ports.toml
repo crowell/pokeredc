@@ -21215,6 +21215,21 @@ proof_domain = "all initial registers/canonical flags and arbitrary proven calle
 decoder = "the exact complete 50-byte body executes under angr; both farcall register/bank contracts, the dust BIT branch, saved BC/DE/HL restoration, all four proven callees, little-endian wCurMapScriptPtr load, synthetic return address, and indirect tail callback compose explicitly. Native C calls every real port and invokes a host-supplied map-script callback."
 
 [[function]]
+assembly_symbol = "JoypadOverworld"
+assembly_source = "home/overworld.asm"
+c_symbol = "port_joypad_overworld"
+c_source = "verification/ports/joypad_overworld.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "player step vectors, trainer/scripted-movement flags, current map, held/pressed/released input, override/ignore/index globals, and movement flags",
+    "the complete 255-byte possible simulated-joypad source region, including aliases with control globals",
+    "ordered register and relevant-memory inputs for the proven RunMapScript and Joypad boundaries",
+]
+proof_domain = "all initial registers/canonical flags; trainer and non-Cycling-Road bypasses, held-input and forced-down Cycling Road paths, non-scripted return, override return, simulation completion cleanup, zero/nonzero simulated input, both address-carry paths, and every initial simulated-state index 0 through 255"
+decoder = "the exact complete 106-byte body executes under angr; individual unsupported SM83 loads/stores, XOR, BIT, AND, CP, DEC [HL], ADD L, INC H, RES, and indexed read/write instructions are shimmed. The complete state machine and address arithmetic execute pathwise, while production C calls the real proven RunMapScript and Joypad ports and forwards the map-script callback."
+
+[[function]]
 assembly_symbol = "RunNPCMovementScript.playerStepOutFromDoor"
 assembly_source = "home/npc_movement.asm"
 c_symbol = "port_run_npc_movement_script_player_step_out_from_door"
