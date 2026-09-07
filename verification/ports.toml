@@ -28317,6 +28317,20 @@ proof_domain = "all caller registers and canonical flags, symbolic bag count/qua
 decoder = "the exact complete 33-byte linked body 211ed30100002afeffc8fe462804230c18f4211dd379ea92cf3e01ea96cfc3bb2b executes under angr through the real item/quantity scan loop, both comparisons, absent return, found index/quantity writes, and tail jump; only individual unsupported SM83 instructions and the independently proven inventory-removal transition are shimmed, while native C executes the actual loop and calls the real wrapper symbol"
 
 [[function]]
+assembly_symbol = "OaksLabOak1Text"
+assembly_source = "scripts/OaksLab.asm"
+c_symbol = "port_oaks_lab_oak1_text"
+c_source = "verification/ports/oaks_lab_oak1_text.c"
+status = "proven"
+observables = [
+    "all general registers and canonical flags",
+    "the Pallet, Oak's Lab, and Route 22 event bytes, status flags, text control, current lab script, selected text pointer, and bank/predef state",
+    "exact CountSetBits, IsItemInBag, GiveItem, OaksLabScript_RemoveParcel, DisplayDexRating, PrintText, and TextScriptEnd boundary transitions",
+]
+proof_domain = "ten semantic terminal scenarios cover both Pokedex-rating entries, already holding Poke Balls, the first and repeated five-Poke-Ball reward, the post-Pokedex world text, pre-starter and post-starter choices, post-rival parcel absence, and parcel delivery"
+decoder = "the exact complete 167-byte executable body after the text_asm marker executes under angr; only individual unsupported SM83 instructions and independently proven callee boundaries are shimmed, and the platform dispatcher registers the original bank 07 address 5248"
+
+[[function]]
 assembly_symbol = "BlackbeltAI"
 assembly_source = "engine/battle/trainer_ai.asm"
 c_symbol = "port_blackbelt_ai"

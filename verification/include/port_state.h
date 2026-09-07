@@ -1303,6 +1303,29 @@ struct bit_count_state {
 	port_u8 fetched;
 };
 
+struct oaks_lab_oak1_text_state {
+	struct cpu_register_state registers;
+	port_u8 selected_text_low;
+	port_u8 selected_text_high;
+	port_u8 new_sound_id;
+	port_u8 audio_fade_out_control;
+	port_u8 audio_rom_bank;
+	port_u8 audio_saved_bank;
+	port_u8 last_music_sound_id;
+	port_u8 stop_sound_called;
+	port_u8 rating_sound_called;
+	port_u8 default_music_called;
+	port_u8 wait_joy5;
+	port_u8 wait_down_arrow_blink1;
+	port_u8 wait_down_arrow_blink2;
+	port_u8 wait_b;
+	port_u8 wait_c;
+	port_u8 wait_d;
+	port_u8 wait_e;
+	port_u8 wait_h;
+	port_u8 wait_l;
+};
+
 struct divide_bytes_state {
 	struct cpu_register_state registers;
 	port_u8 dividend;

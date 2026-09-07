@@ -8,6 +8,7 @@ void port_enable_auto_text_box_drawing(struct auto_text_box_state *);
 void port_display_text_id_init(struct display_text_id_init_private_state *, port_u8 *);
 void port_close_text_display(struct close_text_display_state *, port_u8 *);
 void port_update_sprite_facing_offset_and_delay_movement(struct sprite_facing_delay_state *);
+void port_oaks_lab_oak1_text(struct oaks_lab_oak1_text_state *, port_u8 *);
 
 static unsigned word(const uint8_t *m, unsigned address)
 {
@@ -69,6 +70,11 @@ void map_script_tick(uint8_t *m, struct mac_game *g)
  * TODO(proof): prove selectors and implement RedsHouse1FMomHealScript. */
 static unsigned map_text_callback(uint8_t *m, unsigned bank, unsigned pointer)
 {
+	if (bank == 0x07 && pointer == 0x5248) {
+		struct oaks_lab_oak1_text_state oak = {0};
+		port_oaks_lab_oak1_text(&oak, m);
+		return oak.selected_text_low | oak.selected_text_high * 256u;
+	}
 	if (bank == 0x12 && pointer == 0x416f) {
 		if (!(m[0xd72e] & 8)) return 0x4185;
 		fprintf(stderr, "TODO(RedsHouse1FMomHealScript): heal/music/fade continuation\n");
