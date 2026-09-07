@@ -12843,18 +12843,16 @@ decoder = "exact 39-byte body and linked addresses checked; sprite-state pointer
 [[function]]
 assembly_symbol = "GetMoveBoulderDustFunctionPointer"
 assembly_source = "engine/overworld/dust_smoke.asm"
-c_symbol = "port_get_move_boulder_dust_function_pointer"
-c_source = "verification/ports/overworld_flags.c"
+c_symbol = "port_get_move_boulder_dust_function_pointer_memory"
+c_source = "verification/ports/get_move_boulder_dust_function_pointer.c"
 status = "proven"
 observables = [
-    "all registers and flags",
-    "facing direction",
-    "all four computed table reads",
-    "wCoordAdjustmentAmount",
-    "computed shadow-OAM pointer",
+    "all registers and canonical flags",
+    "wSpritePlayerStateData1FacingDirection and wCoordAdjustmentAmount",
+    "selected AdjustOAMBlock function pointer and sprite-36 OAM destination pointer",
 ]
-proof_domain = "all register/flag/global/table inputs and every facing byte, including undocumented unaligned/out-of-table reads and all table/OAM pointer carries"
-decoder = "exact 30-byte body and linked addresses checked; raw direction indexing, four HLI/table reads, adjustment store, function-pointer assembly/save/restore, OAM offset addition, and final DE/HL values modeled explicitly"
+proof_domain = "all initial registers, canonical flags, and coordinate-adjustment bytes for each of the four valid player facing offsets 0, 4, 8, and 12; invalid offsets are excluded because callers maintain the four-direction facing invariant and the assembly would index beyond its fixed table"
+decoder = "the exact complete 30-byte linked body and 16-byte direction table execute under angr; only individual absolute/HLI loads, absolute store, 16-bit ADD, stack, and register-pair load instructions are shimmed, while all table selection, pointer construction, and flag effects execute pathwise"
 
 
 
