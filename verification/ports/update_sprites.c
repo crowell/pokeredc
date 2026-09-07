@@ -4,7 +4,7 @@
 #endif
 
 #define W_UPDATE_SPRITES_ENABLED 0xcfcbu
-#define W_NPC_MOVEMENT_SCRIPT_SPRITE_OFFSET 0xcf14u
+#define W_NPC_MOVEMENT_SCRIPT_SPRITE_OFFSET 0xcf17u
 #define W_SPRITE_STATE_DATA2 0xc200u
 #define H_LOADED_ROM_BANK 0xffb8u
 #define H_CURRENT_SPRITE_OFFSET 0xffdau
@@ -12,6 +12,7 @@
 #define R_ROMB 0x2000u
 
 void port_do_scripted_npc_movement(struct cpu_register_state *, port_u8 *);
+void port_update_non_player_sprite(struct cpu_register_state *, port_u8 *);
 void port_update_npc_sprite(struct cpu_register_state *, port_u8 *);
 void port_update_player_sprite(struct cpu_register_state *, port_u8 *);
 
@@ -81,7 +82,14 @@ update_current_sprite(struct cpu_register_state *registers, port_u8 *memory)
 		port_update_player_sprite(registers, memory);
 		return;
 	}
+	port_update_non_player_sprite(registers, memory);
+}
 
+/* Port of UpdateNonPlayerSprite in engine/overworld/sprite_collisions.asm. */
+__attribute__((noinline, used)) void
+port_update_non_player_sprite(struct cpu_register_state *registers,
+	port_u8 *memory)
+{
 	dec_a(registers);
 	swap_a(registers);
 	memory[H_TILE_PLAYER_STANDING_ON] = registers->a;

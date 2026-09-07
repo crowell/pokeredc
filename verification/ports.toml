@@ -31373,6 +31373,20 @@ proof_domain = "all caller registers and canonical flags and every valid 16-byte
 decoder = "exact 112-byte linked body checked across all 16 active slots; individual SM83 absolute/high-memory loads, BIT/SET, ADD/CP/DEC/INC flag operations, conditional branches, direct stores, and terminal RET are adapted at instruction seams. The proven X/Y pointer helpers, InitScriptedNPCMovement, and AnimScriptedNPCMovement are explicit compositional boundaries."
 
 [[function]]
+assembly_symbol = "UpdateNonPlayerSprite"
+assembly_source = "engine/overworld/sprite_collisions.asm"
+c_symbol = "port_update_non_player_sprite"
+c_source = "verification/ports/update_sprites.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wNPCMovementScriptSpriteOffset, hCurrentSpriteOffset, and hTilePlayerStandingOn",
+    "the selected complete DoScriptedNPCMovement or UpdateNPCSprite transition and exact dispatch path",
+]
+proof_domain = "all caller registers and canonical flags, every image-base byte value, symbolic scripted/current sprite offsets over both equality branches, and arbitrary matching complete post-states from the independently proven DoScriptedNPCMovement and UpdateNPCSprite callees"
+decoder = "the exact complete 20-byte linked body 3dcb37e093fa17cf47f0dab82003c33652c3d14e executes under angr through DEC, SWAP, HRAM store/load, the absolute wNPCMovementScriptSpriteOffset load at $cf17, comparison, branch, and both tail jumps; only individual unsupported SM83 instructions and the two independently proven complete callee transitions are shimmed, while native C executes the real helper and dispatches to the real C symbols"
+
+[[function]]
 assembly_symbol = "_UpdateSprites"
 assembly_source = "engine/overworld/sprite_collisions.asm"
 c_symbol = "port_update_sprites_private"
