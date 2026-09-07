@@ -5,6 +5,7 @@
 void port_place_string_resume(struct place_string_resume_state *, port_u8 *);
 void port_text_box_border(struct text_box_border_state *, port_u8 *);
 void port_get_cry_data(struct cpu_register_state *, port_u8 *);
+void port_text_command_ram(struct cpu_register_state *, port_u8 *);
 
 static void text_finish(struct mac_text *t, uint8_t *m)
 {
@@ -54,7 +55,7 @@ static void start_string(struct mac_text *t, unsigned pointer)
 /* NextTextCommand/PlaceNextChar continuations. The host supplies real frame
  * and button observations instead of auto-acknowledging every wait. These
  * supported commands cover Oak's original ROM streams; TODO(text-complete):
- * implement the remaining commands, including RAM/number/ASM dispatch, and
+ * implement the remaining commands, including number/ASM dispatch, and
  * prove this resumable composition. Unsupported commands report and stop;
  * they must not silently skip game logic or execute SM83 instructions. */
 void text_tick(struct mac_text *t, uint8_t *m, uint8_t pressed, uint8_t held)
@@ -113,6 +114,26 @@ void text_tick(struct mac_text *t, uint8_t *m, uint8_t pressed, uint8_t held)
 			t->bank = bank;
 		} else if (command == 0) {
 			start_string(t, t->pointer);
+		} else if (command == 0x01) {
+			/* TextCommand_RAM reads its two-byte source operand from the
+			 * current ROM stream, renders that RAM string, and returns HL at
+			 * the following command with BC at the advanced cursor. */
+			unsigned saved_bank = m[H_LOADED_ROM_BANK];
+			struct cpu_register_state r = {
+				.b = (port_u8)(t->destination >> 8),
+				.c = (port_u8)t->destination,
+				.h = (port_u8)(t->pointer >> 8),
+				.l = (port_u8)t->pointer,
+			};
+			port_sync_rom_window(m, (port_u8)t->bank);
+			m[H_LOADED_ROM_BANK] = (port_u8)t->bank;
+			m[R_ROMB] = (port_u8)t->bank;
+			port_text_command_ram(&r, m);
+			t->pointer = r.h * 256u + r.l;
+			t->destination = r.b * 256u + r.c;
+			m[H_LOADED_ROM_BANK] = (port_u8)saved_bank;
+			m[R_ROMB] = (port_u8)saved_bank;
+			port_sync_rom_window(m, (port_u8)saved_bank);
 		} else if (command >= 0x14 && command <= 0x16) {
 			/* Preserve the original OakSpeechText2 Nidorina cry, even though
 			 * the displayed picture is Nidorino. */

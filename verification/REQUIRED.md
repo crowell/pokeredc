@@ -74,9 +74,12 @@ Ported and available for deeper composition: `port_scroll_title_screen_game_vers
 | `PlayMusic` (Music_OakSpeech) | audio/ | intro theme |
 
 Text-engine progress: `TextCommandProcessor` and all command handlers are
-now ported and the Oak driver composes the dispatcher, including its
-bank-1-to-bank-22 `TX_FAR` text stream. `DisplayTextBoxID_` / message-box
-setup, naming flow, and picture transfer remain separate gaps.
+now ported. The resumable host loop composes `TX_START`, `TX_RAM`, `TX_FAR`,
+`TX_END`, and the three cry commands; the remaining handler integrations are
+still diagnosed explicitly instead of being skipped. Oak's bank-1-to-bank-22
+`TX_FAR` stream and its RAM-backed received-Pokemon name now execute through
+the real ports. `DisplayTextBoxID_` / message-box setup, naming flow, and
+picture transfer remain separate gaps.
 
 Ported intro fragments remain available for later naming and picture fidelity:
 `port_move_pic_left`, `port_oak_speech_slide_pic_right`,
