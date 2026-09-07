@@ -31198,6 +31198,22 @@ proof_domain = "all initial registers/canonical flags and symbolic relevant memo
 decoder = "the exact complete 62-byte linked body executes through all eight backedges; only individual SM83 load/store/XOR/DEC/stack instructions, the proven bank-switch/callee transition, and independently proven callee boundaries are shimmed. Native C calls every real port, executes its real loop, preserves the Bankswitch and PUSH/POP BC contracts, and its adjustment adapter is checked at every iteration."
 
 [[function]]
+assembly_symbol = "DoBoulderDustAnimation"
+assembly_source = "engine/overworld/push_boulder.asm"
+c_symbol = "port_do_boulder_dust_animation"
+c_source = "verification/ports/do_boulder_dust_animation.c"
+status = "proven"
+observables = [
+    "all registers and canonical flags",
+    "wStatusFlags5, wMiscFlags, wJoyIgnore, wBoulderSpriteIndex, hSpriteIndex, and all three joypad edge/held bytes",
+    "the complete possible 255-byte GetSpriteMovementByte2Pointer destination region",
+    "AnimateBoulderDust OAM/palette/update state, ROM bank state, and complete PlaySound audio state",
+    "the ordered inputs and matching post-states of AnimateBoulderDust, DiscardButtonPresses, ResetBoulderPushFlags, GetSpriteMovementByte2Pointer, and PlaySound",
+]
+proof_domain = "all initial registers/canonical flags and symbolic relevant memory for both values of BIT_SCRIPTED_NPC_MOVEMENT; the active path covers all 256 boulder sprite indices, all possible indexed movement-byte destinations, arbitrary dust-animation state, and arbitrary matching post-states for the proven AnimateBoulderDust and PlaySound transitions."
+decoder = "the exact complete 40-byte linked body executes from entry through both the scripted-movement RET and full tail-JP paths; only individual SM83 absolute/high-memory loads and stores, BIT/SET, LD [HL],n, and the independently proven callee boundaries are shimmed. Native C calls every real port, models the complete callfar/Bankswitch return contract, and preserves the tail-call result."
+
+[[function]]
 assembly_symbol = "WriteCutOrBoulderDustAnimationOAMBlock"
 assembly_source = "engine/overworld/cut.asm"
 c_symbol = "port_write_cut_or_boulder_dust_animation_oam_block"
