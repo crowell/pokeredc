@@ -427,15 +427,23 @@ port_update_npc_sprite(struct cpu_register_state *r, port_u8 *memory)
 		return;
 	}
 	cp_a(r, 0xffu);
+	if (r->f & PORT_FLAG_Z) {
+		memory[address(W_SPRITE_STATE_DATA2, offset, 6)] = r->a;
+		memory[W_STATUS_FLAGS5] &= 0xfeu;
+		r->a = 0;
+		r->f = PORT_FLAG_Z;
+		memory[W_SIMULATED_JOYPAD_STATES_INDEX] = r->a;
+		memory[W_UNUSED_OVERRIDE_SIMULATED_JOYPAD_STATES_INDEX] = r->a;
+		return;
+	}
+	cp_a(r, 0xfeu);
 	if (!(r->f & PORT_FLAG_Z))
 		goto determine_direction;
-	memory[address(W_SPRITE_STATE_DATA2, offset, 6)] = r->a;
-	memory[W_STATUS_FLAGS5] &= 0xfeu;
-	r->a = 0;
-	r->f = PORT_FLAG_Z;
-	memory[W_SIMULATED_JOYPAD_STATES_INDEX] = r->a;
-	memory[W_UNUSED_OVERRIDE_SIMULATED_JOYPAD_STATES_INDEX] = r->a;
-	return;
+	memory[address(W_SPRITE_STATE_DATA2, offset, 6)] = 1;
+	r->d = (port_u8)(W_NPC_MOVEMENT_DIRECTIONS >> 8);
+	r->e = (port_u8)W_NPC_MOVEMENT_DIRECTIONS;
+	load_de_plus_a(r, memory);
+	goto determine_direction;
 
 random_movement:
 	get_tile_sprite_stands_on(r, memory);
