@@ -138,14 +138,29 @@ class ReturnCarry(angr.SimProcedure):
 
 class CanWalkBoundary(angr.SimProcedure):
     """Complete CanWalkOntoTile transitions for its scripted and sentinel domains."""
-    def __init__(self, failure: bool, next_address: int) -> None:
-        super().__init__(); self.failure = failure; self.next_address = next_address
+    def __init__(self, failure: bool, passable: bool, next_address: int) -> None:
+        super().__init__(); self.failure = failure; self.passable = passable; self.next_address = next_address
     def run(self) -> None:  # type: ignore[override]
         offset = self.state.memory.load(OFFSET, 1)
         self.state.regs.h = claripy.BVV(0xc2, 8)
         self.state.regs.a = offset + 6
         self.state.regs.l = self.state.regs.a
         movement = self.state.memory.load(self.state.regs.hl, 1)
+        if self.passable:
+            y_address = claripy.Concat(claripy.BVV(0xc2, 8), offset + 2)
+            x_address = claripy.Concat(claripy.BVV(0xc2, 8), offset + 3)
+            y = self.state.memory.load(y_address, 1) + self.state.regs.d
+            x = self.state.memory.load(x_address, 1) + self.state.regs.e
+            self.state.memory.store(y_address, y)
+            self.state.memory.store(x_address, x)
+            self.state.regs.h = claripy.BVV(0xc2, 8)
+            self.state.regs.l = offset + 2
+            self.state.regs.d = y
+            self.state.regs.a = x
+            self.state.regs.f = claripy.BVV(0x20, 8) | claripy.If(
+                x == 0, claripy.BVV(0x40, 8), claripy.BVV(0, 8)
+            )
+            self.jump(self.next_address); return
         if not self.failure:
             self.state.regs.a = movement
             self.state.regs.f = claripy.BVV(0x10, 8) | claripy.If(movement == 0, claripy.BVV(0x40, 8), claripy.BVV(0, 8))
@@ -203,32 +218,41 @@ class UpdateImageBoundary(angr.SimProcedure):
 
 def setup(state: angr.SimState, base: int, failure: bool, movement: claripy.ast.BV | int,
           random_add: claripy.ast.BV | None = None, random_sub: claripy.ast.BV | None = None,
-          div: claripy.ast.BV | None = None) -> None:
-    for address in (*range(S1, S1 + 16), *range(S2, S2 + 16)):
+          div: claripy.ast.BV | None = None, offset: int = 0,
+          passable: bool = False) -> None:
+    for address in (*range(S1 + offset, S1 + offset + 16),
+                    *range(S2 + offset, S2 + offset + 16)):
         state.memory.store(base + address, claripy.BVV(0, 8))
-    for address, value in ((OFFSET, 0), (TILE, 0x20), (S1 + 8, 2), (S1 + 9, 4),
-                           (S2 + 4, 7), (S2 + 5, 9), (S2 + 6, movement),
+    for address, value in ((OFFSET, offset), (TILE, 0x20),
+                           (S1 + offset + 4, 0x30), (S1 + offset + 6, 0x30),
+                           (S1 + offset + 8, 2), (S1 + offset + 9, 4),
+                           (S2 + offset + 2, 8), (S2 + offset + 3, 8),
+                           (S2 + offset + 4, 7), (S2 + offset + 5, 9),
+                           (S2 + offset + 6, movement),
                            (TILE_POINTER, 0x33), (COLLISION, COLLISION_POINTER & 0xff),
                            (COLLISION + 1, COLLISION_POINTER >> 8),
-                           (COLLISION_POINTER, 0xff)):
+                           (COLLISION_POINTER, 0x33 if passable else 0xff),
+                           (COLLISION_POINTER + 1, 0xff)):
         state.memory.store(base + address, value if isinstance(value, claripy.ast.BV) else claripy.BVV(value, 8))
     for address, value in ((RANDOM_ADD, random_add), (RANDOM_SUB, random_sub), (DIV, div)):
         state.memory.store(base + address, claripy.BVV(0, 8) if value is None else value)
-    if not failure:
+    if not failure and not passable:
         state.solver.add(movement.ULT(claripy.BVV(0xfe, 8)))  # type: ignore[union-attr]
 
 
-def endpoint(state: angr.SimState, native: bool) -> E:
+def endpoint(state: angr.SimState, native: bool, offset: int = 0) -> E:
     base = NM if native else 0
     registers = native_registers(state, NS) if native else assembly_registers(state)
-    watched = (*range(S1, S1 + 16), *range(S2, S2 + 16), TILE_POINTER,
+    watched = (*range(S1 + offset, S1 + offset + 16),
+               *range(S2 + offset, S2 + offset + 16), TILE_POINTER,
                COLLISION, COLLISION + 1, COLLISION_POINTER, RANDOM_ADD, RANDOM_SUB, DIV, TILE, OFFSET)
     return E(**registers, state=claripy.Concat(*(state.memory.load(base + x, 1) for x in watched)), constraints=tuple(state.solver.constraints))
 
 
 def assembly(values: dict[str, claripy.ast.BV], failure: bool, movement: claripy.ast.BV | int,
              random_add: claripy.ast.BV | None = None, random_sub: claripy.ast.BV | None = None,
-             div: claripy.ast.BV | None = None) -> list[E]:
+             div: claripy.ast.BV | None = None, offset: int = 0,
+             passable: bool = False) -> list[E]:
     location = symbol_location(SYMBOLS, "TryWalking")
     assert linked_bytes(ROM, location, len(BODY)) == BODY
     project = angr.Project(rom_window(ROM, location.bank), auto_load_libs=False, rebase_granularity=0x100,
@@ -250,7 +274,7 @@ def assembly(values: dict[str, claripy.ast.BV], failure: bool, movement: claripy
     project.hook(q + 18, Pop("hl", q + 19), length=1)
     project.hook(q + 19, Push("de", q + 20), length=1)
     project.hook(q + 20, LoadAtHL("c", q + 21), length=1)
-    project.hook(q + 21, CanWalkBoundary(failure, q + 24), length=3)
+    project.hook(q + 21, CanWalkBoundary(failure, passable, q + 24), length=3)
     project.hook(q + 24, Pop("de", q + 25), length=1)
     project.hook(q + 25, ReturnCarry(q + 26), length=1)
     project.hook(q + 26, Imm("h", 0xc2, q + 28), length=2)
@@ -272,45 +296,67 @@ def assembly(values: dict[str, claripy.ast.BV], failure: bool, movement: claripy
     project.hook(q + 48, UpdateImageBoundary(RET), length=3)
     state = project.factory.blank_state(addr=q)
     set_assembly_registers(state, values)
-    setup(state, 0, failure, movement, random_add, random_sub, div)
+    setup(state, 0, failure, movement, random_add, random_sub, div, offset, passable)
     state.regs.sp = claripy.BVV(STACK, 16)
     state.memory.store(STACK, claripy.BVV(RET, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
     manager.explore(find=RET, num_find=4)
     assert not manager.errored and manager.found
-    return [endpoint(x, False) for x in manager.found]
+    return [endpoint(x, False, offset) for x in manager.found]
 
 
 def native(values: dict[str, claripy.ast.BV], failure: bool, movement: claripy.ast.BV | int,
            random_add: claripy.ast.BV | None = None, random_sub: claripy.ast.BV | None = None,
-           div: claripy.ast.BV | None = None) -> list[E]:
+           div: claripy.ast.BV | None = None, offset: int = 0,
+           passable: bool = False) -> list[E]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_try_walking")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NS, NM)
     store_native_registers(state, NS, values)
-    setup(state, NM, failure, movement, random_add, random_sub, div)
+    setup(state, NM, failure, movement, random_add, random_sub, div, offset, passable)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and manager.deadended
-    return [endpoint(x, True) for x in manager.deadended]
+    return [endpoint(x, True, offset) for x in manager.deadended]
 
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
-def test_try_walking_scripted_success_pathwise_equivalence() -> None:
-    values = symbolic_registers("try_walking_success")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_try_walking_scripted_success_pathwise_equivalence(offset: int) -> None:
+    values = symbolic_registers(f"try_walking_success_{offset:02x}")
     values["h"] = claripy.BVV(TILE_POINTER >> 8, 8)
     values["l"] = claripy.BVV(TILE_POINTER & 0xff, 8)
-    movement = claripy.BVS("try_walking_success_movement", 8)
-    assert_pathwise_equivalent(assembly(values, False, movement), native(values, False, movement), (*REGISTERS, "state"))
+    movement = claripy.BVS(f"try_walking_success_movement_{offset:02x}", 8)
+    assert_pathwise_equivalent(assembly(values, False, movement, offset=offset), native(values, False, movement, offset=offset), (*REGISTERS, "state"))
 
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
-def test_try_walking_collision_failure_pathwise_equivalence() -> None:
-    values = symbolic_registers("try_walking_failure")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_try_walking_collision_failure_pathwise_equivalence(offset: int) -> None:
+    values = symbolic_registers(f"try_walking_failure_{offset:02x}")
     values["h"] = claripy.BVV(TILE_POINTER >> 8, 8)
     values["l"] = claripy.BVV(TILE_POINTER & 0xff, 8)
-    random_add = claripy.BVS("try_walking_failure_random_add", 8)
-    random_sub = claripy.BVS("try_walking_failure_random_sub", 8)
-    div = claripy.BVS("try_walking_failure_div", 8)
-    assert_pathwise_equivalent(assembly(values, True, 0xff, random_add, random_sub, div), native(values, True, 0xff, random_add, random_sub, div), (*REGISTERS, "state"))
+    random_add = claripy.BVS(f"try_walking_failure_random_add_{offset:02x}", 8)
+    random_sub = claripy.BVS(f"try_walking_failure_random_sub_{offset:02x}", 8)
+    div = claripy.BVS(f"try_walking_failure_div_{offset:02x}", 8)
+    assert_pathwise_equivalent(assembly(values, True, 0xff, random_add, random_sub, div, offset=offset), native(values, True, 0xff, random_add, random_sub, div, offset=offset), (*REGISTERS, "state"))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+@pytest.mark.parametrize("direction,d,e", ((1, 1, 0), (2, 0, 0xff), (4, 0xff, 0), (8, 0, 1)))
+def test_try_walking_nonscripted_passable_all_slots_pathwise_equivalence(
+    offset: int, direction: int, d: int, e: int,
+) -> None:
+    values = symbolic_registers(f"try_walking_passable_{direction}_{offset:02x}")
+    values["h"] = claripy.BVV(TILE_POINTER >> 8, 8)
+    values["l"] = claripy.BVV(TILE_POINTER & 0xff, 8)
+    values["c"] = claripy.BVV(direction, 8)
+    values["d"] = claripy.BVV(d, 8)
+    values["e"] = claripy.BVV(e, 8)
+    assert_pathwise_equivalent(
+        assembly(values, False, 0xfe, offset=offset, passable=True),
+        native(values, False, 0xfe, offset=offset, passable=True),
+        (*REGISTERS, "state"),
+    )
