@@ -505,6 +505,7 @@ def scripted_reload_setup(
     movement_delay: int | claripy.ast.BV = 0,
     walking: dict[str, claripy.ast.BV] | None = None,
     movement2: int | claripy.ast.BV = 0xD0,
+    reload_direction: int | claripy.ast.BV = 0x55,
 ) -> None:
     for address in (*range(S1, S1 + 0x100), *range(S2, S2 + 0x100)):
         state.memory.store(base + address, claripy.BVV(0, 8))
@@ -523,7 +524,7 @@ def scripted_reload_setup(
         (S2 + offset + 8, movement_delay),
         (FONT, font), (WALK_COUNTER, walk_counter), (SCRIPTED_STEPS, 5),
         (0xD361, 4), (0xD362, 6),
-        (DIRECTIONS + 0x20, first_direction), (DIRECTIONS + 0xFE, 0x55),
+        (DIRECTIONS + 0x20, first_direction), (DIRECTIONS + 0xFE, reload_direction),
         (STATUS3, 0 if face is None else face["status"]),
         (PLAYER_DIRECTION, 0 if face is None else face["direction"]),
         (PLAYER_TILE, 0 if face is None else face["tile"]),
@@ -576,6 +577,7 @@ def scripted_reload_assembly(
     movement2: int | claripy.ast.BV = 0xD0,
     random_path: bool = False,
     tile: dict[str, claripy.ast.BV] | None = None,
+    reload_direction: int | claripy.ast.BV = 0x55,
 ) -> list[E]:
     location = symbol_location(SYMBOLS, "UpdateNPCSprite")
     assert linked_bytes(ROM, location, len(BODY)) == BODY
@@ -717,7 +719,7 @@ def scripted_reload_assembly(
     try_walking = symbol_location(SYMBOLS, "TryWalking")
     assert linked_bytes(ROM, try_walking, 51) == bytes.fromhex("e526c1f0dac6096f71f0dac6036f722c2c73e1d54ecd6e51d1d826c2f0dac6046f7e82227e8377f0da6f3610252c3603c35751")
     project.hook(try_walking.address, TerminalBoundary(False), length=1)
-    state = project.factory.blank_state(addr=q); set_assembly_registers(state, values); scripted_reload_setup(state, 0, offset, check, init, first_direction, walk_counter, movement_status, face, font, movement_byte, movement_delay, walking, movement2)
+    state = project.factory.blank_state(addr=q); set_assembly_registers(state, values); scripted_reload_setup(state, 0, offset, check, init, first_direction, walk_counter, movement_status, face, font, movement_byte, movement_delay, walking, movement2, reload_direction)
     if isinstance(first_direction, claripy.ast.BV): state.solver.add(first_direction != 0xe0, first_direction != 0xfe, first_direction != 0xff)
     if isinstance(walk_counter, claripy.ast.BV): state.solver.add(walk_counter != 0)
     if isinstance(movement_status, claripy.ast.BV): state.solver.add((movement_status & 0x80) != 0)
@@ -743,6 +745,7 @@ def scripted_reload_native(
     movement2: int | claripy.ast.BV = 0xD0,
     random_path: bool = False,
     tile: dict[str, claripy.ast.BV] | None = None,
+    reload_direction: int | claripy.ast.BV = 0x55,
 ) -> list[E]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_update_npc_sprite"); availability = project.loader.find_symbol("port_check_sprite_availability")
@@ -751,7 +754,7 @@ def scripted_reload_native(
     project.hook(availability.rebased_addr, NativeRegisterBoundary(check, 1)); project.hook(initialize.rebased_addr, NativeRegisterBoundary(init, 2))
     project.hook(load.rebased_addr, ComputedLoadBoundary(0, True)); project.hook(try_walking.rebased_addr, TerminalBoundary(True))
     project.hook(tile_stands_on.rebased_addr, NativeRegisterBoundary(tile or init, 4))
-    state = project.factory.call_state(function.rebased_addr, NS, NM); store_native_registers(state, NS, values); scripted_reload_setup(state, NM, offset, check, init, first_direction, walk_counter, movement_status, face, font, movement_byte, movement_delay, walking, movement2)
+    state = project.factory.call_state(function.rebased_addr, NS, NM); store_native_registers(state, NS, values); scripted_reload_setup(state, NM, offset, check, init, first_direction, walk_counter, movement_status, face, font, movement_byte, movement_delay, walking, movement2, reload_direction)
     if isinstance(first_direction, claripy.ast.BV): state.solver.add(first_direction != 0xe0, first_direction != 0xfe, first_direction != 0xff)
     if isinstance(walk_counter, claripy.ast.BV): state.solver.add(walk_counter != 0)
     if isinstance(movement_status, claripy.ast.BV): state.solver.add((movement_status & 0x80) != 0)
@@ -771,6 +774,23 @@ def test_update_npc_sprite_scripted_walk_reload_pathwise_equivalence(offset: int
     init = symbolic_registers(f"update_npc_scripted_reload_{offset:02x}_init")
     init["screen_y"] = claripy.BVS(f"update_npc_scripted_reload_{offset:02x}_screen_y", 8); init["screen_x"] = claripy.BVS(f"update_npc_scripted_reload_{offset:02x}_screen_x", 8)
     assert_pathwise_equivalent(scripted_reload_assembly(values, offset, check, init), scripted_reload_native(values, offset, check, init), (*REGISTERS, "state"))
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+def test_update_npc_sprite_scripted_walk_reload_matrix_pathwise_equivalence(offset: int) -> None:
+    prefix = f"update_npc_scripted_reload_matrix_{offset:02x}"
+    values = symbolic_registers(prefix)
+    check = symbolic_registers(f"{prefix}_check")
+    check["f"] = claripy.Concat(claripy.BVS(f"{prefix}_check_znh", 3), claripy.BVV(0, 5))
+    check["image"] = claripy.BVS(f"{prefix}_image", 8); check["grass"] = claripy.BVS(f"{prefix}_grass", 8)
+    init = symbolic_registers(f"{prefix}_init")
+    init["screen_y"] = claripy.BVS(f"{prefix}_screen_y", 8); init["screen_x"] = claripy.BVS(f"{prefix}_screen_x", 8)
+    reload_direction = claripy.BVS(f"{prefix}_reload_direction", 8)
+    movement2 = claripy.BVS(f"{prefix}_movement2", 8)
+    assembly_paths = scripted_reload_assembly(values, offset, check, init, movement2=movement2, reload_direction=reload_direction)
+    native_paths = scripted_reload_native(values, offset, check, init, movement2=movement2, reload_direction=reload_direction)
+    assert_pathwise_equivalent(assembly_paths, native_paths, (*REGISTERS, "state"))
 
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(), reason="build artifacts missing")
