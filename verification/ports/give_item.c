@@ -1,108 +1,70 @@
 #include "port_state.h"
 
-/* Port of GiveItem in home/give.asm.
- *
- * Give player quantity c of item b, and copy the item's name to wStringBuffer.
- * Return carry on success.
- *
- * Input: b = item ID, c = quantity
- * Output: carry flag set on success, clear on failure */
+#define W_NAME_BUFFER 0xcd6du
+#define W_STRING_BUFFER 0xcf4bu
+#define W_CUR_ITEM 0xcf91u
+#define W_ITEM_QUANTITY 0xcf96u
+#define W_NAME_LIST_INDEX 0xd0b5u
+#define W_NAME_LIST_TYPE 0xd0b6u
+#define W_PREDEF_BANK 0xd0b7u
+#define W_NAMED_OBJECT_INDEX 0xd11eu
+#define W_NUM_BAG_ITEMS 0xd31du
+#define H_LOADED_ROM_BANK 0xffb8u
+#define R_ROMB 0x2000u
 
-#define W_NAMED_OBJECT_INDEX 0xD11Eu
-#define W_CUR_ITEM 0xD05Du
-#define W_ITEM_QUANTITY 0xD05Eu
-#define W_NUM_BAG_ITEMS 0xD31Eu
-#define W_NAME_BUFFER 0xCD6Du
-#define W_NAME_LIST_INDEX 0xD05Cu
-#define W_NAME_LIST_TYPE 0xD05Eu
-#define W_PREDEF_BANK 0xD05Fu
+struct get_name_state {
+	struct cpu_register_state registers;
+	port_u8 name_list_index;
+	port_u8 name_list_type;
+	port_u8 predef_bank;
+	port_u8 named_object_index;
+	port_u8 loaded_bank;
+	port_u8 rom_bank;
+	port_u8 swap_temp;
+	port_u8 swap_temp_plus1;
+	port_u8 unused_pointer_low;
+	port_u8 unused_pointer_high;
+	struct cpu_register_state saved;
+	port_u8 saved_bank;
+};
 
-#define ITEM_NAME 0x01u
-#define HM01 0xC4u
-#define TEXT_TERMINATOR 0x50u
+void port_add_item_to_inventory_home(struct cpu_register_state *, port_u8 *);
+void port_get_item_name(struct get_name_state *, port_u8 *);
+void port_copy_to_string_buffer(struct cpu_register_state *, port_u8 *);
 
-/* Forward declarations of already-ported functions. */
-__attribute__((noinline, used)) void
-port_add_item_to_inventory(struct add_inventory_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_copy_to_string_buffer(struct cpu_register_state *state, port_u8 *memory);
-
-__attribute__((noinline, used)) void
-port_get_machine_name(struct cpu_register_state *state, port_u8 *memory);
-
-/* Port of GiveItem in home/give.asm. */
+/* Complete port of GiveItem in home/give.asm. */
 __attribute__((noinline, used)) void
 port_give_item(struct cpu_register_state *state, port_u8 *memory)
 {
-	(void)state;
-	(void)memory;
+	struct get_name_state name = {0};
 
-	/* ld a, b; ld [wNamedObjectIndex], a; ld [wCurItem], a */
-	memory[W_NAMED_OBJECT_INDEX] = state->b;
-	memory[W_CUR_ITEM] = state->b;
+	state->a = state->b;
+	memory[W_NAMED_OBJECT_INDEX] = state->a;
+	memory[W_CUR_ITEM] = state->a;
+	state->a = state->c;
+	memory[W_ITEM_QUANTITY] = state->a;
+	state->h = (port_u8)(W_NUM_BAG_ITEMS >> 8);
+	state->l = (port_u8)W_NUM_BAG_ITEMS;
+	port_add_item_to_inventory_home(state, memory);
+	if (!(state->f & PORT_FLAG_C))
+		return;
 
-	/* ld a, c; ld [wItemQuantity], a */
-	memory[W_ITEM_QUANTITY] = state->c;
+	name.registers = *state;
+	name.name_list_index = memory[W_NAME_LIST_INDEX];
+	name.name_list_type = memory[W_NAME_LIST_TYPE];
+	name.predef_bank = memory[W_PREDEF_BANK];
+	name.named_object_index = memory[W_NAMED_OBJECT_INDEX];
+	name.loaded_bank = memory[H_LOADED_ROM_BANK];
+	name.rom_bank = memory[R_ROMB];
+	port_get_item_name(&name, memory);
+	*state = name.registers;
+	memory[W_NAME_LIST_INDEX] = name.name_list_index;
+	memory[W_NAME_LIST_TYPE] = name.name_list_type;
+	memory[W_PREDEF_BANK] = name.predef_bank;
+	memory[W_NAMED_OBJECT_INDEX] = name.named_object_index;
+	memory[H_LOADED_ROM_BANK] = name.loaded_bank;
+	memory[R_ROMB] = name.rom_bank;
 
-	/* ld hl, wNumBagItems; call AddItemToInventory_ */
-	{
-		struct add_inventory_state inv_state = {0};
-
-		/* Initialize registers with current state */
-		inv_state.registers = *state;
-
-		/* Set up inventory pointer: HL = wNumBagItems */
-		inv_state.registers.h = 0xD3;
-		inv_state.registers.l = 0x1E;
-
-		/* Item ID is in B, quantity in C */
-		inv_state.cur_item = state->b;
-		inv_state.item_quantity = state->c;
-
-		/* Call the AddItemToInventory function */
-		port_add_item_to_inventory(&inv_state, memory);
-
-		/* Check result: carry flag in F indicates success/failure */
-		if (!(inv_state.registers.f & 0x10)) {
-			/* Carry clear = failure */
-			return;
-		}
-
-		/* Update flags from result */
-		state->f = inv_state.registers.f;
-	}
-
-	/* call GetItemName - inline logic:
-	 * If item is TM/HM (>= HM01), call GetMachineName
-	 * Otherwise, look up item name from ItemNames table
-	 * For the port, we'll call GetMachineName for TM/HM items,
-	 * and for regular items we'll just set up wNameBuffer with a placeholder
-	 * since the full item name lookup requires the GetName predef. */
-
-	port_u8 item_id = memory[0xD11E];
-	if (item_id >= 0xC4) { /* HM01 = 0xC4 */
-		/* TM/HM: call GetMachineName */
-		port_get_machine_name(state, (port_u8 *)0);
-	} else {
-		/* Regular item: set up for GetName predef
-		 * In the full port, we'd call GetName predef here.
-		 * For now, we'll just copy a placeholder name. */
-		memory[0xD05C] = 0; /* W_NAME_LIST_INDEX */
-		memory[0xD05E] = 0x01; /* W_NAME_LIST_TYPE = ITEM_NAME */
-		memory[0xD05F] = 0x01; /* W_PREDEF_BANK = BANK(ItemNames) */
-		/* GetName predef would be called here */
-		/* For port, just copy a placeholder */
-		memory[0xCD6D] = 'I';
-		memory[0xCD6E] = 'T';
-		memory[0xCD6F] = 'E';
-		memory[0xCD70] = 'M';
-		memory[0xCD71] = 0x50; /* @ terminator */
-	}
-
-	/* call CopyToStringBuffer */
-	port_copy_to_string_buffer(state, (port_u8 *)0);
-
-	/* scf; ret */
-	state->f |= 0x10;
+	port_copy_to_string_buffer(state, memory);
+	state->f = (port_u8)((state->f & PORT_FLAG_Z) | PORT_FLAG_C);
 }

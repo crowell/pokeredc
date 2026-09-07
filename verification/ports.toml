@@ -18047,10 +18047,13 @@ c_symbol = "port_give_item"
 c_source = "verification/ports/give_item.c"
 status = "proven"
 observables = [
-    "C (carry flag), A, F, wNameBuffer (item name copied)",
+    "all registers and canonical flags",
+    "wNamedObjectIndex, wCurItem, wItemQuantity, all name-selection globals, hLoadedROMBank, and rROMB",
+    "the complete 20-byte wNameBuffer and wStringBuffer and complete 20-slot bag region",
+    "exact AddItemToInventory, GetItemName, and CopyToStringBuffer call-state snapshots",
 ]
-proof_domain = "all general-register and canonical-flag inputs; AddItemToInventory_ inlined as state machine, GetMachineName for TM/HM, GetName predef modeled as placeholder, CopyToStringBuffer inlined"
-decoder = "exact 60-byte linked body checked; `call AddItemToInventory_` inlined as state machine (port_add_item_to_inventory); `call GetItemName` inlined with TM/HM branch to GetMachineName and placeholder for GetName predef; `call CopyToStringBuffer` inlined; `ld [a16],a` (0xEA) shimmed for wNamedObjectIndex/wCurItem/wItemQuantity"
+proof_domain = "all register/flag, item, quantity, bag, name/global, bank, and buffer inputs on both inventory-failure and inventory-success terminals, with arbitrary matching complete post-states from each independently proven callee"
+decoder = "the exact complete 26-byte linked body 78ea1ed1ea91cf79ea96cf211dd3cdcf2bd0cdcf2fcd263837c9 executes under angr through item/quantity setup, carry failure, the full successful callee sequence, SCF, and return; only individual unsupported SM83 loads/stores and the three independently proven callee boundaries are shimmed; production C calls the real AddItemToInventory home wrapper, GetItemName, and CopyToStringBuffer ports with complete adapters and no placeholders or null memory"
 
 
 
