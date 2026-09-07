@@ -13058,15 +13058,15 @@ assembly_symbol = "CanWalkOntoTile"
 assembly_source = "engine/overworld/movement.asm"
 c_symbol = "port_can_walk_onto_tile"
 c_source = "verification/ports/can_walk_onto_tile.c"
-status = "partial"
+status = "proven"
 observables = [
     "all registers and canonical flags",
     "hCurrentSpriteOffset, hRandomAdd, hRandomSub, and rDIV",
     "the current 16-byte wSpriteStateData1 and wSpriteStateData2 slots",
     "the scanned collision-table bytes",
 ]
-proof_domain = "all scripted movement values below WALK with symbolic caller registers; non-scripted collision-table match, sentinel, and repeated non-match scan failures with symbolic random inputs; vertical and horizontal off-screen rejection; and a passable displacement success path that executes the real unused-current-sprite early-return body of DetectCollisionBetweenSprites. Visible-peer collision configurations and the remaining signed displacement combinations are outside this current proof domain."
-decoder = "the complete C routine scans the collision table, calls the real detect-collision and random ports, executes both coordinate checks, and preserves the assembly's asymmetric displacement logic and delayed-failure writes. The focused angr test executes the linked assembly through individual SM83 load, arithmetic, comparison, branch, stack, call/return, memory-store, and Random-boundary adapters; Random is a complete separately-proven composition transition."
+proof_domain = "all scripted movement bytes below WALK with symbolic caller registers; non-scripted WALK/STAY, collision-table match, sentinel, and repeated non-match scan paths with symbolic random inputs; vertical and horizontal off-screen rejection; and every valid current-sprite offset across collision failure plus up, down, left, and right displacement-limit and success classes, including the original asymmetric right/bottom behavior. DetectCollisionBetweenSprites and Random compose through their complete separately-proven transitions"
+decoder = "the complete 153-byte linked body executes through individual SM83 load, arithmetic, comparison, branch, stack, call/return, memory-store, and callee-boundary adapters; the production routine calls the real proven collision and random ports, preserves delayed-failure writes, and reproduces the assembly's pointer increments and asymmetric displacement logic"
 
 
 [[function]]

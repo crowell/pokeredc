@@ -160,6 +160,7 @@ port_can_walk_onto_tile(struct cpu_register_state *r, port_u8 *memory)
 	cp_a(r, 0x80u);
 	if (!(r->f & PORT_FLAG_C))
 		goto impassable;
+	r->l++;
 	r->a = memory[(port_u16)(((port_u16)r->h << 8) | r->l)];
 	add_a(r, r->e);
 	cp_a(r, 0x90u);

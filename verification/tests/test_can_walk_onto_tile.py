@@ -158,6 +158,18 @@ class StoreAtHL(angr.SimProcedure):
         self.jump(self.next_address)
 
 
+class StoreRegisterAtHL(angr.SimProcedure):
+    def __init__(self, source: str, next_address: int) -> None:
+        super().__init__()
+        self.source = source
+        self.next_address = next_address
+
+    def run(self) -> None:  # type: ignore[override]
+        self.state.memory.store(self.state.regs.hl,
+                                getattr(self.state.regs, self.source))
+        self.jump(self.next_address)
+
+
 class IncH(angr.SimProcedure):
     def __init__(self, next_address: int) -> None:
         super().__init__()
@@ -271,16 +283,16 @@ class StoreAtHLDecrement(angr.SimProcedure):
         self.jump(self.next_address)
 
 
-def _endpoint(state: angr.SimState, native: bool) -> Endpoint:
+def _endpoint(state: angr.SimState, native: bool, offset: int = 0x20) -> Endpoint:
     base = NATIVE_MEMORY if native else 0
     registers = native_registers(state, NATIVE_STATE) if native else assembly_registers(state)
     return Endpoint(
         **registers,
         state=claripy.Concat(*(
-            state.memory.load(base + SPRITE_DATA1 + 0x20 + offset, 1)
-            for offset in range(16)
-        ), *(state.memory.load(base + SPRITE_DATA2 + 0x20 + offset, 1)
-             for offset in range(16)),
+            state.memory.load(base + SPRITE_DATA1 + offset + index, 1)
+            for index in range(16)
+        ), *(state.memory.load(base + SPRITE_DATA2 + offset + index, 1)
+             for index in range(16)),
             *(state.memory.load(base + address, 1) for address in (0xff04, 0xffd3, 0xffd4))),
         constraints=tuple(state.solver.constraints),
     )
@@ -465,23 +477,38 @@ def _native_stay_failure(values: dict[str, claripy.ast.BV], random_add: claripy.
     return [_endpoint(manager.deadended[0], True)]
 
 
-def _setup_unused_detector_success(state: angr.SimState, base: int) -> None:
-    state.memory.store(base + H_CURRENT_SPRITE_OFFSET, claripy.BVV(0x20, 8))
-    for address in range(SPRITE_DATA1 + 0x20, SPRITE_DATA1 + 0x30):
+def _setup_unused_detector_success(
+    state: angr.SimState, base: int, *, offset: int = 0x20,
+    y_pixels: int = 0, x_pixels: int = 0, y_displacement: int = 8,
+    x_displacement: int = 8, collision: int = 0,
+    random_add: claripy.ast.BV | int = 0,
+    random_sub: claripy.ast.BV | int = 0, div: claripy.ast.BV | int = 0,
+) -> None:
+    state.memory.store(base + H_CURRENT_SPRITE_OFFSET, claripy.BVV(offset, 8))
+    for address in range(SPRITE_DATA1 + offset, SPRITE_DATA1 + offset + 0x10):
         state.memory.store(base + address, claripy.BVV(0, 8))
-    for address in range(SPRITE_DATA2 + 0x20, SPRITE_DATA2 + 0x30):
+    for address in range(SPRITE_DATA2 + offset, SPRITE_DATA2 + offset + 0x10):
         state.memory.store(base + address, claripy.BVV(0, 8))
-    state.memory.store(base + SPRITE_DATA2 + 0x22, claripy.BVV(8, 8))
-    state.memory.store(base + SPRITE_DATA2 + 0x23, claripy.BVV(8, 8))
-    state.memory.store(base + SPRITE_DATA2 + 0x26, claripy.BVV(0xfe, 8))
+    state.memory.store(base + SPRITE_DATA1 + offset + 4, claripy.BVV(y_pixels, 8))
+    state.memory.store(base + SPRITE_DATA1 + offset + 6, claripy.BVV(x_pixels, 8))
+    state.memory.store(base + SPRITE_DATA1 + offset + 12, claripy.BVV(collision, 8))
+    state.memory.store(base + SPRITE_DATA2 + offset + 2,
+                       claripy.BVV(y_displacement, 8))
+    state.memory.store(base + SPRITE_DATA2 + offset + 3,
+                       claripy.BVV(x_displacement, 8))
+    state.memory.store(base + SPRITE_DATA2 + offset + 6, claripy.BVV(0xfe, 8))
     state.memory.store(base + 0xd530, claripy.BVV(0x700, 16), endness="Iend_LE")
     state.memory.store(base + 0x700, claripy.BVV(0x33, 8))
     state.memory.store(base + 0x701, claripy.BVV(0xff, 8))
-    for address in (0xff04, 0xffd3, 0xffd4):
-        state.memory.store(base + address, claripy.BVV(0, 8))
+    for address, value in ((0xff04, div), (0xffd3, random_add),
+                           (0xffd4, random_sub)):
+        state.memory.store(base + address, value if isinstance(value, claripy.ast.BV)
+                           else claripy.BVV(value, 8))
 
 
-def _assembly_unused_detector_success(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+def _assembly_unused_detector_success(
+    values: dict[str, claripy.ast.BV], **setup_kwargs,
+) -> list[Endpoint]:
     location = symbol_location(SYMBOLS, "CanWalkOntoTile")
     detector = symbol_location(SYMBOLS, "DetectCollisionBetweenSprites")
     assert linked_bytes(ROM, location, 123).hex().endswith("3272a7c9")
@@ -575,30 +602,52 @@ def _assembly_unused_detector_success(values: dict[str, claripy.ast.BV]) -> list
     project.hook(q + 115, Sm83SubImmediate(1, q + 117), length=2)
     project.hook(q + 117, BranchFlag(q + 123, q + 119, 0, True), length=2)
     project.hook(q + 119, StoreAtHLDecrement(q + 120), length=1)
-    project.hook(q + 120, StoreAtHL(q + 121), length=1)
+    project.hook(q + 120, StoreRegisterAtHL("d", q + 121), length=1)
     project.hook(q + 121, AndA(q + 122), length=1)
+    project.hook(q + 123, LoadHImmediate(0xc1, q + 125), length=2)
+    project.hook(q + 125, Sm83LoadAHighImmediate(0xda, q + 127), length=2)
+    project.hook(q + 127, Sm83IncRegister("a", q + 128), length=1)
+    project.hook(q + 128, LoadRegister("l", "a", q + 129), length=1)
+    project.hook(q + 129, StoreImmediateAtHL(2, q + 131), length=2)
+    project.hook(q + 131, Sm83IncRegister("l", q + 132), length=1)
+    project.hook(q + 132, Sm83IncRegister("l", q + 133), length=1)
+    project.hook(q + 133, Sm83XorA(q + 134), length=1)
+    project.hook(q + 134, Sm83StoreAAtHlIncrement(q + 135), length=1)
+    project.hook(q + 135, Sm83IncRegister("l", q + 136), length=1)
+    project.hook(q + 136, StoreAtHL(q + 137), length=1)
+    project.hook(q + 137, IncH(q + 138), length=1)
+    project.hook(q + 138, Sm83LoadAHighImmediate(0xda, q + 140), length=2)
+    project.hook(q + 140, Sm83AddImmediate(8, q + 142), length=2)
+    project.hook(q + 142, LoadRegister("l", "a", q + 143), length=1)
+    project.hook(q + 143, RandomBoundary(q + 146), length=3)
+    project.hook(q + 146, Sm83LoadAHighImmediate(0xd3, q + 148), length=2)
+    project.hook(q + 148, Sm83AndImmediate(0x7f, q + 150), length=2)
+    project.hook(q + 150, StoreAtHL(q + 151), length=1)
+    project.hook(q + 151, Sm83Scf(q + 152), length=1)
     state = project.factory.blank_state(addr=q)
     set_assembly_registers(state, values)
-    _setup_unused_detector_success(state, 0)
+    _setup_unused_detector_success(state, 0, **setup_kwargs)
     state.regs.sp = STACK
     state.memory.store(STACK, claripy.BVV(RETURN, 16), endness="Iend_LE")
     manager = project.factory.simulation_manager(state)
     manager.explore(find=RETURN)
     assert not manager.errored and len(manager.found) == 1
-    return [_endpoint(manager.found[0], False)]
+    return [_endpoint(manager.found[0], False, setup_kwargs.get("offset", 0x20))]
 
 
-def _native_unused_detector_success(values: dict[str, claripy.ast.BV]) -> list[Endpoint]:
+def _native_unused_detector_success(
+    values: dict[str, claripy.ast.BV], **setup_kwargs,
+) -> list[Endpoint]:
     project = angr.Project(ELF, auto_load_libs=False)
     function = project.loader.find_symbol("port_can_walk_onto_tile")
     assert function is not None
     state = project.factory.call_state(function.rebased_addr, NATIVE_STATE, NATIVE_MEMORY)
     store_native_registers(state, NATIVE_STATE, values)
-    _setup_unused_detector_success(state, NATIVE_MEMORY)
+    _setup_unused_detector_success(state, NATIVE_MEMORY, **setup_kwargs)
     manager = project.factory.simulation_manager(state)
     manager.run()
     assert not manager.errored and len(manager.deadended) == 1
-    return [_endpoint(manager.deadended[0], True)]
+    return [_endpoint(manager.deadended[0], True, setup_kwargs.get("offset", 0x20))]
 
 
 @pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
@@ -706,5 +755,50 @@ def test_can_walk_onto_tile_unused_sprite_success_pathwise_equivalence() -> None
     assert_pathwise_equivalent(
         _assembly_unused_detector_success(values),
         _native_unused_detector_success(values),
+        (*REGISTERS, "state"),
+    )
+
+
+POST_DETECTOR_CASES = (
+    ("sprite_collision", 1, 0, 0, 8, 8, 1),
+    ("down_limit", 1, 1, 0, 3, 8, 0),
+    ("down_success", 1, 1, 0, 8, 8, 0),
+    ("up_limit", 4, 0xff, 0, 0, 8, 0),
+    ("up_success", 4, 0xff, 0, 8, 8, 0),
+    ("left_limit", 2, 0, 0xff, 8, 0, 0),
+    ("left_success", 2, 0, 0xff, 8, 8, 0),
+    ("right_low_bug", 8, 0, 1, 8, 3, 0),
+    ("right_success", 8, 0, 1, 8, 8, 0),
+)
+
+
+@pytest.mark.skipif(not ELF.exists() or not ROM.exists() or not SYMBOLS.exists(),
+                    reason="build artifacts missing")
+@pytest.mark.parametrize("offset", range(0, 0x100, 0x10))
+@pytest.mark.parametrize(
+    "name,b,d,e,y_displacement,x_displacement,collision",
+    POST_DETECTOR_CASES,
+)
+def test_can_walk_onto_tile_post_detector_all_slots_pathwise_equivalence(
+    offset: int, name: str, b: int, d: int, e: int,
+    y_displacement: int, x_displacement: int, collision: int,
+) -> None:
+    values = symbolic_registers(f"can_walk_{name}_{offset:02x}")
+    values["b"] = claripy.BVV(b, 8)
+    values["c"] = claripy.BVV(0x33, 8)
+    values["d"] = claripy.BVV(d, 8)
+    values["e"] = claripy.BVV(e, 8)
+    random_add = claripy.BVS(f"can_walk_{name}_{offset:02x}_random_add", 8)
+    random_sub = claripy.BVS(f"can_walk_{name}_{offset:02x}_random_sub", 8)
+    div = claripy.BVS(f"can_walk_{name}_{offset:02x}_div", 8)
+    setup_kwargs = dict(
+        offset=offset, y_pixels=0x30, x_pixels=0x30,
+        y_displacement=y_displacement, x_displacement=x_displacement,
+        collision=collision, random_add=random_add, random_sub=random_sub,
+        div=div,
+    )
+    assert_pathwise_equivalent(
+        _assembly_unused_detector_success(values, **setup_kwargs),
+        _native_unused_detector_success(values, **setup_kwargs),
         (*REGISTERS, "state"),
     )
